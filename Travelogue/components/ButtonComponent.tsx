@@ -55,6 +55,7 @@ const ButtonComponent = (props: Props) => {
             marginLeft: icon && iconFlex === 'left' ? 12 : 0,
             marginRight: icon && iconFlex === 'right' ? 12 : 0,
             fontSize: 16,
+            fontWeight: 'bold'
           },
         ]}
       />
