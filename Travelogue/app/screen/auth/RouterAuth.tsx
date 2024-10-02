@@ -3,6 +3,7 @@ import LoginScreen from "./LoginScreen";
 import RegisterScreen from "./RegisterScreen";
 import { View } from "react-native";
 import { SectionComponent } from "@/components";
+import ForgotPasswordScreen from "@/app/screen/auth/ForgotPasswordScreen";
 
 const Stack = createStackNavigator();
 
@@ -20,6 +21,11 @@ const RouterAuth = () => {
         <Stack.Screen
           name="RegisterScreen"
           component={RegisterScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ForgotPasswordScreen"
+          component={ForgotPasswordScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

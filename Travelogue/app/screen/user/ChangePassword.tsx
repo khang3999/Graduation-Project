@@ -1,0 +1,60 @@
+import { ButtonComponent, InputComponent, SectionComponent, TextComponent } from "@/components";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Lock } from "iconsax-react-native";
+import { appColors } from "@/constants/appColors";
+
+const ChangePassword = () => {
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  return (
+    <View>
+      <SectionComponent styles={{ marginTop: 20 }}>
+        <TextComponent
+          text="Đổi Mật Khẩu"
+          size={24}
+          styles={{ fontWeight: "800", margin: 5, marginBottom: 20 }}
+        />
+        <InputComponent
+          value={password}
+          placeholder="Nhập mật khẩu cũ"
+          onChange={(val) => setPassword(val)}
+          isPassword
+          allowClear
+          affix={<Lock size={22} color={appColors.gray2} />}
+        />
+        <InputComponent
+          value={password}
+          placeholder="Nhập mật khẩu mới"
+          onChange={(val) => setPassword(val)}
+          isPassword
+          allowClear
+          affix={<Lock size={22} color={appColors.gray2} />}
+        />
+        <InputComponent
+          value={password}
+          placeholder="Nhập xác nhận lại mật khẩu mới"
+          onChange={(val) => setPassword(val)}
+          isPassword
+          allowClear
+          affix={<Lock size={22} color={appColors.gray2} />}
+        />
+        <SectionComponent>
+          <ButtonComponent
+            text="Đổi mật khẩu"
+            textStyles={{ fontWeight: "bold", fontSize: 20 }}
+            color={appColors.danger}
+            type="primary"
+            onPress={()=>{console.log('Change Password')}}
+          />
+        </SectionComponent>
+      </SectionComponent>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({});
+
+export default ChangePassword;
