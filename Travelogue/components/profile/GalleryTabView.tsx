@@ -19,7 +19,7 @@ const renderScene = SceneMap({
   third: ThirdRoute,
 });
 
-export default function TabViewExample() {
+export default function GalleryTabView() {
   const layout = useWindowDimensions();
 
   const [index, setIndex] = React.useState(0);
@@ -45,12 +45,12 @@ export default function TabViewExample() {
         />
       )}
       indicatorStyle={{backgroundColor:'black'}}
-      style={{backgroundColor:'white'}} 
+      style={{backgroundColor:'#f2f2f2'}} 
     />
   );
 
   return (
-    <View style={{ flex: 2.5 }}>
+    <View style={{ flex: 2.2 }}>
       <TabView
         lazy
         navigationState={{ index, routes }}

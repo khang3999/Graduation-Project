@@ -5,13 +5,13 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import HeaderProfile from "@/components/profile/HeaderProfile";
-import TabViewExample from "@/components/profile/TabViewExample";
+import GalleryTabView from "@/components/profile/GalleryTabView";
 
 export default function ProfileScreen() {
   return (    
     <>
       <HeaderProfile />   
-      <TabViewExample />       
+      <GalleryTabView />       
     </>
   );
 }
