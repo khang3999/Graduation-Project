@@ -1,53 +1,91 @@
-import { View, Text, Image, StyleSheet, Pressable, TextInput ,ScrollView} from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ScrollView,
+} from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+
 
 
 
 export default function EditingProfileScreen() {
+
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  const imageSource = selectedImage ? { uri: selectedImage } : require("@/assets/images/tom.png");
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }else{
+      alert("Image picker was cancelled");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView >
-      <View style={styles.container}>
-        <Image
-          style={styles.avatar}
-          source={require("@/assets/images/tom.png")}
-        />
-        <Pressable style={styles.editButton}>
-          <Text style={styles.editText}>Edit picture or avatar</Text>
-        </Pressable>
-
-        <View style={styles.infoContainer}>
-        <View style={styles.row}>
-            <Text style={styles.infoText}>Name:</Text>
-            <TextInput style={styles.username} placeholder="Name"></TextInput>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.infoText}>Username:</Text>
-            <TextInput style={styles.username} placeholder="Username"></TextInput>
-          </View>
-          
-          <View style={styles.row}>
-            <Text style={styles.infoText}>Email:</Text>
-            <TextInput style={styles.username} placeholder="Email"></TextInput>
-          </View>
-          
-          <View style={styles.row}>
-            <Text style={styles.infoText}>Phone:</Text>
-            <TextInput style={styles.username} placeholder="0123-455-667"></TextInput>
-          </View>
-          
-          <View style={styles.row}>
-            <Text style={styles.infoText}>Address:</Text>
-            <TextInput style={styles.username} placeholder="Address"></TextInput>
-          </View>
-          
-          <Pressable style={styles.saveButton} onPress={router.back}>
-            <Text style={styles.saveButtonText}>Save Changes</Text>
+      <ScrollView>
+        <View style={styles.container}>
+          <Image
+            style={styles.avatar}
+            source={imageSource}
+          />
+          <Pressable style={styles.editButton} onPress={pickImageAsync}>
+            <Text style={styles.editText}>Edit picture or avatar</Text>
           </Pressable>
+
+          <View style={styles.infoContainer}>
+            <View style={styles.row}>
+              <Text style={styles.infoText}>Name:</Text>
+              <TextInput style={styles.username} placeholder="Name"></TextInput>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.infoText}>Username:</Text>
+              <TextInput
+                style={styles.username}
+                placeholder="Username"
+              ></TextInput>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.infoText}>Email:</Text>
+              <TextInput
+                style={styles.username}
+                placeholder="Email"
+              ></TextInput>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.infoText}>Phone:</Text>
+              <TextInput
+                style={styles.username}
+                placeholder="0123-455-667"
+              ></TextInput>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.infoText}>Address:</Text>
+              <TextInput
+                style={styles.username}
+                placeholder="Address"
+              ></TextInput>
+            </View>
+
+            <Pressable style={styles.saveButton} onPress={router.back}>
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -56,7 +94,7 @@ export default function EditingProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
   },
   container: {
     alignItems: "center",
@@ -84,8 +122,8 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   infoContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
     shadowColor: "#000",
