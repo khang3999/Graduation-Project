@@ -1,10 +1,51 @@
 import * as React from "react";
-import { View, useWindowDimensions, Text } from "react-native";
+import {
+  View,
+  useWindowDimensions,
+  Text,
+  Image,
+  Dimensions,
+  StyleSheet,
+  FlatList,
+  Pressable,
+} from "react-native";
 import { TabView, SceneMap, TabBar, TabBarProps } from "react-native-tab-view";
 import MaterialIcons from "@expo/vector-icons/Ionicons";
 
+const { width } = Dimensions.get("window");
+const itemWidth = width / 3;
+
+const images = [
+  { id: "1", uri: "@assets/images/tom.png" },
+  { id: "2", uri: "@assets/images/tom.png" },
+  { id: "3", uri: "@assets/images/tom.png" },
+  { id: "4", uri: "@assets/images/tom.png" },
+  { id: "5", uri: "@assets/images/tom.png" },
+  { id: "6", uri: "@assets/images/tom.png" },
+  { id: "7", uri: "@assets/images/tom.png" },
+  { id: "8", uri: "@assets/images/tom.png" },
+  { id: "9", uri: "@assets/images/tom.png" },
+  { id: "10", uri: "@assets/images/tom.png" },
+  { id: "11", uri: "@assets/images/tom.png" },
+  { id: "12", uri: "@assets/images/tom.png" },
+];
+
 const FirstRoute = () => (
-  <View style={{ flex: 1, backgroundColor: "#ff4081" }} />
+  <FlatList
+    style={{ flex: 1 }}
+    data={images}
+    renderItem={({ item }) => (
+      <Pressable onPress={()=>{console.log("Image Clicked");
+      }}>
+      <Image
+        source={require("../../assets/images/tom.png")}
+        style={styles.imagesGallery}
+      />
+      </Pressable>
+    )}
+    keyExtractor={(item) => item.id}
+    numColumns={3}
+  />
 );
 
 const SecondRoute = () => (
@@ -41,11 +82,11 @@ export default function GalleryTabView() {
               : "map-outline"
           }
           size={24}
-          color={focused ? 'black' : 'grey'}
+          color={focused ? "black" : "grey"}
         />
       )}
-      indicatorStyle={{backgroundColor:'black'}}
-      style={{backgroundColor:'#f2f2f2'}} 
+      indicatorStyle={{ backgroundColor: "black" }}
+      style={{ backgroundColor: "#f2f2f2" }}
     />
   );
 
@@ -57,9 +98,18 @@ export default function GalleryTabView() {
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
-        renderTabBar={renderTabBar}       
-       
+        renderTabBar={renderTabBar}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  imagesGallery: {
+    width: itemWidth,
+    height: itemWidth,
+    marginTop: 2,
+    marginBottom: 0,
+    marginRight: 2,
+  },
+});
