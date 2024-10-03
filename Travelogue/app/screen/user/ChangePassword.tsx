@@ -10,8 +10,9 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
-    <View>
-      <SectionComponent styles={{ marginTop: 20 }}>
+    <View style={{backgroundColor: 'white', flex: 1 }}>
+      
+      <SectionComponent styles={{ marginTop: 50}}>
         <TextComponent
           text="Đổi Mật Khẩu"
           size={24}
@@ -26,17 +27,17 @@ const ChangePassword = () => {
           affix={<Lock size={22} color={appColors.gray2} />}
         />
         <InputComponent
-          value={password}
+          value={newPassword}
           placeholder="Nhập mật khẩu mới"
-          onChange={(val) => setPassword(val)}
+          onChange={(val) => setNewPassword(val)}
           isPassword
           allowClear
           affix={<Lock size={22} color={appColors.gray2} />}
         />
         <InputComponent
-          value={password}
+          value={confirmPassword}
           placeholder="Nhập xác nhận lại mật khẩu mới"
-          onChange={(val) => setPassword(val)}
+          onChange={(val) => setConfirmPassword(val)}
           isPassword
           allowClear
           affix={<Lock size={22} color={appColors.gray2} />}
