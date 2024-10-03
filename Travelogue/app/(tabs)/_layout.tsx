@@ -15,35 +15,46 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const Tab = createBottomTabNavigator();
 
+const _layout = () => {
   return (
-    // <Tabs
-    //   screenOptions={{
-    //     tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-    //     headerShown: false,
-    //   }}>
-    //   <Tabs.Screen
-    //     name="index"
-    //     options={{
-    //       title: 'Home',
-    //       tabBarIcon: ({ color, focused }) => (
-    //         <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-    //       ),
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="explore"
-    //     options={{
-    //       title: 'Explore',
-    //       tabBarIcon: ({ color, focused }) => (
-    //         <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-    //       ),
-    //     }}
-    //   />
-    // </Tabs>
-    <NavigationContainer independent={true}>
-      <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Map" component={MapScreen} />
-      </Tab.Navigator>
-    </NavigationContainer>
-  );
+
+    <>
+      <Tabs
+        tabBar={props => <TabBar {...props} />}
+      >
+        <Tabs.Screen
+          key={1}
+          name="index"
+          options={{
+            title: 'Home',
+            headerShown: false,
+          }} />
+        <Tabs.Screen
+          key={2}
+          name="tour"
+          options={{
+            title: 'Tour',
+            headerShown: false,
+          }} />
+        <Tabs.Screen
+          key={3}
+          name="map"
+          options={{
+            title: 'Map',
+            headerShown: false,
+          }} />
+        <Tabs.Screen
+          key={4}
+          name="profile"
+          options={{
+            title: 'Profile',
+            headerShown: false,
+          }} />
+
+      </Tabs>
+    </>
+
+  )
 }
+
+export default _layout
