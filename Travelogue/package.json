@@ -15,10 +15,6 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@expo/vector-icons": "^14.0.2",
-    "@react-native-picker/picker": "^2.7.5",
-=======
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@expo/metro-runtime": "~3.2.3",
@@ -27,10 +23,10 @@
     "@mui/material": "^6.1.1",
     "@react-native-picker/picker": "2.7.5",
     "@react-native-vector-icons/ionicons": "^7.4.0-alpha.27",
->>>>>>> 3c4b96d3a92b13b1cadda0ca9b2df27183ccaaac
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/drawer": "^6.7.2",
-    "@react-navigation/native": "^6.0.2",
+    "@react-navigation/native": "^6.1.18",
+    "@react-navigation/native-stack": "^6.11.0",
     "@react-navigation/stack": "^6.4.1",
     "expo": "~51.0.35",
     "expo-constants": "~16.0.2",
@@ -58,8 +54,8 @@
     "react-native-pager-view": "6.3.0",
     "react-native-paper": "^5.12.5",
     "react-native-reanimated": "~3.10.1",
-    "react-native-safe-area-context": "^4.10.5",
-    "react-native-screens": "3.31.1",
+    "react-native-safe-area-context": "^4.11.0",
+    "react-native-screens": "^3.31.1",
     "react-native-tab-view": "^3.5.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10"

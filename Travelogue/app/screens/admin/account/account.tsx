@@ -8,19 +8,19 @@ interface Account {
   id: string;
   name: string;
   email: string;
+  isBlocked: boolean;
 }
 
 // Giả lập danh sách tài khoản bị block
 const initialBlockedAccounts: Account[] = [
-  { id: '1', name: 'User 1', email: 'user1@example.com' },
-  { id: '2', name: 'User 2', email: 'user2@example.com' },
-  { id: '3', name: 'User 3', email: 'user3@example.com' },
-  { id: '4', name: 'User 4', email: 'user4@example.com' },
+  { id: '1', name: 'User 1', email: 'user1@example.com', isBlocked: true },
+  { id: '2', name: 'User 2', email: 'user2@example.com' , isBlocked: false},
+  { id: '3', name: 'User 3', email: 'user3@example.com' , isBlocked: true},
+  { id: '4', name: 'User 4', email: 'user4@example.com' , isBlocked: true},
 ];
 
 export default function AccountManagementScreen() {
-  const [blockedAccounts, setBlockedAccounts] = useState<Account[]>(initialBlockedAccounts);
-
+  const [accounts, setAccounts] = useState<Account[]>(initialBlockedAccounts);
   // Hàm gỡ block cho tài khoản
   const unblockAccount = (accountId: string) => {
     Alert.alert(
@@ -29,9 +29,18 @@ export default function AccountManagementScreen() {
       [
         { text: "Cancel", style: "cancel" },
         { text: "OK", onPress: () => {
-          setBlockedAccounts(prevAccounts =>
-            prevAccounts.filter(account => account.id !== accountId)
+          // setBlockedAccounts(prevAccounts =>
+          //   prevAccounts.filter(account => account.id !== accountId)
+          // );
+          setAccounts(prevAccounts =>
+            prevAccounts.map(account => {
+              if (account.id === accountId) {
+                return { ...account, isBlocked: !account.isBlocked };
+              }
+              return account;
+            })
           );
+
 
         }}
       ]
@@ -46,10 +55,10 @@ export default function AccountManagementScreen() {
         <Text style={styles.email}>{item.email}</Text>
       </View>
       <TouchableOpacity
-        style={styles.unblockButton}
+        style={item.isBlocked ? styles.unblockButton :styles.blockButton}
         onPress={() => unblockAccount(item.id)}
       >
-        <Text style={styles.buttonText}>Unblock</Text>
+        <Text style={styles.buttonText}>{item.isBlocked ? 'Unblock' : 'Lock'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -57,16 +66,16 @@ export default function AccountManagementScreen() {
   return (
     <View style={styles.container}>
       
-      {blockedAccounts.length > 0 ? (
+      {accounts.length > 0 ? (
         <FlatList
-          data={blockedAccounts}
+          data={accounts}
           keyExtractor={(item) => item.id}
           renderItem={renderAccountItem}
         />
       ) : (
         <Text style={styles.noAccountsText}>No blocked accounts</Text>
       )}
-      <UnlockBtn></UnlockBtn>
+      
     </View>
   );
 }
@@ -105,6 +114,12 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   unblockButton: {
+    backgroundColor: '#2986cc',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  blockButton: {
     backgroundColor: '#ff5c5c',
     paddingVertical: 8,
     paddingHorizontal: 16,
