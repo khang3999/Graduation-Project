@@ -4,11 +4,6 @@ import { AntDesign, FontAwesome, FontAwesome5, FontAwesome6 } from '@expo/vector
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CommentButton = ({...props}) => {
-    // Render 1 lần từ db để load các bài đã like
-    useEffect(() => {
-        // 
-    }, []);
-
     // Hàm set like
     const handleComment = () => {
         // Show comment bottom sheet
@@ -16,8 +11,7 @@ const CommentButton = ({...props}) => {
     }
     return (
         <TouchableOpacity delayPressOut={50} onPress={handleComment} {...props}>
-            {/* <FontAwesome name="comment-o" size={24} color="black" /> */}
-            <Icon name="bookmark-o" size={24} color="black" />
+            <Icon name="comment-o" size={24} color="black" style={styles.container}/>
         </TouchableOpacity>
     )
 }
@@ -25,4 +19,9 @@ const CommentButton = ({...props}) => {
 // Style
 const likedColor = 'red'
 const unlikedColor = 'black'
+const styles = StyleSheet.create({
+    container: {
+        bottom: 1 
+    }
+})
 export default CommentButton

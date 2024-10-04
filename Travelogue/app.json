@@ -1,5 +1,6 @@
 {
   "expo": {
+    "entryPoint": "./app/(tabs)/index.tsx",
     "name": "Travelogue",
     "slug": "Travelogue",
     "version": "1.0.0",

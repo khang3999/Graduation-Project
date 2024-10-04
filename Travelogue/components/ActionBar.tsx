@@ -3,13 +3,14 @@ import React from 'react'
 import { FontAwesome5 } from '@expo/vector-icons';
 import LikeButton from './buttons/HeartButton';
 import CommentButton from './buttons/CommentButton';
+import SaveButton from './buttons/SaveButton';
 
 const ActionBar = () => {
     return (
         <View style={styles.container}>
            <LikeButton style={styles.buttonItem}></LikeButton>
            <CommentButton style={styles.buttonItem}></CommentButton>
-           <LikeButton style={styles.buttonItem}></LikeButton>
+           <SaveButton style={styles.buttonItem}></SaveButton>
         </View>
     )
 }
@@ -17,7 +18,7 @@ const ActionBar = () => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: '#7d7d7d',
+        backgroundColor: 'white',
         width: 150,
         justifyContent: 'space-around',
         paddingVertical: 6,

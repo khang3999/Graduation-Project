@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity, TouchableHighlight, TouchableHighlightComponent } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { AntDesign } from '@expo/vector-icons'
+import  Icon  from 'react-native-vector-icons/FontAwesome';
 
 
 const HeartButton = ({...props}) => {
