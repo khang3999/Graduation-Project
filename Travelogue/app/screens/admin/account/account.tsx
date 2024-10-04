@@ -32,6 +32,7 @@ export default function AccountManagementScreen() {
           setBlockedAccounts(prevAccounts =>
             prevAccounts.filter(account => account.id !== accountId)
           );
+
         }}
       ]
     );
@@ -55,7 +56,7 @@ export default function AccountManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Blocked Accounts</Text>
+      
       {blockedAccounts.length > 0 ? (
         <FlatList
           data={blockedAccounts}

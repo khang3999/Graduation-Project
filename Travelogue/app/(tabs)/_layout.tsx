@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { Tabs } from 'expo-router'
+import { Stack, Tabs } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
 import HeaderIndex from '@/components/header/HeaderIndex'
 
@@ -41,6 +41,7 @@ const _layout = () => {
           }} />
 
       </Tabs>
+      
     </>
 
   )
