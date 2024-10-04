@@ -53,7 +53,7 @@ const TabBarButton = (props) => {
         }
       </Animated.View>
 
-      <Animated.Text style={[{ color, fontSize:12},animatedTextStyle]}>
+      <Animated.Text style={[{ color, fontSize: 12 }, animatedTextStyle]}>
         {label}
       </Animated.Text>
     </Pressable>
