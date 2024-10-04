@@ -10,11 +10,7 @@ function CustomDrawerContent(props:any) {
       {/* Hình ảnh phía trên */}
       <View style={styles.imageContainer}>
         <Image 
-<<<<<<< HEAD
           source={require('@/assets/images/logo.png')} 
-=======
-          source={require('../../../assets/images/logo.png')} 
->>>>>>> e0e135ad0175f7faa6ec8f30fa266cdee046326a
           resizeMode="contain" 
           style={styles.image} 
         />
