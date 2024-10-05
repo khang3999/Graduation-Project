@@ -174,7 +174,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 <TextComponent text="Hãy thêm mặt trước CCCD" />
                 <Image
                   style={styles.image}
-                  source={require("../../../assets/images/mat_truoc_cccd.png")}
+                  source={require("@/assets/images/mat_truoc_cccd.png")}
                 />
               </View>
               <View>
@@ -186,7 +186,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 <TextComponent text="Hãy thêm mặt sau CCCD" />
                 <Image
                   style={styles.image}
-                  source={require("../../../assets/images/mat_sau_cccd.png")}
+                  source={require("@/assets/images/mat_sau_cccd.png")}
                 />
               </View>
 
@@ -212,7 +212,7 @@ const RegisterScreen = ({ navigation }: any) => {
                     borderRadius: 10,
                     marginBottom: 20,
                   }]}
-                  source={require("../../../assets/images/giay_phep_kinh_doanh.png")}
+                  source={require("@/assets/images/giay_phep_kinh_doanh.png")}
                 />
               </View>
 
