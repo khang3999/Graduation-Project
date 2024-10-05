@@ -26,7 +26,7 @@ export default function ProfileLayout() {
         headerTitleAlign: "center", // Align title to center
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen
         name="notification"
         options={{

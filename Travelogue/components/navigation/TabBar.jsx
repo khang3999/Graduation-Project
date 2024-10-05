@@ -22,7 +22,8 @@ const greyColor = '#444444'
 
         if (['_sitemap','+not-found'].includes(route.name)) return null;
 
-
+        console.log(route.name);
+        
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -98,7 +99,8 @@ const styles = StyleSheet.create({
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 20 },
     shadowRadius: 10,
-    shadowOpacity: 1
+    shadowOpacity: 1,
+    elevation: 5
   },
   tabbarItem: {
     flex: 1,

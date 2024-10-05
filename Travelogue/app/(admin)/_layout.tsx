@@ -10,7 +10,7 @@ function CustomDrawerContent(props:any) {
       {/* Hình ảnh phía trên */}
       <View style={styles.imageContainer}>
         <Image 
-          source={require('../../../assets/images/logo.png')} 
+          source={require('../../assets/images/logo.png')} 
           resizeMode="contain" 
           style={styles.image} 
         />
@@ -29,7 +29,7 @@ export default function Layout() {
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <Drawer.Screen
-          name="account" 
+          name="(account)" 
           options={{
             drawerLabel: 'Accounts',
             title: 'Accounts',
@@ -39,7 +39,7 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="report" 
+          name="(report)" 
           options={{
             drawerLabel: 'Reports',
             title: 'Reports',
@@ -99,7 +99,7 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="information" 
+          name="(information)" 
           options={{
             drawerLabel: 'Information Locations',
             title: 'Information Locations',
