@@ -14,6 +14,8 @@ import {
   Bank,
   ArrowLeft,
   Bookmark,
+  Camera,
+  Gallery,
 } from "iconsax-react-native";
 import React, { useState } from "react";
 import {
@@ -25,16 +27,97 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Modal,
 } from "react-native";
+import ImagePickerComponent from "@/components/images/ImagePickerComponent";
 
 const RegisterScreen = ({ navigation }: any) => {
+  // Thanh chuyển tab
   const [activeTab, setActiveTab] = useState("user");
+  // Thông tin đăng ký
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [tax, setTax] = useState("");
+  // Lưu ảnh
+  const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
+  const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
+  const [businessLicenseImage, setBusinessLicenseImage] = useState<string | null>(null);
+  
+  // Xử lý đăng ký
+const onRegisterUser = () => {
+    // Nếu là người dùng
+  if (activeTab === "user") {
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      Alert.alert("Lỗi", "Bạn cần nhập đủ thông tin.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com).");
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10,12}$/; 
+    if (!phoneRegex.test(phone)) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.(10-12 số)");
+      return;
+    }
+
+    console.log("Thông tin đăng ký người dùng:", {
+      name,
+      email,
+      phone,
+      password,
+    });
+
+  } else {
+    // Doanh nghiệp
+    if (!name || !email || !phone || !tax || !password || !confirmPassword || !frontCCCDImage || !backCCCDImage || !businessLicenseImage) {
+      Alert.alert("Lỗi", "Tất cả các trường là bắt buộc.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Lỗi", "Mật khẩu không khớp.");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.(abc@gmail.com)");
+      return;
+    }
+    const phoneRegex = /^[0-9]{10,12}$/;
+    if (!phoneRegex.test(phone)) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.(10-12 số)");
+      return;
+    }
+
+    // Log thông tin đăng ký doanh nghiệp
+    console.log("Thông tin đăng ký doanh nghiệp:", {
+      name,
+      email,
+      phone,
+      tax,
+      frontCCCDImage,
+      backCCCDImage,
+      businessLicenseImage,
+      password,
+    });
+  }
+
+  // Chuyển màn hình nếu thành công
+  navigation.navigate("LoginScreen");
+}
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="height">
@@ -90,6 +173,7 @@ const RegisterScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Phần đăng ký */}
         {activeTab === "user" ? (
@@ -137,6 +221,7 @@ const RegisterScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formContainer}>
             <SectionComponent>
+              {/* Họ và tên */}
               <InputComponent
                 value={name}
                 placeholder="Họ và tên"
@@ -144,6 +229,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<Profile size={22} color={appColors.gray2} />}
               />
+              {/* Gmail */}
               <InputComponent
                 value={email}
                 placeholder="abc@gmail.com"
@@ -151,6 +237,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<Sms size={22} color={appColors.gray2} />}
               />
+              {/* Phone */}
               <InputComponent
                 value={phone}
                 placeholder="Số điện thoại"
@@ -158,6 +245,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<CallCalling size={22} color={appColors.gray2} />}
               />
+              {/* Số cccd */}
               <InputComponent
                 value={phone}
                 placeholder="Số căn cước công dân"
@@ -165,6 +253,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<Bookmark size={22} color={appColors.gray2} />}
               />
+
               <View>
                 <RowComponent justify="flex-start">
                   <TextComponent text="CCCD" styles={{ fontWeight: "bold" }} />
@@ -172,11 +261,14 @@ const RegisterScreen = ({ navigation }: any) => {
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm mặt trước CCCD" />
-                <Image
-                  style={styles.image}
-                  source={require("@/assets/images/mat_truoc_cccd.png")}
+                <ImagePickerComponent
+                  image={frontCCCDImage}
+                  placeholderImage={require("@/assets/images/mat_truoc_cccd.png")}
+                  onImagePicked={setFrontCCCDImage}
                 />
               </View>
+
+              {/* Ảnh cccd mặt sau */}
               <View>
                 <RowComponent justify="flex-start">
                   <TextComponent text="CCCD" styles={{ fontWeight: "bold" }} />
@@ -184,9 +276,10 @@ const RegisterScreen = ({ navigation }: any) => {
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm mặt sau CCCD" />
-                <Image
-                  style={styles.image}
-                  source={require("@/assets/images/mat_sau_cccd.png")}
+                <ImagePickerComponent
+                  image={backCCCDImage}
+                  placeholderImage={require("@/assets/images/mat_sau_cccd.png")}
+                  onImagePicked={setBackCCCDImage}
                 />
               </View>
 
@@ -201,18 +294,17 @@ const RegisterScreen = ({ navigation }: any) => {
 
               <View>
                 <RowComponent justify="flex-start">
-                  <TextComponent text="Giấy phép kinh doanh" styles={{ fontWeight: "bold" }} />
+                  <TextComponent
+                    text="Giấy phép kinh doanh"
+                    styles={{ fontWeight: "bold" }}
+                  />
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm ảnh giấy phép kinh doanh" />
-                <Image
-                  style={[styles.image, { width: 380, height: 300, marginTop: 20
-                    ,borderWidth: 1, 
-                    borderColor: appColors.gray2, 
-                    borderRadius: 10,
-                    marginBottom: 20,
-                  }]}
-                  source={require("@/assets/images/giay_phep_kinh_doanh.png")}
+                <ImagePickerComponent
+                  image={businessLicenseImage}
+                  placeholderImage={require("@/assets/images/giay_phep_kinh_doanh.png")}
+                  onImagePicked={setBusinessLicenseImage}
                 />
               </View>
 
@@ -245,7 +337,7 @@ const RegisterScreen = ({ navigation }: any) => {
             color={appColors.danger}
             type="primary"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
-            onPress={() => navigation.navigate("LoginScreen")}
+            onPress={onRegisterUser}
           />
         </SectionComponent>
         <SectionComponent>
@@ -303,14 +395,6 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#fff",
   },
-  image: {
-    width: 380,
-    height: 300,
-    resizeMode: "contain",
-    marginTop: -20,
-    marginBottom: -20,
-    marginStart: 0,
-  },
 });
 
-export default RegisterScreen;
+export default RegisterScreen; 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Image, Switch, Alert } from "react-native";
+import { StyleSheet, Image, Switch, Alert,View, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import {
   ButtonComponent,
@@ -10,32 +10,33 @@ import {
 } from "@/components";
 import { Lock, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
-import { View } from "react-native";
+import { router } from "expo-router";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRemember, setIsRemember] = useState(false);
 
-  const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert("Lỗi", "Hãy nhập đầy đủ thông tin đăng nhập.");
       return;
     }
-
-    if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.(abc@gmail.com)");
       return;
     }
+    if (password.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
+    router.push('/(tabs)')
   };
 
   return (
-    <View>
+    <ScrollView>
       <SectionComponent
         styles={{
           justifyContent: "center",
@@ -141,7 +142,7 @@ const LoginScreen = ({ navigation }: any) => {
           />
         </RowComponent>
       </SectionComponent>
-    </View>
+    </ScrollView>
   );
 };
 

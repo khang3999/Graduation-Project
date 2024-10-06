@@ -313,7 +313,7 @@ const Map = () => {
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
   useEffect(() => {
-    console.log("Updated Selected Country:", selectedCountry);
+    // console.log("Updated Selected Country:", selectedCountry);
   }, [selectedCountry]);
   const handleCountryChange = (item) => {
     // console.log("Selected Country1:", item);
@@ -353,20 +353,20 @@ const Map = () => {
         longitudeDelta: 5.0,
       });
       setSelectedArea(item.id);
-      console.log("Selected Area:", item.label);
+      // console.log("Selected Area:", item.label);
     }
     setModalVisibleArea(false);
   };
 
   useEffect(() => {
-    console.log("Updated Selected Area:", selectedArea);
+    // console.log("Updated Selected Area:", selectedArea);
   }, [selectedArea]);
   // Thay đổi type lễ hội
   const handleFestivalChange = (value, index) => {
-    console.log("Số vị trí:", value);
-    console.log("Số index:", index);
+    // console.log("Số vị trí:", value);
+    // console.log("Số index:", index);
     setSelectedFestivalType(index);
-    console.log("Selected Country:", selectedFestivalType);
+    // console.log("Selected Country:", selectedFestivalType);
 
     setmodalFestivalType(false);
   };
@@ -387,9 +387,9 @@ const Map = () => {
     : festivals;
   // Search khu vực theo id của quốc gia
 
-  console.log("Selected Country:", selectedCountry);
+  // console.log("Selected Country:", selectedCountry);
 
-  console.log("Filtered Area Data:", filteredAreaData);
+  // console.log("Filtered Area Data:", filteredAreaData);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -439,8 +439,8 @@ const Map = () => {
           region={mapRegion}
           mapType="standard"
           onRegionChangeComplete={(region) => {
-            console.log("Latitude:", region.latitude);
-            console.log("Longitude:", region.longitude);
+            // console.log("Latitude:", region.latitude);
+            // console.log("Longitude:", region.longitude);
             setMapRegion(region);
           }}
         >
