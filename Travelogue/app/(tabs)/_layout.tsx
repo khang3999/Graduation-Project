@@ -34,12 +34,11 @@ const _layout = () => {
           }} />
         <Tabs.Screen
           key={4}
-          name="profile"
+          name="(profiles)"
           options={{
             title: 'Profile',
             headerShown: false,
           }} />
-
       </Tabs>
       
     </>

@@ -13,7 +13,6 @@ const styles = StyleSheet.create({
   header: {
     height: 70,
     backgroundColor: 'white',
-    position: 'fixed',
     paddingVertical: 10,
     paddingHorizontal: 10,
     
