@@ -99,8 +99,8 @@ const Map = () => {
     {
       id: "vietnam",
       label: "VietNam",
-      latitude: 15.02,
-      longitude: 106,
+      latitude: 17.65005783136121,
+      longitude: 105.40283940732479,
       image: "https://inuvdp.com/wp-content/uploads/2022/05/logo-la-co-01.jpg",
     },
     {
@@ -147,17 +147,59 @@ const Map = () => {
       countryId: "vietnam",
     },
     {
-      id: "region-north",
+      id: "region-northwest",
       label: "Tây Bắc Bộ",
       latitude: 21.3331,
       longitude: 103.9328,
       countryId: "vietnam",
     },
     {
-      id: "region-central",
+      id: "region-northeast",
       label: "Đông Bắc Bộ",
       latitude: 22.3964,
       longitude: 104.0498,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-redriverdelta",
+      label: "Đồng bằng sông Hồng",
+      latitude: 20.9123,
+      longitude: 106.1553,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-northcentral",
+      label: "Bắc Trung Bộ",
+      latitude: 18.2809,
+      longitude: 105.6916,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-southcentralcoast",
+      label: "Duyên hải Nam Trung Bộ",
+      latitude: 14.0583,
+      longitude: 108.2772,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-centralhighlands",
+      label: "Tây Nguyên",
+      latitude: 13.0820,
+      longitude: 108.2772,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-southeast",
+      label: "Đông Nam Bộ",
+      latitude: 10.8231,
+      longitude: 106.6297,
+      countryId: "vietnam",
+    },
+    {
+      id: "region-mekongdelta",
+      label: "Đồng bằng sông Cửu Long",
+      latitude: 10.2251,
+      longitude: 105.9640,
       countryId: "vietnam",
     },
     // Các khu vực của Thái Lan
@@ -250,8 +292,8 @@ const Map = () => {
     },
   ];
 
-  const [mapLat] = useState(17.65005783136121);
-  const [mapLong] = useState(105.40283940732479);
+  const [mapLat] = useState(16.494413736992392);
+  const [mapLong] = useState( 105.18357904627919);
   const [selectedFestival, setSelectedFestival] = useState(null);
   const [mapRegion, setMapRegion] = useState({
     latitude: mapLat,
@@ -271,7 +313,7 @@ const Map = () => {
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
   useEffect(() => {
-    console.log("Updated Selected Country:", selectedCountry);
+    // console.log("Updated Selected Country:", selectedCountry);
   }, [selectedCountry]);
   const handleCountryChange = (item) => {
     // console.log("Selected Country1:", item);
@@ -281,7 +323,7 @@ const Map = () => {
         latitude: latitude,
         longitude: longitude,
         latitudeDelta: 8.0,
-        longitudeDelta: 8.0,
+        longitudeDelta: 10,
       });
       setSelectedCountry(item.id);
 
@@ -311,20 +353,20 @@ const Map = () => {
         longitudeDelta: 5.0,
       });
       setSelectedArea(item.id);
-      console.log("Selected Area:", item.label);
+      // console.log("Selected Area:", item.label);
     }
     setModalVisibleArea(false);
   };
 
   useEffect(() => {
-    console.log("Updated Selected Area:", selectedArea);
+    // console.log("Updated Selected Area:", selectedArea);
   }, [selectedArea]);
   // Thay đổi type lễ hội
   const handleFestivalChange = (value, index) => {
-    console.log("Số vị trí:", value);
-    console.log("Số index:", index);
+    // console.log("Số vị trí:", value);
+    // console.log("Số index:", index);
     setSelectedFestivalType(index);
-    console.log("Selected Country:", selectedFestivalType);
+    // console.log("Selected Country:", selectedFestivalType);
 
     setmodalFestivalType(false);
   };
@@ -345,9 +387,9 @@ const Map = () => {
     : festivals;
   // Search khu vực theo id của quốc gia
 
-  console.log("Selected Country:", selectedCountry);
+  // console.log("Selected Country:", selectedCountry);
 
-  console.log("Filtered Area Data:", filteredAreaData);
+  // console.log("Filtered Area Data:", filteredAreaData);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -397,8 +439,8 @@ const Map = () => {
           region={mapRegion}
           mapType="standard"
           onRegionChangeComplete={(region) => {
-            console.log("Latitude:", region.latitude);
-            console.log("Longitude:", region.longitude);
+            // console.log("Latitude:", region.latitude);
+            // console.log("Longitude:", region.longitude);
             setMapRegion(region);
           }}
         >
@@ -410,7 +452,10 @@ const Map = () => {
                 longitude: festival.longitude,
               }}
               title={festival.title}
-              pinColor={festival.type === "landmark" ? "blue" : "red"}
+              pinColor={festival.type === "landmark" ?  "blue" : "red"}
+          //     pinColor = festival.type === "landmark" ? "blue" 
+          // : festival.type === "city" ? "green"
+          // : "red";
               onPress={(e) => {
                 e.persist();
                 openBottomSheet(festival);
@@ -457,7 +502,7 @@ const Map = () => {
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {selectedFestivalType!=null
+                  {selectedFestivalType != null
                     ? festivalTypeOptions[selectedFestivalType].label
                     : "Chọn tất cả"}
                 </Text>
@@ -509,19 +554,25 @@ const Map = () => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Chọn Khu Vực</Text>
-              <FlatList
-                data={filteredAreaData}
-                keyExtractor={(item) => item.id.toString()}
-                style={styles.countryList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.countryOption}
-                    onPress={() => handleAreaChange(item)}
-                  >
-                    <Text style={styles.countryLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-              />
+              {selectedCountry === null ? (
+                <Text style={styles.warningText}>
+                  Vui lòng chọn quốc gia trước khi chọn khu vực
+                </Text>
+              ) : (
+                <FlatList
+                  data={filteredAreaData}
+                  keyExtractor={(item) => item.id.toString()}
+                  style={styles.countryList}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.countryOption}
+                      onPress={() => handleAreaChange(item)}
+                    >
+                      <Text style={styles.countryLabel}>{item.label}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
               <View style={styles.separator} />
               <TouchableOpacity
                 style={styles.closeButton}
