@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 const Layout = () => {
     return (
         <>
-         <RouterAuth/>   
+         <RouterAuth    />   
         </>
     );
 }

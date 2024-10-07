@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState } from "react";
 import { View, TouchableOpacity, Image, Modal, StyleSheet, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Gallery } from "iconsax-react-native";

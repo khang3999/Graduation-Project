@@ -1,3 +1,4 @@
+import React from 'react';
 import { Stack } from 'expo-router/stack';
 import { createStackNavigator, Header } from "@react-navigation/stack";
 

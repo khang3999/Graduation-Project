@@ -31,6 +31,9 @@ import {
   Modal,
 } from "react-native";
 import ImagePickerComponent from "@/components/images/ImagePickerComponent";
+import auth from '@react-native-firebase/auth';
+import database from '@react-native-firebase/database';
+import { UserRegister } from "@/model/UserRegister";
 
 const RegisterScreen = ({ navigation }: any) => {
   // Thanh chuyển tab
@@ -48,76 +51,111 @@ const RegisterScreen = ({ navigation }: any) => {
   const [businessLicenseImage, setBusinessLicenseImage] = useState<string | null>(null);
   
   // Xử lý đăng ký
-const onRegisterUser = () => {
-    // Nếu là người dùng
-  if (activeTab === "user") {
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      Alert.alert("Lỗi", "Bạn cần nhập đủ thông tin.");
-      return;
-    }
+const onRegisterUser = async () => {
+  try {
+    if (activeTab === "user") {
+      if (!name || !email || !phone || !password || !confirmPassword) {
+        Alert.alert("Lỗi", "Bạn cần nhập đủ thông tin.");
+        return;
+      }
 
-    if (password !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo.");
-      return;
-    }
+      if (password !== confirmPassword) {
+        Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo.");
+        return;
+      }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com).");
-      return;
-    }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com).");
+        return;
+      }
 
-    const phoneRegex = /^[0-9]{10,12}$/; 
-    if (!phoneRegex.test(phone)) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.(10-12 số)");
-      return;
-    }
+      const phoneRegex = /^[0-9]{10,12}$/;
+      if (!phoneRegex.test(phone)) {
+        Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ (10-12 số).");
+        return;
+      }
 
-    console.log("Thông tin đăng ký người dùng:", {
-      name,
+     //Tạo auth
+     const userCredential = await auth().createUserWithEmailAndPassword(
       email,
-      phone,
       password,
-    });
+    );
+    const user = userCredential.user;
+    if (user) {
+      // Tạo đối tượng User mới
+      const currentDate = new Date().toLocaleDateString(); 
+      const newUser = new UserRegister(name, email, phone ,password, currentDate);
 
-  } else {
-    // Doanh nghiệp
-    if (!name || !email || !phone || !tax || !password || !confirmPassword || !frontCCCDImage || !backCCCDImage || !businessLicenseImage) {
-      Alert.alert("Lỗi", "Tất cả các trường là bắt buộc.");
-      return;
-    }
+      // Lưu thông tin người dùng vào Firebase Realtime Database
+      await database()
+        .ref(`/users/${user.uid}`)
+        .set({
+          fullname: newUser.fullname,
+          email: newUser.email,
+          createdAt: newUser.createdAt,
+        });
 
-    if (password !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu không khớp.");
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.(abc@gmail.com)");
-      return;
-    }
-    const phoneRegex = /^[0-9]{10,12}$/;
-    if (!phoneRegex.test(phone)) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ.(10-12 số)");
-      return;
+
+      Alert.alert("Thành công", "Đăng ký thành công!");
+      navigation.navigate("LoginScreen");
     }
 
-    // Log thông tin đăng ký doanh nghiệp
-    console.log("Thông tin đăng ký doanh nghiệp:", {
-      name,
-      email,
-      phone,
-      tax,
-      frontCCCDImage,
-      backCCCDImage,
-      businessLicenseImage,
-      password,
-    });
+    } else {
+      // Xử lý cho doanh nghiệp
+      if (!name || !email || !phone || !tax || !password || !confirmPassword || !frontCCCDImage || !backCCCDImage || !businessLicenseImage) {
+        Alert.alert("Lỗi", "Tất cả các trường là bắt buộc.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        Alert.alert("Lỗi", "Mật khẩu không khớp.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.");
+        return;
+      }
+
+      const phoneRegex = /^[0-9]{10,12}$/;
+      if (!phoneRegex.test(phone)) {
+        Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ (10-12 số).");
+        return;
+      }
+
+      // Log thông tin đăng ký doanh nghiệp
+      console.log("Thông tin đăng ký doanh nghiệp:", {
+        name,
+        email,
+        phone,
+        tax,
+        frontCCCDImage,
+        backCCCDImage,
+        businessLicenseImage,
+        password,
+      });
+
+      Alert.alert("Thành công", "Đăng ký doanh nghiệp thành công!");
+      navigation.navigate("LoginScreen");
+    }
+  } catch (error: any) {
+    console.error("Lỗi khi đăng ký:", error);
+    
+    // Firebase error handling
+    if (error.code === 'auth/email-already-in-use') {
+      Alert.alert("Lỗi", "Email đã được sử dụng.");
+    } else if (error.code === 'auth/invalid-email') {
+      Alert.alert("Lỗi", "Email không hợp lệ.");
+    } else if (error.code === 'auth/weak-password') {
+      Alert.alert("Lỗi", "Mật khẩu quá yếu.");
+    } else {
+      Alert.alert("Lỗi", "Đã xảy ra lỗi: " + error.message);
+    }
   }
+};
 
-  // Chuyển màn hình nếu thành công
-  navigation.navigate("LoginScreen");
-}
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="height">

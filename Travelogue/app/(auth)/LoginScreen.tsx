@@ -12,6 +12,7 @@ import { Lock, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
 
+
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
