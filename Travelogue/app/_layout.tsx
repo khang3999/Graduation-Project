@@ -9,8 +9,8 @@ export default function Layout() {
               contentStyle: {paddingTop: 50}
             }}>
             <Stack.Screen name="(auth)" options={{headerShown: false}}/>
-            <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
-            <Stack.Screen name="(admin)"/>
+            {/* <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+            <Stack.Screen name="(admin)"/> */}
         </Stack>
     );
 }
