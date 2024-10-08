@@ -15,7 +15,7 @@ import LikeButton from "@/components/buttons/HeartButton";
 import CommentButton from "@/components/buttons/CommentButton";
 import SaveButton from "@/components/buttons/SaveButton";
 import { Divider } from "react-native-paper";
-import MenuItem from "@/components/profile/MenuProfile";
+import MenuItem from "@/components/buttons/MenuButton";
 import CheckedInChip from "@/components/chips/CheckedInChip";
 
 const windowWidth = Dimensions.get("window").width;
@@ -74,7 +74,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem />
+          <MenuItem menuIcon="dots-horizontal"/>
         </View>
       </View>
       <Carousel

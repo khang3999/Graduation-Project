@@ -11,6 +11,7 @@ import {
 import React from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
+import MenuItem from "@/components/buttons/MenuButton";
 
 const Plus = () => (
   <IconButton
@@ -36,55 +37,6 @@ const Bell = () => (
   />
 );
 
-const MyComponent = () => {
-  const [visible, setVisible] = React.useState(false);
-
-  const openMenu = () => setVisible(true);
-  const closeMenu = () => setVisible(false);
-
-  return (
-    <Provider>
-      <View>
-        <Menu
-          visible={visible}
-          onDismiss={closeMenu}
-          anchor={
-            <IconButton
-              icon="menu"
-              iconColor={MD3Colors.error10}
-              size={24}
-              onPress={openMenu}
-              style={styles.button}
-              accessible={true}
-              accessibilityLabel="Menu button"
-            />
-          }
-          contentStyle={styles.menuContent}
-        >
-          <Menu.Item
-            onPress={() => console.log("Profile clicked")}
-            title="Profile"
-            leadingIcon={() => <Icon name="account" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-          <Menu.Item
-            onPress={() => console.log("Settings clicked")}
-            title="Settings"
-            leadingIcon={() => <Icon name="cog" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-          <Divider />
-          <Menu.Item
-            onPress={() => console.log("Logout clicked")}
-            title="Logout"
-            leadingIcon={() => <Icon name="logout" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-        </Menu>
-      </View>
-    </Provider>
-  );
-};
 
 export default function HeaderProfile() {
   return (
@@ -96,9 +48,8 @@ export default function HeaderProfile() {
         </View>
         <View style={styles.headerButton}>
           <Plus />
-          <Bell />
-          
-          <MyComponent />
+          <Bell />          
+          <MenuItem menuIcon="dots-horizontal" />
         </View>
       </View>
       <AvatarProfile />
@@ -123,8 +74,7 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginEnd: 20,
+    justifyContent: "space-evenly",    
   },
   button: {
     margin: 0,

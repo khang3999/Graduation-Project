@@ -1,7 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-const MenuPopupButton = () => {
+
+interface MenuPopupButtonProps {
+  menuIcon: string;
+}
+
+const MenuPopupButton : React.FC<MenuPopupButtonProps> = ({menuIcon}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
   const buttonRef = useRef(null); // To measure the button's position
@@ -28,7 +33,7 @@ const MenuPopupButton = () => {
         onPress={toggleModal}
         style={styles.button}
       >
-        <Icon size={18} name='dots-horizontal'></Icon>
+        <Icon size={24} name={menuIcon}></Icon>
       </TouchableOpacity>
 
       {/* Menu Modal */}
@@ -79,13 +84,11 @@ const MenuPopupButton = () => {
 
 // Styles for the components
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: {    
     justifyContent: 'center',
     alignItems: 'center',
   },
-  button: {    
-    paddingHorizontal: 10,
+  button: {        
     borderRadius: 5,
   },
   buttonText: {
