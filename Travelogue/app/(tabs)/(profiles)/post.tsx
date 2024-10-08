@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useCallback, useMemo, useState,  } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Carousel from "react-native-reanimated-carousel";
 // import ActionBar from "@/components/ActionBar";
 import LikeButton from "@/components/buttons/HeartButton";
 import CommentButton from "@/components/buttons/CommentButton";
 import SaveButton from "@/components/buttons/SaveButton";
-import { Divider } from 'react-native-paper';
+import { Divider } from "react-native-paper";
+import MenuItem from "@/components/profile/MenuProfile";
+import CheckedInChip from "@/components/chips/CheckedInChip";
 
 const windowWidth = Dimensions.get("window").width;
 type Post = {
@@ -29,6 +31,7 @@ type PostData = {
   time: string;
   posts: Post[];
   description: string;
+  place: string[];
 };
 
 const data: PostData[] = [
@@ -41,10 +44,10 @@ const data: PostData[] = [
       { id: 1, image: require("@/assets/images/tom_post_1.png") },
       { id: 2, image: require("@/assets/images/tom_post_2.png") },
     ],
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+    place: ['da lat', 'tàu tàu'],
+    description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur",
   },
-  
-  
 ];
 
 const maxLength = 100;
@@ -55,60 +58,69 @@ type PostItemProps = {
   toggleDescription: () => void;
 };
 
-const PostItem: React.FC<PostItemProps> = ({ item, showFullDescription, toggleDescription }) => {
-  return(
-  <View key={item.id}>
+const PostItem: React.FC<PostItemProps> = ({
+  item,
+  showFullDescription,
+  toggleDescription,
+}) => {
+  return (
+    <View key={item.id}>
+      <View style={styles.row}>
         <View style={styles.row}>
-          <View style={styles.row}>
-            <Image source={item.avatar} style={styles.miniAvatar} />
-            <View style={styles.column}>
-              <Text style={styles.username}>{item.username}</Text>
-              <Text style={styles.time}>{item.time}</Text>
-            </View>
+          <Image source={item.avatar} style={styles.miniAvatar} />
+          <View style={styles.column}>
+            <Text style={styles.username}>{item.username}</Text>
+            <Text style={styles.time}>{item.time}</Text>
           </View>
-          <Text>:</Text>
         </View>
-        <Carousel     
+        <View style={{ zIndex: 1000 }}>
+          <MenuItem />
+        </View>
+      </View>
+      <Carousel
         panGestureHandlerProps={{
           activeOffsetX: [-10, 10],
         }}
         pagingEnabled={true}
-          loop={false}
-          width={windowWidth}
-          height={windowWidth}            
-          data={item.posts}        
-          scrollAnimationDuration={300}
-          renderItem={({ item: post }) => (
-            <View style={styles.carouselItem}>
-              <Image style={styles.posts} source={post.image} />
-              <View style={styles.viewTextStyles}>
-                <Text style={styles.carouselText}>
-                  {post.id}/{item.posts.length}                    
-                </Text>
-              </View>
+        loop={false}
+        width={windowWidth}
+        height={windowWidth}
+        data={item.posts}
+        scrollAnimationDuration={300}
+        renderItem={({ item: post }) => (
+          <View style={styles.carouselItem}>
+            <Image style={styles.posts} source={post.image} />
+            <View style={styles.viewTextStyles}>
+              <Text style={styles.carouselText}>
+                {post.id}/{item.posts.length}
+              </Text>
             </View>
-          )}
-        />
-        <View>
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonRow}>
-              <LikeButton style={styles.buttonItem} />
-              <CommentButton style={styles.buttonItem} />
-            </View>
-            <SaveButton style={styles.buttonItem} />
           </View>
+        )}
+      />
+      <View>
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonRow}>
+            <LikeButton style={styles.buttonItem} />
+            <CommentButton style={styles.buttonItem} />
+          </View>
+          <SaveButton style={styles.buttonItem} />
         </View>
-        <View style={{ paddingHorizontal: 15}}>
-          <Text>
-            {showFullDescription ? item.description : `${item.description.slice(0, maxLength)} ...`}
-          </Text>
-          <TouchableOpacity onPress={toggleDescription}>
-            <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
-          </TouchableOpacity>
-        </View>
-        <Divider style={styles.divider} bold={true}/>
       </View>
-)
+      <CheckedInChip items={item.place}/>
+      <View style={{ paddingHorizontal: 15 }}>
+        <Text>
+          {showFullDescription
+            ? item.description
+            : `${item.description.slice(0, maxLength)} ...`}
+        </Text>
+        <TouchableOpacity onPress={toggleDescription}>
+          <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
+        </TouchableOpacity>
+      </View>
+      <Divider style={styles.divider} bold={true} />
+    </View>
+  );
 };
 
 export default function PostsScreen() {
@@ -118,34 +130,32 @@ export default function PostsScreen() {
   // Function to toggle description
   const toggleDescription = useCallback(() => {
     setShowFullDescription((prev) => !prev);
-  },[])
+  }, []);
   const memoriedPostItem = useMemo(() => data, []);
 
   return (
     <FlatList
-    data={memoriedPostItem}
-    renderItem={({ item }) => (
-      <PostItem
-        item={item}
-        showFullDescription={showFullDescription}
-        toggleDescription={toggleDescription}
-      />
-    )}
-    keyExtractor={(item) => item.id.toString()}
-    style={styles.container}
-    scrollEnabled={false}
+      data={memoriedPostItem}
+      renderItem={({ item }) => (
+        <PostItem
+          item={item}
+          showFullDescription={showFullDescription}
+          toggleDescription={toggleDescription}
+        />
+      )}
+      keyExtractor={(item) => item.id.toString()}
+      style={styles.container}
     ></FlatList>
-    
   );
 }
 const styles = StyleSheet.create({
-  carouselText:{
+  carouselText: {
     color: "#fff",
     fontSize: 14,
     textAlign: "center",
   },
-  divider:{
-    marginVertical: 35
+  divider: {
+    marginVertical: 35,
   },
   carouselItem: {
     flex: 1,
