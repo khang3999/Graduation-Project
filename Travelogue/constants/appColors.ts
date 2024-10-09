@@ -7,4 +7,6 @@ export const appColors = {
     gray3: '#E4DFDF',
     link: '#5669FF',
     danger: '#e74c3c',
+    disabledText: '#FFFFFF',
+    disabled: '#BDBDBD',
 };

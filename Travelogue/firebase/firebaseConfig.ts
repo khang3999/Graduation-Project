@@ -1,9 +1,15 @@
 import { initializeApp } from '@firebase/app';
-import { getAuth } from '@firebase/auth';
+import { getAuth, FacebookAuthProvider, signInWithCredential } from '@firebase/auth';
 import { getDatabase } from '@firebase/database'; 
 import { ref, set } from "@firebase/database";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
-
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAXg7q7WhZy38dAadC-f6zEXtq-8FKV58A",
   authDomain: "travelogue-abb82.firebaseapp.com",
@@ -15,8 +21,22 @@ const firebaseConfig = {
   measurementId: "G-H5NCLHNC83"
 };
 
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app); 
+const storage = getStorage(app);
 
-export { auth, database, ref, set };
+// Exporting Firebase services
+export { 
+  auth, 
+  database, 
+  ref, 
+  set, 
+  storage, 
+  storageRef, 
+  uploadBytes, 
+  getDownloadURL, 
+  FacebookAuthProvider, 
+  signInWithCredential 
+};
