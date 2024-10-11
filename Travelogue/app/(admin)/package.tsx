@@ -621,9 +621,10 @@ const PackageComponent = () => {
   };
 
   const handleSavePackage = (pkg: Package) => {
+    // Cập nhật trạng thái isSaved và lưu gói vào danh sách packages
     pkg.isSaved = true;
-    setPackages([...packages, pkg]);
-    setNewPackages(newPackages.filter((p) => p.id !== pkg.id));
+    setPackages(packages.map((p) => (p.id === pkg.id ? pkg : p)));
+    setNewPackages(newPackages.filter((p) => p.id !== pkg.id)); // Xóa khỏi danh sách gói mới
     setEditingPackageId(null);
   };
 
@@ -646,8 +647,7 @@ const PackageComponent = () => {
           onFocus={() => setEditingPackageId(pkg.id)}
           onChangeText={(text) => {
             pkg.price = text;
-            if (!pkg.isSaved) setNewPackages([...newPackages]);
-            else setPackages([...packages]);
+            setPackages(packages.map((p) => (p.id === pkg.id ? pkg : p)));
           }}
         />
       </View>
@@ -659,8 +659,7 @@ const PackageComponent = () => {
           onFocus={() => setEditingPackageId(pkg.id)}
           onChangeText={(text) => {
             pkg.minAccumulated = text;
-            if (!pkg.isSaved) setNewPackages([...newPackages]);
-            else setPackages([...packages]);
+            setPackages(packages.map((p) => (p.id === pkg.id ? pkg : p)));
           }}
         />
       </View>
@@ -672,13 +671,13 @@ const PackageComponent = () => {
           onFocus={() => setEditingPackageId(pkg.id)}
           onChangeText={(text) => {
             pkg.factor = text;
-            if (!pkg.isSaved) setNewPackages([...newPackages]);
-            else setPackages([...packages]);
+            setPackages(packages.map((p) => (p.id === pkg.id ? pkg : p)));
           }}
         />
       </View>
       <View style={styles.buttonContainer}>
-        {editingPackageId === pkg.id && !pkg.isSaved && (
+        {/* Hiển thị nút Save nếu gói đang được chỉnh sửa */}
+        {editingPackageId === pkg.id && (
           <TouchableOpacity
             style={styles.saveBtn}
             onPress={() => handleSavePackage(pkg)}
@@ -716,10 +715,6 @@ const PackageComponent = () => {
 
 // Styles
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
   addBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
