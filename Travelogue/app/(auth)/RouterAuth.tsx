@@ -1,9 +1,10 @@
+import React from 'react';
 import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "./LoginScreen";
-import RegisterScreen from "./RegisterScreen";
 import { View } from "react-native";
 import { SectionComponent } from "@/components";
 import ForgotPasswordScreen from "@/app/(auth)/ForgotPasswordScreen";
+import RegisterScreen from "@/app/(auth)/RegisterScreen";
 
 const Stack = createStackNavigator();
 
