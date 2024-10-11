@@ -14,6 +14,8 @@ import {
   Bank,
   ArrowLeft,
   Bookmark,
+  Camera,
+  Gallery,
 } from "iconsax-react-native";
 import React, { useState } from "react";
 import {
@@ -25,16 +27,264 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Modal,
+  ActivityIndicator
 } from "react-native";
+import ImagePickerComponent from "@/components/images/ImagePickerComponent";
+import { database, getDownloadURL, ref, set, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { UserRegister } from "@/model/UserRegister";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, storage } from "@/firebase/firebaseConfig";
+
 
 const RegisterScreen = ({ navigation }: any) => {
+  
+  //Thêm trạng thái
+  const [isLoading, setIsLoading] = useState(false); 
+  // Thanh chuyển tab
   const [activeTab, setActiveTab] = useState("user");
+  // Thông tin đăng ký
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [tax, setTax] = useState("");
+  const [businessLicense, setBusinessLicense] = useState("");
+  const [numberCCCD, setNumberCCCD] = useState("");
+  // Lưu ảnh
+  const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
+  const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
+  const [businessLicenseImage, setBusinessLicenseImage] = useState<
+    string | null
+  >(null);
+
+  //Up ảnh lên storage
+  const uploadImage = async (imageUri: string, path: string): Promise<string | null> => {
+    try {
+      console.log(frontCCCDImage);
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageReference = storageRef(storage, path);
+      await uploadBytes(storageReference, blob);
+      const url = await getDownloadURL(storageReference);
+      return url;  
+    } catch (error) {
+      console.error("Upload image failed", error);
+      return null;
+    }
+  };
+  // Xử lý đăng ký
+  const onRegisterUser = async () => {
+    setIsLoading(true); 
+    try {
+      if (activeTab === "user") {
+        if (!name || !email || !phone || !password || !confirmPassword) {
+          Alert.alert("Thông báo", "Bạn cần nhập đủ thông tin.");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          Alert.alert(
+            "Thông báo",
+            "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo."
+          );
+          return;
+        }
+        if (password.length < 6) {
+          Alert.alert("Thông báo", "Mật khẩu phải có ít nhất 6 ký tự.");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com)."
+          );
+          return;
+        }
+
+        const phoneRegex = /^[0-9]{10,12}$/;
+        if (!phoneRegex.test(phone)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập số điện thoại hợp lệ (10-12 số)."
+          );
+          return;
+        }
+
+        // Luu thông tin đăng ký người dùng tren auth
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        // console.log(userCredential);
+        const user = userCredential.user;
+        if (user) {
+          // Tạo đối tượng User mới
+          const behavior = "";
+          const avatar = "";
+          const numberCCCD = null;
+          const imageFrontUrlCCCD = null;
+          const imageBackUrlCCCD = null;
+          const business_license_id = null;
+          const imageUrlBusinessLicense = null;
+          const expense = null;
+          const currentDate = new Date().toLocaleDateString();
+          const newUser = new UserRegister({
+            name,
+            email,
+            phone,
+            password,
+            behavior,
+            avatar,
+            expense,
+            currentDate,
+            numberCCCD,
+            imageFrontUrlCCCD,
+            imageBackUrlCCCD,
+            business_license_id,
+            imageUrlBusinessLicense,
+          });
+
+          // // Lưu thông tin người dùng vào Firebase Realtime
+          await set(ref(database, `/users/${user.uid}`), {
+            fullname: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            behavior: newUser.behavior,
+            avatar: newUser.avatar,
+            expense: newUser.expense,
+            createdAt: newUser.currentDate,
+          });
+          Alert.alert("Thành công", "Đăng ký thành công!");
+          navigation.navigate("LoginScreen");
+        }
+      } else {
+        // Xử lý cho doanh nghiệp
+        if (
+          !name ||
+          !email ||
+          !phone ||
+          !businessLicense ||
+          !password ||
+          !confirmPassword ||
+          !frontCCCDImage ||
+          !backCCCDImage ||
+          !businessLicenseImage ||
+          !numberCCCD
+        ) {
+          Alert.alert("Thông báo", "Bạn cần nhập đủ thông tin.");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          Alert.alert("Thông báo", "Mật khẩu không khớp.");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          Alert.alert("Thông báo", "Vui lòng nhập địa chỉ email hợp lệ.");
+          return;
+        }
+
+        const phoneRegex = /^[0-9]{10,12}$/;
+        if (!phoneRegex.test(phone)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập số điện thoại hợp lệ (10-12 số)."
+          );
+          return;
+        }
+        const cccdRegex = /^[0-9]{9,12}$/;
+        if (!cccdRegex.test(numberCCCD)) {
+          Alert.alert("Thông báo", "Vui lòng nhập số CCCD hợp lệ (9-12 số).");
+          return;
+        }
+
+        // Luu thông tin đăng ký người dùng tren auth
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        // console.log(userCredential);
+        const user = userCredential.user;
+        if (user) {
+          // Tạo đối tượng User mới
+          const behavior = "";
+          const avatar = "";
+          const expense = 0;
+          const currentDate = new Date().toLocaleDateString();
+          const newUser = new UserRegister({
+            name,
+            email,
+            phone,
+            password,
+            behavior,
+            avatar,
+            expense,
+            currentDate,
+            numberCCCD,
+            imageFrontUrlCCCD: frontCCCDImage,
+            imageBackUrlCCCD: backCCCDImage,
+            business_license_id: businessLicense,
+            imageUrlBusinessLicense: businessLicenseImage,
+          });
+
+          let frontImageUrl, backImageUrl, businessLicenseImageUrl;
+          
+          if (newUser.imageFrontUrlCCCD) {
+            frontImageUrl = await uploadImage(
+              newUser.imageFrontUrlCCCD,
+              `users/${user.uid}/papers/frontCCCD.jpg`
+            );
+          }
+          
+          if (newUser.imageBackUrlCCCD) {
+            backImageUrl = await uploadImage(
+              newUser.imageBackUrlCCCD,
+              `users/${user.uid}/papers/backCCCD.jpg`
+            );
+          }
+          
+          if (newUser.imageUrlBusinessLicense) {
+            businessLicenseImageUrl = await uploadImage(
+              newUser.imageUrlBusinessLicense,
+              `users/${user.uid}/papers/businessLicense.jpg`
+            );
+          }
+
+          // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
+          await set(ref(database, `/users/${user.uid}`), {
+            fullname: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            numberCCCD: newUser.numberCCCD,
+            imageFrontUrlCCCD: frontImageUrl,
+            imageBackUrlCCCD: backImageUrl,
+            imageUrlBusinessLicense: businessLicenseImageUrl,
+            createdAt: newUser.currentDate,
+          });
+        }
+
+        Alert.alert("Thành công", "Đăng ký doanh nghiệp thành công!");
+        navigation.navigate("LoginScreen");
+      }
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        Alert.alert("Thông báo", "Email đã được sử dụng.");
+      } else {
+        Alert.alert("Thông báo", "Đã xảy ra lỗi: " + error.message);
+      }
+    }
+    finally {
+      setIsLoading(false); 
+    }
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="height">
@@ -90,6 +340,7 @@ const RegisterScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Phần đăng ký */}
         {activeTab === "user" ? (
@@ -137,6 +388,7 @@ const RegisterScreen = ({ navigation }: any) => {
         ) : (
           <View style={styles.formContainer}>
             <SectionComponent>
+              {/* Họ và tên */}
               <InputComponent
                 value={name}
                 placeholder="Họ và tên"
@@ -144,6 +396,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<Profile size={22} color={appColors.gray2} />}
               />
+              {/* Gmail */}
               <InputComponent
                 value={email}
                 placeholder="abc@gmail.com"
@@ -151,6 +404,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<Sms size={22} color={appColors.gray2} />}
               />
+              {/* Phone */}
               <InputComponent
                 value={phone}
                 placeholder="Số điện thoại"
@@ -158,13 +412,15 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<CallCalling size={22} color={appColors.gray2} />}
               />
+              {/* Số cccd */}
               <InputComponent
-                value={phone}
+                value={numberCCCD}
                 placeholder="Số căn cước công dân"
-                onChange={(val) => setPhone(val)}
+                onChange={(val) => setNumberCCCD(val)}
                 allowClear
                 affix={<Bookmark size={22} color={appColors.gray2} />}
               />
+
               <View>
                 <RowComponent justify="flex-start">
                   <TextComponent text="CCCD" styles={{ fontWeight: "bold" }} />
@@ -172,11 +428,14 @@ const RegisterScreen = ({ navigation }: any) => {
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm mặt trước CCCD" />
-                <Image
-                  style={styles.image}
-                  source={require("@/assets/images/mat_truoc_cccd.png")}
+                <ImagePickerComponent
+                  image={frontCCCDImage}
+                  placeholderImage={require("@/assets/images/mat_truoc_cccd.png")}
+                  onImagePicked={setFrontCCCDImage}
                 />
               </View>
+
+              {/* Ảnh cccd mặt sau */}
               <View>
                 <RowComponent justify="flex-start">
                   <TextComponent text="CCCD" styles={{ fontWeight: "bold" }} />
@@ -184,35 +443,34 @@ const RegisterScreen = ({ navigation }: any) => {
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm mặt sau CCCD" />
-                <Image
-                  style={styles.image}
-                  source={require("@/assets/images/mat_sau_cccd.png")}
+                <ImagePickerComponent
+                  image={backCCCDImage}
+                  placeholderImage={require("@/assets/images/mat_sau_cccd.png")}
+                  onImagePicked={setBackCCCDImage}
                 />
               </View>
 
               <InputComponent
-                value={tax}
+                value={businessLicense}
                 placeholder="Nhập mã kinh doanh của bạn"
-                onChange={(val) => setTax(val)}
-                isPassword
+                onChange={(val) => setBusinessLicense(val)}
                 allowClear
                 affix={<Bank size={22} color={appColors.gray2} />}
               />
 
               <View>
                 <RowComponent justify="flex-start">
-                  <TextComponent text="Giấy phép kinh doanh" styles={{ fontWeight: "bold" }} />
+                  <TextComponent
+                    text="Giấy phép kinh doanh"
+                    styles={{ fontWeight: "bold" }}
+                  />
                   <TextComponent text=" *" color="red" />
                 </RowComponent>
                 <TextComponent text="Hãy thêm ảnh giấy phép kinh doanh" />
-                <Image
-                  style={[styles.image, { width: 380, height: 300, marginTop: 20
-                    ,borderWidth: 1, 
-                    borderColor: appColors.gray2, 
-                    borderRadius: 10,
-                    marginBottom: 20,
-                  }]}
-                  source={require("@/assets/images/giay_phep_kinh_doanh.png")}
+                <ImagePickerComponent
+                  image={businessLicenseImage}
+                  placeholderImage={require("@/assets/images/giay_phep_kinh_doanh.png")}
+                  onImagePicked={setBusinessLicenseImage}
                 />
               </View>
 
@@ -239,15 +497,25 @@ const RegisterScreen = ({ navigation }: any) => {
 
       {/* Nút đăng ký cố định ở dưới */}
       <View style={styles.footer}>
-        <SectionComponent styles={{ marginBottom: -10 }}>
-          <ButtonComponent
-            text="Đăng ký"
-            color={appColors.danger}
-            type="primary"
-            textStyles={{ fontWeight: "bold", fontSize: 20 }}
-            onPress={() => navigation.navigate("LoginScreen")}
-          />
-        </SectionComponent>
+      {isLoading ? (  
+             <ButtonComponent
+             text="Đăng ký"
+             color={appColors.danger}
+             type="primary"
+             textStyles={{ fontWeight: "bold", fontSize: 20 }}
+             onPress={onRegisterUser}
+             disabled={isLoading}  
+           />
+          ) : (
+            <ButtonComponent
+              text="Đăng ký"
+              color={appColors.danger}
+              type="primary"
+              textStyles={{ fontWeight: "bold", fontSize: 20 }}
+              onPress={onRegisterUser}
+              disabled={isLoading}  
+            />
+          )}
         <SectionComponent>
           <RowComponent justify="center">
             <TextComponent text="Bạn đã có tài khoản? " />
@@ -269,7 +537,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 50
   },
   scrollContent: {
     flexGrow: 1,
@@ -303,14 +570,6 @@ const styles = StyleSheet.create({
   footer: {
     padding: 15,
     backgroundColor: "#fff",
-  },
-  image: {
-    width: 380,
-    height: 300,
-    resizeMode: "contain",
-    marginTop: -20,
-    marginBottom: -20,
-    marginStart: 0,
   },
 });
 
