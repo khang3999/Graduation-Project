@@ -1,6 +1,6 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Image, View, StyleSheet } from 'react-native';
+import { Image, View, StyleSheet, Text } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { MaterialIcons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 
@@ -29,7 +29,7 @@ export default function Layout() {
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <Drawer.Screen
-          name="account" 
+          name="(account)" 
           options={{
             drawerLabel: 'Accounts',
             title: 'Accounts',
@@ -39,7 +39,7 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="report" 
+          name="(report)" 
           options={{
             drawerLabel: 'Reports',
             title: 'Reports',
@@ -85,21 +85,16 @@ export default function Layout() {
             title: 'Packages',
             drawerIcon: ({color, size}) => (
               <MaterialCommunityIcons name="package" size={size} color={color} />
+            ),
+            headerRight : ()=>(
+              <Text>Pluss</Text>
             )
           }}
+          
         />
+        
         <Drawer.Screen
-          name="rating" 
-          options={{
-            drawerLabel: 'Ratings',
-            title: 'Rating',
-            drawerIcon: ({color, size}) => (
-              <MaterialCommunityIcons name="progress-star" size={size} color={color} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="information" 
+          name="(information)" 
           options={{
             drawerLabel: 'Information Locations',
             title: 'Information Locations',

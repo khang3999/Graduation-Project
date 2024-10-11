@@ -2,13 +2,15 @@ import { View, Text, StyleSheet, Button } from 'react-native'
 import React from 'react'
 import { FontAwesome5 } from '@expo/vector-icons';
 import LikeButton from './buttons/HeartButton';
+import CommentButton from './buttons/CommentButton';
+import SaveButton from './buttons/SaveButton';
 
 const ActionBar = () => {
     return (
         <View style={styles.container}>
            <LikeButton style={styles.buttonItem}></LikeButton>
-           <LikeButton style={styles.buttonItem}></LikeButton>
-           <LikeButton style={styles.buttonItem}></LikeButton>
+           <CommentButton style={styles.buttonItem}></CommentButton>
+           <SaveButton style={styles.buttonItem}></SaveButton>
         </View>
     )
 }
@@ -16,15 +18,19 @@ const ActionBar = () => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: '#7d7d7d7d',
+        backgroundColor: 'white',
         width: 150,
-        // paddingHorizontal: 20,
+        justifyContent: 'space-around',
+        paddingVertical: 6,
         borderRadius: 999,
         elevation: 5,
+        
     },
     buttonItem: {
+        alignItems: 'center',
+        flex: 1,
+        gap: 4,
     }
 });
 
-console.log('acc rendered');
 export default ActionBar

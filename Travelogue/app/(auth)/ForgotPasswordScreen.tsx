@@ -6,9 +6,9 @@ import {
   SectionComponent,
   SpaceComponent,
   TextComponent,
-} from "../../../components";
+} from "@/components";
 import { ArrowLeft, Sms } from "iconsax-react-native";
-import { appColors } from "../../../constants/appColors";
+import { appColors } from "@/constants/appColors";
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const ForgotPasswordScreen = ({navigation}: any) => {

@@ -3,7 +3,7 @@ import LoginScreen from "./LoginScreen";
 import RegisterScreen from "./RegisterScreen";
 import { View } from "react-native";
 import { SectionComponent } from "@/components";
-import ForgotPasswordScreen from "@/app/screens/auth/ForgotPasswordScreen";
+import ForgotPasswordScreen from "@/app/(auth)/ForgotPasswordScreen";
 
 const Stack = createStackNavigator();
 

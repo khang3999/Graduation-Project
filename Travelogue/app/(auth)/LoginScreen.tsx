@@ -7,9 +7,9 @@ import {
   RowComponent,
   SectionComponent,
   TextComponent,
-} from "../../../components";
+} from "@/components";
 import { Lock, Sms } from "iconsax-react-native";
-import { appColors } from "../../../constants/appColors";
+import { appColors } from "@/constants/appColors";
 import { View } from "react-native";
 
 const LoginScreen = ({ navigation }: any) => {
@@ -44,7 +44,7 @@ const LoginScreen = ({ navigation }: any) => {
         }}
       >
         <Image
-          source={require("../../../assets/images/logo_login.png")}
+          source={require("@/assets/images/logo_login.png")}
           style={{ width: 162, height: 165, marginBottom: 0 }}
         />
       </SectionComponent>

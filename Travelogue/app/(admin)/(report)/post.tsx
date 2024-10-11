@@ -4,61 +4,51 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
 // Định nghĩa kiểu dữ liệu cho một tài khoản
-interface Account {
+interface Post {
   id: string;
   name: string;
-  email: string;
+  postContent: string;
   isBlocked: boolean;
 }
 
 // Giả lập danh sách tài khoản bị block
-const initialBlockedAccounts: Account[] = [
-  { id: '1', name: 'User 1', email: 'user1@example.com', isBlocked: true },
-  { id: '2', name: 'User 2', email: 'user2@example.com' , isBlocked: false},
-  { id: '3', name: 'User 3', email: 'user3@example.com' , isBlocked: true},
-  { id: '4', name: 'User 4', email: 'user4@example.com' , isBlocked: true},
+const initialBlockedPosts: Post[] = [
+  { id: '1', name: 'User 1', postContent: 'Vinh Hy mua he', isBlocked: true },
+  { id: '2', name: 'User 2', postContent: 'Nha Trang mat me' , isBlocked: false},
+  { id: '3', name: 'User 3', postContent: 'Du lich tu tuc' , isBlocked: true},
+  { id: '4', name: 'User 4', postContent: 'Du lich xanh' , isBlocked: true},
 ];
 
 export default function AccountManagementScreen() {
-  const [accounts, setAccounts] = useState<Account[]>(initialBlockedAccounts);
+  const [posts, setPosts] = useState<Post[]>(initialBlockedPosts);
   // Hàm gỡ block cho tài khoản
-  const unblockAccount = (accountId: string) => {
+  const unblockPost= (postId: string) => {
     Alert.alert(
       "Unblock Account",
       "Are you sure you want to unblock this account?",
       [
         { text: "Cancel", style: "cancel" },
         { text: "OK", onPress: () => {
-          // setBlockedAccounts(prevAccounts =>
-          //   prevAccounts.filter(account => account.id !== accountId)
-          // );
-          setAccounts(prevAccounts =>
-            prevAccounts.map(account => {
-              if (account.id === accountId) {
-                return { ...account, isBlocked: !account.isBlocked };
-              }
-              return account;
-            })
+          setPosts(prePosts =>
+            prePosts.filter(post => post.id !== postId)
           );
-
-
         }}
       ]
     );
   };
 
   // Render từng item trong danh sách
-  const renderAccountItem = ({ item }: { item: Account }) => (
+  const renderPostItem = ({ item }: { item: Post }) => (
     <View style={styles.accountItem}>
       <View>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+        <Text style={styles.postContent}>{item.postContent}</Text>
       </View>
       <TouchableOpacity
-        style={item.isBlocked ? styles.unblockButton :styles.blockButton}
-        onPress={() => unblockAccount(item.id)}
+        style={styles.unblockButton}
+        onPress={() => unblockPost(item.id)}
       >
-        <Text style={styles.buttonText}>{item.isBlocked ? 'Unblock' : 'Lock'}</Text>
+        <Text style={styles.buttonText}>Unlock</Text>
       </TouchableOpacity>
     </View>
   );
@@ -66,11 +56,11 @@ export default function AccountManagementScreen() {
   return (
     <View style={styles.container}>
       
-      {accounts.length > 0 ? (
+      {posts.length > 0 ? (
         <FlatList
-          data={accounts}
+          data={posts}
           keyExtractor={(item) => item.id}
-          renderItem={renderAccountItem}
+          renderItem={renderPostItem}
         />
       ) : (
         <Text style={styles.noAccountsText}>No blocked accounts</Text>
@@ -109,7 +99,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  email: {
+  postContent: {
     fontSize: 14,
     color: '#555',
   },
