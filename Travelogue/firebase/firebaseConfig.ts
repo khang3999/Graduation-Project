@@ -9,6 +9,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "@firebase/storage";
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration
 const firebaseConfig = {

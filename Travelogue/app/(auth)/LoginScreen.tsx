@@ -21,26 +21,29 @@ import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig"; 
 import FacebookLoginButton from "@/components/socials/facebook";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const LoginScreen =  ({ navigation }: any) => {
+const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRemember, setIsRemember] = useState(false);
 
-  // if (isRemember) {
-  //   await AsyncStorage.setItem('userEmail', email);
-  //   await AsyncStorage.setItem('userPassword', password); 
-  // }
-  // useEffect(() => {
-  //   const loadCredentials = async () => {
-  //     const savedEmail = await AsyncStorage.getItem('userEmail');
-  //     const savedPassword = await AsyncStorage.getItem('userPassword');
-  //     if (savedEmail) setEmail(savedEmail);
-  //     if (savedPassword) setPassword(savedPassword);
-  //   };
+  if (isRemember) {
+     AsyncStorage.setItem('userEmail', email);
+     AsyncStorage.setItem('userPassword', password); 
+  }
+  useEffect(() => {
+    const loadCredentials = async () => {
+      const savedEmail = await AsyncStorage.getItem('userEmail');
+      const savedPassword = await AsyncStorage.getItem('userPassword');
+      console.log(savedEmail);
+      console.log(savedPassword);
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+    };
   
-  //   loadCredentials();
-  // }, []);
+    loadCredentials();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -119,7 +122,7 @@ const LoginScreen =  ({ navigation }: any) => {
           <ButtonComponent
             text="Quên mật khẩu"
             color={appColors.primary}
-            onPress={() => navigation.navigate("ForgotPasswordScreen")}
+            onPress={() => navigation.navigate("ForgotPasswordScreen",{email: email})}
             type="text"
           />
         </RowComponent>

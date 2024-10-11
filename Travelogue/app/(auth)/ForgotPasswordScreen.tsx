@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import {
   ButtonComponent,
   InputComponent,
@@ -9,17 +9,41 @@ import {
 } from "@/components";
 import { ArrowLeft, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
-import AntDesign from '@expo/vector-icons/AntDesign';
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { fetchSignInMethodsForEmail, getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/firebase/firebaseConfig";
 
-const ForgotPasswordScreen = ({navigation}: any) => {
-  <AntDesign name="arrowleft" size={24} color="black" />
-  const [email, setEmail] = useState("");
+const ForgotPasswordScreen = ({ navigation, route }: any) => {
+  const requestemail = route.params?.email || "";
+  // console.log (requestemail);
+  const [email, setEmail] = useState(requestemail);
+
+  const handleResetPassword = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
+      return;
+    }
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length === 0) {
+        Alert.alert("Lỗi", "Email chua duoc dang ky.");
+        return;
+      }
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert("Thành công", "Email đặt lại mật khẩu đã được gửi");
+      navigation.navigate("LoginScreen");
+    } catch (error: any) {
+      console.error("Error:", error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra. Vui lòng thử lại.");
+    }
+  };
   return (
     <View style={styles.container}>
-       <SectionComponent>
+      <SectionComponent>
         <ArrowLeft
           size="32"
-          style={{ marginBottom: -10 }} 
+          style={{ marginBottom: -10 }}
           onPress={() => {
             navigation.navigate("LoginScreen");
           }}
@@ -50,7 +74,7 @@ const ForgotPasswordScreen = ({navigation}: any) => {
           textStyles={{ fontWeight: "semibold", fontSize: 20 }}
           text="GỬI YÊU CẦU"
           color={appColors.danger}
-          onPress={() => {}}
+          onPress={handleResetPassword}
         />
       </SectionComponent>
     </View>
