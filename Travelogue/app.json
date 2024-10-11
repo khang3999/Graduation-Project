@@ -13,6 +13,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "facebookAppId": "1042817677331180",
+    "facebookDisplayName": "Travelogue",
+    "facebookScheme": "fb1042817677331180",
+    "facebookAutoLogAppEventsEnabled": true,
+    "facebookAdvertiserIDCollectionEnabled": true,
     "ios": {
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",

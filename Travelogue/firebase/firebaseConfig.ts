@@ -1,13 +1,14 @@
 import { initializeApp } from '@firebase/app';
-import { getAuth, FacebookAuthProvider, signInWithCredential } from '@firebase/auth';
+import { getAuth, FacebookAuthProvider, signInWithCredential, signInWithPopup } from '@firebase/auth';
 import { getDatabase } from '@firebase/database'; 
 import { ref, set } from "@firebase/database";
+
 import {
   getStorage,
   ref as storageRef,
   uploadBytes,
   getDownloadURL,
-} from "firebase/storage";
+} from "@firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -37,6 +38,7 @@ export {
   storageRef, 
   uploadBytes, 
   getDownloadURL, 
+  signInWithPopup,
   FacebookAuthProvider, 
   signInWithCredential 
 };

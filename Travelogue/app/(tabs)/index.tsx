@@ -10,7 +10,6 @@ import { auth } from "@/firebase/firebaseConfig";
 
 console.log("App is running from (tabs)/index.tsx");
 
-const handleLogout = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -20,8 +19,6 @@ const handleLogout = () => {
       Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
     }
   };
-  router.push("/(auth)/LoginScreen");
-};
 const Home = () => {
   return (
     <View>

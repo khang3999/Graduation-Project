@@ -1,5 +1,12 @@
-import React, { useState } from "react";
-import { StyleSheet, Image, Switch, Alert,View, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Image,
+  Switch,
+  Alert,
+  View,
+  ScrollView,
+} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import {
   ButtonComponent,
@@ -11,29 +18,58 @@ import {
 import { Lock, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase/firebaseConfig"; 
+import FacebookLoginButton from "@/components/socials/facebook";
 
-
-const LoginScreen = ({ navigation }: any) => {
+const LoginScreen =  ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRemember, setIsRemember] = useState(false);
 
+  // if (isRemember) {
+  //   await AsyncStorage.setItem('userEmail', email);
+  //   await AsyncStorage.setItem('userPassword', password); 
+  // }
+  // useEffect(() => {
+  //   const loadCredentials = async () => {
+  //     const savedEmail = await AsyncStorage.getItem('userEmail');
+  //     const savedPassword = await AsyncStorage.getItem('userPassword');
+  //     if (savedEmail) setEmail(savedEmail);
+  //     if (savedPassword) setPassword(savedPassword);
+  //   };
+  
+  //   loadCredentials();
+  // }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Lỗi", "Hãy nhập đầy đủ thông tin đăng nhập.");
       return;
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.(abc@gmail.com)");
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
       return;
     }
+
     if (password.length < 6) {
       Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự.");
       return;
     }
-    router.push('/(tabs)')
+
+    try {
+      // Đăng nhập bằng email và mật khẩu
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      router.replace("/(tabs)");
+
+      Alert.alert("Đăng nhập thành công", `Chào mừng ${user.email}`);
+    } catch (error) {
+      Alert.alert("Đăng nhập thất bại", "Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -59,7 +95,6 @@ const LoginScreen = ({ navigation }: any) => {
           value={email}
           placeholder="abc@gmail.com"
           onChange={(val) => setEmail(val)}
-          // isPassword
           allowClear
           affix={<Sms size={22} color={appColors.gray2} />}
         />
@@ -106,18 +141,7 @@ const LoginScreen = ({ navigation }: any) => {
           size={16}
           color={appColors.gray}
         />
-        <ButtonComponent
-          icon={<Icon name="facebook" size={20} color="blue" />}
-          iconFlex="left"
-          color="white"
-          textColor="blue"
-          text="Đăng nhập bằng Facebook"
-          styles={{
-            margin: 10,
-            borderColor: appColors.gray2,
-            borderWidth: 0.3,
-          }}
-        />
+        <FacebookLoginButton/>
         <ButtonComponent
           icon={<Icon name="google" size={20} color="red" />}
           iconFlex="left"
