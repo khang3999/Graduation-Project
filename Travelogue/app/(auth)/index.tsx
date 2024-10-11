@@ -1,23 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import React from 'react'
-import HeaderIndex from '@/components/header/HeaderIndex'
-import ActionBar from '@/components/ActionBar'
-import {router } from 'expo-router'
+import React from 'react';
 
-console.log('App is running from (tabs)/index.tsx');
-
-const Home = () => {
-  return (
-    <View>
-      <HeaderIndex></HeaderIndex>
-      <Text>Home</Text>
-      <ActionBar></ActionBar>
-      <TouchableOpacity onPress={()=>{router.push('/(admin)/(account)/account')}}>
-        <Text>admin</Text>
-      </TouchableOpacity>
-    </View>
-  )
+const Index = () => {
+    return (
+        <div>
+            Index
+        </div>
+    );
 }
 
-
-export default Home
+export default Index;

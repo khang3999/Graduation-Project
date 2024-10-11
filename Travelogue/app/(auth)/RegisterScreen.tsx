@@ -29,13 +29,19 @@ import {
   Platform,
   Alert,
   Modal,
+  ActivityIndicator
 } from "react-native";
 import ImagePickerComponent from "@/components/images/ImagePickerComponent";
-import auth from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database';
+import { database, getDownloadURL, ref, set, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
 import { UserRegister } from "@/model/UserRegister";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, storage } from "@/firebase/firebaseConfig";
+
 
 const RegisterScreen = ({ navigation }: any) => {
+  
+  //Thêm trạng thái
+  const [isLoading, setIsLoading] = useState(false); 
   // Thanh chuyển tab
   const [activeTab, setActiveTab] = useState("user");
   // Thông tin đăng ký
@@ -44,118 +50,241 @@ const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [tax, setTax] = useState("");
+  const [businessLicense, setBusinessLicense] = useState("");
+  const [numberCCCD, setNumberCCCD] = useState("");
   // Lưu ảnh
   const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
   const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
-  const [businessLicenseImage, setBusinessLicenseImage] = useState<string | null>(null);
-  
+  const [businessLicenseImage, setBusinessLicenseImage] = useState<
+    string | null
+  >(null);
+
+  //Up ảnh lên storage
+  const uploadImage = async (imageUri: string, path: string): Promise<string | null> => {
+    try {
+      console.log(frontCCCDImage);
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageReference = storageRef(storage, path);
+      await uploadBytes(storageReference, blob);
+      const url = await getDownloadURL(storageReference);
+      return url;  
+    } catch (error) {
+      console.error("Upload image failed", error);
+      return null;
+    }
+  };
   // Xử lý đăng ký
-const onRegisterUser = async () => {
-  try {
-    if (activeTab === "user") {
-      if (!name || !email || !phone || !password || !confirmPassword) {
-        Alert.alert("Lỗi", "Bạn cần nhập đủ thông tin.");
-        return;
+  const onRegisterUser = async () => {
+    setIsLoading(true); 
+    try {
+      if (activeTab === "user") {
+        if (!name || !email || !phone || !password || !confirmPassword) {
+          Alert.alert("Thông báo", "Bạn cần nhập đủ thông tin.");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          Alert.alert(
+            "Thông báo",
+            "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo."
+          );
+          return;
+        }
+        if (password.length < 6) {
+          Alert.alert("Thông báo", "Mật khẩu phải có ít nhất 6 ký tự.");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com)."
+          );
+          return;
+        }
+
+        const phoneRegex = /^[0-9]{10,12}$/;
+        if (!phoneRegex.test(phone)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập số điện thoại hợp lệ (10-12 số)."
+          );
+          return;
+        }
+
+        // Luu thông tin đăng ký người dùng tren auth
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        // console.log(userCredential);
+        const user = userCredential.user;
+        if (user) {
+          // Tạo đối tượng User mới
+          const behavior = "";
+          const avatar = "";
+          const numberCCCD = null;
+          const imageFrontUrlCCCD = null;
+          const imageBackUrlCCCD = null;
+          const business_license_id = null;
+          const imageUrlBusinessLicense = null;
+          const expense = null;
+          const currentDate = new Date().toLocaleDateString();
+          const newUser = new UserRegister({
+            name,
+            email,
+            phone,
+            password,
+            behavior,
+            avatar,
+            expense,
+            currentDate,
+            numberCCCD,
+            imageFrontUrlCCCD,
+            imageBackUrlCCCD,
+            business_license_id,
+            imageUrlBusinessLicense,
+          });
+
+          // // Lưu thông tin người dùng vào Firebase Realtime
+          await set(ref(database, `/users/${user.uid}`), {
+            fullname: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            behavior: newUser.behavior,
+            avatar: newUser.avatar,
+            expense: newUser.expense,
+            createdAt: newUser.currentDate,
+          });
+          Alert.alert("Thành công", "Đăng ký thành công!");
+          navigation.navigate("LoginScreen");
+        }
+      } else {
+        // Xử lý cho doanh nghiệp
+        if (
+          !name ||
+          !email ||
+          !phone ||
+          !businessLicense ||
+          !password ||
+          !confirmPassword ||
+          !frontCCCDImage ||
+          !backCCCDImage ||
+          !businessLicenseImage ||
+          !numberCCCD
+        ) {
+          Alert.alert("Thông báo", "Bạn cần nhập đủ thông tin.");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          Alert.alert("Thông báo", "Mật khẩu không khớp.");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          Alert.alert("Thông báo", "Vui lòng nhập địa chỉ email hợp lệ.");
+          return;
+        }
+
+        const phoneRegex = /^[0-9]{10,12}$/;
+        if (!phoneRegex.test(phone)) {
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng nhập số điện thoại hợp lệ (10-12 số)."
+          );
+          return;
+        }
+        const cccdRegex = /^[0-9]{9,12}$/;
+        if (!cccdRegex.test(numberCCCD)) {
+          Alert.alert("Thông báo", "Vui lòng nhập số CCCD hợp lệ (9-12 số).");
+          return;
+        }
+
+        // Luu thông tin đăng ký người dùng tren auth
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        // console.log(userCredential);
+        const user = userCredential.user;
+        if (user) {
+          // Tạo đối tượng User mới
+          const behavior = "";
+          const avatar = "";
+          const expense = 0;
+          const currentDate = new Date().toLocaleDateString();
+          const newUser = new UserRegister({
+            name,
+            email,
+            phone,
+            password,
+            behavior,
+            avatar,
+            expense,
+            currentDate,
+            numberCCCD,
+            imageFrontUrlCCCD: frontCCCDImage,
+            imageBackUrlCCCD: backCCCDImage,
+            business_license_id: businessLicense,
+            imageUrlBusinessLicense: businessLicenseImage,
+          });
+
+          let frontImageUrl, backImageUrl, businessLicenseImageUrl;
+          
+          if (newUser.imageFrontUrlCCCD) {
+            frontImageUrl = await uploadImage(
+              newUser.imageFrontUrlCCCD,
+              `users/${user.uid}/papers/frontCCCD.jpg`
+            );
+          }
+          
+          if (newUser.imageBackUrlCCCD) {
+            backImageUrl = await uploadImage(
+              newUser.imageBackUrlCCCD,
+              `users/${user.uid}/papers/backCCCD.jpg`
+            );
+          }
+          
+          if (newUser.imageUrlBusinessLicense) {
+            businessLicenseImageUrl = await uploadImage(
+              newUser.imageUrlBusinessLicense,
+              `users/${user.uid}/papers/businessLicense.jpg`
+            );
+          }
+
+          // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
+          await set(ref(database, `/users/${user.uid}`), {
+            fullname: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            numberCCCD: newUser.numberCCCD,
+            imageFrontUrlCCCD: frontImageUrl,
+            imageBackUrlCCCD: backImageUrl,
+            imageUrlBusinessLicense: businessLicenseImageUrl,
+            createdAt: newUser.currentDate,
+          });
+        }
+
+        Alert.alert("Thành công", "Đăng ký doanh nghiệp thành công!");
+        navigation.navigate("LoginScreen");
       }
-
-      if (password !== confirmPassword) {
-        Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp với mật khẩu bạn tạo.");
-        return;
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        Alert.alert("Thông báo", "Email đã được sử dụng.");
+      } else {
+        Alert.alert("Thông báo", "Đã xảy ra lỗi: " + error.message);
       }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ (abc@gmail.com).");
-        return;
-      }
-
-      const phoneRegex = /^[0-9]{10,12}$/;
-      if (!phoneRegex.test(phone)) {
-        Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ (10-12 số).");
-        return;
-      }
-
-     //Tạo auth
-     const userCredential = await auth().createUserWithEmailAndPassword(
-      email,
-      password,
-    );
-    const user = userCredential.user;
-    if (user) {
-      // Tạo đối tượng User mới
-      const currentDate = new Date().toLocaleDateString(); 
-      const newUser = new UserRegister(name, email, phone ,password, currentDate);
-
-      // Lưu thông tin người dùng vào Firebase Realtime Database
-      await database()
-        .ref(`/users/${user.uid}`)
-        .set({
-          fullname: newUser.fullname,
-          email: newUser.email,
-          createdAt: newUser.createdAt,
-        });
-
-
-      Alert.alert("Thành công", "Đăng ký thành công!");
-      navigation.navigate("LoginScreen");
     }
-
-    } else {
-      // Xử lý cho doanh nghiệp
-      if (!name || !email || !phone || !tax || !password || !confirmPassword || !frontCCCDImage || !backCCCDImage || !businessLicenseImage) {
-        Alert.alert("Lỗi", "Tất cả các trường là bắt buộc.");
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        Alert.alert("Lỗi", "Mật khẩu không khớp.");
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ.");
-        return;
-      }
-
-      const phoneRegex = /^[0-9]{10,12}$/;
-      if (!phoneRegex.test(phone)) {
-        Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ (10-12 số).");
-        return;
-      }
-
-      // Log thông tin đăng ký doanh nghiệp
-      console.log("Thông tin đăng ký doanh nghiệp:", {
-        name,
-        email,
-        phone,
-        tax,
-        frontCCCDImage,
-        backCCCDImage,
-        businessLicenseImage,
-        password,
-      });
-
-      Alert.alert("Thành công", "Đăng ký doanh nghiệp thành công!");
-      navigation.navigate("LoginScreen");
+    finally {
+      setIsLoading(false); 
     }
-  } catch (error: any) {
-    console.error("Lỗi khi đăng ký:", error);
-    
-    // Firebase error handling
-    if (error.code === 'auth/email-already-in-use') {
-      Alert.alert("Lỗi", "Email đã được sử dụng.");
-    } else if (error.code === 'auth/invalid-email') {
-      Alert.alert("Lỗi", "Email không hợp lệ.");
-    } else if (error.code === 'auth/weak-password') {
-      Alert.alert("Lỗi", "Mật khẩu quá yếu.");
-    } else {
-      Alert.alert("Lỗi", "Đã xảy ra lỗi: " + error.message);
-    }
-  }
-};
-
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="height">
@@ -285,9 +414,9 @@ const onRegisterUser = async () => {
               />
               {/* Số cccd */}
               <InputComponent
-                value={phone}
+                value={numberCCCD}
                 placeholder="Số căn cước công dân"
-                onChange={(val) => setPhone(val)}
+                onChange={(val) => setNumberCCCD(val)}
                 allowClear
                 affix={<Bookmark size={22} color={appColors.gray2} />}
               />
@@ -322,10 +451,9 @@ const onRegisterUser = async () => {
               </View>
 
               <InputComponent
-                value={tax}
+                value={businessLicense}
                 placeholder="Nhập mã kinh doanh của bạn"
-                onChange={(val) => setTax(val)}
-                isPassword
+                onChange={(val) => setBusinessLicense(val)}
                 allowClear
                 affix={<Bank size={22} color={appColors.gray2} />}
               />
@@ -369,15 +497,25 @@ const onRegisterUser = async () => {
 
       {/* Nút đăng ký cố định ở dưới */}
       <View style={styles.footer}>
-        <SectionComponent styles={{ marginBottom: -10 }}>
-          <ButtonComponent
-            text="Đăng ký"
-            color={appColors.danger}
-            type="primary"
-            textStyles={{ fontWeight: "bold", fontSize: 20 }}
-            onPress={onRegisterUser}
-          />
-        </SectionComponent>
+      {isLoading ? (  
+             <ButtonComponent
+             text="Đăng ký"
+             color={appColors.danger}
+             type="primary"
+             textStyles={{ fontWeight: "bold", fontSize: 20 }}
+             onPress={onRegisterUser}
+             disabled={isLoading}  
+           />
+          ) : (
+            <ButtonComponent
+              text="Đăng ký"
+              color={appColors.danger}
+              type="primary"
+              textStyles={{ fontWeight: "bold", fontSize: 20 }}
+              onPress={onRegisterUser}
+              disabled={isLoading}  
+            />
+          )}
         <SectionComponent>
           <RowComponent justify="center">
             <TextComponent text="Bạn đã có tài khoản? " />
@@ -435,4 +573,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen; 
+export default RegisterScreen;
