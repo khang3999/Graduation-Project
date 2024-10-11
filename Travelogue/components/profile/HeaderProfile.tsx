@@ -49,7 +49,7 @@ export default function HeaderProfile() {
         <View style={styles.headerButton}>
           <Plus />
           <Bell />          
-          <MenuItem menuIcon="dots-horizontal" />
+          <MenuItem menuIcon="menu" />
         </View>
       </View>
       <AvatarProfile />
