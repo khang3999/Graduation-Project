@@ -10,7 +10,11 @@ import {
 import { ArrowLeft, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { fetchSignInMethodsForEmail, getAuth, sendPasswordResetEmail } from "firebase/auth";
+import {
+  fetchSignInMethodsForEmail,
+  getAuth,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 
 const ForgotPasswordScreen = ({ navigation, route }: any) => {
@@ -24,19 +28,14 @@ const ForgotPasswordScreen = ({ navigation, route }: any) => {
       Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
       return;
     }
-    try {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (methods.length === 0) {
-        Alert.alert("Lỗi", "Email chua duoc dang ky.");
-        return;
-      }
-      await sendPasswordResetEmail(auth, email);
-      Alert.alert("Thành công", "Email đặt lại mật khẩu đã được gửi");
-      navigation.navigate("LoginScreen");
-    } catch (error: any) {
-      console.error("Error:", error);
-      Alert.alert("Lỗi", "Có lỗi xảy ra. Vui lòng thử lại.");
-    }
+    await sendPasswordResetEmail(auth, email)
+      .then(() => {
+        Alert.alert("Thành công", "Email đặt lại mật khẩu đã được gửi");
+        navigation.navigate("LoginScreen");
+      })
+      .catch((error) => {
+        Alert.alert("Lỗi", "Email chưa được đăng ký");
+      });
   };
   return (
     <View style={styles.container}>

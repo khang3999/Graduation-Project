@@ -50,7 +50,7 @@ const LoginScreen = ({ navigation }: any) => {
       Alert.alert("Lỗi", "Hãy nhập đầy đủ thông tin đăng nhập.");
       return;
     }
-
+     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
@@ -137,7 +137,7 @@ const LoginScreen = ({ navigation }: any) => {
         />
       </SectionComponent>
       {/* OR SOCIAL */}
-      <SectionComponent>
+      {/* <SectionComponent>
         <TextComponent
           styles={{ textAlign: "center" }}
           text="Hoặc"
@@ -157,7 +157,7 @@ const LoginScreen = ({ navigation }: any) => {
             borderWidth: 0.3,
           }}
         />
-      </SectionComponent>
+      </SectionComponent> */}
       {/*  */}
       <SectionComponent>
         <RowComponent justify="center">
