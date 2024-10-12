@@ -5,13 +5,17 @@ import LikeButton from './buttons/HeartButton';
 import CommentButton from './buttons/CommentButton';
 import SaveButton from './buttons/SaveButton';
 
-const ActionBar = () => {
+
+const ActionBar = (props:any) => {
     return (
-        <View style={styles.container}>
+        <View {...props}>
+             <View style={styles.container}>
            <LikeButton style={styles.buttonItem}></LikeButton>
            <CommentButton style={styles.buttonItem}></CommentButton>
            <SaveButton style={styles.buttonItem}></SaveButton>
         </View>
+        </View>
+       
     )
 }
 

@@ -5,9 +5,9 @@ export default function Layout() {
     return (
         <Stack
             screenOptions={{
-              contentStyle: {paddingTop: 50}
+                headerShown: false,
             }}>
-            <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+            <Stack.Screen name="(tabs)"/>
             <Stack.Screen name="(admin)"/>
         </Stack>
     );

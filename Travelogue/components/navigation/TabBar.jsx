@@ -86,6 +86,7 @@ const greyColor = '#444444'
 
 const styles = StyleSheet.create({
   tabbar: {
+    backgroundColor:'white',
     position: 'absolute',
     bottom: 10,
     flexDirection: 'row',

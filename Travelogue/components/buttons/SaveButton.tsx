@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Icon  from 'react-native-vector-icons/FontAwesome';
 import { AntDesign } from '@expo/vector-icons';
 
-const SaveButton = ({ ...props }) => {
+const SaveButton = (props: any) => {
   const [saved, setSaved] = useState(false);
   // Render 1 lần từ db để load các bài đã like
   useEffect(() => {
