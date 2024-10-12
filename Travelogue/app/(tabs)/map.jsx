@@ -15,8 +15,12 @@ import BottomSheet from "react-native-gesture-bottom-sheet";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { ImageSlider } from "react-native-image-slider-banner";
 import { RowComponent, SectionComponent } from "@/components";
+import { database, ref, onValue } from "@/firebase/firebaseConfig";
 
 const Map = () => {
+  // const [countryData, setCountryData] = useState([]);
+  // const [areaData, setAreaData] = useState([]);
+
   const festivalTypeOptions = [
     {
       id: "all",
@@ -94,7 +98,7 @@ const Map = () => {
     },
   ];
 
-  // Dữ liệu các quốc gia
+  // // Dữ liệu các quốc gia
   const countryData = [
     {
       id: "vietnam",
@@ -291,7 +295,31 @@ const Map = () => {
       countryId: "china",
     },
   ];
+  //Lấu dữ liệu từ firebase về quốc gia
+  // useEffect(() => {
+  //   const countriesRef = ref(database, 'countries');
+  //   const areaRef = ref(database, 'areas');
+  //   onValue(countriesRef, (snapshot) => {
+  //     const data = snapshot.val() || {};
+  //     console.log(data);
+  //     // Chuyển từ đối tượng thành mảng
+  //     const formattedData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+  //     console.log(formattedData);
+  //     setCountryData(formattedData);
+  //     // console.log("Country Data:", countryData);
+  //   });
+  //   onValue(areaRef, (snapshot) => {
+  //     const data = snapshot.val() || {};
+  //     // console.log(data);
+  //     // Chuyển từ đối tượng thành mảng
+  //     const formattedData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+  //     // console.log(formattedData);
+  //     setAreaData(formattedData);
+  //   });
 
+  // }, []);
+
+  const mapViewRef = useRef(null);
   const [mapLat] = useState(16.494413736992392);
   const [mapLong] = useState( 105.18357904627919);
   const [selectedFestival, setSelectedFestival] = useState(null);
@@ -313,21 +341,26 @@ const Map = () => {
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
   useEffect(() => {
-    // console.log("Updated Selected Country:", selectedCountry);
+    console.log("Updated Selected Country:", selectedCountry);
   }, [selectedCountry]);
   const handleCountryChange = (item) => {
     // console.log("Selected Country1:", item);
     if (item !== null) {
       const { latitude, longitude } = item;
-      setMapRegion({
-        latitude: latitude,
-        longitude: longitude,
-        latitudeDelta: 8.0,
-        longitudeDelta: 10,
-      });
+
+      // sử dụng animateToRegion
+      if (mapViewRef.current) {
+        mapViewRef.current.animateToRegion({
+          latitude: latitude,
+          longitude: longitude,
+          latitudeDelta: 8.0,
+          longitudeDelta: 10,
+        }, 1000); 
+      }
+
       setSelectedCountry(item.id);
 
-      // console.log("Selected Country:", item);
+      console.log("Selected Country:", item);
       // console.log("Selected Country id:", countryData[item].id);
     }
 
@@ -346,12 +379,15 @@ const Map = () => {
     // const selectedAreaChosse = areaData.find((area) => area.id === item.id);
     if (item !== null) {
       const { latitude, longitude } = item;
-      setMapRegion({
-        latitude: latitude,
-        longitude: longitude,
-        latitudeDelta: 5.0,
-        longitudeDelta: 5.0,
-      });
+      // sử dụng animateToRegion
+      if (mapViewRef.current) {
+        mapViewRef.current.animateToRegion({
+          latitude: latitude,
+          longitude: longitude,
+          latitudeDelta: 5,
+          longitudeDelta: 5,
+        }, 1000);
+      }
       setSelectedArea(item.id);
       // console.log("Selected Area:", item.label);
     }
@@ -434,7 +470,7 @@ const Map = () => {
           </View>
         </View>
         {/* Map của Google Map */}
-        <MapView
+        {/* <MapView
           style={styles.map}
           region={mapRegion}
           mapType="standard"
@@ -443,6 +479,11 @@ const Map = () => {
             // console.log("Longitude:", region.longitude);
             setMapRegion(region);
           }}
+        > */}
+        <MapView
+        style={styles.map}
+        ref={mapViewRef}
+        initialRegion={mapRegion} 
         >
           {filteredFestivals.map((festival) => (
             <Marker
