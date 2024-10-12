@@ -22,6 +22,7 @@ const greyColor = '#444444'
 
         if (['_sitemap','+not-found'].includes(route.name)) return null;
 
+        console.log(route.name);
         
         const isFocused = state.index === index;
 
@@ -85,6 +86,7 @@ const greyColor = '#444444'
 
 const styles = StyleSheet.create({
   tabbar: {
+    backgroundColor:'white',
     position: 'absolute',
     bottom: 10,
     flexDirection: 'row',

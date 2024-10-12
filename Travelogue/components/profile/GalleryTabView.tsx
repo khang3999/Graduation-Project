@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { TabView, SceneMap, TabBar, TabBarProps } from "react-native-tab-view";
 import MaterialIcons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -32,15 +31,14 @@ const images = [
 ];
 
 const FirstRoute = () => (
-  <View style={{flex: 1, paddingBottom:70}}>
   <FlatList
     style={{ flex: 1 }}
     data={images}
     renderItem={({ item }) => (
-      <Pressable onPress={()=>{router.push("/post");
+      <Pressable onPress={()=>{console.log("Image Clicked");
       }}>
       <Image
-        source={require("@/assets/images/tom.png")}
+        source={require("../../assets/images/tom.png")}
         style={styles.imagesGallery}
       />
       </Pressable>
@@ -48,8 +46,6 @@ const FirstRoute = () => (
     keyExtractor={(item) => item.id}
     numColumns={3}
   />
-  </View>
-  
 );
 
 const SecondRoute = () => (

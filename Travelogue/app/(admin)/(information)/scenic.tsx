@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const Factor = () => {
+const Scenic = () => {
   return (
     <View>
-      <Text>Factor</Text>
+      <Text>Scenic spots</Text>
     </View>
   )
 }
 
-export default Factor
+export default Scenic

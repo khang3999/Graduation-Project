@@ -10,7 +10,6 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 
-
 export default function ProfileLayout() {
   const colorScheme = useColorScheme();
 
@@ -49,22 +48,6 @@ export default function ProfileLayout() {
         options={{
           headerShown: true,
           title: "Edit Profile",
-          headerStyle: {
-            backgroundColor:
-              Colors[colorScheme ? colorScheme : "light"].background,
-          },
-          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
-          headerTitleAlign: "center",
-        }}
-      />
-        <Stack.Screen
-        name="post"
-        options={{
-          headerShown: true,
-          title: "Posts",
           headerStyle: {
             backgroundColor:
               Colors[colorScheme ? colorScheme : "light"].background,

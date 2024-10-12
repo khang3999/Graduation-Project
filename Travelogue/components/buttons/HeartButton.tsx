@@ -4,7 +4,7 @@ import { AntDesign } from '@expo/vector-icons'
 import  Icon  from 'react-native-vector-icons/FontAwesome';
 
 
-const HeartButton = ({...props}) => {
+const HeartButton = (props: any) => {
     const [liked, setLiked] = useState(false);
     // Render 1 lần từ db để load các bài đã like
     useEffect(() => {

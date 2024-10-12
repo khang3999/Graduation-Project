@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const Factor = () => {
+const Place = () => {
   return (
     <View>
-      <Text>Factor</Text>
+      <Text>Place</Text>
     </View>
   )
 }
 
-export default Factor
+export default Place

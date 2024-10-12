@@ -3,14 +3,14 @@ import React, { useEffect, useState } from 'react'
 import { AntDesign, FontAwesome, FontAwesome5, FontAwesome6 } from '@expo/vector-icons'
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const CommentButton = ({...props}) => {
+const CommentButton = (props: any) => {
     // Hàm set like
-    const handleComment = () => {
+    const handleTap = () => {
         // Show comment bottom sheet
 
     }
     return (
-        <TouchableOpacity delayPressOut={50} onPress={handleComment} {...props}>
+        <TouchableOpacity delayPressOut={50} onPress={handleTap} {...props}>
             <Icon name="comment-o" size={24} color="black" style={styles.container}/>
         </TouchableOpacity>
     )

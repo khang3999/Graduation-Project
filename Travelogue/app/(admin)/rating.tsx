@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const Factor = () => {
+const Rating = () => {
   return (
     <View>
-      <Text>Factor</Text>
+      <Text>Rating</Text>
     </View>
   )
 }
 
-export default Factor
+export default Rating

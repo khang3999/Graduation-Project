@@ -11,7 +11,6 @@ import {
 import React from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
-import MenuItem from "@/components/buttons/MenuProfileButton";
 
 const Plus = () => (
   <IconButton

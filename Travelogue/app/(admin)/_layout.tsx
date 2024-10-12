@@ -1,6 +1,6 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Image, View, StyleSheet, Text } from 'react-native';
+import { Image, View, StyleSheet } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { MaterialIcons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 
@@ -10,7 +10,7 @@ function CustomDrawerContent(props:any) {
       {/* Hình ảnh phía trên */}
       <View style={styles.imageContainer}>
         <Image 
-          source={require('@/assets/images/logo.png')} 
+          source={require('../../assets/images/logo.png')} 
           resizeMode="contain" 
           style={styles.image} 
         />
@@ -85,14 +85,19 @@ export default function Layout() {
             title: 'Packages',
             drawerIcon: ({color, size}) => (
               <MaterialCommunityIcons name="package" size={size} color={color} />
-            ),
-            headerRight : ()=>(
-              <Text>Pluss</Text>
             )
           }}
-          
         />
-        
+        <Drawer.Screen
+          name="rating" 
+          options={{
+            drawerLabel: 'Ratings',
+            title: 'Rating',
+            drawerIcon: ({color, size}) => (
+              <MaterialCommunityIcons name="progress-star" size={size} color={color} />
+            )
+          }}
+        />
         <Drawer.Screen
           name="(information)" 
           options={{
