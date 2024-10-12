@@ -4,7 +4,7 @@ import React from 'react'
 const Scenic = () => {
   return (
     <View>
-      <Text>Scenic spots</Text>
+      <Text>Scenic</Text>
     </View>
   )
 }

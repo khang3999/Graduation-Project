@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import React from 'react'
 import { Chip } from 'react-native-paper';
 
@@ -10,7 +10,7 @@ export default function CheckedInChip({items}: CheckedInChipProps) {
   return (
     <View style={styles.container}>
         {items.map((item, index) => (
-        <Chip key={index} icon="check" style={styles.chipItem} textStyle={styles.chipText}>{item}</Chip>             
+        <Chip key={index} style={styles.chipItem} >{item}</Chip>             
     ))}
     </View>
   )

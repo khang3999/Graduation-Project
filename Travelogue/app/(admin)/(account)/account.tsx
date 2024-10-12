@@ -1,11 +1,3 @@
-<<<<<<< HEAD:Travelogue/app/screens/admin/account/account.tsx
-=======
-
-import { View, Text } from 'react-native'
-import React from 'react'
-console.log('App is running from (admin)/index.tsx');
->>>>>>> 1c10ec0ff9f61229c1f01828fbc5e8db9bbfb2d2:Travelogue/app/(admin)/(account)/account.tsx
-
 import UnlockBtn from '@/components/buttons/UnlockBtn';
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';

@@ -10,15 +10,7 @@ function CustomDrawerContent(props:any) {
       {/* Hình ảnh phía trên */}
       <View style={styles.imageContainer}>
         <Image 
-<<<<<<< HEAD:Travelogue/app/screens/admin/_layout.tsx
-<<<<<<< HEAD
           source={require('@/assets/images/logo.png')} 
-=======
-          source={require('../../../assets/images/logo.png')} 
->>>>>>> e0e135ad0175f7faa6ec8f30fa266cdee046326a
-=======
-          source={require('../../assets/images/logo.png')} 
->>>>>>> 1c10ec0ff9f61229c1f01828fbc5e8db9bbfb2d2:Travelogue/app/(admin)/_layout.tsx
           resizeMode="contain" 
           style={styles.image} 
         />
