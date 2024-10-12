@@ -29,7 +29,7 @@ const auth = getAuth(app);
 const database = getDatabase(app); 
 const storage = getStorage(app);
 
-// Exporting Firebase services
+// Exporting Firebase services  
 export { 
   auth, 
   database, 
