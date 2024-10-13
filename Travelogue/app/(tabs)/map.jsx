@@ -18,8 +18,8 @@ import { RowComponent, SectionComponent } from "@/components";
 import { database, ref, onValue } from "@/firebase/firebaseConfig";
 
 const Map = () => {
-  // const [countryData, setCountryData] = useState([]);
-  // const [areaData, setAreaData] = useState([]);
+  const [countryData, setCountryData] = useState([]);
+  const [areaData, setAreaData] = useState([]);
 
   const festivalTypeOptions = [
     {
@@ -99,225 +99,226 @@ const Map = () => {
   ];
 
   // // Dữ liệu các quốc gia
-  const countryData = [
-    {
-      id: "vietnam",
-      label: "VietNam",
-      latitude: 17.65005783136121,
-      longitude: 105.40283940732479,
-      image: "https://inuvdp.com/wp-content/uploads/2022/05/logo-la-co-01.jpg",
-    },
-    {
-      id: "thailand",
-      label: "Thailand",
-      latitude: 15.87,
-      longitude: 100.9925,
-      image:
-        "https://seeklogo.com/images/T/thailand-flag-logo-AC65995692-seeklogo.com.png",
-    },
-    {
-      id: "japan",
-      label: "Japan",
-      latitude: 36.2048,
-      longitude: 138.2529,
-      image:
-        "https://seeklogo.com/images/J/Japan-logo-95CBBFE790-seeklogo.com.png",
-    },
-    {
-      id: "southkorea",
-      label: "South Korea",
-      latitude: 35.9078,
-      longitude: 127.7669,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQewfnFo0VDCF0JhqDv1GisWfqPULWJvjLJmw&s",
-    },
-    {
-      id: "china",
-      label: "China",
-      latitude: 35.8617,
-      longitude: 104.1954,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8A47nB2JnLyB9OFUXuTrjgPmRarECQjy_Vg&s",
-    },
-  ];
+  // const countryData = [
+  //   {
+  //     id: "vietnam",
+  //     label: "VietNam",
+  //     latitude: 17.65005783136121,
+  //     longitude: 105.40283940732479,
+  //     image: "https://inuvdp.com/wp-content/uploads/2022/05/logo-la-co-01.jpg",
+  //   },
+  //   {
+  //     id: "thailand",
+  //     label: "Thailand",
+  //     latitude: 15.87,
+  //     longitude: 100.9925,
+  //     image:
+  //       "https://seeklogo.com/images/T/thailand-flag-logo-AC65995692-seeklogo.com.png",
+  //   },
+  //   {
+  //     id: "japan",
+  //     label: "Japan",
+  //     latitude: 36.2048,
+  //     longitude: 138.2529,
+  //     image:
+  //       "https://seeklogo.com/images/J/Japan-logo-95CBBFE790-seeklogo.com.png",
+  //   },
+  //   {
+  //     id: "southkorea",
+  //     label: "South Korea",
+  //     latitude: 35.9078,
+  //     longitude: 127.7669,
+  //     image:
+  //       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQewfnFo0VDCF0JhqDv1GisWfqPULWJvjLJmw&s",
+  //   },
+  //   {
+  //     id: "china",
+  //     label: "China",
+  //     latitude: 35.8617,
+  //     longitude: 104.1954,
+  //     image:
+  //       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8A47nB2JnLyB9OFUXuTrjgPmRarECQjy_Vg&s",
+  //   },
+  // ];
 
-  const areaData = [
-    // Các khu vực của Việt Nam
-    {
-      id: "region-all",
-      label: "Tất cả khu vực",
-      latitude: 17.65005783136121,
-      longitude: 105.40283940732479,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-northwest",
-      label: "Tây Bắc Bộ",
-      latitude: 21.3331,
-      longitude: 103.9328,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-northeast",
-      label: "Đông Bắc Bộ",
-      latitude: 22.3964,
-      longitude: 104.0498,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-redriverdelta",
-      label: "Đồng bằng sông Hồng",
-      latitude: 20.9123,
-      longitude: 106.1553,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-northcentral",
-      label: "Bắc Trung Bộ",
-      latitude: 18.2809,
-      longitude: 105.6916,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-southcentralcoast",
-      label: "Duyên hải Nam Trung Bộ",
-      latitude: 14.0583,
-      longitude: 108.2772,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-centralhighlands",
-      label: "Tây Nguyên",
-      latitude: 13.0820,
-      longitude: 108.2772,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-southeast",
-      label: "Đông Nam Bộ",
-      latitude: 10.8231,
-      longitude: 106.6297,
-      countryId: "vietnam",
-    },
-    {
-      id: "region-mekongdelta",
-      label: "Đồng bằng sông Cửu Long",
-      latitude: 10.2251,
-      longitude: 105.9640,
-      countryId: "vietnam",
-    },
-    // Các khu vực của Thái Lan
-    {
-      id: "region-alls",
-      label: "Tất cả khu vực",
-      latitude: 15.87,
-      longitude: 100.9925,
-      countryId: "thailand",
-    },
-    {
-      id: "region-bangkok",
-      label: "Bangkok và Trung Thái",
-      latitude: 13.7563,
-      longitude: 100.5018,
-      countryId: "thailand",
-    },
-    {
-      id: "region-chiangmai",
-      label: "Chiang Mai và Bắc Thái",
-      latitude: 18.7061,
-      longitude: 98.9817,
-      countryId: "thailand",
-    },
-    // Các khu vực của Nhật Bản
-    {
-      id: "region-allx",
-      label: "Tất cả khu vực",
-      latitude: 36.2048,
-      longitude: 138.2529,
-      countryId: "japan",
-    },
-    {
-      id: "region-kanto",
-      label: "Khu vực Kanto",
-      latitude: 35.6895,
-      longitude: 139.6917,
-      countryId: "japan",
-    },
-    {
-      id: "region-kansai",
-      label: "Khu vực Kansai",
-      latitude: 34.6937,
-      longitude: 135.5023,
-      countryId: "japan",
-    },
-    // Các khu vực của Hàn Quốc
-    {
-      id: "dđregion-all",
-      label: "Tất cả khu vực",
-      latitude: 35.9078,
-      longitude: 127.7669,
-      countryId: "southkorea",
-    },
-    {
-      id: "region-seoul",
-      label: "Seoul và Gyeonggi",
-      latitude: 37.5665,
-      longitude: 126.978,
-      countryId: "southkorea",
-    },
-    {
-      id: "region-busan",
-      label: "Busan và Đông Nam Hàn",
-      latitude: 35.1796,
-      longitude: 129.0756,
-      countryId: "southkorea",
-    },
-    // Các khu vực của Trung Quốc
-    {
-      id: "region-allxx",
-      label: "Tất cả khu vực",
-      latitude: 35.8617,
-      longitude: 104.1954,
-      countryId: "china",
-    },
-    {
-      id: "region-beijing",
-      label: "Bắc Kinh và Bắc Trung Quốc",
-      latitude: 39.9042,
-      longitude: 116.4074,
-      countryId: "china",
-    },
-    {
-      id: "region-shenzhen",
-      label: "Thâm Quyến và Nam Trung Quốc",
-      latitude: 22.3964,
-      longitude: 114.1095,
-      countryId: "china",
-    },
-  ];
+  // const areaData = [
+  //   // Các khu vực của Việt Nam
+  //   {
+  //     id: "region-all",
+  //     label: "Tất cả khu vực",
+  //     latitude: 17.65005783136121,
+  //     longitude: 105.40283940732479,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-northwest",
+  //     label: "Tây Bắc Bộ",
+  //     latitude: 21.3331,
+  //     longitude: 103.9328,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-northeast",
+  //     label: "Đông Bắc Bộ",
+  //     latitude: 22.3964,
+  //     longitude: 104.0498,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-redriverdelta",
+  //     label: "Đồng bằng sông Hồng",
+  //     latitude: 20.9123,
+  //     longitude: 106.1553,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-northcentral",
+  //     label: "Bắc Trung Bộ",
+  //     latitude: 18.2809,
+  //     longitude: 105.6916,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-southcentralcoast",
+  //     label: "Duyên hải Nam Trung Bộ",
+  //     latitude: 14.0583,
+  //     longitude: 108.2772,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-centralhighlands",
+  //     label: "Tây Nguyên",
+  //     latitude: 13.0820,
+  //     longitude: 108.2772,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-southeast",
+  //     label: "Đông Nam Bộ",
+  //     latitude: 10.8231,
+  //     longitude: 106.6297,
+  //     countryId: "vietnam",
+  //   },
+  //   {
+  //     id: "region-mekongdelta",
+  //     label: "Đồng bằng sông Cửu Long",
+  //     latitude: 10.2251,
+  //     longitude: 105.9640,
+  //     countryId: "vietnam",
+  //   },
+  //   // Các khu vực của Thái Lan
+  //   {
+  //     id: "region-alls",
+  //     label: "Tất cả khu vực",
+  //     latitude: 15.87,
+  //     longitude: 100.9925,
+  //     countryId: "thailand",
+  //   },
+  //   {
+  //     id: "region-bangkok",
+  //     label: "Bangkok và Trung Thái",
+  //     latitude: 13.7563,
+  //     longitude: 100.5018,
+  //     countryId: "thailand",
+  //   },
+  //   {
+  //     id: "region-chiangmai",
+  //     label: "Chiang Mai và Bắc Thái",
+  //     latitude: 18.7061,
+  //     longitude: 98.9817,
+  //     countryId: "thailand",
+  //   },
+  //   // Các khu vực của Nhật Bản
+  //   {
+  //     id: "region-allx",
+  //     label: "Tất cả khu vực",
+  //     latitude: 36.2048,
+  //     longitude: 138.2529,
+  //     countryId: "japan",
+  //   },
+  //   {
+  //     id: "region-kanto",
+  //     label: "Khu vực Kanto",
+  //     latitude: 35.6895,
+  //     longitude: 139.6917,
+  //     countryId: "japan",
+  //   },
+  //   {
+  //     id: "region-kansai",
+  //     label: "Khu vực Kansai",
+  //     latitude: 34.6937,
+  //     longitude: 135.5023,
+  //     countryId: "japan",
+  //   },
+  //   // Các khu vực của Hàn Quốc
+  //   {
+  //     id: "dđregion-all",
+  //     label: "Tất cả khu vực",
+  //     latitude: 35.9078,
+  //     longitude: 127.7669,
+  //     countryId: "southkorea",
+  //   },
+  //   {
+  //     id: "region-seoul",
+  //     label: "Seoul và Gyeonggi",
+  //     latitude: 37.5665,
+  //     longitude: 126.978,
+  //     countryId: "southkorea",
+  //   },
+  //   {
+  //     id: "region-busan",
+  //     label: "Busan và Đông Nam Hàn",
+  //     latitude: 35.1796,
+  //     longitude: 129.0756,
+  //     countryId: "southkorea",
+  //   },
+  //   // Các khu vực của Trung Quốc
+  //   {
+  //     id: "region-allxx",
+  //     label: "Tất cả khu vực",
+  //     latitude: 35.8617,
+  //     longitude: 104.1954,
+  //     countryId: "china",
+  //   },
+  //   {
+  //     id: "region-beijing",
+  //     label: "Bắc Kinh và Bắc Trung Quốc",
+  //     latitude: 39.9042,
+  //     longitude: 116.4074,
+  //     countryId: "china",
+  //   },
+  //   {
+  //     id: "region-shenzhen",
+  //     label: "Thâm Quyến và Nam Trung Quốc",
+  //     latitude: 22.3964,
+  //     longitude: 114.1095,
+  //     countryId: "china",
+  //   },
+  // ];
   //Lấu dữ liệu từ firebase về quốc gia
-  // useEffect(() => {
-  //   const countriesRef = ref(database, 'countries');
-  //   const areaRef = ref(database, 'areas');
-  //   onValue(countriesRef, (snapshot) => {
-  //     const data = snapshot.val() || {};
-  //     console.log(data);
-  //     // Chuyển từ đối tượng thành mảng
-  //     const formattedData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-  //     console.log(formattedData);
-  //     setCountryData(formattedData);
-  //     // console.log("Country Data:", countryData);
-  //   });
-  //   onValue(areaRef, (snapshot) => {
-  //     const data = snapshot.val() || {};
-  //     // console.log(data);
-  //     // Chuyển từ đối tượng thành mảng
-  //     const formattedData = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-  //     // console.log(formattedData);
-  //     setAreaData(formattedData);
-  //   });
+  
+  useEffect(() => {
+    const countriesRef = ref(database, 'countries');
+    const areaRef = ref(database, 'areas');
+    onValue(countriesRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      // console.log(data);
+      // Chuyển từ đối tượng thành mảng
+      const formattedDataCountry = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+      // console.log(formattedDataCountry);
+      setCountryData(formattedDataCountry);
+      // console.log("Country Data:", countryData);
+    });
+    onValue(areaRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      console.log(data);
+      // Chuyển từ đối tượng thành mảng
+      const formattedDataAreas = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+      // console.log(formattedDataAreas);
+      setAreaData(formattedDataAreas);
+    });
 
-  // }, []);
+  }, []);
 
   const mapViewRef = useRef(null);
   const [mapLat] = useState(16.494413736992392);
@@ -340,13 +341,12 @@ const Map = () => {
   const bottomSheetRef = useRef(null);
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
-  useEffect(() => {
-    console.log("Updated Selected Country:", selectedCountry);
-  }, [selectedCountry]);
-  const handleCountryChange = (item) => {
-    // console.log("Selected Country1:", item);
-    if (item !== null) {
-      const { latitude, longitude } = item;
+ 
+
+  const handleCountryChange = (country) => {
+    // console.log("Selected Country1:", country);
+    if (country !== null) {
+      const { latitude, longitude } = country;
 
       // sử dụng animateToRegion
       if (mapViewRef.current) {
@@ -358,27 +358,33 @@ const Map = () => {
         }, 1000); 
       }
 
-      setSelectedCountry(item.id);
+      setSelectedCountry(country.id);
 
-      console.log("Selected Country:", item);
-      // console.log("Selected Country id:", countryData[item].id);
+      console.log("Selected Country:", country);
+      console.log("Selected Country id:", country.id);
+      
     }
 
     setModalVisibleCountry(false);
   };
   useEffect(() => {
     if (selectedCountry) {
+      // console.log("Selected Country:", selectedCountry);
       setFilteredAreaData(
+        // console.log("Area Data:", areaData),
         areaData.filter((area) => area.countryId === selectedCountry)
       );
-      setSelectedArea(filteredAreaData[0].id);
+      console.log("Filtered Area Data:", filteredAreaData);
+      setSelectedArea(filteredAreaData.id);
+      console.log("Selected Area:", selectedArea);
     }
+
   }, [selectedCountry]);
 
-  const handleAreaChange = (item) => {
-    // const selectedAreaChosse = areaData.find((area) => area.id === item.id);
-    if (item !== null) {
-      const { latitude, longitude } = item;
+  const handleAreaChange = (area) => {
+    // const selectedAreaChosse = areaData.find((area) => area.id === area.id);
+    if (area !== null) {
+      const { latitude, longitude } = area;
       // sử dụng animateToRegion
       if (mapViewRef.current) {
         mapViewRef.current.animateToRegion({
@@ -388,15 +394,13 @@ const Map = () => {
           longitudeDelta: 5,
         }, 1000);
       }
-      setSelectedArea(item.id);
-      // console.log("Selected Area:", item.label);
+      setSelectedArea(area.id);
+      // console.log("Selected Area:", area.label);
     }
     setModalVisibleArea(false);
   };
 
-  useEffect(() => {
-    // console.log("Updated Selected Area:", selectedArea);
-  }, [selectedArea]);
+
   // Thay đổi type lễ hội
   const handleFestivalChange = (value, index) => {
     // console.log("Số vị trí:", value);
