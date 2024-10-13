@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import {
   ButtonComponent,
   InputComponent,
@@ -15,25 +22,35 @@ import {
   getAuth,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { auth } from "@/firebase/firebaseConfig";
+import { auth, set } from "@/firebase/firebaseConfig";
 
 const ForgotPasswordScreen = ({ navigation, route }: any) => {
   const requestemail = route.params?.email || "";
   // console.log (requestemail);
   const [email, setEmail] = useState(requestemail);
+  const [loading, setLoading] = useState(false);
+  const [textLoading, setTextLoading] = useState("Gửi yêu cầu");
 
   const handleResetPassword = async () => {
+    setLoading(true);
+    setTextLoading("Đang gửi...");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      setLoading(false);
+      setTextLoading("Gửi yêu cầu");
       Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
       return;
     }
     await sendPasswordResetEmail(auth, email)
       .then(() => {
+        setLoading(false);
+        setTextLoading("Gửi yêu cầu");
         Alert.alert("Thành công", "Email đặt lại mật khẩu đã được gửi");
         navigation.navigate("LoginScreen");
       })
       .catch((error) => {
+        setLoading(false);
+        setTextLoading("Gửi yêu cầu");
         Alert.alert("Lỗi", "Email chưa được đăng ký");
       });
   };
@@ -71,11 +88,18 @@ const ForgotPasswordScreen = ({ navigation, route }: any) => {
         />
         <ButtonComponent
           textStyles={{ fontWeight: "semibold", fontSize: 20 }}
-          text="GỬI YÊU CẦU"
+          text={textLoading}
           color={appColors.danger}
           onPress={handleResetPassword}
         />
       </SectionComponent>
+      {loading && (
+        <Modal transparent={true} animationType="none" visible={loading}>
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={appColors.danger} />
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -84,6 +108,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: appColors.white,
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });
 

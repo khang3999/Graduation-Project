@@ -29,19 +29,25 @@ import {
   Platform,
   Alert,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import ImagePickerComponent from "@/components/images/ImagePickerComponent";
-import { database, getDownloadURL, ref, set, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import {
+  database,
+  getDownloadURL,
+  ref,
+  set,
+  storageRef,
+  uploadBytes,
+} from "@/firebase/firebaseConfig";
 import { UserRegister } from "@/model/UserRegister";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, storage } from "@/firebase/firebaseConfig";
 
-
 const RegisterScreen = ({ navigation }: any) => {
-  
   //Thêm trạng thái
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [textLoading, setTextLoading] = useState("Đăng ký");
   // Thanh chuyển tab
   const [activeTab, setActiveTab] = useState("user");
   // Thông tin đăng ký
@@ -60,7 +66,10 @@ const RegisterScreen = ({ navigation }: any) => {
   >(null);
 
   //Up ảnh lên storage
-  const uploadImage = async (imageUri: string, path: string): Promise<string | null> => {
+  const uploadImage = async (
+    imageUri: string,
+    path: string
+  ): Promise<string | null> => {
     try {
       console.log(frontCCCDImage);
       const response = await fetch(imageUri);
@@ -68,7 +77,7 @@ const RegisterScreen = ({ navigation }: any) => {
       const storageReference = storageRef(storage, path);
       await uploadBytes(storageReference, blob);
       const url = await getDownloadURL(storageReference);
-      return url;  
+      return url;
     } catch (error) {
       console.error("Upload image failed", error);
       return null;
@@ -76,7 +85,8 @@ const RegisterScreen = ({ navigation }: any) => {
   };
   // Xử lý đăng ký
   const onRegisterUser = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
+    setTextLoading("Đang xử lý...");
     try {
       if (activeTab === "user") {
         if (!name || !email || !phone || !password || !confirmPassword) {
@@ -236,21 +246,21 @@ const RegisterScreen = ({ navigation }: any) => {
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
-          
+
           if (newUser.imageFrontUrlCCCD) {
             frontImageUrl = await uploadImage(
               newUser.imageFrontUrlCCCD,
               `users/${user.uid}/papers/frontCCCD.jpg`
             );
           }
-          
+
           if (newUser.imageBackUrlCCCD) {
             backImageUrl = await uploadImage(
               newUser.imageBackUrlCCCD,
               `users/${user.uid}/papers/backCCCD.jpg`
             );
           }
-          
+
           if (newUser.imageUrlBusinessLicense) {
             businessLicenseImageUrl = await uploadImage(
               newUser.imageUrlBusinessLicense,
@@ -276,13 +286,17 @@ const RegisterScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
+        setTextLoading("Đăng ký");
+        setIsLoading(false);
         Alert.alert("Thông báo", "Email đã được sử dụng.");
       } else {
+        setTextLoading("Đăng ký");
+        setIsLoading(false);
         Alert.alert("Thông báo", "Đã xảy ra lỗi: " + error.message);
       }
-    }
-    finally {
-      setIsLoading(false); 
+    } finally {
+      setTextLoading("Đăng ký");
+      setIsLoading(false);
     }
   };
 
@@ -497,25 +511,25 @@ const RegisterScreen = ({ navigation }: any) => {
 
       {/* Nút đăng ký cố định ở dưới */}
       <View style={styles.footer}>
-      {isLoading ? (  
-             <ButtonComponent
-             text="Đăng ký"
-             color={appColors.danger}
-             type="primary"
-             textStyles={{ fontWeight: "bold", fontSize: 20 }}
-             onPress={onRegisterUser}
-             disabled={isLoading}  
-           />
-          ) : (
-            <ButtonComponent
-              text="Đăng ký"
-              color={appColors.danger}
-              type="primary"
-              textStyles={{ fontWeight: "bold", fontSize: 20 }}
-              onPress={onRegisterUser}
-              disabled={isLoading}  
-            />
-          )}
+        {isLoading ? (
+          <ButtonComponent
+            text={textLoading}
+            color={appColors.danger}
+            type="primary"
+            textStyles={{ fontWeight: "bold", fontSize: 20 }}
+            onPress={onRegisterUser}
+            disabled={isLoading}
+          />
+        ) : (
+          <ButtonComponent
+            text={textLoading}
+            color={appColors.danger}
+            type="primary"
+            textStyles={{ fontWeight: "bold", fontSize: 20 }}
+            onPress={onRegisterUser}
+            disabled={isLoading}
+          />
+        )}
         <SectionComponent>
           <RowComponent justify="center">
             <TextComponent text="Bạn đã có tài khoản? " />
@@ -527,6 +541,13 @@ const RegisterScreen = ({ navigation }: any) => {
             />
           </RowComponent>
         </SectionComponent>
+        {isLoading && (
+          <Modal transparent={true} animationType="none" visible={isLoading}>
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={appColors.danger} />
+            </View>
+          </Modal>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -570,6 +591,12 @@ const styles = StyleSheet.create({
   footer: {
     padding: 15,
     backgroundColor: "#fff",
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });
 
