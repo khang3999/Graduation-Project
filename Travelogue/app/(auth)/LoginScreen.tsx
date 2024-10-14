@@ -21,9 +21,11 @@ import { Lock, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, set } from "@/firebase/firebaseConfig";
+import { auth, set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { get } from "@firebase/database";
+import Toast from 'react-native-toast-message';
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -76,20 +78,47 @@ const LoginScreen = ({ navigation }: any) => {
         password
       );
       const user = userCredential.user;
-
-      router.replace("/(tabs)");
+      const userRef = ref(database, "accounts/" + user.uid);
+      const snapshot = await get(userRef);
+      const data = snapshot.val();
+      // console.log(data);
+      if (data) {
+        const statusId = data.status_id;
+        console.log(statusId);
+        if (statusId === "block") {
+          Alert.alert(
+            "Tài khoản đã bị cấm",
+            "Vui lòng liên hệ quản trị viên để biết thêm thông tin."
+          );
+        } else if (statusId === "register") {
+          Alert.alert(
+            "Tài khoản chưa được duyệt",
+            "Hãy chờ quản trị viên duyệt tài khoản."
+          );
+        } else if (statusId === "active") {
+          Toast.show({
+            type: 'success',
+            text1: 'Đăng nhập thành công',
+            text2: `Chào mừng ${data.fullname }`,
+            visibilityTime: 3000,
+          });
+          router.replace("/(tabs)");
+        }
+      }
+   
       setLoading(false);
       setTextLoading("Đăng nhập");
-      Alert.alert("Đăng nhập thành công", `Chào mừng ${user.email}`);
-    } catch (error) {
+   
+   } catch (error) {
       setLoading(false);
       setTextLoading("Đăng nhập");
       Alert.alert(
         "Đăng nhập thất bại",
         "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
       );
-    }
-  };
+   }
+  }
+   
 
   return (
     <ScrollView>
@@ -188,13 +217,13 @@ const LoginScreen = ({ navigation }: any) => {
           />
         </RowComponent>
       </SectionComponent>
-    {loading && (
-      <Modal transparent={true} animationType="none" visible={loading}>
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={appColors.danger} />
-        </View>
-      </Modal>
-    )}
+      {loading && (
+        <Modal transparent={true} animationType="none" visible={loading}>
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={appColors.danger} />
+          </View>
+        </Modal>
+      )}
     </ScrollView>
   );
 };

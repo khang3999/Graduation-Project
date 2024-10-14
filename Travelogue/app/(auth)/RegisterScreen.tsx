@@ -136,13 +136,15 @@ const RegisterScreen = ({ navigation }: any) => {
           // Tạo đối tượng User mới
           const behavior = "";
           const avatar = "";
-          const numberCCCD = null;
-          const imageFrontUrlCCCD = null;
-          const imageBackUrlCCCD = null;
-          const business_license_id = null;
-          const imageUrlBusinessLicense = null;
+          const numberCCCD = "";
+          const imageFrontUrlCCCD = "";
+          const imageBackUrlCCCD = "";
+          const business_license_id = "";
+          const imageUrlBusinessLicense = "";
           const expense = null;
+          const status = "active";
           const currentDate = new Date().toLocaleDateString();
+         
           const newUser = new UserRegister({
             name,
             email,
@@ -157,10 +159,12 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD,
             business_license_id,
             imageUrlBusinessLicense,
+            status_id: status,
           });
+          // console.log(newUser);
 
           // // Lưu thông tin người dùng vào Firebase Realtime
-          await set(ref(database, `/users/${user.uid}`), {
+          await set(ref(database, `/accounts/${user.uid}`), {
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -168,6 +172,13 @@ const RegisterScreen = ({ navigation }: any) => {
             avatar: newUser.avatar,
             expense: newUser.expense,
             createdAt: newUser.currentDate,
+            numberCCCD: newUser.numberCCCD,
+            imageFrontUrlCCCD: newUser.imageFrontUrlCCCD,
+            imageBackUrlCCCD: newUser.imageBackUrlCCCD,
+            business_license_id: newUser.business_license_id,
+            imageUrlBusinessLicense: newUser.imageUrlBusinessLicense,
+            status_id: newUser.status_id,
+            
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -229,6 +240,10 @@ const RegisterScreen = ({ navigation }: any) => {
           const avatar = "";
           const expense = 0;
           const currentDate = new Date().toLocaleDateString();
+          const status = "register";
+          // const likes = ["empty"];
+          // const marks = ["empty"];
+          // const checkins = { default: "empty" };
           const newUser = new UserRegister({
             name,
             email,
@@ -243,6 +258,8 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD: backCCCDImage,
             business_license_id: businessLicense,
             imageUrlBusinessLicense: businessLicenseImage,
+            status_id: status,
+           
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
@@ -250,34 +267,40 @@ const RegisterScreen = ({ navigation }: any) => {
           if (newUser.imageFrontUrlCCCD) {
             frontImageUrl = await uploadImage(
               newUser.imageFrontUrlCCCD,
-              `users/${user.uid}/papers/frontCCCD.jpg`
+              `accounts/${user.uid}/papers/frontCCCD.jpg`
             );
           }
 
           if (newUser.imageBackUrlCCCD) {
             backImageUrl = await uploadImage(
               newUser.imageBackUrlCCCD,
-              `users/${user.uid}/papers/backCCCD.jpg`
+              `accounts/${user.uid}/papers/backCCCD.jpg`
             );
           }
 
           if (newUser.imageUrlBusinessLicense) {
             businessLicenseImageUrl = await uploadImage(
               newUser.imageUrlBusinessLicense,
-              `users/${user.uid}/papers/businessLicense.jpg`
+              `accounts/${user.uid}/papers/businessLicense.jpg`
             );
           }
 
           // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
-          await set(ref(database, `/users/${user.uid}`), {
+          await set(ref(database, `/accounts/${user.uid}`), {
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
+            behavior: newUser.behavior,
+            avatar: newUser.avatar,
             numberCCCD: newUser.numberCCCD,
             imageFrontUrlCCCD: frontImageUrl,
             imageBackUrlCCCD: backImageUrl,
             imageUrlBusinessLicense: businessLicenseImageUrl,
+            business_license_id: newUser.business_license_id,
             createdAt: newUser.currentDate,
+            status_id: newUser.status_id,
+            expense: newUser.expense,
+           
           });
         }
 
