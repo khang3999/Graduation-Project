@@ -1,13 +1,42 @@
-import { Image, StyleSheet, Platform, Text } from "react-native";
+import { Image, StyleSheet, Platform, Text, ActivityIndicator } from "react-native";
 
 import HeaderProfile from "@/components/profile/HeaderProfile";
 import GalleryTabView from "@/components/profile/GalleryTabView";
+import React, { useEffect } from "react";
+import { getCurrentUserData } from "@/services/userService";
 
 export default function ProfileScreen() {
-  return (    
+  const [userData, setUserData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await getCurrentUserData();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }     
+    };
+    fetchUserData();
+  }, []);
+ 
+  if(loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
+  if (!userData) {
+    return <Text>No user data available</Text>;
+  }
+  
+  console.log(userData);
+  
+  return (
     <>
-      <HeaderProfile />   
-      <GalleryTabView />       
+      <HeaderProfile />
+      <GalleryTabView />
     </>
   );
 }

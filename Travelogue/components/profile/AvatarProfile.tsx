@@ -5,6 +5,7 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {router} from 'expo-router';
+import React from "react";
 
 export default function AvatarProfile() {
   return (
@@ -12,7 +13,7 @@ export default function AvatarProfile() {
       <View style={styles.row}>
         <Image
           style={styles.avatar}
-          source={require("../../assets/images/tom.png")}
+          source={require("@/assets/images/tom.png")}
         />
         <View style={styles.column}>
           <Text style={styles.infoText}>1.000</Text>
