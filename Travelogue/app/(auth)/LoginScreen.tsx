@@ -38,26 +38,35 @@ const LoginScreen = ({ navigation }: any) => {
     const loadCredentials = async () => {
       const savedEmail = await AsyncStorage.getItem("userEmail");
       const savedPassword = await AsyncStorage.getItem("userPassword");
-      console.log(savedEmail);
-      console.log(savedPassword);
+      const savedRemember = await AsyncStorage.getItem("isRemember");
+
       if (savedEmail) setEmail(savedEmail);
       if (savedPassword) setPassword(savedPassword);
+      if (savedRemember === "true") setIsRemember(true);
     };
 
     loadCredentials();
   }, []);
 
   const handleLogin = async () => {
-    setLoading(true);
-    setTextLoading("Đang đăng nhập...");
+   
     if (isRemember) {
       AsyncStorage.setItem("userEmail", email);
       AsyncStorage.setItem("userPassword", password);
+      AsyncStorage.setItem("isRemember", "true");
     }
+    else {
+      AsyncStorage.removeItem("userEmail");
+      AsyncStorage.removeItem("userPassword");
+      AsyncStorage.removeItem("isRemember");
+    }
+
     if (!email || !password) {
       Alert.alert("Lỗi", "Hãy nhập đầy đủ thông tin đăng nhập.");
       return;
     }
+    setLoading(true);
+    setTextLoading("Đang đăng nhập...");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {

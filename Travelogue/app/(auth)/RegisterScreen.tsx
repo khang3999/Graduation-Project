@@ -85,8 +85,6 @@ const RegisterScreen = ({ navigation }: any) => {
   };
   // Xử lý đăng ký
   const onRegisterUser = async () => {
-    setIsLoading(true);
-    setTextLoading("Đang xử lý...");
     try {
       if (activeTab === "user") {
         if (!name || !email || !phone || !password || !confirmPassword) {
@@ -123,7 +121,8 @@ const RegisterScreen = ({ navigation }: any) => {
           );
           return;
         }
-
+        setIsLoading(true);
+        setTextLoading("Đang xử lý...");
         // Luu thông tin đăng ký người dùng tren auth
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -144,7 +143,7 @@ const RegisterScreen = ({ navigation }: any) => {
           const expense = null;
           const status = "active";
           const currentDate = new Date().toLocaleDateString();
-         
+
           const newUser = new UserRegister({
             name,
             email,
@@ -178,7 +177,6 @@ const RegisterScreen = ({ navigation }: any) => {
             business_license_id: newUser.business_license_id,
             imageUrlBusinessLicense: newUser.imageUrlBusinessLicense,
             status_id: newUser.status_id,
-            
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -225,7 +223,8 @@ const RegisterScreen = ({ navigation }: any) => {
           Alert.alert("Thông báo", "Vui lòng nhập số CCCD hợp lệ (9-12 số).");
           return;
         }
-
+        setIsLoading(true);
+        setTextLoading("Đang xử lý...");
         // Luu thông tin đăng ký người dùng tren auth
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -259,7 +258,6 @@ const RegisterScreen = ({ navigation }: any) => {
             business_license_id: businessLicense,
             imageUrlBusinessLicense: businessLicenseImage,
             status_id: status,
-           
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
@@ -300,7 +298,6 @@ const RegisterScreen = ({ navigation }: any) => {
             createdAt: newUser.currentDate,
             status_id: newUser.status_id,
             expense: newUser.expense,
-           
           });
         }
 
