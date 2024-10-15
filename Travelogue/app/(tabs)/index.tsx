@@ -6,6 +6,14 @@ import {router } from 'expo-router'
 
 console.log('App is running from (tabs)/index.tsx');
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/LoginScreen"); 
+    } catch (error) {
+      Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
+    }
+  };
 const Home = () => {
   return (
     <View>

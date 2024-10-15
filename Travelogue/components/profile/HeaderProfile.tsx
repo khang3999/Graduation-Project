@@ -19,6 +19,7 @@ const Plus = () => (
     iconColor={MD3Colors.error10}
     size={24}
     onPress={() => console.log("Plus button pressed")}
+    // onPress={() => router.push("/(user)/ChangePassword")}
     style={styles.button}
     accessible={true}
     accessibilityLabel="Add button"

@@ -3,6 +3,7 @@ import { Drawer } from 'expo-router/drawer';
 import { Image, View, StyleSheet, Text } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { MaterialIcons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import React from 'react';
 
 function CustomDrawerContent(props:any) {
   return (

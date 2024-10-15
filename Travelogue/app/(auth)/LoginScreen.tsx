@@ -1,5 +1,14 @@
-import React, { useState } from "react";
-import { StyleSheet, Image, Switch, Alert } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Image,
+  Switch,
+  Alert,
+  View,
+  ScrollView,
+  Modal,
+  ActivityIndicator,
+} from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import {
   ButtonComponent,
@@ -10,32 +19,118 @@ import {
 } from "@/components";
 import { Lock, Sms } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
-import { View } from "react-native";
+import { router } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, set, ref, database, onValue } from "@/firebase/firebaseConfig";
+// import FacebookLoginButton from "@/components/socials/facebook";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { get } from "@firebase/database";
+import Toast from 'react-native-toast-message';
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRemember, setIsRemember] = useState(false);
+  const [textLoading, setTextLoading] = useState("Đăng nhập");
+  const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  useEffect(() => {
+    const loadCredentials = async () => {
+      const savedEmail = await AsyncStorage.getItem("userEmail");
+      const savedPassword = await AsyncStorage.getItem("userPassword");
+      const savedRemember = await AsyncStorage.getItem("isRemember");
+
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+      if (savedRemember === "true") setIsRemember(true);
+    };
+
+    loadCredentials();
+  }, []);
 
   const handleLogin = async () => {
+   
+    if (isRemember) {
+      AsyncStorage.setItem("userEmail", email);
+      AsyncStorage.setItem("userPassword", password);
+      AsyncStorage.setItem("isRemember", "true");
+    }
+    else {
+      AsyncStorage.removeItem("userEmail");
+      AsyncStorage.removeItem("userPassword");
+      AsyncStorage.removeItem("isRemember");
+    }
+
     if (!email || !password) {
       Alert.alert("Error", "Please enter both email and password.");
       return;
     }
+    setLoading(true);
+    setTextLoading("Đang đăng nhập...");
 
-    if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Vui lòng nhập địa chỉ email hợp lệ. (abc@gmail.com)");
       return;
     }
-  };
+
+    if (password.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
+
+    try {
+      // Đăng nhập bằng email và mật khẩu
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      const userRef = ref(database, "accounts/" + user.uid);
+      const snapshot = await get(userRef);
+      const data = snapshot.val();
+      // console.log(data);
+      if (data) {
+        const statusId = data.status_id;
+        console.log(statusId);
+        if (statusId === "block") {
+          Alert.alert(
+            "Tài khoản đã bị cấm",
+            "Vui lòng liên hệ quản trị viên để biết thêm thông tin."
+          );
+        } else if (statusId === "register") {
+          Alert.alert(
+            "Tài khoản chưa được duyệt",
+            "Hãy chờ quản trị viên duyệt tài khoản."
+          );
+        } else if (statusId === "active") {
+          Toast.show({
+            type: 'success',
+            text1: 'Đăng nhập thành công',
+            text2: `Chào mừng ${data.fullname }`,
+            visibilityTime: 3000,
+          });
+          router.replace("/(tabs)");
+        }
+      }
+   
+      setLoading(false);
+      setTextLoading("Đăng nhập");
+   
+   } catch (error) {
+      setLoading(false);
+      setTextLoading("Đăng nhập");
+      Alert.alert(
+        "Đăng nhập thất bại",
+        "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
+      );
+   }
+  }
+   
 
   return (
-    <View>
+    <ScrollView>
       <SectionComponent
         styles={{
           justifyContent: "center",
@@ -83,14 +178,16 @@ const LoginScreen = ({ navigation }: any) => {
           <ButtonComponent
             text="Quên mật khẩu"
             color={appColors.primary}
-            onPress={() => navigation.navigate("ForgotPasswordScreen")}
+            onPress={() =>
+              navigation.navigate("ForgotPasswordScreen", { email: email })
+            }
             type="text"
           />
         </RowComponent>
       </SectionComponent>
       <SectionComponent>
         <ButtonComponent
-          text="Đăng nhập"
+          text={textLoading}
           textStyles={{ fontWeight: "bold", fontSize: 20 }}
           color={appColors.danger}
           type="primary"
@@ -98,7 +195,7 @@ const LoginScreen = ({ navigation }: any) => {
         />
       </SectionComponent>
       {/* OR SOCIAL */}
-      <SectionComponent>
+      {/* <SectionComponent>
         <TextComponent
           styles={{ textAlign: "center" }}
           text="Hoặc"
@@ -129,7 +226,7 @@ const LoginScreen = ({ navigation }: any) => {
             borderWidth: 0.3,
           }}
         />
-      </SectionComponent>
+      </SectionComponent> */}
       {/*  */}
       <SectionComponent>
         <RowComponent justify="center">
@@ -142,10 +239,24 @@ const LoginScreen = ({ navigation }: any) => {
           />
         </RowComponent>
       </SectionComponent>
-    </View>
+      {loading && (
+        <Modal transparent={true} animationType="none" visible={loading}>
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={appColors.danger} />
+          </View>
+        </Modal>
+      )}
+    </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+});
 
 export default LoginScreen;
