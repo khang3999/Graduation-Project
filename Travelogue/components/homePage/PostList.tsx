@@ -17,7 +17,7 @@ const PostList = () => {
       created_at: '07 tháng 11, 2024',
       author: {
         name: "Hieu Phuc",
-        image: "logo.png",
+        image: "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/testImagePost%2Fda-lat.png?alt=media&token=39bb9034-6bca-47b8-8d5a-2f4aa5f60f9b",
       }
     },
     {
@@ -27,7 +27,7 @@ const PostList = () => {
       created_at: '07 tháng 11, 2024',
       author: {
         name: "Tran Thi Anh Thu",
-        image: "logo.png",
+        image: "da-lat.png",
       }
     },
     {
@@ -41,18 +41,7 @@ const PostList = () => {
       }
     },
   ];
-  // List location
-  const theme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      background: 'white',  // Đặt màu nền là trắng
-      surface: 'white',     // Đặt màu surface (nền cho các thành phần như Menu) là trắng
-      primary: 'blue',      // Màu primary (nút, nhấn)
-      text: 'black',        // Màu chữ là đen
-    },
-    roundness: 4,  // Độ bo góc
-  };
+
   const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1); // Sử dụng một trạng thái để quản lý ID của menu đang mở
   const openMenu = (itemIndex: any) => {
     setIndexVisibleMenu(itemIndex)
@@ -63,16 +52,20 @@ const PostList = () => {
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}
     // console.log(post.index);
     return (
-      <PaperProvider theme={theme} key={post.index}>
+      <PaperProvider>
         <Pressable style={styles.item} onPress={() => console.log(post.index + "hh")
         }>
           {/*Author*/}
           <View style={styles.authorContent}>
-            <View style={styles.avatarWrap}>
+            <TouchableOpacity style={styles.avatarWrap}>
               <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
-            </View>
+            </TouchableOpacity>
             <View className='justify-center mx-2'>
-              <Text className='font-semibold w-[120px]'>{post.item.author.name}</Text>
+              <TouchableOpacity>
+                <Text className='font-semibold w-[120px]'>
+                  {post.item.author.name}
+                </Text>
+              </TouchableOpacity> 
               <Text className='italic text-xs'>{post.item.created_at}</Text>
             </View>
           </View>
@@ -99,7 +92,7 @@ const PostList = () => {
                 return (
                   <>
                     <TouchableOpacity key={index}>
-                      <Menu.Item  title={location} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+                      <Menu.Item title={location} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                       <Divider />
                     </TouchableOpacity>
 
@@ -109,6 +102,10 @@ const PostList = () => {
             </Menu>
             {/* </Provider> */}
           </View>
+          <View style={styles.imagePost}>
+            <Image style={styles.imagePost} source={{ uri: post.item.author.image }}></Image>
+          </View>
+
           {/* Button like, comment, save */}
           <ActionBar style={styles.actionBar}></ActionBar>
         </Pressable>
@@ -122,6 +119,7 @@ const PostList = () => {
       <FlatList
         data={dataPosts}
         renderItem={postItem}
+        keyExtractor={(post) => post.id}
         contentContainerStyle={{ paddingBottom: 15 }}
         ItemSeparatorComponent={() => <View style={{ height: 20, }} />} />
     </View>
@@ -130,6 +128,11 @@ const PostList = () => {
   )
 }
 const styles = StyleSheet.create({
+  imagePost: {
+    height: 410,
+    // backgroundColor: 'red',
+    borderRadius: 30,
+  },
   itemLocation: {
     padding: 0,
     fontSize: 14,
@@ -150,6 +153,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: 4,
+    zIndex: 3
   },
   avatar: {
     borderRadius: 90,
@@ -164,24 +168,28 @@ const styles = StyleSheet.create({
     elevation: 3
   },
   authorContent: {
+    position: 'absolute',
     left: 10,
     top: 10,
     flexDirection: 'row',
     backgroundColor: 'white',
     width: 185,
     padding: 6,
-    borderRadius: 90
+    borderRadius: 90,
+    zIndex: 3
   },
   item: {
     height: 410,
-    backgroundColor: 'red',
+    position: "relative",
     marginHorizontal: 10,
     borderRadius: 30,
+    elevation: 6
   },
   actionBar: {
     position: 'absolute',
     bottom: 10,
-    left: 10
+    left: 10,
+    zIndex:3
   },
   container: {
     position: 'relative',

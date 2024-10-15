@@ -3,17 +3,19 @@ import React from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 
 const { width } = Dimensions.get('window');
-
+const dataTours = [
+    []
+]
 const TourList = () => {
     const tourItem = () => {
         return (
-            <View style={styles.tourItem} >
+            <TouchableOpacity style={styles.tourItem} >
                 <Text>1</Text>
                 {/* <Image
                     source={require('@/assets/images/logo.png')}
                     resizeMode="contain"
                 /> */}
-            </View>
+            </TouchableOpacity>
         )
     }
 
