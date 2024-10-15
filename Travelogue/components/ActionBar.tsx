@@ -6,16 +6,16 @@ import CommentButton from './buttons/CommentButton';
 import SaveButton from './buttons/SaveButton';
 
 
-const ActionBar = (props:any) => {
+const ActionBar = (props: any) => {
     return (
         <View {...props}>
-             <View style={styles.container}>
-           <LikeButton style={styles.buttonItem}></LikeButton>
-           <CommentButton style={styles.buttonItem}></CommentButton>
-           <SaveButton style={styles.buttonItem}></SaveButton>
+            <View style={styles.container}>
+                <LikeButton style={styles.buttonItem}></LikeButton>
+                <CommentButton style={styles.buttonItem}></CommentButton>
+                <SaveButton style={styles.buttonItem}></SaveButton>
+            </View>
         </View>
-        </View>
-       
+
     )
 }
 

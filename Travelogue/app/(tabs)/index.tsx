@@ -20,15 +20,14 @@ const Home = () => {
       {/* Tour section */}
       <View>
         <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
+        {/* <TouchableOpacity onPress={() => { router.push('/(admin)/(account)/account') }}>
+          <Text>admin</Text>
+        </TouchableOpacity> */}
       </View>
       <TourList></TourList>
       {/* Post Section */}
       <Text style={[styles.textCategory]}>Những bài viết mới</Text>
       <PostList></PostList>
-
-      <TouchableOpacity onPress={() => { router.push('/(admin)/(account)/account') }}>
-        <Text>admin</Text>
-      </TouchableOpacity>
     </View>
   )
 }
@@ -48,7 +47,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     fontWeight: 500,
-    alignSelf: 'flex-start'
+    alignSelf: 'flex-start',
+    elevation: 10
   }
 })
 

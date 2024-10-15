@@ -19,7 +19,7 @@ const _layout = () => {
           options={{
             title: 'Home',
             headerStyle: {
-              height: 85,
+              height: 90,
             },
             headerTitle: (props) =>
               // Bỏ image vào đây
