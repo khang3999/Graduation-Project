@@ -1,31 +1,43 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
-import React, { useState } from 'react'
-import { FlatList, TextInput } from 'react-native-gesture-handler'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { FlatList, TextInput } from 'react-native-gesture-handler';
+import '@react-native-firebase/app';
+import database from '@react-native-firebase/database';
 
 interface BanWord {
   id: string;
   name: string;
 }
 
-const initialBanWords: BanWord[] = [
-  { id: '1', name: 'User 1' },
-  { id: '2', name: 'User 2' },
-  { id: '3', name: 'User 3' },
-  { id: '4', name: 'User 4' },
-];
-
 const Ban = () => {
   const [inputText, setInputText] = useState('');
-  const [banWords, setBanWords] = useState<BanWord[]>(initialBanWords);
-  const [filteredData, setFilteredData] = useState(banWords);
+  const [banWords, setBanWords] = useState<BanWord[]>([]);
+  const [filteredData, setFilteredData] = useState<BanWord[]>([]);
   const [isDisabled, setIsDisabled] = useState(false);
+
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = database()
+      .ref('/words')
+      .on('value', snapshot => {
+        const words = snapshot.val() ? Object.keys(snapshot.val()).map(key => ({
+          id: key,
+          name: snapshot.val()[key].name,
+        })) : [];
+        setBanWords(words);
+        setFilteredData(words);
+      });
+
+    // Hủy lắng nghe khi component bị unmount
+    return () => database().ref('/words').off('value', onValueChange);
+  }, []);
 
   const handleAdd = () => {
     if (inputText.trim()) {
-      const newItem = { id: (banWords.length + 1).toString(), name: inputText };
-      const newBanWords = [...banWords, newItem];
-      setBanWords(newBanWords);
-      setFilteredData(newBanWords);
+      const newRef = database().ref('/words').push();
+      const newItem = { id: newRef.key, name: inputText };
+
+      newRef.set(newItem); // Thêm từ vào Realtime Database
       setInputText('');
       setIsDisabled(false);
     }
@@ -51,9 +63,7 @@ const Ban = () => {
         { text: "Cancel", style: "cancel" },
         {
           text: "OK", onPress: () => {
-            const newBanWords = banWords.filter(banWord => banWord.id !== banWordId);
-            setBanWords(newBanWords);
-            setFilteredData(newBanWords);
+            database().ref(`/words/${banWordId}`).remove(); // Xóa từ khỏi Realtime Database
           }
         }
       ]
@@ -137,7 +147,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   disabledBtn: {
-    backgroundColor: '#999999', // Màu xám cho button khi disabled
+    backgroundColor: '#999999',
   },
   remove: {
     backgroundColor: '#2986cc',
