@@ -13,7 +13,6 @@ console.log("App is running from (tabs)/index.tsx");
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
       router.replace("/LoginScreen"); 
     } catch (error) {
       Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
