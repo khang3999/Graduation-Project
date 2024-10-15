@@ -1,4 +1,4 @@
-import React, {ReactNode} from 'react';
+import React, { ReactNode } from 'react';
 import {
   StyleProp,
   StyleSheet,
@@ -8,8 +8,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import TextComponent from '../TextComponent';
-import {globalStyle} from '../../styles/globalStyles';
-import {appColors} from '../../constants/appColors';
+import { globalStyle } from '../../styles/globalStyles';
+import { appColors } from '../../constants/appColors';
 
 interface Props {
   icon?: ReactNode;
@@ -21,11 +21,23 @@ interface Props {
   textStyles?: StyleProp<TextStyle>;
   onPress?: () => void;
   iconFlex?: 'right' | 'left';
+  disabled?: boolean;
 }
 
 const ButtonComponent = (props: Props) => {
-  const {icon, text, type = 'primary', textColor, textStyles, color, styles, onPress, iconFlex = 'left'} = props;
-  
+  const { 
+    icon, 
+    text, 
+    type = 'primary', 
+    textColor, 
+    textStyles, 
+    color, 
+    styles, 
+    onPress, 
+    iconFlex = 'left', 
+    disabled = false
+  } = props;
+
   const renderIcon = () => {
     return icon ? (
       <View style={iconFlex === 'right' ? stylesRightIcon : stylesLeftIcon}>
@@ -34,38 +46,50 @@ const ButtonComponent = (props: Props) => {
     ) : null;
   };
 
+  const handlePress = () => {
+    if (!disabled && onPress) {
+      onPress();
+    }
+  };
+
+  const buttonStyle = [
+    globalStyle.button,
+    globalStyle.shadow,
+    {
+      backgroundColor: disabled ? appColors.disabled : color ?? appColors.danger,
+    },
+    styles,
+  ];
+
+  const textColorToUse = disabled ? appColors.disabledText : textColor ?? appColors.white;
+
   return type === 'primary' ? (
     <TouchableOpacity
-      onPress={onPress}
-      style={[
-        globalStyle.button,
-        globalStyle.shadow,
-        {
-          backgroundColor: color ?? appColors.danger,
-        },
-        styles,
-      ]}>
+      onPress={handlePress}
+      style={buttonStyle}
+      disabled={disabled} 
+    >
       {iconFlex === 'left' && renderIcon()}
       <TextComponent
         text={text}
-        color={textColor ?? appColors.white}
+        color={textColorToUse}
         styles={[
           textStyles,
           {
             marginLeft: icon && iconFlex === 'left' ? 12 : 0,
             marginRight: icon && iconFlex === 'right' ? 12 : 0,
             fontSize: 16,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
           },
         ]}
       />
       {iconFlex === 'right' && renderIcon()}
     </TouchableOpacity>
   ) : (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={handlePress} disabled={disabled}>
       <TextComponent
         text={text}
-        color={type === 'link' ? appColors.link : appColors.text}
+        color={disabled ? appColors.disabledText : (type === 'link' ? appColors.link : appColors.text)}
       />
     </TouchableOpacity>
   );

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Stack } from 'expo-router/stack';
 import { createStackNavigator, Header } from "@react-navigation/stack";
 
@@ -7,7 +8,9 @@ export default function Layout() {
             screenOptions={{
                 headerShown: false,
             }}>
-            <Stack.Screen name="(tabs)"/>
+            <Stack.Screen name="(auth)" options={{headerShown: false}}/>
+            <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+            <Stack.Screen name="(user)" options={{headerShown: false}}/>
             <Stack.Screen name="(admin)"/>
         </Stack>
     );

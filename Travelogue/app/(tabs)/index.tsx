@@ -1,15 +1,20 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native'
-import React from 'react'
-import HeaderIndex from '@/components/header/HeaderIndex'
-import ActionBar from '@/components/ActionBar'
-import { router } from 'expo-router'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React from "react";
+import { router } from "expo-router";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebase/firebaseConfig";
 import SearchBar from '@/components/homePage/SearchBar'
-import ToursComponent from '@/components/homePage/ToursComponent'
 import TourList from '@/components/homePage/TourList'
 import PostList from '@/components/homePage/PostList'
 
-console.log('App is running from (tabs)/index.tsx');
-
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
+    router.replace("/LoginScreen");
+  } catch (error) {
+    Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
+  }
+};
 const Home = () => {
   return (
     <View style={styles.container}>
@@ -20,17 +25,24 @@ const Home = () => {
       {/* Tour section */}
       <View>
         <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
-        {/* <TouchableOpacity onPress={() => { router.push('/(admin)/(account)/account') }}>
+        <TouchableOpacity onPress={() => { router.push('/(admin)/(account)/account') }}>
           <Text>admin</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
       <TourList></TourList>
       {/* Post Section */}
       <Text style={[styles.textCategory]}>Những bài viết mới</Text>
       <PostList></PostList>
+      {/* <ButtonComponent
+        text="Đăng xuất"
+        color={appColors.danger}
+        onPress={handleLogout}
+      /> */}
     </View>
+
   )
 }
+
 const styles = StyleSheet.create({
   tourItem: {
 
@@ -52,5 +64,4 @@ const styles = StyleSheet.create({
   }
 })
 
-
-export default Home
+export default Home;
