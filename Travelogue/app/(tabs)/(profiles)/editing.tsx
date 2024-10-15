@@ -46,25 +46,10 @@ export default function EditingProfileScreen() {
 
           <View style={styles.infoContainer}>
             <View style={styles.row}>
-              <Text style={styles.infoText}>Name:</Text>
-              <TextInput style={styles.username} placeholder="Name"></TextInput>
+              <Text style={styles.infoText}>Fullname:</Text>
+              <TextInput style={styles.username} placeholder="Fullname"></TextInput>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.infoText}>Username:</Text>
-              <TextInput
-                style={styles.username}
-                placeholder="Username"
-              ></TextInput>
-            </View>
-
-            <View style={styles.row}>
-              <Text style={styles.infoText}>Email:</Text>
-              <TextInput
-                style={styles.username}
-                placeholder="Email"
-              ></TextInput>
-            </View>
-
+                    
             <View style={styles.row}>
               <Text style={styles.infoText}>Phone:</Text>
               <TextInput
@@ -72,15 +57,7 @@ export default function EditingProfileScreen() {
                 placeholder="0123-455-667"
               ></TextInput>
             </View>
-
-            <View style={styles.row}>
-              <Text style={styles.infoText}>Address:</Text>
-              <TextInput
-                style={styles.username}
-                placeholder="Address"
-              ></TextInput>
-            </View>
-
+           
             <Pressable style={styles.saveButton} onPress={router.back}>
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </Pressable>

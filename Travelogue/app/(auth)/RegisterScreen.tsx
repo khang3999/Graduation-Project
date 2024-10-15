@@ -134,7 +134,9 @@ const RegisterScreen = ({ navigation }: any) => {
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
-          const avatar = "";
+          const avatar = await getDownloadURL(
+            storageRef(storage, "defaultAvatar/avatar.png")
+          ); // Set default avatar URL
           const numberCCCD = "";
           const imageFrontUrlCCCD = "";
           const imageBackUrlCCCD = "";

@@ -8,7 +8,7 @@ import { auth } from '@/firebase/firebaseConfig';
     if (!user) {
       throw new Error('No user is currently logged in');
     }
-    const userRef = ref(database, `users/${user.uid}`);
+    const userRef = ref(database, `accounts/${user.uid}`);
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
       return snapshot.val();
