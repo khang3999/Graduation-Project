@@ -2,6 +2,7 @@ import { Image, StyleSheet, Platform, Text } from "react-native";
 
 import HeaderProfile from "@/components/profile/HeaderProfile";
 import GalleryTabView from "@/components/profile/GalleryTabView";
+import React from "react";
 
 export default function ProfileScreen() {
   return (    
