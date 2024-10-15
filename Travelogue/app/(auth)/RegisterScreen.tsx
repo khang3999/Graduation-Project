@@ -29,19 +29,25 @@ import {
   Platform,
   Alert,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import ImagePickerComponent from "@/components/images/ImagePickerComponent";
-import { database, getDownloadURL, ref, set, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import {
+  database,
+  getDownloadURL,
+  ref,
+  set,
+  storageRef,
+  uploadBytes,
+} from "@/firebase/firebaseConfig";
 import { UserRegister } from "@/model/UserRegister";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, storage } from "@/firebase/firebaseConfig";
 
-
 const RegisterScreen = ({ navigation }: any) => {
-  
   //Thêm trạng thái
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [textLoading, setTextLoading] = useState("Đăng ký");
   // Thanh chuyển tab
   const [activeTab, setActiveTab] = useState("user");
   // Thông tin đăng ký
@@ -60,7 +66,10 @@ const RegisterScreen = ({ navigation }: any) => {
   >(null);
 
   //Up ảnh lên storage
-  const uploadImage = async (imageUri: string, path: string): Promise<string | null> => {
+  const uploadImage = async (
+    imageUri: string,
+    path: string
+  ): Promise<string | null> => {
     try {
       console.log(frontCCCDImage);
       const response = await fetch(imageUri);
@@ -68,7 +77,7 @@ const RegisterScreen = ({ navigation }: any) => {
       const storageReference = storageRef(storage, path);
       await uploadBytes(storageReference, blob);
       const url = await getDownloadURL(storageReference);
-      return url;  
+      return url;
     } catch (error) {
       console.error("Upload image failed", error);
       return null;
@@ -76,7 +85,6 @@ const RegisterScreen = ({ navigation }: any) => {
   };
   // Xử lý đăng ký
   const onRegisterUser = async () => {
-    setIsLoading(true); 
     try {
       if (activeTab === "user") {
         if (!name || !email || !phone || !password || !confirmPassword) {
@@ -113,7 +121,8 @@ const RegisterScreen = ({ navigation }: any) => {
           );
           return;
         }
-
+        setIsLoading(true);
+        setTextLoading("Đang xử lý...");
         // Luu thông tin đăng ký người dùng tren auth
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -126,13 +135,15 @@ const RegisterScreen = ({ navigation }: any) => {
           // Tạo đối tượng User mới
           const behavior = "";
           const avatar = "";
-          const numberCCCD = null;
-          const imageFrontUrlCCCD = null;
-          const imageBackUrlCCCD = null;
-          const business_license_id = null;
-          const imageUrlBusinessLicense = null;
+          const numberCCCD = "";
+          const imageFrontUrlCCCD = "";
+          const imageBackUrlCCCD = "";
+          const business_license_id = "";
+          const imageUrlBusinessLicense = "";
           const expense = null;
+          const status = "active";
           const currentDate = new Date().toLocaleDateString();
+
           const newUser = new UserRegister({
             name,
             email,
@@ -147,10 +158,12 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD,
             business_license_id,
             imageUrlBusinessLicense,
+            status_id: status,
           });
+          // console.log(newUser);
 
           // // Lưu thông tin người dùng vào Firebase Realtime
-          await set(ref(database, `/users/${user.uid}`), {
+          await set(ref(database, `/accounts/${user.uid}`), {
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -158,6 +171,12 @@ const RegisterScreen = ({ navigation }: any) => {
             avatar: newUser.avatar,
             expense: newUser.expense,
             createdAt: newUser.currentDate,
+            numberCCCD: newUser.numberCCCD,
+            imageFrontUrlCCCD: newUser.imageFrontUrlCCCD,
+            imageBackUrlCCCD: newUser.imageBackUrlCCCD,
+            business_license_id: newUser.business_license_id,
+            imageUrlBusinessLicense: newUser.imageUrlBusinessLicense,
+            status_id: newUser.status_id,
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -204,7 +223,8 @@ const RegisterScreen = ({ navigation }: any) => {
           Alert.alert("Thông báo", "Vui lòng nhập số CCCD hợp lệ (9-12 số).");
           return;
         }
-
+        setIsLoading(true);
+        setTextLoading("Đang xử lý...");
         // Luu thông tin đăng ký người dùng tren auth
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -219,6 +239,10 @@ const RegisterScreen = ({ navigation }: any) => {
           const avatar = "";
           const expense = 0;
           const currentDate = new Date().toLocaleDateString();
+          const status = "register";
+          // const likes = ["empty"];
+          // const marks = ["empty"];
+          // const checkins = { default: "empty" };
           const newUser = new UserRegister({
             name,
             email,
@@ -233,41 +257,47 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD: backCCCDImage,
             business_license_id: businessLicense,
             imageUrlBusinessLicense: businessLicenseImage,
+            status_id: status,
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
-          
+
           if (newUser.imageFrontUrlCCCD) {
             frontImageUrl = await uploadImage(
               newUser.imageFrontUrlCCCD,
-              `users/${user.uid}/papers/frontCCCD.jpg`
+              `accounts/${user.uid}/papers/frontCCCD.jpg`
             );
           }
-          
+
           if (newUser.imageBackUrlCCCD) {
             backImageUrl = await uploadImage(
               newUser.imageBackUrlCCCD,
-              `users/${user.uid}/papers/backCCCD.jpg`
+              `accounts/${user.uid}/papers/backCCCD.jpg`
             );
           }
-          
+
           if (newUser.imageUrlBusinessLicense) {
             businessLicenseImageUrl = await uploadImage(
               newUser.imageUrlBusinessLicense,
-              `users/${user.uid}/papers/businessLicense.jpg`
+              `accounts/${user.uid}/papers/businessLicense.jpg`
             );
           }
 
           // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
-          await set(ref(database, `/users/${user.uid}`), {
+          await set(ref(database, `/accounts/${user.uid}`), {
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
+            behavior: newUser.behavior,
+            avatar: newUser.avatar,
             numberCCCD: newUser.numberCCCD,
             imageFrontUrlCCCD: frontImageUrl,
             imageBackUrlCCCD: backImageUrl,
             imageUrlBusinessLicense: businessLicenseImageUrl,
+            business_license_id: newUser.business_license_id,
             createdAt: newUser.currentDate,
+            status_id: newUser.status_id,
+            expense: newUser.expense,
           });
         }
 
@@ -276,13 +306,17 @@ const RegisterScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
+        setTextLoading("Đăng ký");
+        setIsLoading(false);
         Alert.alert("Thông báo", "Email đã được sử dụng.");
       } else {
+        setTextLoading("Đăng ký");
+        setIsLoading(false);
         Alert.alert("Thông báo", "Đã xảy ra lỗi: " + error.message);
       }
-    }
-    finally {
-      setIsLoading(false); 
+    } finally {
+      setTextLoading("Đăng ký");
+      setIsLoading(false);
     }
   };
 
@@ -497,25 +531,25 @@ const RegisterScreen = ({ navigation }: any) => {
 
       {/* Nút đăng ký cố định ở dưới */}
       <View style={styles.footer}>
-      {isLoading ? (  
-             <ButtonComponent
-             text="Đăng ký"
-             color={appColors.danger}
-             type="primary"
-             textStyles={{ fontWeight: "bold", fontSize: 20 }}
-             onPress={onRegisterUser}
-             disabled={isLoading}  
-           />
-          ) : (
-            <ButtonComponent
-              text="Đăng ký"
-              color={appColors.danger}
-              type="primary"
-              textStyles={{ fontWeight: "bold", fontSize: 20 }}
-              onPress={onRegisterUser}
-              disabled={isLoading}  
-            />
-          )}
+        {isLoading ? (
+          <ButtonComponent
+            text={textLoading}
+            color={appColors.danger}
+            type="primary"
+            textStyles={{ fontWeight: "bold", fontSize: 20 }}
+            onPress={onRegisterUser}
+            disabled={isLoading}
+          />
+        ) : (
+          <ButtonComponent
+            text={textLoading}
+            color={appColors.danger}
+            type="primary"
+            textStyles={{ fontWeight: "bold", fontSize: 20 }}
+            onPress={onRegisterUser}
+            disabled={isLoading}
+          />
+        )}
         <SectionComponent>
           <RowComponent justify="center">
             <TextComponent text="Bạn đã có tài khoản? " />
@@ -527,6 +561,13 @@ const RegisterScreen = ({ navigation }: any) => {
             />
           </RowComponent>
         </SectionComponent>
+        {isLoading && (
+          <Modal transparent={true} animationType="none" visible={isLoading}>
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={appColors.danger} />
+            </View>
+          </Modal>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -570,6 +611,12 @@ const styles = StyleSheet.create({
   footer: {
     padding: 15,
     backgroundColor: "#fff",
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });
 

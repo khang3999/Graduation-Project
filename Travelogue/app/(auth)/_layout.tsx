@@ -11,6 +11,7 @@ const Layout = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const user = auth.currentUser; 
+      console.log(user);
       if (user) {
         setIsAuth(true);
       } else {
