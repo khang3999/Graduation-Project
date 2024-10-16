@@ -110,7 +110,7 @@ export default function Layout() {
             drawerLabel: 'Reasons',
             title: 'Reasons',
             drawerIcon: ({color, size}) => (
-              <Entypo name="list" size={24} color="black" />
+              <Entypo name="list" size={size} color={color} />
             )
           }}
         />
