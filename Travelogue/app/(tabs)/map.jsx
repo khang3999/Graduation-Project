@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -20,6 +20,7 @@ import { database, ref, onValue } from "@/firebase/firebaseConfig";
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
   const [areaData, setAreaData] = useState([]);
+  const [points, setPoints] = useState([]);
 
   const festivalTypeOptions = [
     {
@@ -38,291 +39,63 @@ const Map = () => {
       type: "landmark",
     },
   ];
-  // Dữ liệu các lễ hội
-  const festivals = [
-    {
-      id: 1,
-      title: "Lễ hội hoa Đà Lạt",
-      latitude: 11.9429,
-      longitude: 108.455,
-      images: [
-        "https://owa.bestprice.vn/images/articles/uploads/ruc-ro-le-hoi-hoa-o-da-lat-5ece160609332.jpg",
-        "https://lh5.googleusercontent.com/p/AF1QipMzaDc46CVhoKxmQWR6TXqrnXhqea8n8RIQFUaV=w675-h390-n-k-no",
-        "https://image.bnews.vn/MediaUpload/Org/2022/02/04/144341-danh-lam-thang-canh-vinh-ha-long.jpg",
-      ],
-      rating: 4.5,
-      comments: "Lễ hội đẹp với nhiều loại hoa.",
-      type: "festival",
-      startDate: "2024-12-20",
-      endDate: "2024-12-30",
-    },
-    {
-      id: 2,
-      title: "Vịnh Hạ Long",
-      latitude: 20.9101,
-      longitude: 107.1839,
-      images: [
-        "https://upload.wikimedia.org/wikipedia/commons/6/64/Halong_Bay_2.jpg",
-      ],
-      rating: 4.9,
-      comments: "Một trong những kỳ quan thiên nhiên thế giới.",
-      type: "landmark",
-    },
-    {
-      id: 3,
-      title: "Lễ hội Tết Nguyên Đán",
-      latitude: 14.0583,
-      longitude: 108.2772,
-      images: [
-        "https://www.thanhnien.vn/Uploaded/hongha/2022_01_27/viet-nam-7152-20220127165711491.jpeg",
-      ],
-      rating: 5.0,
-      comments: "Lễ hội lớn nhất của người Việt.",
-      type: "festival",
-      startDate: "2025-01-25",
-      endDate: "2025-02-02",
-    },
-    {
-      id: 4,
-      title: "Lễ hội Pháo Đài",
-      latitude: 21.0285,
-      longitude: 105.8542,
-      images: [
-        "https://www.vietnamonline.com/images/upload/2020/03/23/the-festivals-2020/3.jpg",
-      ],
-      rating: 4.2,
-      comments: "Lễ hội văn hóa truyền thống ở Hà Nội.",
-      type: "festival",
-      startDate: "2024-10-01",
-      endDate: "2024-10-05",
-    },
-  ];
 
-  // // Dữ liệu các quốc gia
-  // const countryData = [
-  //   {
-  //     id: "vietnam",
-  //     label: "VietNam",
-  //     latitude: 17.65005783136121,
-  //     longitude: 105.40283940732479,
-  //     image: "https://inuvdp.com/wp-content/uploads/2022/05/logo-la-co-01.jpg",
-  //   },
-  //   {
-  //     id: "thailand",
-  //     label: "Thailand",
-  //     latitude: 15.87,
-  //     longitude: 100.9925,
-  //     image:
-  //       "https://seeklogo.com/images/T/thailand-flag-logo-AC65995692-seeklogo.com.png",
-  //   },
-  //   {
-  //     id: "japan",
-  //     label: "Japan",
-  //     latitude: 36.2048,
-  //     longitude: 138.2529,
-  //     image:
-  //       "https://seeklogo.com/images/J/Japan-logo-95CBBFE790-seeklogo.com.png",
-  //   },
-  //   {
-  //     id: "southkorea",
-  //     label: "South Korea",
-  //     latitude: 35.9078,
-  //     longitude: 127.7669,
-  //     image:
-  //       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQewfnFo0VDCF0JhqDv1GisWfqPULWJvjLJmw&s",
-  //   },
-  //   {
-  //     id: "china",
-  //     label: "China",
-  //     latitude: 35.8617,
-  //     longitude: 104.1954,
-  //     image:
-  //       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8A47nB2JnLyB9OFUXuTrjgPmRarECQjy_Vg&s",
-  //   },
-  // ];
-
-  // const areaData = [
-  //   // Các khu vực của Việt Nam
-  //   {
-  //     id: "region-all",
-  //     label: "Tất cả khu vực",
-  //     latitude: 17.65005783136121,
-  //     longitude: 105.40283940732479,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-northwest",
-  //     label: "Tây Bắc Bộ",
-  //     latitude: 21.3331,
-  //     longitude: 103.9328,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-northeast",
-  //     label: "Đông Bắc Bộ",
-  //     latitude: 22.3964,
-  //     longitude: 104.0498,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-redriverdelta",
-  //     label: "Đồng bằng sông Hồng",
-  //     latitude: 20.9123,
-  //     longitude: 106.1553,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-northcentral",
-  //     label: "Bắc Trung Bộ",
-  //     latitude: 18.2809,
-  //     longitude: 105.6916,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-southcentralcoast",
-  //     label: "Duyên hải Nam Trung Bộ",
-  //     latitude: 14.0583,
-  //     longitude: 108.2772,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-centralhighlands",
-  //     label: "Tây Nguyên",
-  //     latitude: 13.0820,
-  //     longitude: 108.2772,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-southeast",
-  //     label: "Đông Nam Bộ",
-  //     latitude: 10.8231,
-  //     longitude: 106.6297,
-  //     countryId: "vietnam",
-  //   },
-  //   {
-  //     id: "region-mekongdelta",
-  //     label: "Đồng bằng sông Cửu Long",
-  //     latitude: 10.2251,
-  //     longitude: 105.9640,
-  //     countryId: "vietnam",
-  //   },
-  //   // Các khu vực của Thái Lan
-  //   {
-  //     id: "region-alls",
-  //     label: "Tất cả khu vực",
-  //     latitude: 15.87,
-  //     longitude: 100.9925,
-  //     countryId: "thailand",
-  //   },
-  //   {
-  //     id: "region-bangkok",
-  //     label: "Bangkok và Trung Thái",
-  //     latitude: 13.7563,
-  //     longitude: 100.5018,
-  //     countryId: "thailand",
-  //   },
-  //   {
-  //     id: "region-chiangmai",
-  //     label: "Chiang Mai và Bắc Thái",
-  //     latitude: 18.7061,
-  //     longitude: 98.9817,
-  //     countryId: "thailand",
-  //   },
-  //   // Các khu vực của Nhật Bản
-  //   {
-  //     id: "region-allx",
-  //     label: "Tất cả khu vực",
-  //     latitude: 36.2048,
-  //     longitude: 138.2529,
-  //     countryId: "japan",
-  //   },
-  //   {
-  //     id: "region-kanto",
-  //     label: "Khu vực Kanto",
-  //     latitude: 35.6895,
-  //     longitude: 139.6917,
-  //     countryId: "japan",
-  //   },
-  //   {
-  //     id: "region-kansai",
-  //     label: "Khu vực Kansai",
-  //     latitude: 34.6937,
-  //     longitude: 135.5023,
-  //     countryId: "japan",
-  //   },
-  //   // Các khu vực của Hàn Quốc
-  //   {
-  //     id: "dđregion-all",
-  //     label: "Tất cả khu vực",
-  //     latitude: 35.9078,
-  //     longitude: 127.7669,
-  //     countryId: "southkorea",
-  //   },
-  //   {
-  //     id: "region-seoul",
-  //     label: "Seoul và Gyeonggi",
-  //     latitude: 37.5665,
-  //     longitude: 126.978,
-  //     countryId: "southkorea",
-  //   },
-  //   {
-  //     id: "region-busan",
-  //     label: "Busan và Đông Nam Hàn",
-  //     latitude: 35.1796,
-  //     longitude: 129.0756,
-  //     countryId: "southkorea",
-  //   },
-  //   // Các khu vực của Trung Quốc
-  //   {
-  //     id: "region-allxx",
-  //     label: "Tất cả khu vực",
-  //     latitude: 35.8617,
-  //     longitude: 104.1954,
-  //     countryId: "china",
-  //   },
-  //   {
-  //     id: "region-beijing",
-  //     label: "Bắc Kinh và Bắc Trung Quốc",
-  //     latitude: 39.9042,
-  //     longitude: 116.4074,
-  //     countryId: "china",
-  //   },
-  //   {
-  //     id: "region-shenzhen",
-  //     label: "Thâm Quyến và Nam Trung Quốc",
-  //     latitude: 22.3964,
-  //     longitude: 114.1095,
-  //     countryId: "china",
-  //   },
-  // ];
-  //Lấu dữ liệu từ firebase về quốc gia
-  
   useEffect(() => {
-    const countriesRef = ref(database, 'countries');
-    const areaRef = ref(database, 'areas');
+    const countriesRef = ref(database, "countries");
+    const areaRef = ref(database, "areas");
+    const pointRef = ref(database, "points");
+
     onValue(countriesRef, (snapshot) => {
       const data = snapshot.val() || {};
       // console.log(data);
       // Chuyển từ đối tượng thành mảng
-      const formattedDataCountry = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+      const formattedDataCountry = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
       // console.log(formattedDataCountry);
       setCountryData(formattedDataCountry);
       // console.log("Country Data:", countryData);
     });
     onValue(areaRef, (snapshot) => {
       const data = snapshot.val() || {};
-      console.log(data);
       // Chuyển từ đối tượng thành mảng
-      const formattedDataAreas = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-      // console.log(formattedDataAreas);
+      const formattedDataAreas = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
       setAreaData(formattedDataAreas);
+      console.log("Area Data:", areaData);
     });
+    onValue(pointRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const formattedPoints = [];
 
+      Object.keys(data).forEach((countryId) => {
+        const countryPoints = data[countryId];
+        Object.keys(countryPoints).forEach((type) => {
+          const typePoints = countryPoints[type];
+          Object.keys(typePoints).forEach((pointId) => {
+            const point = typePoints[pointId];
+            formattedPoints.push({
+              id: `${countryId}_${type}_${pointId}`,
+              countryId: countryId,
+              cityId: pointId,
+              type: type,
+              ...point,
+            });
+          });
+        });
+      });
+
+      console.log("formattedPoints:", formattedPoints);
+      setPoints(formattedPoints);
+    });
   }, []);
 
   const mapViewRef = useRef(null);
   const [mapLat] = useState(16.494413736992392);
-  const [mapLong] = useState( 105.18357904627919);
+  const [mapLong] = useState(105.18357904627919);
   const [selectedFestival, setSelectedFestival] = useState(null);
   const [mapRegion, setMapRegion] = useState({
     latitude: mapLat,
@@ -333,7 +106,7 @@ const Map = () => {
   // Selected đất nước và khu vực
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
-  const [selectedFestivalType, setSelectedFestivalType] = useState(null);
+  const [selectedFestivalType, setSelectedFestivalType] = useState("all");
   // Modal
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalVisibleArea, setModalVisibleArea] = useState(false);
@@ -341,7 +114,6 @@ const Map = () => {
   const bottomSheetRef = useRef(null);
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
- 
 
   const handleCountryChange = (country) => {
     // console.log("Selected Country1:", country);
@@ -350,23 +122,26 @@ const Map = () => {
 
       // sử dụng animateToRegion
       if (mapViewRef.current) {
-        mapViewRef.current.animateToRegion({
-          latitude: latitude,
-          longitude: longitude,
-          latitudeDelta: 8.0,
-          longitudeDelta: 10,
-        }, 1000); 
+        mapViewRef.current.animateToRegion(
+          {
+            latitude: latitude,
+            longitude: longitude,
+            latitudeDelta: 8.0,
+            longitudeDelta: 10,
+          },
+          1000
+        );
       }
 
       setSelectedCountry(country.id);
 
-      console.log("Selected Country:", country);
-      console.log("Selected Country id:", country.id);
-      
+      // console.log("Selected Country:", country);
+      // console.log("Selected Country id:", country.id);
     }
 
     setModalVisibleCountry(false);
   };
+
   useEffect(() => {
     if (selectedCountry) {
       // console.log("Selected Country:", selectedCountry);
@@ -374,11 +149,10 @@ const Map = () => {
         // console.log("Area Data:", areaData),
         areaData.filter((area) => area.countryId === selectedCountry)
       );
-      console.log("Filtered Area Data:", filteredAreaData);
+      // console.log("Filtered Area Data:", filteredAreaData);
       setSelectedArea(filteredAreaData.id);
-      console.log("Selected Area:", selectedArea);
+      // console.log("Selected Area:", selectedArea);
     }
-
   }, [selectedCountry]);
 
   const handleAreaChange = (area) => {
@@ -387,12 +161,15 @@ const Map = () => {
       const { latitude, longitude } = area;
       // sử dụng animateToRegion
       if (mapViewRef.current) {
-        mapViewRef.current.animateToRegion({
-          latitude: latitude,
-          longitude: longitude,
-          latitudeDelta: 5,
-          longitudeDelta: 5,
-        }, 1000);
+        mapViewRef.current.animateToRegion(
+          {
+            latitude: latitude,
+            longitude: longitude,
+            latitudeDelta: 5,
+            longitudeDelta: 5,
+          },
+          1000
+        );
       }
       setSelectedArea(area.id);
       // console.log("Selected Area:", area.label);
@@ -400,13 +177,10 @@ const Map = () => {
     setModalVisibleArea(false);
   };
 
-
   // Thay đổi type lễ hội
   const handleFestivalChange = (value, index) => {
-    // console.log("Số vị trí:", value);
-    // console.log("Số index:", index);
-    setSelectedFestivalType(index);
-    // console.log("Selected Country:", selectedFestivalType);
+    setSelectedFestivalType(value.id);
+    console.log("Selected type:", selectedFestivalType);
 
     setmodalFestivalType(false);
   };
@@ -417,19 +191,30 @@ const Map = () => {
       bottomSheetRef.current.show();
     }
   };
-  // Search lễ hội theo type
-  const filteredFestivals = selectedFestivalType
-    ? festivals.filter(
-        (festival) =>
-          festival.type ===
-          festivalTypeOptions[selectedFestivalType].type.toLowerCase()
-      )
-    : festivals;
-  // Search khu vực theo id của quốc gia
-
-  // console.log("Selected Country:", selectedCountry);
-
-  // console.log("Filtered Area Data:", filteredAreaData);
+  // Tính toán các điểm cần hiển thị dựa trên các bộ lọc
+  const filteredPoints = useMemo(() => {
+    return points.filter((point) => {
+      console.log("_________________$_");
+      console.log("Selected Country1:", selectedCountry);
+      // Lọc theo quốc gia
+      if (selectedCountry && point.countryId !== selectedCountry) {
+        return false;
+      }
+      console.log("point:", point);
+      // Lọc theo loại lễ hội
+      if (selectedFestivalType) {
+        // cho phép tất cả các loại
+        if (selectedFestivalType === "all") {
+          return true;
+        }
+        // chỉ cho phép các loại tương ứng
+        if (point.type !== selectedFestivalType) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [points, selectedCountry, selectedFestivalType]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -484,29 +269,50 @@ const Map = () => {
             setMapRegion(region);
           }}
         > */}
-        <MapView
-        style={styles.map}
-        ref={mapViewRef}
-        initialRegion={mapRegion} 
-        >
-          {filteredFestivals.map((festival) => (
-            <Marker
-              key={festival.id}
-              coordinate={{
-                latitude: festival.latitude,
-                longitude: festival.longitude,
-              }}
-              title={festival.title}
-              pinColor={festival.type === "landmark" ?  "blue" : "red"}
-          //     pinColor = festival.type === "landmark" ? "blue" 
-          // : festival.type === "city" ? "green"
-          // : "red";
-              onPress={(e) => {
-                e.persist();
-                openBottomSheet(festival);
-              }}
-            />
-          ))}
+        <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
+          {filteredPoints.map((point) => {
+            console.log("pointhello:", point);
+
+            for (const key in point) {
+              if (point[key] && typeof point[key] === "object") {
+                if (point[key].latitude && point[key].longitude) {
+                  latitude = point[key].latitude;
+                  longitude = point[key].longitude;
+                  type = point.type;
+                  start = point[key].start;
+                  end = point[key].end;
+                  title = point[key].title;
+                  break;
+                }
+              }
+            }
+            // console.log("point.latitude:", latitude);
+            // console.log("point.longitude:", longitude);
+            // console.log("point.type:", type);
+            // console.log("point.start:", start);
+            // console.log("point.end:", end);
+            // console.log("point.title:", title);
+
+            // Chọn màu sắc cho Marker
+            const pinColor =
+              type === "landmark"
+                ? "blue"
+                : type === "festival"
+                ? "red"
+                : "green";
+
+            return (
+              <Marker
+                key={point.id}
+                coordinate={{
+                  latitude: latitude,
+                  longitude: longitude,
+                }}
+                title={title}
+                pinColor={pinColor}
+              />
+            );
+          })}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
         <RowComponent justify="space-between">
@@ -548,7 +354,9 @@ const Map = () => {
                   ellipsizeMode="tail"
                 >
                   {selectedFestivalType != null
-                    ? festivalTypeOptions[selectedFestivalType].label
+                    ? festivalTypeOptions.find(
+                        (option) => option.id === selectedFestivalType
+                      )?.label
                     : "Chọn tất cả"}
                 </Text>
                 <Icon
