@@ -6,27 +6,29 @@ import {
   Pressable,
   TextInput,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { updateUserData } from "@/services/userService";
+import { getImageUrl, updateUserData } from "@/services/userService";
 import debounce from "lodash/debounce";
 import { update } from "lodash";
 import { auth } from "@/firebase/firebaseConfig";
 
 export default function EditingProfileScreen() {
-  const localUser = useLocalSearchParams();
-  
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(
-    Array.isArray(localUser.avatar) ? localUser.avatar[0] : localUser.avatar
-  );
-  const [localUserData, setLocalUserData] = React.useState(localUser);
+  const userData = useLocalSearchParams();
 
-  console.log("userData", localUser);
-  console.log("selectedImage", selectedImage);
-  
+  const initialAvatarUrl = Array.isArray(userData.avatar)
+    ? userData.avatar[0]
+    : userData.avatar;
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(
+    initialAvatarUrl || null
+  );
+  const [localUserData, setLocalUserData] = React.useState(userData);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -37,15 +39,60 @@ export default function EditingProfileScreen() {
     if (!result.canceled) {
       const newImage = result.assets[0].uri;
       setSelectedImage(newImage);
-      console.log("selectedImage", selectedImage);
     } else {
       alert("Image picker was cancelled");
     }
   };
 
+  useEffect(() => {
+    const fetchAvatarUrl = async () => {
+      try {
+        const url = await getImageUrl(initialAvatarUrl);
+        setSelectedImage(url);
+      } catch (error) {
+        console.error("Error fetching avatar URL:", error);
+      }
+    };
+
+    fetchAvatarUrl();
+  }, [initialAvatarUrl]);
+
+  const validateInputs = () => {
+    let valid = true;
+    let errors = { fullname: "", phone: "" };
+
+    if (
+      !localUserData.fullname ||
+      (typeof localUserData.fullname === "string" &&
+        localUserData.fullname.trim().length === 0)
+    ) {
+      Alert.alert("Thông báo", "Full name is required.");
+      valid = false;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (
+      !localUserData.phone ||
+      !phoneRegex.test(localUserData.phone as string)
+    ) {
+      errors.phone = "Phone number must be 10 digits.";
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng nhập số điện thoại hợp lệ (10-12 số)."
+      );
+      valid = false;
+    }
+    return valid;
+  };
+
   const handleSaveChangesButton = () => {
+    if(!validateInputs()) {
+      return;
+    }
+
     const currentUser = auth.currentUser;
     if (currentUser) {
+      setIsLoading(true);
       updateUserData(currentUser.uid, localUserData, selectedImage)
         .then(() => {
           alert("User data updated successfully!");
@@ -53,6 +100,9 @@ export default function EditingProfileScreen() {
         })
         .catch((error) => {
           alert("Failed to update user data: " + error.message);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
     } else {
       alert("No user is currently logged in.");
@@ -65,6 +115,12 @@ export default function EditingProfileScreen() {
       [field]: value,
     }));
   };
+
+  if (isLoading) {
+    return (
+      <ActivityIndicator style={styles.loading} size="large" color="red" />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -92,6 +148,7 @@ export default function EditingProfileScreen() {
                 placeholder="0123-455-667"
                 value={localUserData.phone as string}
                 onChangeText={(text) => handleInputChange("phone", text)}
+                keyboardType="numeric"
               ></TextInput>
             </View>
             <Pressable
@@ -111,6 +168,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#f8f8f8",
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   container: {
     alignItems: "center",

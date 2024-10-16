@@ -9,7 +9,6 @@ import {
 import HeaderProfile from "@/components/profile/HeaderProfile";
 import GalleryTabView from "@/components/profile/GalleryTabView";
 import React, { useEffect } from "react";
-import { getCurrentUserData } from "@/services/userService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { database, auth } from "@/firebase/firebaseConfig";
 import { ref, onValue, off } from "firebase/database";

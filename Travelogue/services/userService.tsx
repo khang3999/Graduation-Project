@@ -34,7 +34,7 @@ const getCurrentUserData = async () => {
   }
 };
 
-const updateUserData = async (userId:string | string[] | null, userData:any, selectedImage:string | null) => {
+const updateUserData = async (userId:string , userData:any, selectedImage:string | null) => {
   if (!userId) {
     throw new Error("No user ID provided");
   }
@@ -42,7 +42,7 @@ const updateUserData = async (userId:string | string[] | null, userData:any, sel
     let avatarUrl = userData.avatar;
     const userRef = ref(database, `accounts/${userId}`);
     if (selectedImage && selectedImage !== userData.avatar) {
-      const imageRef = storageRef(storage, `accounts/${userId}/papers`);
+      const imageRef = storageRef(storage, `accounts/${userId}/papers/avatar.png`);
       const response = await fetch(selectedImage);
       const blob = await response.blob();
       await uploadBytes(imageRef, blob);

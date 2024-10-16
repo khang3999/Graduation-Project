@@ -19,7 +19,6 @@ export default function AvatarProfile({userData}:any) {
       try {
         const url = await getImageUrl(userData.avatar);
         setAvatarUrl(url);        
-                   
       } catch (error) {
         console.error('Error fetching avatar URL:', error);
       } finally {
@@ -53,7 +52,7 @@ export default function AvatarProfile({userData}:any) {
       <Text style={styles.username}>{userData.fullname}</Text>
       <Pressable
         style={styles.button}
-        onPressIn={() => router.push({ pathname: "/editing", params: userData  })}
+        onPressIn={() => router.push({ pathname: "/editing", params: userData,  })}
       >
         <Text style={styles.editText}>Edit Profile</Text>
       </Pressable>
