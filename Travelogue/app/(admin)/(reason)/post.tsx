@@ -1,21 +1,20 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import React, { useState, useEffect, Children } from 'react';
-import { FlatList, TextInput } from 'react-native-gesture-handler';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { FlatList, TextInput } from 'react-native-gesture-handler'
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { push, remove } from '@firebase/database';
+import { AntDesign } from '@expo/vector-icons';
 
-
-
-
-const Ban = () => {
+const Post = () => {
   const [inputText, setInputText] = useState('');
-  const [banWords, setBanWords] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [reasons, setReasons] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+
 
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'words/');
+    const onValueChange = ref(database, 'reasons/post/');
     // Lắng nghe thay đổi trong dữ liệu
     const words = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
@@ -25,9 +24,9 @@ const Ban = () => {
           id: key,
           name: value,
         }));
-        setBanWords(dataArray);
+        setReasons(dataArray);
       } else {
-        setBanWords([]);  // Đảm bảo xóa hết dữ liệu khi không còn phần tử nào
+        setReasons([]);  // Đảm bảo xóa hết dữ liệu khi không còn phần tử nào
         setFilteredData([]);  // Cập nhật lại giao diện
         console.log("No data available");
       }
@@ -38,16 +37,17 @@ const Ban = () => {
     // Cleanup function để hủy listener khi component unmount
     return () => words();
   }, []);
-  useEffect(() => {
-    setFilteredData(banWords)
-    console.log('Filter: ', banWords);
 
-  }, [banWords])
+  useEffect(() => {
+    setFilteredData(reasons)
+    console.log('Filter: ', reasons);
+
+  }, [reasons])
 
   const handleAdd = async () => {
     if (inputText.trim()) {
-      // Tạo một tham chiếu đến nhánh 'words' trong Realtime Database
-      const wordsRef = ref(database, 'words');
+      // Tạo một tham chiếu đến nhánh 'reasons/post' trong Realtime Database
+      const wordsRef = ref(database, 'reasons/post');
 
       // Tạo key tu dong cua firebase
       const newItemKey = push(wordsRef);
@@ -55,7 +55,7 @@ const Ban = () => {
       // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
       await set(newItemKey, inputText)
         .then(() => {
-          // Reset input sau khi thêm từ
+          // Reset input sau khi thêm li do
           setInputText('');
           setIsDisabled(false);
           console.log('Data added successfully');
@@ -66,26 +66,11 @@ const Ban = () => {
 
     }
   };
-
-
-  const handleTextChange = (text: string) => {
-    setInputText(text);
-    const filtered = banWords.filter((item: { id: any, name: string }) => item.name.includes(text));
-
-    setFilteredData(filtered);
-
-    if (filtered.length > 0 && filtered.some((item: { id: any, name: any }) => item.name === text)) {
-      setIsDisabled(true);
-    } else {
-      setIsDisabled(false);
-    }
-  };
-
-  const unblockBanWord = (banWordId: string) => {
-    const refRemove = ref(database, `/words/${banWordId}`)
+  const handleRemove = (reasonId: string) => {
+    const refRemove = ref(database, `/reasons/post/${reasonId}`)
     Alert.alert(
-      "Remove word",
-      "Are you sure you want to remove this word?",
+      "Remove reason",
+      "Are you sure you want to remove this reason?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -106,22 +91,30 @@ const Ban = () => {
 
   };
 
-  const renderBanWordsItem = (word: any) => {
+  const handleTextChange = (text: string) => {
+    setInputText(text);
+    const filtered = reasons.filter((item: { id: any, name: string }) => item.name.includes(text));
+
+    setFilteredData(filtered);
+
+    if (filtered.length > 0 && filtered.some((item: { id: any, name: any }) => item.name === text)) {
+      setIsDisabled(true);
+    } else {
+      setIsDisabled(false);
+    }
+  };
+
+  const renderReasonItem = (reason: any) => {
     return (
       <View style={styles.item}>
-        <View>
-          <Text style={styles.name}>{word.item.name}</Text>
+        <View style={{flexDirection:'row'}}>
+          <Text style={styles.name}>{reason.item.name}</Text>
+          <AntDesign name="delete" size={24} color="black" style={{width:'10%', color:'red'}} onPress={()=>handleRemove(reason.item.id)}/>
+
         </View>
-        <TouchableOpacity
-          style={styles.remove}
-          onPress={() => unblockBanWord(word.item.id)}
-        >
-          <Text style={{ color: '#ffffff' }}>Remove</Text>
-        </TouchableOpacity>
       </View>
     )
   };
-
   return (
     <View>
       <View style={styles.addBar}>
@@ -129,6 +122,7 @@ const Ban = () => {
           style={styles.textInput}
           value={inputText}
           onChangeText={handleTextChange}
+          placeholder='Add reason report for post'
         />
         <TouchableOpacity
           style={[styles.addBtn, isDisabled && styles.disabledBtn]}
@@ -143,16 +137,16 @@ const Ban = () => {
           <FlatList
             data={filteredData}
             // keyExtractor={(item) => item.id}
-            renderItem={renderBanWordsItem}
+            renderItem={renderReasonItem}
           />
         ) : (
-          <Text style={styles.noAccountsText}>No words</Text>
+          <Text style={styles.noAccountsText}>No reason</Text>
         )}
       </View>
     </View>
-  );
-};
 
+  )
+}
 const styles = StyleSheet.create({
   container: {
     padding: 16,
@@ -210,7 +204,8 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '600',
+    width: '90%'
   },
 });
 
-export default Ban;
+export default Post

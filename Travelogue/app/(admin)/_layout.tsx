@@ -2,7 +2,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { Image, View, StyleSheet, Text } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { MaterialIcons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Octicons, Entypo } from '@expo/vector-icons';
 import React from 'react';
 
 function CustomDrawerContent(props:any) {
@@ -104,7 +104,18 @@ export default function Layout() {
             )
           }}
         />
+        <Drawer.Screen
+          name="(reason)" 
+          options={{
+            drawerLabel: 'Reasons',
+            title: 'Reasons',
+            drawerIcon: ({color, size}) => (
+              <Entypo name="list" size={24} color="black" />
+            )
+          }}
+        />
       </Drawer>
+      
     </GestureHandlerRootView>
   );
 }
