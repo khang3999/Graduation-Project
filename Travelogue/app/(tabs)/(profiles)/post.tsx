@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useRef } from "react";
 import Carousel from "react-native-reanimated-carousel";
-// import ActionBar from "@/components/ActionBar";
+import { Modalize } from "react-native-modalize";
 import LikeButton from "@/components/buttons/HeartButton";
 import CommentButton from "@/components/buttons/CommentButton";
 import SaveButton from "@/components/buttons/SaveButton";
@@ -44,7 +44,7 @@ const data: PostData[] = [
       { id: 1, image: require("@/assets/images/tom_post_1.png") },
       { id: 2, image: require("@/assets/images/tom_post_2.png") },
     ],
-    place: ['da lat', 'tàu tàu'],
+    place: ["da lat", "tàu tàu"],
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur",
   },
@@ -63,8 +63,13 @@ const PostItem: React.FC<PostItemProps> = ({
   showFullDescription,
   toggleDescription,
 }) => {
+  const commentModalRef = useRef<Modalize>(null);
+  const openCommentModal = () => {  
+    commentModalRef.current?.open();
+  };
   return (
     <View key={item.id}>
+      {/* Post Header */}
       <View style={styles.row}>
         <View style={styles.row}>
           <Image source={item.avatar} style={styles.miniAvatar} />
@@ -74,9 +79,11 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem menuIcon="dots-horizontal"/>
+          <MenuItem menuIcon="dots-horizontal" />
         </View>
       </View>
+
+      {/* Post Images Carousel */}
       <Carousel
         panGestureHandlerProps={{
           activeOffsetX: [-10, 10],
@@ -99,15 +106,17 @@ const PostItem: React.FC<PostItemProps> = ({
         )}
       />
       <View>
+          {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
             <LikeButton style={styles.buttonItem} />
-            <CommentButton style={styles.buttonItem} />
+            <CommentButton style={styles.buttonItem} onPress={openCommentModal}/>
           </View>
           <SaveButton style={styles.buttonItem} />
         </View>
       </View>
-      <CheckedInChip items={item.place}/>
+      <CheckedInChip items={item.place} />
+          {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
         <Text>
           {showFullDescription
@@ -119,6 +128,18 @@ const PostItem: React.FC<PostItemProps> = ({
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} bold={true} />
+       {/* Comment Bottom Sheet */}
+       <Modalize
+        ref={commentModalRef}
+        modalHeight={400}
+        handlePosition="inside"
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalHeaderText}>Comments for {item.username}'s post</Text>
+          {/* Add comment list or form here */}
+          <Text>No comments yet. Be the first to comment!</Text>
+        </View>
+      </Modalize>
     </View>
   );
 };
@@ -214,5 +235,13 @@ const styles = StyleSheet.create({
   posts: {
     width: windowWidth,
     height: windowWidth,
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });
