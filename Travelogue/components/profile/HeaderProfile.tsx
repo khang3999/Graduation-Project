@@ -39,21 +39,17 @@ const Bell = () => (
 );
 
 
-export default function HeaderProfile() {
+export default function HeaderProfile({userData}:any) {
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <View style={styles.row}>
-          <Text style={styles.username}>tranhieuphuc12</Text>
-          <MaterialIcons name="keyboard-arrow-down" size={24} color="black" />
-        </View>
+      <View style={styles.row}>           
         <View style={styles.headerButton}>
           <Plus />
           <Bell />          
           <MenuItem menuIcon="menu" />
         </View>
       </View>
-      <AvatarProfile />
+      <AvatarProfile userData={userData}/>
     </View>
   );
 }
@@ -70,7 +66,7 @@ const styles = StyleSheet.create({
     margin: 2,
   },
   row: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
   },
   headerButton: {

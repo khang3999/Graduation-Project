@@ -7,39 +7,70 @@ import {
   TextInput,
   ScrollView,
 } from "react-native";
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-
-
-
+import { updateUserData } from "@/services/userService";
+import debounce from "lodash/debounce";
+import { update } from "lodash";
+import { auth } from "@/firebase/firebaseConfig";
 
 export default function EditingProfileScreen() {
+  const localUser = useLocalSearchParams();
+  
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(
+    Array.isArray(localUser.avatar) ? localUser.avatar[0] : localUser.avatar
+  );
+  const [localUserData, setLocalUserData] = React.useState(localUser);
 
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
-  const imageSource = selectedImage ? { uri: selectedImage } : require("@/assets/images/tom.png");
+  console.log("userData", localUser);
+  console.log("selectedImage", selectedImage);
+  
+
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       quality: 1,
     });
-  
+
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }else{
+      const newImage = result.assets[0].uri;
+      setSelectedImage(newImage);
+      console.log("selectedImage", selectedImage);
+    } else {
       alert("Image picker was cancelled");
     }
+  };
+
+  const handleSaveChangesButton = () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      updateUserData(currentUser.uid, localUserData, selectedImage)
+        .then(() => {
+          alert("User data updated successfully!");
+          router.back();
+        })
+        .catch((error) => {
+          alert("Failed to update user data: " + error.message);
+        });
+    } else {
+      alert("No user is currently logged in.");
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setLocalUserData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>
         <View style={styles.container}>
-          <Image
-            style={styles.avatar}
-            source={imageSource}
-          />
+          <Image style={styles.avatar} source={{ uri: selectedImage || "a" }} />
           <Pressable style={styles.editButton} onPress={pickImageAsync}>
             <Text style={styles.editText}>Edit picture or avatar</Text>
           </Pressable>
@@ -47,18 +78,26 @@ export default function EditingProfileScreen() {
           <View style={styles.infoContainer}>
             <View style={styles.row}>
               <Text style={styles.infoText}>Fullname:</Text>
-              <TextInput style={styles.username} placeholder="Fullname"></TextInput>
+              <TextInput
+                style={styles.username}
+                placeholder="fullname"
+                value={localUserData.fullname as string}
+                onChangeText={(text) => handleInputChange("fullname", text)}
+              ></TextInput>
             </View>
-                    
             <View style={styles.row}>
               <Text style={styles.infoText}>Phone:</Text>
               <TextInput
                 style={styles.username}
                 placeholder="0123-455-667"
+                value={localUserData.phone as string}
+                onChangeText={(text) => handleInputChange("phone", text)}
               ></TextInput>
             </View>
-           
-            <Pressable style={styles.saveButton} onPress={router.back}>
+            <Pressable
+              style={styles.saveButton}
+              onPress={handleSaveChangesButton}
+            >
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </Pressable>
           </View>

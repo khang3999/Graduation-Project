@@ -1,19 +1,45 @@
-import { Text, View, StyleSheet, Image, Pressable } from "react-native";
+import { Text, View, StyleSheet, Image, Pressable, ActivityIndicator } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {router} from 'expo-router';
-import React from "react";
+import React, { useEffect,useState } from "react";
+import { getImageUrl } from "@/services/userService";
+import { set } from "lodash";
 
-export default function AvatarProfile() {
+export default function AvatarProfile({userData}:any) {
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  
+
+  useEffect(() => {
+    const fetchAvatarUrl = async () => {
+      try {
+        const url = await getImageUrl(userData.avatar);
+        setAvatarUrl(url);        
+                   
+      } catch (error) {
+        console.error('Error fetching avatar URL:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAvatarUrl();
+  }, [userData.avatar]);
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+  
   return (
     <View style={styles.container}>
       <View style={styles.row}>
         <Image
           style={styles.avatar}
-          source={require("@/assets/images/tom.png")}
+          source={{uri: avatarUrl}}
         />
         <View style={styles.column}>
           <Text style={styles.infoText}>1.000</Text>
@@ -24,10 +50,10 @@ export default function AvatarProfile() {
           <Text style={styles.infoText}>bai viet</Text>
         </View>
       </View>
-      <Text style={styles.username}>Tom</Text>
+      <Text style={styles.username}>{userData.fullname}</Text>
       <Pressable
         style={styles.button}
-        onPressIn={() => router.push("/editing")}
+        onPressIn={() => router.push({ pathname: "/editing", params: userData  })}
       >
         <Text style={styles.editText}>Edit Profile</Text>
       </Pressable>
