@@ -1,6 +1,6 @@
 import { initializeApp } from '@firebase/app';
 import { getAuth, FacebookAuthProvider, signInWithCredential, signInWithPopup } from '@firebase/auth';
-import { getDatabase } from '@firebase/database'; 
+import { getDatabase, push } from '@firebase/database'; 
 import { ref, set, onValue } from "@firebase/database";
 
 import {
@@ -28,13 +28,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app); 
 const storage = getStorage(app);
-
 // Exporting Firebase services  
 export { 
   auth, 
   database, 
   ref, 
-  set, 
+  set,
   storage, 
   onValue,
   storageRef, 

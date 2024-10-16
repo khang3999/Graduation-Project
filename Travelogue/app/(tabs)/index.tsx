@@ -23,9 +23,9 @@ const Home = () => {
         <SearchBar></SearchBar>
       </View>
       {/* Tour section */}
-      <View>
+      <View className="flex-row">
         <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
-        <TouchableOpacity onPress={() => { router.push('/(admin)/(account)/account') }}>
+        <TouchableOpacity  className='mt-5' onPress={() => { router.push('/(admin)/(account)/account') }}>
           <Text>admin</Text>
         </TouchableOpacity>
       </View>
@@ -39,7 +39,6 @@ const Home = () => {
         onPress={handleLogout}
       /> */}
     </View>
-
   )
 }
 

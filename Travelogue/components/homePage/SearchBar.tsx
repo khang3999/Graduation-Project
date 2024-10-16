@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     inputText: {
         flex: 3,
         height: 'auto',
-        backgroundColor: '#999999',
+        backgroundColor: '#f0f0f0',
         borderBottomLeftRadius: 10,
         borderTopLeftRadius: 10,
         borderColor: 'black',
