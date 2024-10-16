@@ -41,11 +41,11 @@ export default function AvatarProfile({userData}:any) {
           source={{uri: avatarUrl}}
         />
         <View style={styles.column}>
-          <Text style={styles.infoText}>1.000</Text>
+          <Text style={styles.infoText}>{userData.totalLikes ?? null}</Text>
           <Text style={styles.infoText}>thich</Text>
         </View>
         <View style={styles.column}>
-          <Text style={styles.infoText}>59</Text>
+          <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
           <Text style={styles.infoText}>bai viet</Text>
         </View>
       </View>
