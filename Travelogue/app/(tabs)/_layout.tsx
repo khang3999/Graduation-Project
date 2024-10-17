@@ -44,7 +44,7 @@ const _layout = () => {
           }} />
         <Tabs.Screen
           key={3}
-          name="map"
+          name="(maps)"
           options={{
             title: 'Map',
             headerShown: false,
