@@ -2,6 +2,8 @@ export class UserRegister {
   name: string;
   email: string;
   phone: string;
+  totalLikes: number;
+  totalPosts: number;
   password: string;
   behavior?: string; 
   avatar?: string;
@@ -19,6 +21,8 @@ export class UserRegister {
     name,
     email,
     phone,
+    totalLikes,
+    totalPosts,
     password,
     behavior,
     avatar,
@@ -35,6 +39,8 @@ export class UserRegister {
     name: string;
     email: string;
     phone: string;
+    totalLikes: number;
+    totalPosts: number;
     password: string;
     behavior?: string;
     avatar?: string;
@@ -51,6 +57,8 @@ export class UserRegister {
     this.name = name;
     this.email = email;
     this.phone = phone;
+    this.totalLikes = totalLikes;
+    this.totalPosts = totalPosts;
     this.password = password;
     this.behavior = behavior;
     this.avatar = avatar;

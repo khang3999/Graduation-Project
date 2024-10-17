@@ -1,7 +1,7 @@
 import { initializeApp } from '@firebase/app';
 import { getAuth, FacebookAuthProvider, signInWithCredential, signInWithPopup } from '@firebase/auth';
 import { getDatabase } from '@firebase/database'; 
-import { ref, set, onValue } from "@firebase/database";
+import { ref, set, onValue, get, update} from "@firebase/database";
 
 import {
   getStorage,
@@ -31,8 +31,10 @@ const storage = getStorage(app);
 
 // Exporting Firebase services  
 export { 
+  update,
   auth, 
   database, 
+  get,
   ref, 
   set, 
   storage, 
