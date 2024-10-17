@@ -74,36 +74,36 @@ const Map = () => {
     // Lấy dữ liệu từ firebase (points)
     onValue(pointRef, (snapshot) => {
       const data = snapshot.val() || {};
-      console.log("____________________")
-      console.log(data);
+      // console.log("____________________")
+      // console.log(data);
       const formattedPoints = [];
       Object.keys(data).forEach((countryId) => {
         const countryPoints = data[countryId];
-        console.log("countryPoints:", countryPoints);
+        // console.log("countryPoints:", countryPoints);
         Object.keys(countryPoints).forEach((type) => {
           const typePoints = countryPoints[type];
-          console.log("typePoints:", typePoints);
+          // console.log("typePoints:", typePoints);
           Object.keys(typePoints).forEach((pointId) => {
             const point = typePoints[pointId];
-            console.log("point:", point);
-            
+            // console.log("point:", point);
+
             // Chọn tên biến mới
-            const relevantKeys = Object.keys(point); 
-          console.log("relevantKeys:", relevantKeys)
-    
-            relevantKeys.forEach(pointKey => {
+            const relevantKeys = Object.keys(point);
+            // console.log("relevantKeys:", relevantKeys)
+
+            relevantKeys.forEach((pointKey) => {
               formattedPoints.push({
-                id: pointKey,  
+                id: pointKey,
                 countryId: countryId,
                 cityId: pointId,
                 type: type,
-                ...point[pointKey],  
+                ...point[pointKey],
               });
             });
           });
         });
       });
-          
+
       // console.log("formattedPoints:", formattedPoints);
       setPoints(formattedPoints);
     });
@@ -207,7 +207,7 @@ const Map = () => {
   // Points phụ thuộc vào quốc gia và loại lễ hội
   const filteredPoints = useMemo(() => {
     if (!selectedCountry) {
-      return points; 
+      return points;
     }
     return points.filter((point) => {
       if (selectedCountry && point.countryId !== selectedCountry) {
@@ -221,7 +221,7 @@ const Map = () => {
           return false;
         }
       }
-  
+
       // Giữ lại điểm nếu không có điều kiện nào loại bỏ nó
       return true;
     });
@@ -245,15 +245,14 @@ const Map = () => {
 
   // Xu ly bottom sheet
   const openBottomSheet = (point) => {
-    console.log("Point:", point);
-    
-    
-      // Đặt state và mở BottomSheet
-      setSelectedFestival(point);
-  
-      if (bottomSheetRef.current) {
-        bottomSheetRef.current.show();
-      }
+    // console.log("Point:", point);
+
+    // Đặt state và mở BottomSheet
+    setSelectedFestival(point);
+
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.show();
+    }
   };
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
@@ -264,12 +263,11 @@ const Map = () => {
         {/* Map của Google Map */}
 
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
-          {
-          filteredPoints.map((point) => {
-            console.log("pointhello:", point);
+          {filteredPoints.map((point) => {
+            // console.log("pointhello:", point);
             // Chọn màu sắc cho Marker
             const pinColor =
-            point.type === "landmark"
+              point.type === "landmark"
                 ? "blue"
                 : point.type === "festival"
                 ? "red"
@@ -279,14 +277,14 @@ const Map = () => {
             const longitude = point.longitude;
             return (
               <Marker
-              key={point.id} 
-              coordinate={{ latitude, longitude }}
-              title={point.title}
-              pinColor={pinColor}
-              onPress={() => {
-                console.log(openBottomSheet(point)); 
-              }}
-            />
+                key={point.id}
+                coordinate={{ latitude, longitude }}
+                title={point.title}
+                pinColor={pinColor}
+                onPress={() => {
+                  openBottomSheet(point);
+                }}
+              />
             );
           })}
         </MapView>
@@ -488,7 +486,7 @@ const Map = () => {
                 data={festivalTypeOptions}
                 keyExtractor={(item) => item.id}
                 style={styles.countryList}
-                renderItem={({ item}) => (
+                renderItem={({ item }) => (
                   <TouchableOpacity
                     style={styles.countryOption}
                     onPress={() => handleFestivalChange(item)}
@@ -509,7 +507,6 @@ const Map = () => {
         </Modal>
         {/* BottomSheet le hoi */}
         <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={480}>
-         
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
@@ -518,16 +515,8 @@ const Map = () => {
               </Text>
 
               {/* Kiểm tra số lượng ảnh */}
-              {/* {selectedFestival.images.length === 1 ? ( */}
-                {/* // Th 1 ảnh */}
-                <Image
-                  style={styles.festivalImage}
-                  source={{ uri: selectedFestival.images[0] }}
-                  resizeMode="cover"
-                />
-              {/* ) : ( */}
-                {/* // Th Nhiều ảnh */}
-                {/* <ImageSlider
+              {Array.isArray(selectedFestival.images) ? (
+                <ImageSlider
                   data={selectedFestival.images.map((image) => ({
                     img: image,
                   }))}
@@ -537,7 +526,7 @@ const Map = () => {
                     marginTop: -30,
                     width: 400,
                     height: 250,
-                    resizeMode: "cover",
+                    resizeMode: "stretch",
                     overflow: "hidden",
                   }}
                   indicatorContainerStyle={{
@@ -545,21 +534,29 @@ const Map = () => {
                     bottom: -15,
                   }}
                 />
-              )} */}
+              ) : selectedFestival.images ? (
+                <Image
+                  style={styles.festivalImage}
+                  source={{ uri: selectedFestival.images }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text>Không có ảnh nào</Text> 
+              )}
+
               {/*  */}
               <Text style={styles.dateText}>
                 <Text style={{ fontWeight: "bold" }}>Ngày</Text>:{" "}
-                {selectedFestival.start} -
-                {selectedFestival.end}
+                {selectedFestival.start} -{selectedFestival.end}
               </Text>
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.iconButton}>
+                <TouchableOpacity style={styles.iconButton} onPress={()=>{console.log("Bai Viet: "+selectedFestival.cityId)}}>
                   <Icon name="file-text-o" size={20} color="#000" />
                   <Text style={styles.buttonText}>Bài viết</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconButton}>
+                <TouchableOpacity style={styles.iconButton}  onPress={()=>{console.log("Tour: "+selectedFestival.cityId)}}>
                   <Icon name="picture-o" size={20} color="#000" />
                   <Text style={styles.buttonText}>Tours</Text>
                 </TouchableOpacity>
@@ -726,7 +723,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   festivalImage: {
-    width: 400,
+    width: 350,
     height: 200,
   },
   closeButton: {
