@@ -46,10 +46,44 @@ const FirstRoute = () => (
 );
 
 const SecondRoute = () => (
-  <View style={{ flex: 1, backgroundColor: "#673ab7" }} />
+  <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'orange' }}>
+  <FlatList
+    style={{ flex: 1 }}
+    data={images}
+    renderItem={({ item }) => (
+      <Pressable
+        onPress={() => {
+          router.push("/post");
+        }}
+      >
+        <Image source={item.uri} style={styles.imagesGallery} />
+      </Pressable>
+    )}
+    keyExtractor={(item) => item.id}
+    numColumns={3}
+  />
+</View>
 );
 
-const ThirdRoute = () => <View style={{ flex: 1, backgroundColor: "black" }} />;
+const ThirdRoute = () => (
+  <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'green' }}>
+  <FlatList
+    style={{ flex: 1 }}
+    data={images}
+    renderItem={({ item }) => (
+      <Pressable
+        onPress={() => {
+          router.push("/post");
+        }}
+      >
+        <Image source={item.uri} style={styles.imagesGallery} />
+      </Pressable>
+    )}
+    keyExtractor={(item) => item.id}
+    numColumns={3}
+  />
+</View>
+);
 
 const renderScene = SceneMap({
   first: FirstRoute,

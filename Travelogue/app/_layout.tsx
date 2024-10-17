@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router/stack';
 import { createStackNavigator, Header } from "@react-navigation/stack";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';  
 
 export default function Layout() {
     return (
