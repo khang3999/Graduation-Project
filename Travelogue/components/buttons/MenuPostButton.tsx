@@ -13,6 +13,8 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
+import {Button, Divider} from "react-native-paper";
+
 interface MenuPopupButtonProps {
   menuIcon: string;
 }
@@ -33,16 +35,6 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
       });
     }
     setModalVisible(!isModalVisible);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
-      router.replace("/LoginScreen");
-    } catch (error) {
-      Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
-    }
   };
 
   return (
@@ -75,11 +67,34 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
                 { top: menuPosition.top, left: menuPosition.left },
               ]}
             >
-              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                <View>
-                  <Text style={styles.menuText}>Đăng xuất</Text>
-                </View>
-              </TouchableOpacity>
+              <Button
+                icon="image-outline"
+                mode="text"
+                onPress={() => console.log("Pressed")}  
+                textColor="#000"                                              
+              >
+                Edit
+              </Button>
+              <View style={styles.border} />
+              <Button
+                icon="trash-can-outline"
+                mode="text"
+                onPress={() => console.log("Pressed")}  
+                textColor="#000"                              
+              >
+                Trash
+              </Button>
+              <View style={styles.border} />
+              <Button
+                icon="send"
+                mode="text"
+                onPress={() => console.log("Pressed")}  
+                textColor="#000"                              
+              >
+                Report
+              </Button>
+              
+           
             </View>
           </TouchableOpacity>
         </Modal>
@@ -117,14 +132,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  menuItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  border: {        
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     width: 150,
     alignItems: "center",
-    backgroundColor: "#FF9B45",
     borderRadius: 5,
   },
   menuText: {

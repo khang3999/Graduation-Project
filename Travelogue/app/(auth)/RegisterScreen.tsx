@@ -58,6 +58,8 @@ const RegisterScreen = ({ navigation }: any) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [businessLicense, setBusinessLicense] = useState("");
   const [numberCCCD, setNumberCCCD] = useState("");
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [totalPosts, setTotalPosts] = useState(0);
   // Lưu ảnh
   const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
   const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
@@ -134,7 +136,9 @@ const RegisterScreen = ({ navigation }: any) => {
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
-          const avatar = "";
+          const avatar = await getDownloadURL(
+            storageRef(storage, "defaultAvatar/avatar.png")
+          ); // Set default avatar URL
           const numberCCCD = "";
           const imageFrontUrlCCCD = "";
           const imageBackUrlCCCD = "";
@@ -148,6 +152,8 @@ const RegisterScreen = ({ navigation }: any) => {
             name,
             email,
             phone,
+            totalLikes,
+            totalPosts,
             password,
             behavior,
             avatar,
@@ -167,6 +173,8 @@ const RegisterScreen = ({ navigation }: any) => {
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
+            totalLikes: newUser.totalLikes,
+            totalPosts: newUser.totalPosts,
             behavior: newUser.behavior,
             avatar: newUser.avatar,
             expense: newUser.expense,

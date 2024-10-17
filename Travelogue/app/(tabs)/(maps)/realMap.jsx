@@ -16,6 +16,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { ImageSlider } from "react-native-image-slider-banner";
 import { RowComponent, SectionComponent } from "@/components";
 import { database, ref, onValue } from "@/firebase/firebaseConfig";
+import { ScrollView } from "react-native-gesture-handler";
 
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
@@ -114,6 +115,10 @@ const Map = () => {
   const bottomSheetRef = useRef(null);
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
+  //Scroll View
+  const scrollViewRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   const handleCountryChange = (country) => {
     // console.log("Selected Country1:", country);
@@ -216,59 +221,27 @@ const Map = () => {
     });
   }, [points, selectedCountry, selectedFestivalType]);
 
+  const handleScroll = (event) => {
+    //CHiều rộng nội dung
+    const contentWidth = event.nativeEvent.contentSize.width;
+    //Chiều rộng man hình
+    const scrollWidth = event.nativeEvent.layoutMeasurement.width;
+    //Vị trí cuộn
+    const scrollX = event.nativeEvent.contentOffset.x;
+    // console.log("contentWidth:", contentWidth);
+    // console.log("scrollWidth:", scrollWidth);
+    // console.log("scrollX:", scrollX);
+    
+    setShowLeftArrow(scrollX > 0);
+    setShowRightArrow(scrollX + scrollWidth < contentWidth);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Image source={require("../../assets/images/logo.png")} />
-          </View>
-          <View style={styles.countrySelector}>
-            <TouchableOpacity
-              onPress={() => setModalVisibleCountry(true)}
-              style={styles.countryButton}
-            >
-              {selectedCountry != null && (
-                <Image
-                  source={{
-                    uri: countryData.find(
-                      (country) => country.id === selectedCountry
-                    )?.image,
-                  }}
-                  style={styles.countryFlag}
-                />
-              )}
-              <Text
-                style={styles.countryButtonText}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {selectedCountry != null
-                  ? countryData.find(
-                      (country) => country.id === selectedCountry
-                    )?.label
-                  : "Chọn quốc gia"}
-              </Text>
-              <Icon
-                name="angle-down"
-                size={20}
-                style={{ padding: 10 }}
-                color="#000"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <View style={styles.header}></View>
         {/* Map của Google Map */}
-        {/* <MapView
-          style={styles.map}
-          region={mapRegion}
-          mapType="standard"
-          onRegionChangeComplete={(region) => {
-            // console.log("Latitude:", region.latitude);
-            // console.log("Longitude:", region.longitude);
-            setMapRegion(region);
-          }}
-        > */}
+
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
           {filteredPoints.map((point) => {
             console.log("pointhello:", point);
@@ -315,59 +288,126 @@ const Map = () => {
           })}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
-        <RowComponent justify="space-between">
-          {/* khu vực */}
-          <SectionComponent style={styles.addressButtonArea}>
-            <View style={styles.areaSelector}>
+        <RowComponent styles={{ marginTop: 30 }} justify="center">
+          <View style={styles.containerScroll}>
+            {showLeftArrow && (
               <TouchableOpacity
-                onPress={() => setModalVisibleArea(true)}
-                style={styles.areaButton}
+                style={styles.arrowButton}
+                onPress={() =>
+                  scrollViewRef.current.scrollTo({ x: -230, animated: true })
+                }
               >
-                <Text
-                  style={styles.areaButtonText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {selectedArea != null
-                    ? areaData.find((area) => area.id === selectedArea)?.label
-                    : "Tất cả khu vực"}
-                </Text>
-                <Icon
-                  name="angle-down"
-                  size={20}
-                  style={{ padding: 10 }}
-                  color="#000"
-                />
+                <Text style={styles.arrowText}>&lt;</Text>
               </TouchableOpacity>
-            </View>
-          </SectionComponent>
-          {/* Lễ hội danh lam */}
-          <SectionComponent>
-            <View style={styles.festivalSelector}>
+            )}
+
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onScroll={handleScroll}
+            >
+              <SectionComponent>
+                <View style={styles.countrySelector}>
+                  <TouchableOpacity
+                    onPress={() => setModalVisibleCountry(true)}
+                    style={styles.countryButton}
+                  >
+                    {selectedCountry != null && (
+                      <Image
+                        source={{
+                          uri: countryData.find(
+                            (country) => country.id === selectedCountry
+                          )?.image,
+                        }}
+                        style={styles.countryFlag}
+                      />
+                    )}
+                    <Text
+                      style={styles.countryButtonText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedCountry != null
+                        ? countryData.find(
+                            (country) => country.id === selectedCountry
+                          )?.label
+                        : "Chọn quốc gia"}
+                    </Text>
+                    <Icon
+                      name="angle-down"
+                      size={20}
+                      style={{ padding: 10 }}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </SectionComponent>
+              {/* khu vực */}
+              <SectionComponent>
+                <View style={styles.areaSelector}>
+                  <TouchableOpacity
+                    onPress={() => setModalVisibleArea(true)}
+                    style={styles.areaButton}
+                  >
+                    <Text
+                      style={styles.areaButtonText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedArea != null
+                        ? areaData.find((area) => area.id === selectedArea)
+                            ?.label
+                        : "Tất cả khu vực"}
+                    </Text>
+                    <Icon
+                      name="angle-down"
+                      size={20}
+                      style={{ padding: 10 }}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </SectionComponent>
+              {/* Lễ hội danh lam */}
+              <SectionComponent>
+                <View style={styles.festivalSelector}>
+                  <TouchableOpacity
+                    onPress={() => setmodalFestivalType(true)}
+                    style={styles.festivalButton}
+                  >
+                    <Text
+                      style={styles.countryButtonText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedFestivalType != null
+                        ? festivalTypeOptions.find(
+                            (option) => option.id === selectedFestivalType
+                          )?.label
+                        : "Chọn tất cả"}
+                    </Text>
+                    <Icon
+                      name="angle-down"
+                      size={20}
+                      style={{ padding: 10 }}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </SectionComponent>
+            </ScrollView>
+            {showRightArrow && (
               <TouchableOpacity
-                onPress={() => setmodalFestivalType(true)}
-                style={styles.festivalButton}
+                style={styles.arrowButton}
+                onPress={() =>
+                  scrollViewRef.current.scrollTo({ x: 240, animated: true })
+                }
               >
-                <Text
-                  style={styles.countryButtonText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {selectedFestivalType != null
-                    ? festivalTypeOptions.find(
-                        (option) => option.id === selectedFestivalType
-                      )?.label
-                    : "Chọn tất cả"}
-                </Text>
-                <Icon
-                  name="angle-down"
-                  size={20}
-                  style={{ padding: 10 }}
-                  color="#000"
-                />
+                <Text style={styles.arrowText}>&gt;</Text>
               </TouchableOpacity>
-            </View>
-          </SectionComponent>
+            )}
+          </View>
         </RowComponent>
         {/* Modal chọn quốc gia */}
         <Modal visible={modalVisibleCountry} transparent={true}>
@@ -546,16 +586,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#fff",
   },
-  logoContainer: {
-    marginRight: 5,
-  },
   // Chọn khu vuc
   areaSelector: {
     backgroundColor: "#ccc",
     borderRadius: 30,
     height: 50,
     width: 160,
-    marginTop: 95,
     borderWidth: 1,
     borderColor: "#aaa",
     shadowColor: "#000",
@@ -583,7 +619,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     height: 50,
     width: 160,
-    marginTop: 95,
     borderWidth: 1,
     borderColor: "#aaa",
     shadowColor: "#000",
@@ -611,7 +646,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     height: 50,
     width: 160,
-    marginTop: 10,
     borderWidth: 1,
     borderColor: "#aaa",
     shadowColor: "#000",
@@ -757,6 +791,20 @@ const styles = StyleSheet.create({
   imageSlider: {
     borderRadius: 10,
   },
+  //Scroll View
+  containerScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  arrowButton: {
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    marginTop: -20,
+    elevation: 10,
+    marginHorizontal: 5,
+  },
+ 
 });
 
 export default Map;
