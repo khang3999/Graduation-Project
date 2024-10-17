@@ -8,7 +8,7 @@ export default function Layout() {
         <GestureHandlerRootView style={{flex:1}}> 
         <Stack
             screenOptions={{
-              contentStyle: {paddingTop: 50}
+                headerShown: false,
             }}>
             <Stack.Screen name="(auth)" options={{headerShown: false}}/>
             <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
