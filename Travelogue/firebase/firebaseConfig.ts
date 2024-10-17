@@ -28,7 +28,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app); 
 const storage = getStorage(app);
-
 // Exporting Firebase services  
 export { 
   update,
@@ -36,7 +35,7 @@ export {
   database, 
   get,
   ref, 
-  set, 
+  set,
   storage, 
   onValue,
   storageRef, 
