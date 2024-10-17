@@ -311,7 +311,7 @@ const Map = () => {
     });
     onValue(areaRef, (snapshot) => {
       const data = snapshot.val() || {};
-      console.log(data);
+      // console.log(data);
       // Chuyển từ đối tượng thành mảng
       const formattedDataAreas = Object.keys(data).map(key => ({ id: key, ...data[key] }));
       // console.log(formattedDataAreas);
@@ -360,8 +360,8 @@ const Map = () => {
 
       setSelectedCountry(country.id);
 
-      console.log("Selected Country:", country);
-      console.log("Selected Country id:", country.id);
+      // console.log("Selected Country:", country);
+      // console.log("Selected Country id:", country.id);
       
     }
 
@@ -374,9 +374,9 @@ const Map = () => {
         // console.log("Area Data:", areaData),
         areaData.filter((area) => area.countryId === selectedCountry)
       );
-      console.log("Filtered Area Data:", filteredAreaData);
+      // console.log("Filtered Area Data:", filteredAreaData);
       setSelectedArea(filteredAreaData.id);
-      console.log("Selected Area:", selectedArea);
+      // console.log("Selected Area:", selectedArea);
     }
 
   }, [selectedCountry]);

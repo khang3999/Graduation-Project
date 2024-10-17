@@ -61,7 +61,7 @@ const PostList = () => {
       }))
     );
     return (
-      <PaperProvider>
+      <PaperProvider key={post.item.id}>
         <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
         }>
           {/*Author*/}
