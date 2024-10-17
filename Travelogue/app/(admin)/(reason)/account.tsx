@@ -110,7 +110,7 @@ const Account = () => {
       <View style={styles.item}>
         <View style={{flexDirection:'row'}}>
           <Text style={styles.name}>{reason.item.name}</Text>
-          <AntDesign name="delete" size={24} color="black" style={{width:'10%', color:'red'}} onPress={()=>handleRemove(reason.item.id)}/>
+          <AntDesign name="delete" size={24} style={{width:'10%', color:'red'}} onPress={()=>handleRemove(reason.item.id)}/>
 
         </View>
       </View>

@@ -1,74 +1,136 @@
 
 import UnlockBtn from '@/components/buttons/UnlockBtn';
-import React, { useState } from 'react';
+import { AntDesign } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
+import { push, remove,update } from '@firebase/database';
 
-// Định nghĩa kiểu dữ liệu cho một tài khoản
-interface Comment {
-  id: string;
-  name: string;
-  commentContent: string;
-  isBlocked: boolean;
-}
 
-// Giả lập danh sách tài khoản bị block
-const initialBlockedcomments: Comment[] = [
-  { id: '1', name: 'User 1', commentContent: 'Xau qua', isBlocked: true },
-  { id: '2', name: 'User 2', commentContent: 'Thay ghe' , isBlocked: false},
-  { id: '3', name: 'User 3', commentContent: 'Dung di' , isBlocked: true},
-  { id: '4', name: 'User 4', commentContent: 'Cho' , isBlocked: true},
-];
-
-export default function AccountManagementScreen() {
-  const [comments, setcomments] = useState<Comment[]>(initialBlockedcomments);
-  // Hàm gỡ block cho tài khoản
-  const unblockcomment= (commentId: string) => {
+export default function CommentReport() {
+  const [dataCommentReport, setDataCommentReport] = useState([]);
+  const keyResolve =2;
+  //Du lieu Comment
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'reports/comment');
+    // Lắng nghe thay đổi trong dữ liệu
+    const post = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        const jsonDataArr:any = Object.values(jsonData)
+        // Lọc các bài có status != 2, da xu ly
+       const filteredData = jsonDataArr.filter((post: any) => post.status != keyResolve);
+       setDataCommentReport(filteredData);
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+    // Cleanup function để hủy listener khi component unmount
+    return () => post();
+  }, []);
+  
+  // Hàm gỡ lock cho comment
+  const unlockComment = (commentID: string, postId:string) => {
+    const refRemove = ref(database, `reports/comment/${[commentID]}`)
+    const refComment = ref(database, `posts/${[postId]}/comments/${[commentID]}`)
     Alert.alert(
-      "Unblock Account",
-      "Are you sure you want to unblock this account?",
+      "Unlock comment",
+      "Are you sure you want to unlock this comment?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "OK", onPress: () => {
-          setcomments(precomments =>
-            precomments.filter(comment => comment.id !== commentId)
-          );
-         
-
-
-        }}
+        {
+          text: "OK", onPress: () => {
+            // Xoa khoi bang report
+            remove(refRemove).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+            //Cap nhat report cho comment sau khi unlock
+            update(refComment, { reports: 0 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }
+      ]
+    );
+  };
+  // Hàm hidden comment
+  const hiddenComment = (commentId: string, postId:string) => {
+    const refComment = ref(database, `posts/${[postId]}/comments/${[commentId]}`)
+    const refReport = ref(database, `reports/comment/${[commentId]}`)
+    Alert.alert(
+      "Hidden comment",
+      "Are you sure you want to hidden this comment?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat status cho comment thanh hidden
+            update(refComment, { status: 3 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+            //Cap nhat status cho report da xu ly
+            update(refReport, { status: keyResolve })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+          }
+        }
       ]
     );
   };
 
+
   // Render từng item trong danh sách
-  const rendercommentItem = ({ item }: { item: Comment }) => (
+  const renderCommentItem = (comment:any) => {
+    return(
     <View style={styles.accountItem}>
       <View>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.commentContent}>{item.commentContent}</Text>
+        
+        <Text style={styles.name}>{comment.item.id}</Text>
+        {Object.values(comment.item.reason).map((reason:any)=>{      
+          return(
+            <Text style={styles.reason}>- {reason}</Text>
+          )
+        })}
+        
       </View>
-      <TouchableOpacity
-        style={styles.unblockButton}
-        onPress={() => unblockcomment(item.id)}
-      >
-        <Text style={styles.buttonText}>Unlock</Text>
-      </TouchableOpacity>
+      <View style={{flexDirection:'row'}}>
+        <AntDesign name="unlock" size={24} color='#3366CC'  onPress={()=>unlockComment(comment.item.id,comment.item.post_id)} />
+        <AntDesign name="delete" size={24} style={{  marginLeft:25,color: 'red' }} onPress={()=>hiddenComment(comment.item.id,comment.item.post_id)}/>
+      </View>
+
     </View>
-  );
+  )};
 
   return (
     <View style={styles.container}>
-      
-      {comments.length > 0 ? (
+
+      {dataCommentReport.length > 0 ? (
         <FlatList
-          data={comments}
-          keyExtractor={(item) => item.id}
-          renderItem={rendercommentItem}
+          data={dataCommentReport}
+          renderItem={renderCommentItem}
         />
       ) : (
-        <Text style={styles.noAccountsText}>No blocked accounts</Text>
+        <Text style={styles.noAccountsText}>No comment</Text>
       )}
-      
+
     </View>
   );
 }
@@ -102,7 +164,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  commentContent: {
+  reason: {
+    padding:5,
     fontSize: 14,
     color: '#555',
   },

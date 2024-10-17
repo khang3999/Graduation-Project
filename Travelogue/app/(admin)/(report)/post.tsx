@@ -1,71 +1,139 @@
 
 import UnlockBtn from '@/components/buttons/UnlockBtn';
-import React, { useState } from 'react';
+import { AntDesign, Feather } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
+import { push, remove, update } from '@firebase/database';
 
-// Định nghĩa kiểu dữ liệu cho một tài khoản
-interface Post {
-  id: string;
-  name: string;
-  postContent: string;
-  isBlocked: boolean;
-}
 
-// Giả lập danh sách tài khoản bị block
-const initialBlockedPosts: Post[] = [
-  { id: '1', name: 'User 1', postContent: 'Vinh Hy mua he', isBlocked: true },
-  { id: '2', name: 'User 2', postContent: 'Nha Trang mat me' , isBlocked: false},
-  { id: '3', name: 'User 3', postContent: 'Du lich tu tuc' , isBlocked: true},
-  { id: '4', name: 'User 4', postContent: 'Du lich xanh' , isBlocked: true},
-];
+export default function PostReport() {
+  const [dataPostReport, setDataPostReport] = useState([]);
+  const keyResolve = 2
+  //Du lieu post
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'reports/post');
+    // Lắng nghe thay đổi trong dữ liệu
+    const post = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        const jsonDataArr: any = Object.values(jsonData)
+       // Lọc các bài có status != 2, da xu ly
+       const filteredData = jsonDataArr.filter((post: any) => post.status != keyResolve);
+       setDataPostReport(filteredData);
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
 
-export default function AccountManagementScreen() {
-  const [posts, setPosts] = useState<Post[]>(initialBlockedPosts);
-  // Hàm gỡ block cho tài khoản
-  const unblockPost= (postId: string) => {
+    // Cleanup function để hủy listener khi component unmount
+    return () => post();
+  }, []);
+
+  // Hàm gỡ lock cho post
+  const unlockPost = (postId: string) => {
+    const refRemove = ref(database, `reports/post/${[postId]}`)
+    const refPost = ref(database, `posts/${[postId]}`)
     Alert.alert(
-      "Unblock Account",
-      "Are you sure you want to unblock this account?",
+      "Unlock post",
+      "Are you sure you want to unlock this post?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "OK", onPress: () => {
-          setPosts(prePosts =>
-            prePosts.filter(post => post.id !== postId)
-          );
-        }}
+        {
+          text: "OK", onPress: () => {
+            // Xoa khoi bang report
+            remove(refRemove).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+            //Cap nhat report cho post sau khi unlock
+            update(refPost, { reports: 0 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }
+      ]
+    );
+  };
+  // Hàm hidden post
+  const hiddenPost = (postId: string) => {
+    const refPost = ref(database, `posts/${[postId]}`)
+    const refReport = ref(database, `reports/post/${[postId]}`)
+    Alert.alert(
+      "Hidden post",
+      "Are you sure you want to hidden this post?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat status cho post thanh hidden
+            update(refPost, { status: 3 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+            //Cap nhat status cho report da xu ly
+            update(refReport, { status: keyResolve })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+          }
+        }
       ]
     );
   };
 
   // Render từng item trong danh sách
-  const renderPostItem = ({ item }: { item: Post }) => (
-    <View style={styles.accountItem}>
-      <View>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.postContent}>{item.postContent}</Text>
-      </View>
-      <TouchableOpacity
-        style={styles.unblockButton}
-        onPress={() => unblockPost(item.id)}
-      >
-        <Text style={styles.buttonText}>Unlock</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderPostItem = (post: any) => {
+    
+    return (
+      <View key={post.item.id} style={styles.accountItem}>
+        <View>
+          <Text style={styles.name}>{post.item.id}</Text>
+          {Object.values(post.item.reason).map((reason: any) => {
+            return (
+              <Text style={styles.reason}>- {reason}</Text>
+            )
+          })}
+        
+        </View>
+        <View style={{ flexDirection: 'row' }}>
+          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.id)} />
+          <Feather name="x-square" size={30} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.id)} />
+        </View>
 
+      </View>
+    )
+  };
+  
   return (
-    <View style={styles.container}>
-      
-      {posts.length > 0 ? (
+    
+    <View style={styles.container}>      
+      {
+      (dataPostReport.length>0)? (
         <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
+          data={dataPostReport}
           renderItem={renderPostItem}
         />
+        
       ) : (
-        <Text style={styles.noAccountsText}>No blocked accounts</Text>
+        <Text style={styles.noAccountsText}>No post</Text>
       )}
-      
+
     </View>
   );
 }
@@ -99,7 +167,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  postContent: {
+  reason: {
+    padding: 5,
     fontSize: 14,
     color: '#555',
   },

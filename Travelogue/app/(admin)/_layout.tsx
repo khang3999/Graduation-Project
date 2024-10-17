@@ -70,6 +70,16 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
+          name="(reason)" 
+          options={{
+            drawerLabel: 'Reasons',
+            title: 'Reasons',
+            drawerIcon: ({color, size}) => (
+              <Entypo name="list" size={size} color={color} />
+            )
+          }}
+        />
+        <Drawer.Screen
           name="exchange" 
           options={{
             drawerLabel: 'Exchanges',
@@ -101,16 +111,6 @@ export default function Layout() {
             title: 'Information Locations',
             drawerIcon: ({color, size}) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="(reason)" 
-          options={{
-            drawerLabel: 'Reasons',
-            title: 'Reasons',
-            drawerIcon: ({color, size}) => (
-              <Entypo name="list" size={size} color={color} />
             )
           }}
         />
