@@ -17,11 +17,11 @@ import SaveButton from "@/components/buttons/SaveButton";
 import { Divider } from "react-native-paper";
 import MenuItem from "@/components/buttons/MenuPostButton";
 import CheckedInChip from "@/components/chips/CheckedInChip";
-import RenderHtml from 'react-native-render-html';
+import RenderHtml from "react-native-render-html";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { Rating, AirbnbRating } from "react-native-ratings";
 
 const windowWidth = Dimensions.get("window").width;
-const maxLength = 100;
-
 type Comment = {
   accountID: {
     avatar: any; // Change to ImageSourcePropType if needed
@@ -50,6 +50,12 @@ type Post = {
   price_id: number;
   reports: number;
   view_mode: boolean;
+};
+
+type PostItemProps = {
+  item: Post;
+  showFullDescription: boolean;
+  toggleDescription: () => void;
 };
 
 const post: Post[] = [
@@ -113,10 +119,9 @@ const post: Post[] = [
           },
         ],
       },
-      
     },
     content:
-    '<h1>HEADER</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit es se cillum dolore eu fugiat nulla pariatur.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</p>',
+      "<h1>HEADER</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit es se cillum dolore eu fugiat nulla pariatur.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</p>",
     created_at: "04 August, 2024",
     hashtag: "#vietnam #travel #hanoi",
     images: [
@@ -138,12 +143,6 @@ const post: Post[] = [
   },
 ];
 
-type PostItemProps = {
-  item: Post;
-  showFullDescription: boolean;
-  toggleDescription: () => void;
-};
-
 const renderComments = (comments: Comment[], level = 0) => {
   return comments.map((comment, index) => (
     <View
@@ -157,23 +156,23 @@ const renderComments = (comments: Comment[], level = 0) => {
         <View style={{ flexDirection: "column", marginLeft: 10 }}>
           <Text style={styles.commentUsername}>
             {comment.accountID.username}
-          </Text>        
+          </Text>
           {/* Comment Content */}
           <Text style={styles.commentText}>{comment.content}</Text>
-          
-          <View style={{ flexDirection: "row"}}>
+
+          <View style={{ flexDirection: "row" }}>
             {/* Reply Button*/}
-          <TouchableOpacity>
-            <Text style={styles.replyButton}>Reply</Text>
-          </TouchableOpacity>
-          {/* Report Button*/}
-          <TouchableOpacity>
-            <Text style={styles.replyButton}>Report</Text>
-          </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.replyButton}>Reply</Text>
+            </TouchableOpacity>
+            {/* Report Button*/}
+            <TouchableOpacity>
+              <Text style={styles.replyButton}>Report</Text>
+            </TouchableOpacity>
           </View>
         </View>
-          {/* Comment Time */}
-          <Text style={styles.commentTime}>{comment.created_at}</Text>
+        {/* Comment Time */}
+        <Text style={styles.commentTime}>{comment.created_at}</Text>
       </View>
 
       {/* Nested Children Comments */}
@@ -182,12 +181,35 @@ const renderComments = (comments: Comment[], level = 0) => {
   ));
 };
 
+type RatingButtonProps = {
+  ratingValue: number;
+  onPress: () => void;
+};
+
+const RatingButton: React.FC<RatingButtonProps> = ({
+  ratingValue,
+  onPress,
+}) => {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Text style={styles.ratingLabel}>Rating: </Text>
+      <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
+        <Icon name="smile-o" size={40} color="black" />
+        <Text style={styles.ratingValue}>{ratingValue}/5</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const PostItem: React.FC<PostItemProps> = ({
   item,
   showFullDescription,
   toggleDescription,
 }) => {
   const commentModalRef = useRef<Modalize>(null);
+  const ratingModalRef = useRef<Modalize>(null);
+  const MAX_LENGTH = 100;
+
   const openCommentModal = () => {
     if (commentModalRef.current) {
       commentModalRef.current.open(); // Safely access the ref
@@ -195,11 +217,18 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
+  const openRatingModal = () => {
+    if (ratingModalRef.current) {
+      ratingModalRef.current.open(); // Safely access the ref
+    } else {
+      console.error("Modalize reference is null");
+    }
+  };
 
-  const source = {
+  const desc = {
     html: showFullDescription
       ? item.content
-      : `${item.content.slice(0, maxLength)} ...`,
+      : `${item.content.slice(0, MAX_LENGTH)} ...`,
   };
   return (
     <View>
@@ -249,11 +278,15 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
           <SaveButton style={styles.buttonItem} />
         </View>
+        {/* Rating Button */}
+        <View style={styles.ratingButtonContainer}>
+          <RatingButton ratingValue={4} onPress={openRatingModal} />
+        </View>
       </View>
       <CheckedInChip items={Object.values(item.locations.vietnam)} />
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
-      <RenderHtml contentWidth={windowWidth} source={source} />
+        <RenderHtml contentWidth={windowWidth} source={desc} />
         <TouchableOpacity onPress={toggleDescription}>
           <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
@@ -275,6 +308,29 @@ const PostItem: React.FC<PostItemProps> = ({
           ) : (
             <Text>No comments yet. Be the first to comment!</Text>
           )}
+        </View>
+      </Modalize>
+      {/* Rating Bottom Sheet */}
+      <Modalize
+        ref={ratingModalRef}
+        modalHeight={500}
+        handlePosition="inside"
+        avoidKeyboardLikeIOS={true}
+      >
+        <View style={styles.ratingContainer}>
+          <Rating
+            showRating
+            onFinishRating={(rating:number) => console.log(rating)}
+            imageSize={60}
+            minValue={1}
+            style={{marginBottom:10}}
+          />
+          <View style={styles.ratingButtonWrapper}>
+            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]}>
+              <Icon name="check" size={30} color="white" />
+              <Text style={styles.ratingTitle}>Đánh Giá</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modalize>
     </View>
@@ -307,9 +363,32 @@ export default function PostsScreen() {
   );
 }
 const styles = StyleSheet.create({
+  ratingTitle: {
+    marginLeft: 10,
+    fontWeight: "bold",
+    fontSize: 20,
+    color: "white",
+    marginTop: 3,
+  },
+  ratingContainer: { marginTop: 50, paddingVertical: 10, flexDirection:'column' },
+  ratingLabel: { fontSize: 16, marginRight: 5, fontWeight: "bold" },
+  ratingValue: { marginLeft: 10, fontWeight: "bold", marginTop: 10 },
+  ratingButton: {
+    flexDirection: "row",},
+  ratingButtonWrapper: {
+    marginHorizontal: 130,
+    marginTop: 30,
+    backgroundColor:'red',
+    borderRadius:10,
+  },
+  ratingButtonContainer: {
+    marginLeft: 15,
+    marginBottom: 10,
+    width: 90,
+  },
   totalLikes: {
     marginRight: 10,
-    marginTop:1,
+    marginTop: 1,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -372,8 +451,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: "grey",
   },
-  commentTime:{
-      color: "grey",
+  commentTime: {
+    color: "grey",
   },
   column: {
     flexDirection: "column",

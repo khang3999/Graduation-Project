@@ -16,7 +16,7 @@ import { router } from "expo-router";
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
 
-const images = [
+const posts = [
   { id: "1", uri: require("@/assets/images/tom.png") },
   { id: "2", uri: require("@/assets/images/tom.png") },
   { id: "3", uri: require("@/assets/images/tom.png") },
@@ -29,7 +29,7 @@ const FirstRoute = () => (
   <View style={{ flex: 1, paddingBottom: 70 }}>
     <FlatList
       style={{ flex: 1 }}
-      data={images}
+      data={posts}
       renderItem={({ item }) => (
         <Pressable
           onPress={() => {
@@ -49,7 +49,7 @@ const SecondRoute = () => (
   <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'orange' }}>
   <FlatList
     style={{ flex: 1 }}
-    data={images}
+    data={posts}
     renderItem={({ item }) => (
       <Pressable
         onPress={() => {
@@ -69,7 +69,7 @@ const ThirdRoute = () => (
   <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'green' }}>
   <FlatList
     style={{ flex: 1 }}
-    data={images}
+    data={posts}
     renderItem={({ item }) => (
       <Pressable
         onPress={() => {
