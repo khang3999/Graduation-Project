@@ -7,37 +7,63 @@ import { database, ref } from '@/firebase/firebaseConfig'
 import { get, off, onValue } from '@firebase/database'
 import { Timestamp } from 'react-native-reanimated/lib/typescript/reanimated2/commonTypes'
 import { formatDate } from '@/constants/commonFunctions'
+import { useHomeProvider } from '@/contexts/HomeProvider'
 interface Location {
   id: string,
   name: string
 }
-const PostList = () => {
-  const [dataPosts, setDataPosts] = useState([])
+const PostList = (props: any) => {
+  // const dataPosts = props.dataPosts
+  // const {dataPosts} = useHomeProvider();
+  const { dataPosts } = useHomeProvider();
 
-  // Handle save
+
+
+  // const [dataPosts, setDataPosts] = useState([])
+  // Lưu ID của item đang hiển thị trong postsList
+  const [visiblePostId, setVisiblePostId] = useState<number | null>(null);
+  console.log(visiblePostId);
+
+
+  // Xử lý sự kiện khi item hiển thị thay đổi
+  const onViewableItemsChanged = ({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      // Lấy ID của item đầu tiên trong danh sách hiển thị
+      const firstVisibleItem = viewableItems[0].index;
+      // Xử lí lưu id của bài viết ra biến toàn cục để đổ list tour theo chủ đề của bài viết
+      console.log("a: "+viewableItems[0].item.id);
+      setVisiblePostId(firstVisibleItem);
+    }
+  };
+
+  // Cài đặt để FlatList xác định các mục hiển thị
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50, // Chỉ định rằng item phải hiển thị ít nhất 50% để được coi là visible
+  };
 
   // Realtime database
-  useEffect(() => {
-    // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-    const refPosts = ref(database, 'posts/')
-    const unsubscribe = onValue(refPosts, (snapshot) => {
-      if (snapshot.exists()) {
-        const jsonDataPosts = snapshot.val();
-        // Chuyển đổi object thành array bang values cua js
-        const jsonArrayPosts: any = Object.values(jsonDataPosts).sort((a: any, b: any) => b.created_at - a.created_at)
-        // Set du lieu
-        setDataPosts(jsonArrayPosts)
-      } else {
-        console.log("No data available");
-      }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
+  // useEffect(() => {
+  //   // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
+  //   const refPosts = ref(database, 'posts/')
+  //   const unsubscribe = onValue(refPosts, (snapshot) => {
+  //     if (snapshot.exists()) {
+  //       const jsonDataPosts = snapshot.val();
+  //       // Chuyển đổi object thành array bang values cua js
+  //       const jsonArrayPosts: any = Object.values(jsonDataPosts).sort((a: any, b: any) => b.created_at - a.created_at)
+  //       // Set du lieu
+  //       setDataPosts(jsonArrayPosts)
+  //     } else {
+  //       console.log("No data available");
+  //     }
+  //   }, (error) => {
+  //     console.error("Error fetching data:", error);
+  //   });
 
-    return () => {
-      unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    };
-  }, [])
+  //   return () => {
+  //     unsubscribe(); // Sử dụng unsubscribe để hủy listener
+  //   };
+  // }, [])
+
   // Sử dụng một trạng thái để quản lý ID của menu đang mở
   const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
   // Mở menu theo ID
@@ -125,18 +151,19 @@ const PostList = () => {
 
   // VIEW
   return (
-    // <Provider>
-    <View style={styles.container}>
-      <FlatList
-        showsVerticalScrollIndicator={false}
-        data={dataPosts}
-        renderItem={postItem}
-        keyExtractor={(post: any) => post.id}
-        contentContainerStyle={{ paddingBottom: 15 }}
-        ItemSeparatorComponent={() => <View style={{ height: 20, }} />} />
-    </View>
-    // </Provider>
-
+      <View style={styles.container}>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={dataPosts}
+          renderItem={postItem}
+          keyExtractor={(post: any) => post.id}
+          contentContainerStyle={{ paddingBottom: 15 }}
+          ItemSeparatorComponent={() => <View style={{ height: 20, }} />} // Space between item
+          pagingEnabled //Scroll to next item
+          onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
+          viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
+        />
+      </View>
   )
 }
 const styles = StyleSheet.create({

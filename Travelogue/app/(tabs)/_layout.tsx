@@ -12,35 +12,36 @@ const _layout = () => {
     <>
       <Tabs
         tabBar={(props: any) => <TabBar {...props} />}
+        screenOptions={{
+          headerStyle: {
+            height: 100,
+          },
+          headerTitle: (props) =>
+            // Bỏ image vào đây
+            <Image
+              source={require('@/assets/images/logo.png')}
+              resizeMode="contain"
+            />
+          ,
+          headerRight: () => (
+            <View style={styles.headerRight}>
+              <PlusButton style={styles.buttonRight}></PlusButton>
+              <BellButton style={styles.buttonRight}></BellButton>
+            </View>
+          ),
+        }}
       >
         <Tabs.Screen
           key={1}
           name="index"
           options={{
             title: 'Home',
-            headerStyle: {
-              height: 90,
-            },
-            headerTitle: (props) =>
-              // Bỏ image vào đây
-              <Image
-                source={require('@/assets/images/logo.png')}
-                resizeMode="contain"
-              />
-            ,
-            headerRight: () => (
-              <View style={styles.headerRight}>
-                <PlusButton style={styles.buttonRight}></PlusButton>
-                <BellButton style={styles.buttonRight}></BellButton>
-              </View>
-            ),
           }} />
         <Tabs.Screen
           key={2}
           name="tour"
           options={{
             title: 'Tour',
-            headerShown: false,
           }} />
         <Tabs.Screen
           key={3}

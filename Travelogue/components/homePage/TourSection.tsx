@@ -8,7 +8,7 @@ const { width } = Dimensions.get('window');
 const dataTours = [
     []
 ]
-const TourList = () => {
+const TourSection = () => {
     const [dataTours, setDataTours] = useState([])
 
     useEffect(() => {
@@ -55,7 +55,8 @@ const TourList = () => {
                 renderItem={tourItem}
                 keyExtractor={(tour: any) => tour.id}
                 contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
-                ItemSeparatorComponent={() => <View style={{ width: 10, }} />}>
+                ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
+                pagingEnabled>
             </FlatList>
         </View>
     )
@@ -82,4 +83,4 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     }
 })
-export default TourList
+export default TourSection
