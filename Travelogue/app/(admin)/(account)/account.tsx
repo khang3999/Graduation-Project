@@ -1,78 +1,127 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-
-// Định nghĩa kiểu dữ liệu cho một tài khoản
-interface Account {
-  id: string;
-  name: string;
-  email: string;
-  isBlocked: boolean;
-}
-
-// Giả lập danh sách tài khoản bị block
-const initialBlockedAccounts: Account[] = [
-  { id: '1', name: 'User 1', email: 'user1@example.com', isBlocked: true },
-  { id: '2', name: 'User 2', email: 'user2@example.com' , isBlocked: true},
-  { id: '3', name: 'User 3', email: 'user3@example.com' , isBlocked: true},
-  { id: '4', name: 'User 4', email: 'user4@example.com' , isBlocked: true},
-];
+import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
+import { AntDesign } from '@expo/vector-icons';
+import { remove, update } from '@firebase/database';
 
 export default function AccountManagementScreen() {
-  const [accounts, setAccounts] = useState<Account[]>(initialBlockedAccounts);
-  // Hàm gỡ block cho tài khoản
-  const unblockAccount = (accountId: string) => {
+
+  const [dataAccountReport, setDataAccountReport] = useState([]);
+  const keyResolve = 2
+  const [factorReport, setFactorReport] = useState(0);
+  //Du lieu Account
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'reports/account');
+    // Lắng nghe thay đổi trong dữ liệu
+    const account = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        const jsonDataArr: any = Object.values(jsonData)
+        console.log(jsonDataArr);
+
+        // Lọc các bài có status != 2, da xu ly
+        const filteredData = jsonDataArr.filter((account: any) => (account.status != keyResolve) && (Object.keys(account.reason).length >= factorReport));
+
+        setDataAccountReport(filteredData);
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    // Cleanup function để hủy listener khi component unmount
+    return () => account();
+  }, [factorReport]);
+  //Du lieu factor 
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'factors/report/account');
+    // Lắng nghe thay đổi trong dữ liệu
+    const factor = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        console.log(jsonData);
+
+        setFactorReport(jsonData)
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    // Cleanup function để hủy listener khi component unmount
+    return () => factor();
+  }, []);
+
+  // Hàm gỡ lock cho account
+  const unlockPost = (accountId: string) => {
+    const refRemove = ref(database, `reports/account/${[accountId]}`)
+    const refPost = ref(database, `accounts/${[accountId]}`)
     Alert.alert(
-      "Unblock Account",
-      "Are you sure you want to unblock this account?",
+      "Unlock post",
+      "Are you sure you want to unlock this post?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "OK", onPress: () => {
-          // setBlockedAccounts(prevAccounts =>
-          //   prevAccounts.filter(account => account.id !== accountId)
-          // );
-          setAccounts(prevAccounts =>
-            prevAccounts.map(account => {
-              if (account.id === accountId) {
-                account.isBlocked = !account.isBlocked ;
-                // Cap nhat firebase
-              }
-              return account;
+        {
+          text: "OK", onPress: () => {
+            // Xoa khoi bang report
+            remove(refRemove).then(() => {
+              console.log('Data remove successfully');
             })
-          );
-        }}
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+            //Cap nhat report cho post sau khi unlock
+            update(refPost, { reports: 0 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }
       ]
     );
   };
 
   // Render từng item trong danh sách
-  const renderAccountItem = ({ item }: { item: Account }) => (
-    <View style={styles.accountItem}>
-      <View>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+  const renderAccountItem = (account: any) => {
+    return (
+      <View key={account.item.id} style={styles.accountItem}>
+        <View>
+          <Text style={styles.name}>{account.item.id}</Text>
+          {Object.values(account.item.reason).map((reason: any) => {
+            return (
+              <Text style={styles.reason}>- {reason}</Text>
+            )
+          })}
+
+        </View>
+        <View >
+          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0           }} onPress={() => unlockPost(account.item.id)} />
+
+        </View>
+
       </View>
-      <TouchableOpacity
-        style={item.isBlocked ? styles.unblockButton :styles.blockButton}
-        onPress={() => unblockAccount(item.id)}
-      >
-        <Text style={styles.buttonText}>{item.isBlocked ? 'Unblock' : 'Lock'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    )
+  };
 
   return (
     <View style={styles.container}>
-      
-      {accounts.length > 0 ? (
+
+      {dataAccountReport.length > 0 ? (
         <FlatList
-          data={accounts}
-          keyExtractor={(item) => item.id}
+          data={dataAccountReport}
           renderItem={renderAccountItem}
         />
       ) : (
         <Text style={styles.noAccountsText}>No blocked accounts</Text>
       )}
-      
+
     </View>
   );
 }
@@ -102,6 +151,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  reason: {
+    padding: 5,
+    fontSize: 14,
+    color: '#555',
+  },
   name: {
     fontSize: 18,
     fontWeight: '600',
@@ -109,12 +163,6 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 14,
     color: '#555',
-  },
-  unblockButton: {
-    backgroundColor: '#2986cc',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
   },
   blockButton: {
     backgroundColor: '#ff5c5c',

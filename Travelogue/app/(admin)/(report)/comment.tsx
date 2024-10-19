@@ -4,24 +4,26 @@ import { AntDesign } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { push, remove,update } from '@firebase/database';
+import { push, remove, update } from '@firebase/database';
 
 
 export default function CommentReport() {
   const [dataCommentReport, setDataCommentReport] = useState([]);
-  const keyResolve =2;
+  const keyResolve = 2;
+  const [factorReport, setFactorReport] = useState(0);
+
   //Du lieu Comment
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
     const onValueChange = ref(database, 'reports/comment');
     // Lắng nghe thay đổi trong dữ liệu
-    const post = onValue(onValueChange, (snapshot) => {
+    const comment = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
-        const jsonDataArr:any = Object.values(jsonData)
+        const jsonDataArr: any = Object.values(jsonData)
         // Lọc các bài có status != 2, da xu ly
-       const filteredData = jsonDataArr.filter((post: any) => post.status != keyResolve);
-       setDataCommentReport(filteredData);
+        const filteredData = jsonDataArr.filter((comment: any) => (comment.status != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
+        setDataCommentReport(filteredData);
       } else {
         console.log("No data available");
       }
@@ -29,11 +31,34 @@ export default function CommentReport() {
       console.error("Error fetching data:", error);
     });
     // Cleanup function để hủy listener khi component unmount
-    return () => post();
+    return () => comment();
+  }, [factorReport]);
+
+  //Du lieu factor 
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'factors/report/comment');
+    // Lắng nghe thay đổi trong dữ liệu
+    const factor = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        console.log(jsonData);
+
+        setFactorReport(jsonData)
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    // Cleanup function để hủy listener khi component unmount
+    return () => factor();
   }, []);
-  
+
+
   // Hàm gỡ lock cho comment
-  const unlockComment = (commentID: string, postId:string) => {
+  const unlockComment = (commentID: string, postId: string) => {
     const refRemove = ref(database, `reports/comment/${[commentID]}`)
     const refComment = ref(database, `posts/${[postId]}/comments/${[commentID]}`)
     Alert.alert(
@@ -64,7 +89,7 @@ export default function CommentReport() {
     );
   };
   // Hàm hidden comment
-  const hiddenComment = (commentId: string, postId:string) => {
+  const hiddenComment = (commentId: string, postId: string) => {
     const refComment = ref(database, `posts/${[postId]}/comments/${[commentId]}`)
     const refReport = ref(database, `reports/comment/${[commentId]}`)
     Alert.alert(
@@ -84,12 +109,12 @@ export default function CommentReport() {
               });
             //Cap nhat status cho report da xu ly
             update(refReport, { status: keyResolve })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
           }
         }
       ]
@@ -98,26 +123,27 @@ export default function CommentReport() {
 
 
   // Render từng item trong danh sách
-  const renderCommentItem = (comment:any) => {
-    return(
-    <View style={styles.accountItem}>
-      <View>
-        
-        <Text style={styles.name}>{comment.item.id}</Text>
-        {Object.values(comment.item.reason).map((reason:any)=>{      
-          return(
-            <Text style={styles.reason}>- {reason}</Text>
-          )
-        })}
-        
-      </View>
-      <View style={{flexDirection:'row'}}>
-        <AntDesign name="unlock" size={24} color='#3366CC'  onPress={()=>unlockComment(comment.item.id,comment.item.post_id)} />
-        <AntDesign name="delete" size={24} style={{  marginLeft:25,color: 'red' }} onPress={()=>hiddenComment(comment.item.id,comment.item.post_id)}/>
-      </View>
+  const renderCommentItem = (comment: any) => {
+    return (
+      <View style={styles.accountItem}>
+        <View>
 
-    </View>
-  )};
+          <Text style={styles.name}>{comment.item.id}</Text>
+          {Object.values(comment.item.reason).map((reason: any) => {
+            return (
+              <Text style={styles.reason}>- {reason}</Text>
+            )
+          })}
+
+        </View>
+        <View style={{ flexDirection: 'row' }}>
+          <AntDesign name="unlock" size={24} color='#3366CC' onPress={() => unlockComment(comment.item.id, comment.item.post_id)} />
+          <AntDesign name="delete" size={24} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id)} />
+        </View>
+
+      </View>
+    )
+  };
 
   return (
     <View style={styles.container}>
@@ -165,7 +191,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   reason: {
-    padding:5,
+    padding: 5,
     fontSize: 14,
     color: '#555',
   },

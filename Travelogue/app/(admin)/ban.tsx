@@ -4,9 +4,6 @@ import { FlatList, TextInput } from 'react-native-gesture-handler';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { push, remove } from '@firebase/database';
 
-
-
-
 const Ban = () => {
   const [inputText, setInputText] = useState('');
   const [banWords, setBanWords] = useState([]);

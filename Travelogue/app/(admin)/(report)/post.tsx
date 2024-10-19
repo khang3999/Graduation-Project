@@ -10,6 +10,7 @@ import { push, remove, update } from '@firebase/database';
 export default function PostReport() {
   const [dataPostReport, setDataPostReport] = useState([]);
   const keyResolve = 2
+  const [factorReport,setFactorReport] = useState(0);
   //Du lieu post
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
@@ -19,8 +20,11 @@ export default function PostReport() {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         const jsonDataArr: any = Object.values(jsonData)
+        console.log(jsonDataArr);
+        
        // Lọc các bài có status != 2, da xu ly
-       const filteredData = jsonDataArr.filter((post: any) => post.status != keyResolve);
+       const filteredData = jsonDataArr.filter((post: any) => (post.status != keyResolve)&&(Object.keys(post.reason).length >= factorReport));
+       
        setDataPostReport(filteredData);
       } else {
         console.log("No data available");
@@ -31,6 +35,27 @@ export default function PostReport() {
 
     // Cleanup function để hủy listener khi component unmount
     return () => post();
+  }, [factorReport]);
+   //Du lieu factor 
+   useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, 'factors/report/post');
+    // Lắng nghe thay đổi trong dữ liệu
+    const factor = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        console.log(jsonData);
+        
+        setFactorReport(jsonData)
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    // Cleanup function để hủy listener khi component unmount
+    return () => factor();
   }, []);
 
   // Hàm gỡ lock cho post
