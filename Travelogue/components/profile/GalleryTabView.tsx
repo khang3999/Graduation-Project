@@ -16,47 +16,74 @@ import { router } from "expo-router";
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
 
-const images = [
-  { id: "1", uri: "@assets/images/tom.png" },
-  { id: "2", uri: "@assets/images/tom.png" },
-  { id: "3", uri: "@assets/images/tom.png" },
-  { id: "4", uri: "@assets/images/tom.png" },
-  { id: "5", uri: "@assets/images/tom.png" },
-  { id: "6", uri: "@assets/images/tom.png" },
-  { id: "7", uri: "@assets/images/tom.png" },
-  { id: "8", uri: "@assets/images/tom.png" },
-  { id: "9", uri: "@assets/images/tom.png" },
-  { id: "10", uri: "@assets/images/tom.png" },
-  { id: "11", uri: "@assets/images/tom.png" },
-  { id: "12", uri: "@assets/images/tom.png" },
+const posts = [
+  { id: "1", uri: require("@/assets/images/tom.png") },
+  { id: "2", uri: require("@/assets/images/tom.png") },
+  { id: "3", uri: require("@/assets/images/tom.png") },
+  { id: "4", uri: require("@/assets/images/tom.png") },
+  { id: "5", uri: require("@/assets/images/tom.png") },
+  { id: "6", uri: require("@/assets/images/tom.png") },
 ];
 
 const FirstRoute = () => (
-  <View style={{flex: 1, paddingBottom:70}}>
+  <View style={{ flex: 1, paddingBottom: 70 }}>
+    <FlatList
+      style={{ flex: 1 }}
+      data={posts}
+      renderItem={({ item }) => (
+        <Pressable
+          onPress={() => {
+            router.push("/post");
+          }}
+        >
+          <Image source={item.uri} style={styles.imagesGallery} />
+        </Pressable>
+      )}
+      keyExtractor={(item) => item.id}
+      numColumns={3}
+    />
+  </View>
+);
+
+const SecondRoute = () => (
+  <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'orange' }}>
   <FlatList
     style={{ flex: 1 }}
-    data={images}
+    data={posts}
     renderItem={({ item }) => (
-      <Pressable onPress={()=>{router.push("/post");
-      }}>
-      <Image
-        source={require("@/assets/images/tom.png")}
-        style={styles.imagesGallery}
-      />
+      <Pressable
+        onPress={() => {
+          router.push("/post");
+        }}
+      >
+        <Image source={item.uri} style={styles.imagesGallery} />
       </Pressable>
     )}
     keyExtractor={(item) => item.id}
     numColumns={3}
   />
-  </View>
-  
+</View>
 );
 
-const SecondRoute = () => (
-  <View style={{ flex: 1, backgroundColor: "#673ab7" }} />
+const ThirdRoute = () => (
+  <View style={{ flex: 1, paddingBottom: 70, backgroundColor:'green' }}>
+  <FlatList
+    style={{ flex: 1 }}
+    data={posts}
+    renderItem={({ item }) => (
+      <Pressable
+        onPress={() => {
+          router.push("/post");
+        }}
+      >
+        <Image source={item.uri} style={styles.imagesGallery} />
+      </Pressable>
+    )}
+    keyExtractor={(item) => item.id}
+    numColumns={3}
+  />
+</View>
 );
-
-const ThirdRoute = () => <View style={{ flex: 1, backgroundColor: "black" }} />;
 
 const renderScene = SceneMap({
   first: FirstRoute,
