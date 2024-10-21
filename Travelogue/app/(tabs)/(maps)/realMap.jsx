@@ -22,6 +22,7 @@ import { set } from "lodash";
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
   const [areaData, setAreaData] = useState([]);
+  const [cityData, setCityData] = useState([]);
   const [points, setPoints] = useState([]);
 
   // Lua chon kieu points
@@ -47,6 +48,7 @@ const Map = () => {
     const countriesRef = ref(database, "countries");
     const areaRef = ref(database, "areas");
     const pointRef = ref(database, "points");
+    const cityRef = ref(database, "cities");
 
     // Lấy dữ liệu từ firebase (qgia)
     onValue(countriesRef, (snapshot) => {
@@ -71,6 +73,25 @@ const Map = () => {
       setAreaData(formattedDataAreas);
       // console.log("Area Data:", areaData);
     });
+    onValue(cityRef, (snapshot) => {
+      const data = snapshot.val() || {};
+    
+      // Duyệt qua tất cả các quốc gia
+      const formattedData = Object.keys(data).flatMap((countryKey) => {
+        const countryData = data[countryKey];  
+        console.log("countryData:", countryData);
+        
+        return Object.keys(countryData).map((cityKey) => ({
+          id: cityKey,                         
+          id_nuoc: countryData[cityKey].id_nuoc,  
+          ...countryData[cityKey],           
+        }));
+      });
+    
+      setCityData(formattedData);
+      console.log("Cty:", formattedData); 
+    });
+    
     // Lấy dữ liệu từ firebase (points)
     onValue(pointRef, (snapshot) => {
       const data = snapshot.val() || {};
@@ -104,7 +125,7 @@ const Map = () => {
         });
       });
 
-      // console.log("formattedPoints:", formattedPoints);
+      console.log("formattedPoints:", formattedPoints);
       setPoints(formattedPoints);
     });
   }, []);
@@ -121,20 +142,25 @@ const Map = () => {
   // Selected đất nước và khu vực
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
   const [selectedFestivalType, setSelectedFestivalType] = useState("all");
   const [selectedFestival, setSelectedFestival] = useState(null);
   // Modal
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalVisibleArea, setModalVisibleArea] = useState(false);
+  const [modalVisibleCity, setModalVisibleCity] = useState(false);
   const [modalFestivalType, setmodalFestivalType] = useState(false);
   //Bottom sheet
   const bottomSheetRef = useRef(null);
   //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
+  const [filteredCityData, setFilteredCityData] = useState(cityData);
   //Scroll View
   const scrollViewRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  //lấy id của tp 
+  const [idCities, setIdCities] = useState([]);
 
   //Thay đổi quốc gia
   const handleCountryChange = (country) => {
@@ -155,7 +181,9 @@ const Map = () => {
       }
 
       setSelectedCountry(country.id);
-
+      setSelectedArea(null)
+      setSelectedCity(null)
+      
       // console.log("Selected Country:", country);
       // console.log("Selected Country id:", country.id);
     }
@@ -170,11 +198,37 @@ const Map = () => {
         // console.log("Area Data:", areaData),
         areaData.filter((area) => area.countryId === selectedCountry)
       );
-      // console.log("Filtered Area Data:", filteredAreaData);
+      console.log("Filtered Area Data:", filteredAreaData);
       // setSelectedArea(filteredAreaData.id);
       // console.log("Selected Area:", selectedArea);
     }
   }, [selectedCountry]);
+
+//Xử lý chọn thành phố theo khu vực
+useEffect(() => {
+  if (selectedArea) {
+    console.log("Selected Area:", selectedArea);
+    const filteredData = cityData.filter((city) => 
+      city.area_id && city.area_id.includes(selectedArea)
+    );
+    setFilteredCityData(filteredData);
+    console.log("Filtered City Data:", filteredData);
+    setSelectedCity(null); 
+  } else {
+    console.log("____________________");
+    console.log("cityData:", cityData);
+    setFilteredCityData(cityData);
+  }
+}, [selectedArea, cityData]);
+
+// Cập nhật idCities khi filteredCityData thay đổi
+useEffect(() => {
+  setIdCities(filteredCityData.map((city) => city.id));
+  console.log("idCities:", filteredCityData.map((city) => city.id));
+}, [filteredCityData]);
+
+  
+  
 
   // Thay đổi khu vực
   const handleAreaChange = (area) => {
@@ -197,6 +251,27 @@ const Map = () => {
     }
     setModalVisibleArea(false);
   };
+  // Thay doi thanh pho
+  const handleCityChange = (city) => {
+    if (city !== null) {
+      const { latitude, longitude } = city;
+      // sử dụng animateToRegion
+      if (mapViewRef.current) {
+        mapViewRef.current.animateToRegion(
+          {
+            latitude: latitude,
+            longitude: longitude,
+            latitudeDelta: 1,
+            longitudeDelta: 1,
+          },
+          1000
+        );
+      }
+      setSelectedCity(city.id);
+      // console.log("Selected Area:", area.label);
+    }
+    setModalVisibleCity(false);
+  };
 
   // Thay đổi type lễ hội
   const handleFestivalChange = (value) => {
@@ -213,6 +288,19 @@ const Map = () => {
       if (selectedCountry && point.countryId !== selectedCountry) {
         return false;
       }
+      if (selectedCity && point.cityId !== selectedCity) {
+        return false;
+      }
+      
+    if (idCities) {
+      if (idCities.includes(point.cityId)) {
+        return true;
+      }
+      return false;
+    }
+
+     
+    
       if (selectedFestivalType) {
         if (selectedFestivalType === "all") {
           return true;
@@ -222,10 +310,9 @@ const Map = () => {
         }
       }
 
-      // Giữ lại điểm nếu không có điều kiện nào loại bỏ nó
       return true;
     });
-  }, [points, selectedCountry, selectedFestivalType]);
+  }, [points, selectedCountry, selectedFestivalType, selectedCity,idCities]);
 
   // xử lý cuộn scroll
   const handleScroll = (event) => {
@@ -295,7 +382,7 @@ const Map = () => {
               <TouchableOpacity
                 style={styles.arrowButton}
                 onPress={() =>
-                  scrollViewRef.current.scrollTo({ x: -230, animated: true })
+                  scrollViewRef.current.scrollTo({ x: 0, animated: true })
                 }
               >
                 <Text style={styles.arrowText}>&lt;</Text>
@@ -370,6 +457,32 @@ const Map = () => {
                   </TouchableOpacity>
                 </View>
               </SectionComponent>
+              {/* Thanh Pho  */}
+              <SectionComponent>
+                <View style={styles.areaSelector}>
+                  <TouchableOpacity
+                    onPress={() => setModalVisibleCity(true)}
+                    style={styles.areaButton}
+                  >
+                    <Text
+                      style={styles.areaButtonText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedCity != null
+                        ? cityData.find((city) => city.id === selectedCity)
+                            ?.name
+                        : "Tất cả tỉnh thành"}
+                    </Text>
+                    <Icon
+                      name="angle-down"
+                      size={20}
+                      style={{ padding: 10 }}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </SectionComponent>
               {/* Lễ hội danh lam */}
               <SectionComponent>
                 <View style={styles.festivalSelector}>
@@ -402,7 +515,7 @@ const Map = () => {
               <TouchableOpacity
                 style={styles.arrowButton}
                 onPress={() =>
-                  scrollViewRef.current.scrollTo({ x: 240, animated: true })
+                  scrollViewRef.current.scrollTo({ x: 450, animated: true })
                 }
               >
                 <Text style={styles.arrowText}>&gt;</Text>
@@ -471,6 +584,40 @@ const Map = () => {
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setModalVisibleArea(false)}
+              >
+                <Text style={styles.closeButtonText}>Đóng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+         {/* Modal chọn khu vực */}
+         <Modal visible={modalVisibleCity} transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
+              {selectedArea === null ? (
+                <Text style={styles.warningText}>
+                  Vui lòng chọn khu vực trước khi chọn thành phố
+                </Text>
+              ) : (
+                <FlatList
+                  data={filteredCityData}
+                  keyExtractor={(item) => item.id}
+                  style={styles.countryList}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.countryOption}
+                      onPress={() => handleCityChange(item)}
+                    >
+                      <Text style={styles.countryLabel}>{item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
+              <View style={styles.separator} />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisibleCity(false)}
               >
                 <Text style={styles.closeButtonText}>Đóng</Text>
               </TouchableOpacity>

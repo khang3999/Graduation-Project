@@ -7,7 +7,8 @@ export class UserRegister {
   password: string;
   behavior?: string; 
   avatar?: string;
-  expense?: number | null;
+  balance?: number | null;
+  accumulate?: number | null; 
   currentDate: string;
   numberCCCD?: string | null;
   imageFrontUrlCCCD?: string | null;
@@ -27,7 +28,8 @@ export class UserRegister {
     password,
     behavior,
     avatar,
-    expense = null,
+    balance = null,
+    accumulate = null, 
     currentDate,
     numberCCCD = null,
     imageFrontUrlCCCD = null,
@@ -46,7 +48,8 @@ export class UserRegister {
     password: string;
     behavior?: string;
     avatar?: string;
-    expense: number | null;
+    balance: number | null;
+    accumulate : number | null;
     currentDate: string;
     numberCCCD: string | null;
     imageFrontUrlCCCD: string | null;
@@ -65,7 +68,8 @@ export class UserRegister {
     this.password = password;
     this.behavior = behavior;
     this.avatar = avatar;
-    this.expense = expense;
+    this.balance = balance;
+    this.accumulate = accumulate;
     this.currentDate = currentDate;
     this.numberCCCD = numberCCCD;
     this.imageFrontUrlCCCD = imageFrontUrlCCCD;
