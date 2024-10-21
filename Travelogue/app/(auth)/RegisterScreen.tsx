@@ -172,6 +172,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
+            id: user.uid,
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -299,6 +300,7 @@ const RegisterScreen = ({ navigation }: any) => {
           );
           // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
           await set(ref(database, `/accounts/${user.uid}`), {
+            id: user.uid,
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
