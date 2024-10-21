@@ -9,12 +9,13 @@ export class UserRegister {
   avatar?: string;
   expense?: number | null;
   currentDate: string;
-  numberCCCD?: string;
-  imageFrontUrlCCCD?: string;
-  imageBackUrlCCCD?: string;
-  business_license_id?: string;
-  imageUrlBusinessLicense?: string;
+  numberCCCD?: string | null;
+  imageFrontUrlCCCD?: string | null;
+  imageBackUrlCCCD?: string | null;
+  business_license_id?: string | null;
+  imageUrlBusinessLicense?: string | null;
   status_id: string;
+  role : string;
 
 
   constructor({
@@ -28,13 +29,14 @@ export class UserRegister {
     avatar,
     expense = null,
     currentDate,
-    numberCCCD,
-    imageFrontUrlCCCD,
-    imageBackUrlCCCD,
-    business_license_id,
-    imageUrlBusinessLicense,
+    numberCCCD = null,
+    imageFrontUrlCCCD = null,
+    imageBackUrlCCCD = null,
+    business_license_id = null,
+    imageUrlBusinessLicense = null,
     status_id,
-  
+    role
+
   }: {
     name: string;
     email: string;
@@ -44,15 +46,16 @@ export class UserRegister {
     password: string;
     behavior?: string;
     avatar?: string;
-    expense ?: number | null;
+    expense: number | null;
     currentDate: string;
-    numberCCCD: string ;
-    imageFrontUrlCCCD: string;
-    imageBackUrlCCCD: string;
-    business_license_id: string;
-    imageUrlBusinessLicense: string;
+    numberCCCD: string | null;
+    imageFrontUrlCCCD: string | null;
+    imageBackUrlCCCD: string | null; 
+    business_license_id: string | null;
+    imageUrlBusinessLicense: string | null;
     status_id: string;
- 
+    role: string;
+
   }) {
     this.name = name;
     this.email = email;
@@ -70,6 +73,7 @@ export class UserRegister {
     this.business_license_id = business_license_id;
     this.imageUrlBusinessLicense = imageUrlBusinessLicense;
     this.status_id = status_id;
+    this.role = role;
    
   }
 }
