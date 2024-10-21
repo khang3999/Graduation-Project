@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native'
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 import { onValue, ref } from 'firebase/database';
-import { database } from '@/firebase/firebaseConfig';
+import { database, get } from '@/firebase/firebaseConfig';
 
 // Định nghĩa kiểu cho context
 // interface HomeContextType {=
@@ -13,9 +13,32 @@ import { database } from '@/firebase/firebaseConfig';
 //     dataPosts: [], // Giá trị mặc định cho dataPosts
 // };
 const HomeContext = createContext();
-const HomeProvider = ({children}) => {
+const HomeProvider = ({ children }) => {
     const [dataPosts, setDataPosts] = useState([])
-    
+    const [postId, setPostId] = useState(-1)
+    const [dataTour, setDataTour] = useState([])
+
+    // Lấy tour theo bài viết
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const refTours = ref(database, 'tours/')
+                const snapshot = await get(refTours);
+                if (snapshot.exists()) {
+                    const dataToursJson = snapshot.val()
+                    console.log(snapshot.val()); // Xử lý dữ liệu
+                } else {
+                    console.log("No data available");
+                }
+            } catch (error) {
+                console.error("Error fetching data: ", error);
+            }
+        }
+
+        fetchData();
+    }, [postId])
+
+    // Lấy bài viết
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
         const refPosts = ref(database, 'posts/')
