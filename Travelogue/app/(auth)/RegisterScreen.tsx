@@ -41,7 +41,7 @@ import {
   uploadBytes,
 } from "@/firebase/firebaseConfig";
 import { UserRegister } from "@/model/UserRegister";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth, storage } from "@/firebase/firebaseConfig";
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -133,20 +133,21 @@ const RegisterScreen = ({ navigation }: any) => {
         );
         // console.log(userCredential);
         const user = userCredential.user;
+        await sendEmailVerification(user);
+        Alert.alert(
+          "Xác nhận email",
+          "Một email xác nhận đã được gửi đến địa chỉ của bạn. Vui lòng kiểm tra hộp thư đến và xác nhận."
+        );
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
           const avatar = await getDownloadURL(
             storageRef(storage, "defaultAvatar/avatar.png")
           ); // Set default avatar URL
-          const numberCCCD = "";
-          const imageFrontUrlCCCD = "";
-          const imageBackUrlCCCD = "";
-          const business_license_id = "";
-          const imageUrlBusinessLicense = "";
-          const expense = null;
-          const status = "active";
+
+          const status = "2";
           const currentDate = new Date().toLocaleDateString();
+          const role = "user";
 
           const newUser = new UserRegister({
             name,
@@ -157,19 +158,21 @@ const RegisterScreen = ({ navigation }: any) => {
             password,
             behavior,
             avatar,
-            expense,
             currentDate,
-            numberCCCD,
-            imageFrontUrlCCCD,
-            imageBackUrlCCCD,
-            business_license_id,
-            imageUrlBusinessLicense,
             status_id: status,
+            role: role,
+            expense: null,
+            numberCCCD: null,
+            imageFrontUrlCCCD: null,
+            imageBackUrlCCCD: null,
+            business_license_id: null,
+            imageUrlBusinessLicense: null,
           });
           // console.log(newUser);
 
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
+            id: user.uid,
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -177,14 +180,9 @@ const RegisterScreen = ({ navigation }: any) => {
             totalPosts: newUser.totalPosts,
             behavior: newUser.behavior,
             avatar: newUser.avatar,
-            expense: newUser.expense,
             createdAt: newUser.currentDate,
-            numberCCCD: newUser.numberCCCD,
-            imageFrontUrlCCCD: newUser.imageFrontUrlCCCD,
-            imageBackUrlCCCD: newUser.imageBackUrlCCCD,
-            business_license_id: newUser.business_license_id,
-            imageUrlBusinessLicense: newUser.imageUrlBusinessLicense,
             status_id: newUser.status_id,
+            role: newUser.role,
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -241,20 +239,25 @@ const RegisterScreen = ({ navigation }: any) => {
         );
         // console.log(userCredential);
         const user = userCredential.user;
+        await sendEmailVerification(user);
+      
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
-          const avatar = "";
           const expense = 0;
           const currentDate = new Date().toLocaleDateString();
-          const status = "register";
-          // const likes = ["empty"];
-          // const marks = ["empty"];
-          // const checkins = { default: "empty" };
+          const status = "1";
+          const role = "business";
+          const avatar = await getDownloadURL(
+            storageRef(storage, "defaultAvatar/avatar.png")
+          );
+
           const newUser = new UserRegister({
             name,
             email,
             phone,
+            totalLikes,
+            totalPosts,
             password,
             behavior,
             avatar,
@@ -266,6 +269,7 @@ const RegisterScreen = ({ navigation }: any) => {
             business_license_id: businessLicense,
             imageUrlBusinessLicense: businessLicenseImage,
             status_id: status,
+            role: role,
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
@@ -290,9 +294,13 @@ const RegisterScreen = ({ navigation }: any) => {
               `accounts/${user.uid}/papers/businessLicense.jpg`
             );
           }
-
+          Alert.alert(
+            "Xác nhận email",
+            "Một email xác nhận đã được gửi đến địa chỉ của bạn. Vui lòng kiểm tra hộp thư đến và xác nhận."
+          );
           // Lưu thông tin người dùng vào Firebase Realtime với các URL ảnh đã upload
           await set(ref(database, `/accounts/${user.uid}`), {
+            id: user.uid,
             fullname: newUser.name,
             email: newUser.email,
             phone: newUser.phone,
@@ -306,6 +314,7 @@ const RegisterScreen = ({ navigation }: any) => {
             createdAt: newUser.currentDate,
             status_id: newUser.status_id,
             expense: newUser.expense,
+            role: newUser.role,
           });
         }
 
@@ -334,9 +343,7 @@ const RegisterScreen = ({ navigation }: any) => {
         <ArrowLeft
           size="32"
           style={{ marginBottom: -10 }}
-          onPress={() => {
-            navigation.navigate("LoginScreen");
-          }}
+          onPress={() => navigation.navigate("LoginScreen")}
           color="#000"
         />
       </SectionComponent>
@@ -381,6 +388,11 @@ const RegisterScreen = ({ navigation }: any) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <View style={{padding: 15}}>
+          <TextComponent text="Chú ý" styles={{fontWeight: 'bold'}} />
+          <TextComponent text="Thông tin cá nhân nhập phải thực sự chính xác" color={appColors.danger} styles={{fontWeight: 'bold'}}/>
+          </View> 
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -454,7 +466,24 @@ const RegisterScreen = ({ navigation }: any) => {
                 allowClear
                 affix={<CallCalling size={22} color={appColors.gray2} />}
               />
+              <InputComponent
+                value={password}
+                placeholder="Nhập mật khẩu của bạn"
+                onChange={(val) => setPassword(val)}
+                isPassword
+                allowClear
+                affix={<Lock size={22} color={appColors.gray2} />}
+              />
+              <InputComponent
+                value={confirmPassword}
+                placeholder="Xác nhận mật khẩu của bạn"
+                onChange={(val) => setConfirmPassword(val)}
+                isPassword
+                allowClear
+                affix={<Lock size={22} color={appColors.gray2} />}
+              />
               {/* Số cccd */}
+
               <InputComponent
                 value={numberCCCD}
                 placeholder="Số căn cước công dân"
@@ -515,23 +544,6 @@ const RegisterScreen = ({ navigation }: any) => {
                   onImagePicked={setBusinessLicenseImage}
                 />
               </View>
-
-              <InputComponent
-                value={password}
-                placeholder="Nhập mật khẩu của bạn"
-                onChange={(val) => setPassword(val)}
-                isPassword
-                allowClear
-                affix={<Lock size={22} color={appColors.gray2} />}
-              />
-              <InputComponent
-                value={confirmPassword}
-                placeholder="Xác nhận mật khẩu của bạn"
-                onChange={(val) => setConfirmPassword(val)}
-                isPassword
-                allowClear
-                affix={<Lock size={22} color={appColors.gray2} />}
-              />
             </SectionComponent>
           </View>
         )}
@@ -593,6 +605,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: "row",
     padding: 15,
+    paddingBottom: -15,
     marginBottom: 20,
   },
   tabButton: {
