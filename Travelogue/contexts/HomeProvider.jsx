@@ -4,7 +4,7 @@ import { onValue, ref } from 'firebase/database';
 import { database } from '@/firebase/firebaseConfig';
 
 // Định nghĩa kiểu cho context
-// interface HomeContextType {
+// interface HomeContextType {=
 //     dataPosts: any[]; // Bạn có thể thay thế `any[]` bằng kiểu chính xác nếu biết
 // }
 
@@ -40,8 +40,7 @@ const HomeProvider = ({children}) => {
     return (
         <HomeContext.Provider
             value={{
-                dataPosts,
-
+                dataPosts
             }}
 
         >

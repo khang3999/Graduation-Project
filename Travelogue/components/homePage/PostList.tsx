@@ -21,7 +21,7 @@ const PostList = (props: any) => {
 
   // const [dataPosts, setDataPosts] = useState([])
   // Lưu ID của item đang hiển thị trong postsList
-  const [visiblePostId, setVisiblePostId] = useState<number | null>(null);
+  const [visiblePostId, setVisiblePostId] = useState(-1);
   console.log(visiblePostId);
 
 
@@ -87,7 +87,7 @@ const PostList = (props: any) => {
       }))
     );
     return (
-      <PaperProvider key={post.item.id}>
+      <PaperProvider>
         <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
         }>
           {/*Author*/}
