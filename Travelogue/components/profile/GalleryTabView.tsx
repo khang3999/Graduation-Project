@@ -19,6 +19,7 @@ import { ref, onValue, off, Unsubscribe } from "firebase/database";
 import { usePost } from "@/contexts/PostProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
+import { initial } from "lodash";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -125,7 +126,7 @@ export default function GalleryTabView() {
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
-      await fetchCreatedPosts(); // Set up Firebase listener for real-time updates
+      await fetchCreatedPosts(); // Set up Firebase listener for real-time updates      
       setIsLoading(false);
     };
     initialize();
@@ -145,13 +146,14 @@ export default function GalleryTabView() {
         <FlatList
           style={{ flex: 1 }}
           data={createdPosts}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <Pressable
               onPress={() => {
                 router.push({
                   pathname: "/post",
+                  params: { initialIndex: index.toString() },
                 }); 
-                setSelectedPost([item]);
+                setSelectedPost(createdPosts);
               }}
             >
               <Image

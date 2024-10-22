@@ -25,6 +25,8 @@ import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 
 const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
+
 type Comment = {
   accountID: {
     avatar: any; // Change to ImageSourcePropType if needed
@@ -211,7 +213,7 @@ const PostItem: React.FC<PostItemProps> = ({
           <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
-      <Divider style={styles.divider} bold={true} />
+      <Divider style={styles.divider}  />
       {/* Comment Bottom Sheet */}
       <Modalize
         ref={commentModalRef}
@@ -261,9 +263,8 @@ export default function PostsScreen() {
   // State to track whether full description is shown
   const [showFullDescription, setShowFullDescription] = useState(false); 
   const {selectedPost, setSelectedPost} = usePost();
-  
-
-  // console.log(postData[0].author.avatar, "avatar 2");
+  const {initialIndex} = useLocalSearchParams();
+  const initialPage = parseInt(initialIndex as string, 10);
   
   // Function to toggle description
   const toggleDescription = useCallback(() => {
@@ -283,6 +284,11 @@ export default function PostsScreen() {
       )}
       keyExtractor={(item, index) => index.toString()}
       style={styles.container}
+      // pagingEnabled
+      initialScrollIndex={initialPage}      
+      getItemLayout={(data, index) => (
+        { length: windowHeight, offset: index * windowHeight , index }
+      )}
     ></FlatList>
   );
 }
@@ -352,6 +358,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    width: '100%',
+
   },
   row: {
     flexDirection: "row",
