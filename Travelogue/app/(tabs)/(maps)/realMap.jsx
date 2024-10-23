@@ -75,23 +75,23 @@ const Map = () => {
     });
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
-    
+
       // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        const countryData = data[countryKey];  
-        console.log("countryData:", countryData);
-        
+        const countryData = data[countryKey];
+        // console.log("countryData:", countryData);
+
         return Object.keys(countryData).map((cityKey) => ({
-          id: cityKey,                         
-          id_nuoc: countryData[cityKey].id_nuoc,  
-          ...countryData[cityKey],           
+          id: cityKey,
+          id_nuoc: countryData[cityKey].id_nuoc,
+          ...countryData[cityKey],
         }));
       });
-    
+
       setCityData(formattedData);
-      console.log("Cty:", formattedData); 
+      // console.log("Cty:", formattedData);
     });
-    
+
     // Lấy dữ liệu từ firebase (points)
     onValue(pointRef, (snapshot) => {
       const data = snapshot.val() || {};
@@ -159,7 +159,7 @@ const Map = () => {
   const scrollViewRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  //lấy id của tp 
+  //lấy id của tp
   const [idCities, setIdCities] = useState([]);
 
   //Thay đổi quốc gia
@@ -181,9 +181,9 @@ const Map = () => {
       }
 
       setSelectedCountry(country.id);
-      setSelectedArea(null)
-      setSelectedCity(null)
-      
+      setSelectedArea(null);
+      setSelectedCity(null);
+
       // console.log("Selected Country:", country);
       // console.log("Selected Country id:", country.id);
     }
@@ -198,37 +198,37 @@ const Map = () => {
         // console.log("Area Data:", areaData),
         areaData.filter((area) => area.countryId === selectedCountry)
       );
-      console.log("Filtered Area Data:", filteredAreaData);
+      // console.log("Filtered Area Data:", filteredAreaData);
       // setSelectedArea(filteredAreaData.id);
       // console.log("Selected Area:", selectedArea);
     }
   }, [selectedCountry]);
 
-//Xử lý chọn thành phố theo khu vực
-useEffect(() => {
-  if (selectedArea) {
-    console.log("Selected Area:", selectedArea);
-    const filteredData = cityData.filter((city) => 
-      city.area_id && city.area_id.includes(selectedArea)
+  //Xử lý chọn thành phố theo khu vực
+  useEffect(() => {
+    if (selectedArea) {
+      // console.log("Selected Area:", selectedArea);
+      const filteredData = cityData.filter(
+        (city) => city.area_id && city.area_id.includes(selectedArea)
+      );
+      setFilteredCityData(filteredData);
+      // console.log("Filtered City Data:", filteredData);
+      setSelectedCity(null);
+    } else {
+      // console.log("____________________");
+      // console.log("cityData:", cityData);
+      setFilteredCityData(cityData);
+    }
+  }, [selectedArea, cityData]);
+
+  // Cập nhật idCities khi filteredCityData thay đổi
+  useEffect(() => {
+    setIdCities(filteredCityData.map((city) => city.id));
+    console.log(
+      "idCities:",
+      filteredCityData.map((city) => city.id)
     );
-    setFilteredCityData(filteredData);
-    console.log("Filtered City Data:", filteredData);
-    setSelectedCity(null); 
-  } else {
-    console.log("____________________");
-    console.log("cityData:", cityData);
-    setFilteredCityData(cityData);
-  }
-}, [selectedArea, cityData]);
-
-// Cập nhật idCities khi filteredCityData thay đổi
-useEffect(() => {
-  setIdCities(filteredCityData.map((city) => city.id));
-  console.log("idCities:", filteredCityData.map((city) => city.id));
-}, [filteredCityData]);
-
-  
-  
+  }, [filteredCityData]);
 
   // Thay đổi khu vực
   const handleAreaChange = (area) => {
@@ -281,38 +281,38 @@ useEffect(() => {
   };
   // Points phụ thuộc vào quốc gia và loại lễ hội
   const filteredPoints = useMemo(() => {
+    console.log(selectedFestivalType);
+
     if (!selectedCountry) {
       return points;
     }
     return points.filter((point) => {
-      if (selectedCountry && point.countryId !== selectedCountry) {
-        return false;
-      }
-      if (selectedCity && point.cityId !== selectedCity) {
-        return false;
-      }
-      
-    if (idCities) {
-      if (idCities.includes(point.cityId)) {
-        return true;
-      }
-      return false;
-    }
-
-     
-    
       if (selectedFestivalType) {
         if (selectedFestivalType === "all") {
-          return true;
+          if (selectedCountry && point.countryId !== selectedCountry) {
+            return false;
+          }
+          if (selectedCity && point.cityId !== selectedCity) {
+            return false;
+          }
+    
+          if (idCities) {
+            if (idCities.includes(point.cityId)) {
+              return true;
+            }
+            return false;
+          }
         }
         if (point.type !== selectedFestivalType) {
           return false;
         }
       }
+    
+     
 
       return true;
     });
-  }, [points, selectedCountry, selectedFestivalType, selectedCity,idCities]);
+  }, [points, selectedCountry, selectedFestivalType, selectedCity, idCities]);
 
   // xử lý cuộn scroll
   const handleScroll = (event) => {
@@ -590,8 +590,8 @@ useEffect(() => {
             </View>
           </View>
         </Modal>
-         {/* Modal chọn khu vực */}
-         <Modal visible={modalVisibleCity} transparent={true}>
+        {/* Modal chọn khu vực */}
+        <Modal visible={modalVisibleCity} transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
@@ -688,7 +688,7 @@ useEffect(() => {
                   resizeMode="cover"
                 />
               ) : (
-                <Text>Không có ảnh nào</Text> 
+                <Text>Không có ảnh nào</Text>
               )}
 
               {/*  */}
@@ -698,12 +698,22 @@ useEffect(() => {
               </Text>
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.iconButton} onPress={()=>{console.log("Bai Viet: "+selectedFestival.cityId)}}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => {
+                    console.log("Bai Viet: " + selectedFestival.cityId);
+                  }}
+                >
                   <Icon name="file-text-o" size={20} color="#000" />
                   <Text style={styles.buttonText}>Bài viết</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconButton}  onPress={()=>{console.log("Tour: "+selectedFestival.cityId)}}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => {
+                    console.log("Tour: " + selectedFestival.cityId);
+                  }}
+                >
                   <Icon name="picture-o" size={20} color="#000" />
                   <Text style={styles.buttonText}>Tours</Text>
                 </TouchableOpacity>
