@@ -3,40 +3,52 @@ import React, { useEffect, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 import { database, onValue, ref } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
+import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const { width } = Dimensions.get('window');
-const dataTours = [
-    []
-]
 const TourSection = () => {
-    const [dataTours, setDataTours] = useState([])
+    // const [dataTours, setDataTours] = useState([])
+    const {dataTours} = useHomeProvider();
 
-    useEffect(() => {
-        // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-        const refTours = ref(database, 'tours/')
-        const unsubscribe = onValue(refTours, (snapshot) => {
-            if (snapshot.exists()) {
-                const jsonDataTours = snapshot.val();
-                // Chuyển đổi object thành array bang values cua js
-                const jsonArrayTours: any = Object.values(jsonDataTours)
-                // Set du lieu
-                setDataTours(jsonArrayTours)
-            } else {
-                console.log("No data available");
-            }
-        }, (error) => {
-            console.error("Error fetching data:", error);
-        });
+    // useEffect(() => {
+    //     // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
+    //     const refTours = ref(database, 'tours/')
+    //     const unsubscribe = onValue(refTours, (snapshot) => {
+    //         if (snapshot.exists()) {
+    //             const jsonDataTours = snapshot.val();
+    //             // Chuyển đổi object thành array bang values cua js
+    //             const jsonArrayTours: any = Object.values(jsonDataTours)
+    //             // Set du lieu
+    //             setDataTours(jsonArrayTours)
+    //         } else {
+    //             console.log("No data available");
+    //         }
+    //     }, (error) => {
+    //         console.error("Error fetching data:", error);
+    //     });
 
-        return () => {
-            unsubscribe(); // Sử dụng unsubscribe để hủy listener
-        };
-    }, [])
+    //     return () => {
+    //         unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    //     };
+    // }, [])
 
     const tourItem = (tour: any) => {
+        const locations = tour.item.locations
+        const nameTours = Object.keys(locations).flatMap((country:any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
+        // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
+        Object.entries(locations[country]).map(([id, name]) => ({
+          id,
+          name
+        }))
+      );
         return (
             <Pressable style={styles.tourItem}>
                 <View style={styles.imageWrap}>
+                    {nameTours.map((nameTour:any)=>{
+                        return (
+                            <Text>{nameTour.name}</Text>
+                        )
+                    })}
                     <Image
                         style={styles.image}
                         source={{ uri: tour.item.images }}

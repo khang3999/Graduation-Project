@@ -20,8 +20,6 @@ const TabBar = ({ state, descriptors, navigation }) => {
                 : route.name;
           if (['_sitemap', '+not-found'].includes(route.name)) return null;
 
-          console.log(route.name);
-
           const isFocused = state.index === index;
 
           const onPress = () => {
