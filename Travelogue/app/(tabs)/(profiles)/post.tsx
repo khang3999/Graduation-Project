@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -23,6 +26,8 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { Rating, AirbnbRating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
+import TabBar from "@/components/navigation/TabBar";
+import { set } from "lodash";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -61,45 +66,22 @@ type PostItemProps = {
   item: Post;
   showFullDescription: boolean;
   toggleDescription: () => void;
+  setIsScrollEnabled: (value: boolean) => void;
 };
 
+const flattenComments = (comments: Comment[], level = 0) => {
+  let flatComments: { comment: Comment; level: number }[] = [];
 
-const renderComments = (comments: Comment[], level = 0) => {
-  return comments.map((comment, index) => (
-    <View
-      key={index}
-      style={[styles.commentContainer, { marginLeft: level * 20 }]}
-    >
-      {/* Avatar */}
-      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-        <Image source={comment.accountID.avatar} style={styles.miniAvatar} />
-        {/* Username */}
-        <View style={{ flexDirection: "column", marginLeft: 10 }}>
-          <Text style={styles.commentUsername}>
-            {comment.accountID.username}
-          </Text>
-          {/* Comment Content */}
-          <Text style={styles.commentText}>{comment.content}</Text>
+  comments.forEach((comment) => {
+    flatComments.push({ comment, level });
+    if (comment.children) {
+      flatComments = flatComments.concat(
+        flattenComments(comment.children, level + 1)
+      );
+    }
+  });
 
-          <View style={{ flexDirection: "row" }}>
-            {/* Reply Button*/}
-            <TouchableOpacity>
-              <Text style={styles.replyButton}>Reply</Text>
-            </TouchableOpacity>
-            {/* Report Button*/}
-            <TouchableOpacity>
-              <Text style={styles.replyButton}>Report</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        {/* Comment Time */}
-        <Text style={styles.commentTime}>{comment.created_at}</Text>
-      </View>
-
-      {/* Nested Children Comments */}
-      {comment.children && renderComments(comment.children, level + 1)}
-    </View>
-  ));
+  return flatComments;
 };
 
 type RatingButtonProps = {
@@ -126,15 +108,34 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   showFullDescription,
   toggleDescription,
+  setIsScrollEnabled
 }) => {
   const commentModalRef = useRef<Modalize>(null);
   const ratingModalRef = useRef<Modalize>(null);
-
+  const [commentText, setCommentText] = useState("");
+  
+  const [comments, setComments] = useState(Object.values(item.comments));
   const MAX_LENGTH = 100;
+  const flattenedComments = flattenComments(comments);
+  const addComment = () => {
+    if (commentText.trim().length > 0) {
+      const newComment = {
+        accountID: {
+          avatar: "https://example.com/avatar.jpg",
+          username: "Current User",
+        },
+        content: commentText,
+        created_at: new Date().toLocaleString(),
+      };
+      setComments((prevComments: any) => [newComment, ...prevComments]);
+      setCommentText("");
+    }
+  };
 
   const openCommentModal = () => {
     if (commentModalRef.current) {
       commentModalRef.current.open(); // Safely access the ref
+      setIsScrollEnabled(false);
     } else {
       console.error("Modalize reference is null");
     }
@@ -157,7 +158,10 @@ const PostItem: React.FC<PostItemProps> = ({
       {/* Post Header */}
       <View style={styles.row}>
         <View style={styles.row}>
-          <Image source={{uri : item.author.avatar}} style={styles.miniAvatar} />
+          <Image
+            source={{ uri: item.author.avatar }}
+            style={styles.miniAvatar}
+          />
           <View style={styles.column}>
             <Text style={styles.username}>{item.author.username}</Text>
             <Text style={styles.time}>{item.created_at}</Text>
@@ -213,24 +217,87 @@ const PostItem: React.FC<PostItemProps> = ({
           <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
-      <Divider style={styles.divider}  />
+      <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
       <Modalize
         ref={commentModalRef}
+        // adjustToContentHeight={false}
         modalHeight={600}
+        alwaysOpen={0}
+        handlePosition="inside"        
         avoidKeyboardLikeIOS={true}
-        handlePosition="inside"
+        onClosed={() => setIsScrollEnabled(true)}
+      
       >
+          <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
         <View style={styles.modalContent}>
           <Text style={styles.modalHeaderText}>
             Comments for {item.author.username}'s post
           </Text>
-          {Object.values(item.comments).length > 0 ? (
-            renderComments(Object.values(item.comments))
+           {/* Sticky comment */}
+           <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write a comment..."
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+            />
+            <TouchableOpacity style={styles.commentButton} onPress={addComment}>
+              <Text style={styles.commentButtonText}>Post</Text>
+            </TouchableOpacity>
+          </View>
+          {flattenedComments.length > 0 ? (
+            <FlatList
+              data={flattenedComments}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.commentContainer,
+                    { marginLeft: item.level * 20 },
+                  ]}
+                >
+                  <View
+                    style={{ flexDirection: "row", alignItems: "flex-start" }}
+                  >
+                    <Image
+                      source={{ uri: item.comment.accountID.avatar }}
+                        style={styles.miniAvatar}
+                    />
+                    <View style={{ flexDirection: "column", marginLeft: 10 }}>
+                      <Text style={styles.commentUsername}>
+                        {item.comment.accountID.username}
+                      </Text>
+                      <Text style={styles.commentText}>
+                        {item.comment.content}
+                      </Text>
+                      <View style={{ flexDirection: "row" }}>
+                        <TouchableOpacity>
+                          <Text style={styles.replyButton}>Reply</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                          <Text style={styles.replyButton}>Report</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={styles.commentTime}>
+                      {item.comment.created_at}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 60 }}
+            />
           ) : (
             <Text>No comments yet. Be the first to comment!</Text>
           )}
+         
         </View>
+        </KeyboardAvoidingView>
       </Modalize>
       {/* Rating Bottom Sheet */}
       <Modalize
@@ -242,10 +309,10 @@ const PostItem: React.FC<PostItemProps> = ({
         <View style={styles.ratingContainer}>
           <Rating
             showRating
-            onFinishRating={(rating:number) => console.log(rating)}
+            onFinishRating={(rating: number) => console.log(rating)}
             imageSize={60}
             minValue={1}
-            style={{marginBottom:10}}
+            style={{ marginBottom: 10 }}
           />
           <View style={styles.ratingButtonWrapper}>
             <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]}>
@@ -261,11 +328,11 @@ const PostItem: React.FC<PostItemProps> = ({
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-  const [showFullDescription, setShowFullDescription] = useState(false); 
-  const {selectedPost, setSelectedPost} = usePost();
-  const {initialIndex} = useLocalSearchParams();
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const { selectedPost, setSelectedPost } = usePost();
+  const { initialIndex } = useLocalSearchParams();
   const initialPage = parseInt(initialIndex as string, 10);
-  
+  const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   // Function to toggle description
   const toggleDescription = useCallback(() => {
     setShowFullDescription((prev) => !prev);
@@ -273,23 +340,28 @@ export default function PostsScreen() {
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   return (
-    <FlatList
-      data={memoriedPostItem}
-      renderItem={({ item }) => (
-        <PostItem
-          item={item}
-          showFullDescription={showFullDescription}
-          toggleDescription={toggleDescription}
-        />
-      )}
-      keyExtractor={(item, index) => index.toString()}
-      style={styles.container}
-      // pagingEnabled
-      initialScrollIndex={initialPage}      
-      getItemLayout={(data, index) => (
-        { length: windowHeight, offset: index * windowHeight , index }
-      )}
-    ></FlatList>
+    <>
+      <FlatList
+        data={memoriedPostItem}
+        renderItem={({ item }) => (
+          <PostItem
+            item={item}
+            showFullDescription={showFullDescription}
+            toggleDescription={toggleDescription}
+            setIsScrollEnabled={setIsScrollEnabled}
+          />
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.container}
+        scrollEnabled={isScrollEnabled}
+        initialScrollIndex={initialPage}
+        getItemLayout={(data, index) => ({
+          length: windowHeight,
+          offset: index * windowHeight,
+          index,
+        })}
+      ></FlatList>
+    </>
   );
 }
 const styles = StyleSheet.create({
@@ -300,16 +372,21 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 3,
   },
-  ratingContainer: { marginTop: 50, paddingVertical: 10, flexDirection:'column' },
+  ratingContainer: {
+    marginTop: 50,
+    paddingVertical: 10,
+    flexDirection: "column",
+  },
   ratingLabel: { fontSize: 16, marginRight: 5, fontWeight: "bold" },
   ratingValue: { marginLeft: 10, fontWeight: "bold", marginTop: 10 },
   ratingButton: {
-    flexDirection: "row",},
+    flexDirection: "row",
+  },
   ratingButtonWrapper: {
     marginHorizontal: 130,
     marginTop: 30,
-    backgroundColor:'red',
-    borderRadius:10,
+    backgroundColor: "red",
+    borderRadius: 10,
   },
   ratingButtonContainer: {
     marginLeft: 15,
@@ -321,6 +398,9 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  commentsContainer: {
+    marginBottom: 100,
   },
   carouselText: {
     color: "#fff",
@@ -358,8 +438,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    width: '100%',
-
+    width: "100%",
   },
   row: {
     flexDirection: "row",
@@ -393,8 +472,9 @@ const styles = StyleSheet.create({
     width: windowWidth,
     height: windowWidth,
   },
-  modalContent: {
+  modalContent: {    
     padding: 20,
+    marginBottom:80
   },
   modalHeaderText: {
     fontSize: 18,
@@ -423,5 +503,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     marginRight: 10,
+  },
+  commentInputContainer: {   
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
+    marginBottom: 20,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 20,
+    padding: 10,
+    marginRight: 10,
+  },
+  commentButton: {
+    backgroundColor: "#007BFF",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  commentButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
