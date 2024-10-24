@@ -22,8 +22,21 @@ const HomeProvider = ({ children }) => {
     // Mảng chứa id tất cả location theo từng bài viết
     const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
     const [allLocationNameFromPost, setAllLocationNameFromPost] = useState([])
+    const [refreshingPost, setRefreshingPost] = useState(false);
 
     /// ------------------------ FUNCTION -------------------
+    // HÀM TÍNH ĐIỂM MỚI NHẤT DÙNG CHO TOUR
+    // Input: 1. Bài viết hiện tại
+    //        2. Từng tour trong danh sách
+    //        3. Hệ số: match > factor of post's price > rating > like > date
+    //                  + match: Lấy 
+    const calculatePointForTour = () =>{
+        
+        return a
+    }
+
+
+
     // Hàm slug text
     const slug = (str) => {
         return String(str)
@@ -36,13 +49,23 @@ const HomeProvider = ({ children }) => {
     // Lấy tour theo bài viết khi có bài viết mới được hiển thị 
     // Thứ tự: Chủ đề -> Tính điểm tour (Hành vi -> Độ ưu tiên khi chọn giá đăng tour -> like = comment -> rating )
 
-    // Hàm tính điểm hành vi
-    // Cần reset behavior sau mỗi phiên đăng nhập
-    const calculateBehaviorPoint = (account, content, locationsIdOfTour) => {
-        const behavior = account.behavior
-        // const content = 
+    // Hàm tính điểm hành vi cho tour(hoặc bài viết theo content và location)
+    // ****** Cần reset behavior sau mỗi phiên đăng nhập *********
+    const calculateByContentAndLocation = (account, content, locationsIdOfTour, dataFactorsPost) => {
         // Có nhiều cách so sánh
         // 1. lau-ga tìm trong 'Hom-nay-di-an-lau-ga'
+        const maxPoint = dataFactorsPost.behavior
+        const behaviorSlug = slug(account.behavior.content)
+        const contentSlug = slug(content)
+        const locationId = account.behavior.location
+        if (contentSlug.includes(behaviorSlug) && locationsIdOfTour.includes(locationId)) {
+            return maxPoint
+        } else if (contentSlug.includes(behaviorSlug) || locationsIdOfTour.includes(locationId)) {
+            return maxPoint / 2
+        }
+        return 0
+        
+       
         // 2. [lẩu, gà] tìm trong " Hôm nay đi ăn lẩu, có bò heo gà"
     }
 
@@ -70,7 +93,6 @@ const HomeProvider = ({ children }) => {
     }
     // Hàm tính điểm tổng
     const calculateTourPoint = (tour, factorsPost) => {
-        const mark = 0
         // Tinh diem luot like
         const likes = tour.likes
         const objLike = factorsPost.like.detail
@@ -85,20 +107,26 @@ const HomeProvider = ({ children }) => {
         const ratingPoint = tour.rating >= 3 ? 1 : 0
 
         // Tính điểm gói sử dụng
-        const pricePackagePoint = tour.package.factor
+        const pricePackagePoint =  tour.package.factor
 
-        // Tinh điểm theo match hành vi
+        // Tinh điểm theo match hành vi cần mảng location name và location id (lưu global)
         const locations = tour.locations
         const allLocationNamesOfTour = Object.keys(locations).flatMap((country) => // ["Ha noi","Cao bang"] cua tour
             Object.values(locations[country])
         );
-        console.log(allLocationNamesOfTour);
-        
         const contentPost = tour.content + "-" + allLocationNamesOfTour.join('-')
+
+        const locationsIdOfTour = Object.keys(tour.locations).flatMap((country) =>
+            Object.keys(locations[country])
+        );
+        console.log(locationsIdOfTour);
+
+
+        const behaviorPoint = calculateByContentAndLocation(dataAccount,contentPost,locationsIdOfTour, dataFactorsPost)
+        console.log(behaviorPoint);
         
-        console.log(slug(contentPost));
-        
-        // const behaviorPoint = calculateBehaviorPoint(dataAccount,contentPostSlug,)
+        const mark = likePoint + commentPoint + ratingPoint + pricePackagePoint + behaviorPoint
+        console.log(mark);
         return mark
     } // ------------------------ END FUNCTION --------------------------
 
@@ -117,8 +145,10 @@ const HomeProvider = ({ children }) => {
                         const matchesA = countMatchingLocations(tourA.locations, allLocationIdFromPost);
                         const matchesB = countMatchingLocations(tourB.locations, allLocationIdFromPost);
 
-                        // CẦN SỬA NẾU MATCH bằng nhau thì phải tính điểm tour để sắp xếp
+                        // Số lượng trùng địa điểm theo bài viết bằng nhau thì phải tính điểm tour để sắp xếp
                         if (matchesA == matchesB) {
+                            console.log(calculateTourPoint(tourA, dataFactorsPost));
+
                             return calculateTourPoint(tourA, dataFactorsPost) - calculateTourPoint(tourB, dataFactorsPost)
                         }
                         return matchesB - matchesA; // Sắp xếp giảm dần theo số lượng trùng khớp
@@ -158,7 +188,7 @@ const HomeProvider = ({ children }) => {
             unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
     }, [])
-    // Lấy factor dùng cho tính điểm
+    // Lấy factor dùng cho tính điểm bài viết (dùng chung cho tour)
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
         const refFactorsPost = ref(database, 'factors/post')
@@ -206,9 +236,11 @@ const HomeProvider = ({ children }) => {
             value={{
                 dataPosts,
                 dataTours,
+                refreshingPost,
                 setAllLocationIdFromPost,
                 setAllLocationNameFromPost,
-                setPostIdCurrent
+                setPostIdCurrent,
+                setRefreshingPost
             }}
 
         >
