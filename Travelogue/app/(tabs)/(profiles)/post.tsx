@@ -68,8 +68,6 @@ type Post = {
 
 type PostItemProps = {
   item: Post;
-  showFullDescription: boolean;
-  toggleDescription: () => void;
   setIsScrollEnabled: (value: boolean) => void;
 };
 
@@ -119,13 +117,11 @@ const RatingButton: React.FC<RatingButtonProps> = ({
 
 const PostItem: React.FC<PostItemProps> = ({
   item,
-  showFullDescription,
-  toggleDescription,
   setIsScrollEnabled,
 }) => {
   const commentModalRef = useRef<Modalize>(null);
   const ratingModalRef = useRef<Modalize>(null);
-  const ratingCommentRef = useRef<Modalize>(null);
+
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -166,7 +162,7 @@ const PostItem: React.FC<PostItemProps> = ({
           
           // Check if a key is generated
           if (newReplyRef.key) {
-            console.log("parentCommentRef.key",parentCommentRef.key);
+            
             const newReply = { ...newComment, id: newReplyRef.key };
             await set(newReplyRef, newReply);
 
@@ -237,18 +233,27 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
-  const openRatingCommentModal = () => {
-    if (ratingCommentRef.current && ratingModalRef.current) {
-      ratingCommentRef.current.open(); 
+  const closeRatingModal = () => {
+    if (ratingModalRef.current) {      
       ratingModalRef.current.close();
     } else {
       console.error("Modalize reference is null");
     }
   };
+  const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
+
+
+    const toggleDescription = (postId: string) => {
+      setExpandedPosts((prev) => ({
+        ...prev,
+        [postId]: !prev[postId],
+      }));
+    };
   
+  const isExpanded = expandedPosts[item.id] || false;
 
   const desc = {
-    html: showFullDescription
+    html: isExpanded
       ? item.content
       : `${item.content.slice(0, MAX_LENGTH)} ...`,
   };
@@ -312,8 +317,8 @@ const PostItem: React.FC<PostItemProps> = ({
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
         <RenderHtml contentWidth={windowWidth} source={desc} />
-        <TouchableOpacity onPress={toggleDescription}>
-          <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
+        <TouchableOpacity onPress={()=>toggleDescription(item.id)}>
+          <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} />
@@ -432,36 +437,27 @@ const PostItem: React.FC<PostItemProps> = ({
             
           />
           <View style={styles.ratingButtonWrapper}>
-            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={openRatingCommentModal}>
+            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={closeRatingModal}>
               <Icon name="check" size={30} color="white" />
               <Text style={styles.ratingTitle}>Đánh Giá</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modalize>
-      <Modalize
-        ref={ratingCommentRef}
-        modalHeight={400}
-        handlePosition="inside"
-        avoidKeyboardLikeIOS={true}
-      >
-        <Text>hihi</Text>
-      </Modalize>
+    
     </View>
   );
 };
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  
   const { selectedPost, setSelectedPost } = usePost();
   const { initialIndex } = useLocalSearchParams();
   const initialPage = parseInt(initialIndex as string, 10);
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-  // Function to toggle description
-  const toggleDescription = useCallback(() => {
-    setShowFullDescription((prev) => !prev);
-  }, []);
+
+
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   return (
@@ -470,9 +466,7 @@ export default function PostsScreen() {
         data={memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
-            item={item}
-            showFullDescription={showFullDescription}
-            toggleDescription={toggleDescription}
+            item={item}            
             setIsScrollEnabled={setIsScrollEnabled}
           />
         )}
