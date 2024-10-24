@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, FlatList, Image, Button, Touchable, TouchableOpacity, Pressable } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, FlatList, Image, Button, Touchable, TouchableOpacity, Pressable, RefreshControl } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import ActionBar from '../ActionBar'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { DefaultTheme, Divider, IconButton, MD3Colors, Menu, PaperProvider, Provider } from 'react-native-paper'
@@ -11,9 +11,23 @@ import { useHomeProvider } from '@/contexts/HomeProvider'
 
 const PostList = (props: any) => {
 
-  const {dataPosts, setAllLocationIdFromPost, setPostIdCurrent, setAllLocationNameFromPost} = useHomeProvider();
+  const {
+    dataPosts,
+    setAllLocationIdFromPost,
+    setPostIdCurrent,
+    setAllLocationNameFromPost,
+    refeshingPost,
+    setRefreshingPost } = useHomeProvider();
 
-  // Ham laya
+  // // Hàm refesh
+  // const onRefresh = useCallback(() => {
+  //   setRefreshingPost(true);
+
+  //   // Mô phỏng việc tải lại dữ liệu sau 2 giây
+  //   setTimeout(() => {
+  //     setRefreshingPost(false);
+  //   }, 2000);
+  // }, []);
 
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
@@ -28,6 +42,8 @@ const PostList = (props: any) => {
       const allLocationNames: string[] = Object.keys(locations).flatMap((country) => // ["Ha noi","Cao bang"]
         Object.values(locations[country])
       );
+      console.log(viewableItems[0].item.id);
+      
       setPostIdCurrent(viewableItems[0].item.id)
       setAllLocationNameFromPost(allLocationNames) // Set mảng name của location để tính điểm tour tour phù hợp
       setAllLocationIdFromPost(allLocationIds) // Set mảng id của location để lấy tour phù hợp
@@ -126,19 +142,19 @@ const PostList = (props: any) => {
 
   // VIEW
   return (
-      <View style={styles.container}>
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={dataPosts}
-          renderItem={postItem}
-          keyExtractor={(post: any) => post.id}
-          contentContainerStyle={{ paddingBottom: 15 }}
-          ItemSeparatorComponent={() => <View style={{ height: 20, }} />} // Space between item
-          pagingEnabled //Scroll to next item
-          onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
-          viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
-        />
-      </View>
+    <View style={styles.container}>
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        data={dataPosts}
+        renderItem={postItem}
+        keyExtractor={(post: any) => post.id}
+        contentContainerStyle={{ paddingBottom: 15 }}
+        ItemSeparatorComponent={() => <View style={{ height: 20, }} />} // Space between item
+        pagingEnabled //Scroll to next item
+        onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
+        viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
+      />
+    </View>
   )
 }
 const styles = StyleSheet.create({
