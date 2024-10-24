@@ -132,6 +132,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const [comments, setComments] = useState(Object.values(item.comments));
   const MAX_LENGTH = 100;
   const flattenedComments = flattenComments(comments);
+  const totalComments = flattenedComments.length;
 
   const addComment = async () => {
     if (commentText.trim().length > 0) {
@@ -242,7 +243,6 @@ const PostItem: React.FC<PostItemProps> = ({
   };
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
-
     const toggleDescription = (postId: string) => {
       setExpandedPosts((prev) => ({
         ...prev,
@@ -305,6 +305,7 @@ const PostItem: React.FC<PostItemProps> = ({
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
+            <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
           <SaveButton style={styles.buttonItem} />
         </View>
@@ -518,6 +519,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  totalComments:{
+    marginRight: 10,
+    marginTop: 1,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   commentsContainer: {
     marginBottom: 100,
   },
@@ -621,6 +628,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#333",
+    marginRight:10,
   },
   commentText: {
     fontSize: 14,
