@@ -27,12 +27,15 @@ import { Rating, AirbnbRating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { set } from "lodash";
+import { database } from "@/firebase/firebaseConfig";
+import { ref, push, set } from "firebase/database";
+import { useAccount } from "@/contexts/AccountProvider";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 type Comment = {
+  id: string;
   accountID: {
     avatar: any; // Change to ImageSourcePropType if needed
     username: string;
@@ -45,6 +48,7 @@ type Comment = {
 };
 
 type Post = {
+  id: string;
   author: {
     avatar: any; // Change to ImageSourcePropType if needed
     username: string;
@@ -69,19 +73,28 @@ type PostItemProps = {
   setIsScrollEnabled: (value: boolean) => void;
 };
 
-const flattenComments = (comments: Comment[], level = 0) => {
+const flattenComments = (comments: Comment[], level = 0) => {  
+  
   let flatComments: { comment: Comment; level: number }[] = [];
-
+  
   comments.forEach((comment) => {
     flatComments.push({ comment, level });
     if (comment.children) {
-      flatComments = flatComments.concat(
-        flattenComments(comment.children, level + 1)
-      );
+      const childComments = convertFirebaseObjectToArray(comment.children);
+      flatComments = flatComments.concat(flattenComments(childComments, level + 1));
     }
   });
 
   return flatComments;
+};
+
+// Helper function to convert Firebase objects to an array
+const convertFirebaseObjectToArray = (obj: any) => {
+  if (!obj) return [];
+  return Object.keys(obj).map((key) => ({
+    id: key,
+    ...obj[key],
+  }));
 };
 
 type RatingButtonProps = {
@@ -108,28 +121,105 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   showFullDescription,
   toggleDescription,
-  setIsScrollEnabled
+  setIsScrollEnabled,
 }) => {
   const commentModalRef = useRef<Modalize>(null);
   const ratingModalRef = useRef<Modalize>(null);
+  const ratingCommentRef = useRef<Modalize>(null);
   const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
+  const { accountData } = useAccount();
   
   const [comments, setComments] = useState(Object.values(item.comments));
   const MAX_LENGTH = 100;
   const flattenedComments = flattenComments(comments);
-  const addComment = () => {
+
+  const addComment = async () => {
     if (commentText.trim().length > 0) {
       const newComment = {
         accountID: {
-          avatar: "https://example.com/avatar.jpg",
-          username: "Current User",
+          avatar:
+          accountData.avatar,
+          username: accountData.fullname,
         },
+        comment_status: "active",
+        reports: 0,
         content: commentText,
-        created_at: new Date().toLocaleString(),
+        children: [],
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
       };
-      setComments((prevComments: any) => [newComment, ...prevComments]);
-      setCommentText("");
+      try {
+        if (replyingTo) {
+          // Add as a reply to an existing comment
+          const parentCommentRef = ref(
+            database,
+            `postsPhuc/${item.id}/comments/${replyingTo.id}/children`
+          );
+          const newReplyRef = push(parentCommentRef);
+          
+          // Check if a key is generated
+          if (newReplyRef.key) {
+            console.log("parentCommentRef.key",parentCommentRef.key);
+            const newReply = { ...newComment, id: newReplyRef.key };
+            await set(newReplyRef, newReply);
+
+            setComments((prevComments) =>
+              addReplyToComment(prevComments, replyingTo.id, newReply)
+            );
+            setReplyingTo(null); // Reset reply state
+          } else {
+            console.error(
+              "Error: Unable to generate a unique key for the reply."
+            );
+            // You might want to show a user-friendly error message here
+          }
+        } else {
+          // Add as a new top-level comment
+          const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
+
+          const newCommentRef = push(CommentsRef);
+          if (newCommentRef.key) {
+            const newTopLevelComment = { ...newComment, id: newCommentRef.key };
+            await set(newCommentRef, newTopLevelComment);
+
+            setComments((prevComments) => [newTopLevelComment, ...prevComments]);
+        }
+      }
+        setCommentText(""); // Clear the input field
+      } catch (error) {
+        console.error("Error adding comment:", error);
+      }
     }
+  };
+  const addReplyToComment = (
+    comments: Comment[],
+    commentId: string,
+    reply: Comment
+  ): Comment[] => {
+    return comments.map((comment) => {
+      if (comment.id === commentId) {
+        // If the comment is the one we're replying to
+        return {
+          // Return a new comment object with the reply added to its children
+          ...comment,
+          children: comment.children ? [...comment.children, reply] : [reply],
+        };
+      } else if (comment.children) {
+        // If the comment has children, recursively add the reply to the children
+        return {
+          ...comment,
+          children: addReplyToComment(comment.children, commentId, reply), // Recursively add the reply to the children
+        };
+      }
+      return comment;
+    });
   };
 
   const openCommentModal = () => {
@@ -147,6 +237,15 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
+  const openRatingCommentModal = () => {
+    if (ratingCommentRef.current && ratingModalRef.current) {
+      ratingCommentRef.current.open(); 
+      ratingModalRef.current.close();
+    } else {
+      console.error("Modalize reference is null");
+    }
+  };
+  
 
   const desc = {
     html: showFullDescription
@@ -224,85 +323,101 @@ const PostItem: React.FC<PostItemProps> = ({
         // adjustToContentHeight={false}
         modalHeight={600}
         alwaysOpen={0}
-        handlePosition="inside"        
+        handlePosition="inside"
         avoidKeyboardLikeIOS={true}
         onClosed={() => setIsScrollEnabled(true)}
-      
       >
-          <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalHeaderText}>
-            Comments for {item.author.username}'s post
-          </Text>
-           {/* Sticky comment */}
-           <View style={styles.commentInputContainer}>
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Write a comment..."
-              value={commentText}
-              onChangeText={setCommentText}
-              multiline
-            />
-            <TouchableOpacity style={styles.commentButton} onPress={addComment}>
-              <Text style={styles.commentButtonText}>Post</Text>
-            </TouchableOpacity>
-          </View>
-          {flattenedComments.length > 0 ? (
-            <FlatList
-              data={flattenedComments}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.commentContainer,
-                    { marginLeft: item.level * 20 },
-                  ]}
-                >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Comments for {item.author.username}'s post
+            </Text>
+            {/* Sticky comment */}
+            {replyingTo && (
+              <View style={styles.replyingToContainer}>
+                <Text>Replying to {replyingTo.username}</Text>
+                <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                  <Text style={styles.cancelReplyButton}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.commentInputContainer}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Write a comment..."
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.commentButton}
+                onPress={addComment}
+              >
+                <Text style={styles.commentButtonText}>Post</Text>
+              </TouchableOpacity>
+            </View>
+            {flattenedComments.length > 0 ? (
+              <FlatList
+                data={flattenedComments}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
                   <View
-                    style={{ flexDirection: "row", alignItems: "flex-start" }}
+                    style={[
+                      styles.commentContainer,
+                      { marginLeft: item.level * 20 },
+                    ]}
                   >
-                    <Image
-                      source={{ uri: item.comment.accountID.avatar }}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "flex-start" }}
+                    >
+                      <Image
+                        source={{ uri: item.comment.accountID.avatar }}
                         style={styles.miniAvatar}
-                    />
-                    <View style={{ flexDirection: "column", marginLeft: 10 }}>
-                      <Text style={styles.commentUsername}>
-                        {item.comment.accountID.username}
-                      </Text>
-                      <Text style={styles.commentText}>
-                        {item.comment.content}
-                      </Text>
-                      <View style={{ flexDirection: "row" }}>
-                        <TouchableOpacity>
-                          <Text style={styles.replyButton}>Reply</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity>
-                          <Text style={styles.replyButton}>Report</Text>
-                        </TouchableOpacity>
+                      />
+                      <View style={{ flexDirection: "column", marginLeft: 10 }}>
+                        <Text style={styles.commentUsername}>
+                          {item.comment.accountID.username}
+                        </Text>
+                        <Text style={styles.commentText}>
+                          {item.comment.content}
+                        </Text>
+                        <View style={{ flexDirection: "row" }}>
+                          <TouchableOpacity
+                            onPress={() =>
+                              setReplyingTo({
+                                id: item.comment.id,
+                                username: item.comment.accountID.username,
+                              })
+                            }
+                          >
+                            <Text style={styles.replyButton}>Reply</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity>
+                            <Text style={styles.replyButton}>Report</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
+                      <Text style={styles.commentTime}>
+                        {item.comment.created_at}
+                      </Text>
                     </View>
-                    <Text style={styles.commentTime}>
-                      {item.comment.created_at}
-                    </Text>
                   </View>
-                </View>
-              )}
-              contentContainerStyle={{ paddingBottom: 60 }}
-            />
-          ) : (
-            <Text>No comments yet. Be the first to comment!</Text>
-          )}
-         
-        </View>
+                )}
+                contentContainerStyle={{ paddingBottom: 60 }}
+              />
+            ) : (
+              <Text>No comments yet. Be the first to comment!</Text>
+            )}
+          </View>
         </KeyboardAvoidingView>
       </Modalize>
       {/* Rating Bottom Sheet */}
       <Modalize
         ref={ratingModalRef}
-        modalHeight={500}
+        modalHeight={400}
         handlePosition="inside"
         avoidKeyboardLikeIOS={true}
       >
@@ -310,17 +425,27 @@ const PostItem: React.FC<PostItemProps> = ({
           <Rating
             showRating
             onFinishRating={(rating: number) => console.log(rating)}
+            startingValue={5}            
             imageSize={60}
             minValue={1}
             style={{ marginBottom: 10 }}
+            
           />
           <View style={styles.ratingButtonWrapper}>
-            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]}>
+            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={openRatingCommentModal}>
               <Icon name="check" size={30} color="white" />
               <Text style={styles.ratingTitle}>Đánh Giá</Text>
             </TouchableOpacity>
           </View>
         </View>
+      </Modalize>
+      <Modalize
+        ref={ratingCommentRef}
+        modalHeight={400}
+        handlePosition="inside"
+        avoidKeyboardLikeIOS={true}
+      >
+        <Text>hihi</Text>
       </Modalize>
     </View>
   );
@@ -436,6 +561,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 7,
   },
+  replyingToContainer: {
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  cancelReplyButton: {
+    color: "#FF0000",
+    marginTop: 5,
+  },
   container: {
     flex: 1,
     width: "100%",
@@ -472,9 +607,9 @@ const styles = StyleSheet.create({
     width: windowWidth,
     height: windowWidth,
   },
-  modalContent: {    
+  modalContent: {
     padding: 20,
-    marginBottom:80
+    marginBottom: 80,
   },
   modalHeaderText: {
     fontSize: 18,
@@ -504,7 +639,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginRight: 10,
   },
-  commentInputContainer: {   
+  commentInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
