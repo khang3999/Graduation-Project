@@ -30,6 +30,7 @@ import TabBar from "@/components/navigation/TabBar";
 import { database } from "@/firebase/firebaseConfig";
 import { ref, push, set } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
+import HeartButton from "@/components/buttons/HeartButton";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -119,6 +120,9 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
+  
+
+  
   const commentModalRef = useRef<Modalize>(null);
   const ratingModalRef = useRef<Modalize>(null);
 
@@ -299,7 +303,7 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <LikeButton style={styles.buttonItem} />
+            <HeartButton style={styles.buttonItem} postID={item.id}/>
             <Text style={styles.totalLikes}>{item.likes}</Text>
             <CommentButton
               style={styles.buttonItem}
@@ -307,7 +311,7 @@ const PostItem: React.FC<PostItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} />
+          <SaveButton style={styles.buttonItem} postID={item.id}/>
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>

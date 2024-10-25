@@ -8,12 +8,13 @@ import { get, remove, update } from '@firebase/database';
 
 const HeartButton = (props: any) => {
     const userID = auth.currentUser?.uid
-
+    
     const [liked, setLiked] = useState(false);
     // Render 1 lần từ db để load các bài đã like
     useEffect(() => {
         const checkIfSaved = async () => {
-            const refPost = ref(database, `accounts/${userID}/savedList/${props.postID}`);
+            const refPost = ref(database, `accounts/${userID}/likedList/${props.postID}`);
+            
             const snapshot = await get(refPost);
 
             // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
@@ -32,7 +33,7 @@ const HeartButton = (props: any) => {
     // Hàm set like
     const handleLike =  async (postID: any, userID: any) => {
         const refLikeList = ref(database, `accounts/${userID}/likedList/`);
-        const refPost = ref(database, `accounts/${userID}/savedList/${postID}`)
+        const refPost = ref(database, `accounts/${userID}/likedList/${postID}`)
         const snapshot = await get(refPost); // Kiểm tra xem postID đã tồn tại chưa
 
         try {
@@ -45,7 +46,7 @@ const HeartButton = (props: any) => {
                 await update(refLikeList, {
                     [postID]: true, // Thêm postID vào savedList
                 });
-                console.log(`Đã thêm ${postID} vào savedList`);
+                console.log(`Đã thêm ${postID} vào likedList`);
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật likedList:', error);
