@@ -6,10 +6,11 @@ import { DefaultTheme, Divider, IconButton, MD3Colors, Menu, PaperProvider, Prov
 import { database, ref } from '@/firebase/firebaseConfig'
 import { get, off, onValue } from '@firebase/database'
 import { Timestamp } from 'react-native-reanimated/lib/typescript/reanimated2/commonTypes'
-import { formatDate } from '@/constants/commonFunctions'
 import { useHomeProvider } from '@/contexts/HomeProvider'
+import SkeletonPost from '@/components/skeletons/SkeletonPost'
+import { formatDate } from '@/utils/commons'
 
-const PostList = (props: any) => {
+const PostList = () => {
 
   const {
     dataPosts,
@@ -17,7 +18,9 @@ const PostList = (props: any) => {
     setPostIdCurrent,
     setAllLocationNameFromPost,
     refeshingPost,
-    setRefreshingPost } = useHomeProvider();
+    setRefreshingPost,
+    loadingPost,
+    setLoadingPost } = useHomeProvider();
 
   // // Hàm refesh
   // const onRefresh = useCallback(() => {
@@ -32,20 +35,14 @@ const PostList = (props: any) => {
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
-      // Xử lí lưu id của bài viết ra biến toàn cục để đổ list tour theo chủ đề của bài viết
+      // Xử lí lưu bìa viết đang hiển thị ra biến toàn cục để đổ list tour theo chủ đề của bài viết
       const locations = viewableItems[0].item.locations
-
       // Lấy tất cả các locationId <=> id của tỉnh thành trong từng bài post ['vn_1', 'jp_1']
       const allLocationIds: string[] = Object.keys(locations).flatMap((country) =>
         Object.keys(locations[country])
       );
-      const allLocationNames: string[] = Object.keys(locations).flatMap((country) => // ["Ha noi","Cao bang"]
-        Object.values(locations[country])
-      );
-      console.log(viewableItems[0].item.id);
-      
       setPostIdCurrent(viewableItems[0].item.id)
-      setAllLocationNameFromPost(allLocationNames) // Set mảng name của location để tính điểm tour tour phù hợp
+      // setAllLocationNameFromPost(allLocationNames) // Set mảng name của location để tính điểm tour tour phù hợp
       setAllLocationIdFromPost(allLocationIds) // Set mảng id của location để lấy tour phù hợp
     }
   };
@@ -78,78 +75,81 @@ const PostList = (props: any) => {
       }))
     );
     return (
-      <PaperProvider>
-        <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
-        }>
-          {/*Author*/}
-          <View style={styles.authorContent}>
-            <TouchableOpacity style={styles.avatarWrap}>
-              <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
-            </TouchableOpacity>
-            <View className='justify-center mx-2'>
-              <TouchableOpacity>
-                <Text className='font-semibold w-[120px]'>
-                  {post.item.author.fullname}
-                </Text>
+      <>
+        {loadingPost && (<SkeletonPost></SkeletonPost>)}
+        < PaperProvider >
+          <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
+          }>
+            {/*Author*/}
+            <View style={styles.authorContent}>
+              <TouchableOpacity style={styles.avatarWrap}>
+                <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
               </TouchableOpacity>
-              <Text className='italic text-xs'>{formatDate(post.item.created_at)}</Text>
+              <View className='justify-center mx-2'>
+                <TouchableOpacity>
+                  <Text className='font-semibold w-[120px]'>
+                    {post.item.author.fullname}
+                  </Text>
+                </TouchableOpacity>
+                <Text className='italic text-xs'>{formatDate(post.item.created_at)}</Text>
+              </View>
             </View>
-          </View>
-          {/* Location */}
-          <View style={styles.flagBtn}>
-            {/* <Provider > */}
-            <Menu
-              // statusBarHeight={0}
-              style={styles.listLocations}
-              visible={indexVisibleMenu === post.index} // Thay the 1 bang index của post trong mang
-              onDismiss={closeMenu}
-              theme={''}
-              anchor={
-                <IconButton
-                  style={{ backgroundColor: 'white', width: 50, height: 32 }}
-                  icon="flag-variant-outline"
-                  iconColor={MD3Colors.error10}
-                  size={26}
-                  onPress={() => openMenu(post.index)}
-                  accessibilityLabel="Menu button"
-                />
-              }>
-              {allLocations.map((location: any) => {
-                return (
-                  <>
-                    <TouchableOpacity key={location.id}>
-                      <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
-                      <Divider />
-                    </TouchableOpacity>
-                  </>
-                )
-              })
-              }
-            </Menu>
-            {/* </Provider> */}
-          </View>
-          <View style={styles.imagePost}>
-            <Image style={styles.imagePost} source={{ uri: post.item.images }}></Image>
-          </View>
+            {/* Location */}
+            <View style={styles.flagBtn}>
+              {/* <Provider > */}
+              <Menu
+                // statusBarHeight={0}
+                style={styles.listLocations}
+                visible={indexVisibleMenu === post.index} // Thay the 1 bang index của post trong mang
+                onDismiss={closeMenu}
+                theme={''}
+                anchor={
+                  <IconButton
+                    style={{ backgroundColor: 'white', width: 50, height: 32 }}
+                    icon="flag-variant-outline"
+                    iconColor={MD3Colors.error10}
+                    size={26}
+                    onPress={() => openMenu(post.index)}
+                    accessibilityLabel="Menu button"
+                  />
+                }>
+                {allLocations.map((location: any) => {
+                  return (
+                    <>
+                      <TouchableOpacity key={location.id}>
+                        <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+                        <Divider />
+                      </TouchableOpacity>
+                    </>
+                  )
+                })
+                }
+              </Menu>
+              {/* </Provider> */}
+            </View>
+            <View style={styles.imagePost}>
+              <Image style={styles.imagePost} source={{ uri: post.item.images }}></Image>
+            </View>
 
-          {/* Button like, comment, save */}
-          <ActionBar style={styles.actionBar} postID={post.item.id}></ActionBar>
-        </Pressable>
-      </PaperProvider >
-
+            {/* Button like, comment, save */}
+            <ActionBar style={styles.actionBar} postID={post.item.id}></ActionBar>
+          </Pressable>
+        </PaperProvider>
+      </>
     )
   }
 
   // VIEW
   return (
     <View style={styles.container}>
+      <Text style={styles.textCategory}>Những bài viết mới</Text>
       <FlatList
         showsVerticalScrollIndicator={false}
         data={dataPosts}
         renderItem={postItem}
         keyExtractor={(post: any) => post.id}
-        contentContainerStyle={{ paddingBottom: 15 }}
-        ItemSeparatorComponent={() => <View style={{ height: 20, }} />} // Space between item
+        contentContainerStyle={{}}
+        // ItemSeparatorComponent={() => <View style={{ height: 20 }} />} // Space between item
         pagingEnabled //Scroll to next item
         onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
         viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
@@ -158,6 +158,18 @@ const PostList = (props: any) => {
   )
 }
 const styles = StyleSheet.create({
+  textCategory: {
+    marginBottom: 10,
+    fontSize: 14,
+    backgroundColor: '#f0f0f0',
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontWeight: '500',
+    alignSelf: 'flex-start',
+    elevation: 10
+  },
   imagePost: {
     height: 410,
     // backgroundColor: 'red',
@@ -212,6 +224,7 @@ const styles = StyleSheet.create({
     height: 410,
     position: "relative",
     marginHorizontal: 10,
+    marginBottom: 10,
     borderRadius: 30,
     elevation: 6
   },
@@ -223,8 +236,8 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'relative',
-    height: 428,
-    marginTop: 15,
+    height: 458,
+    marginTop: 4,
   }
 })
 
