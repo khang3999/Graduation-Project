@@ -5,7 +5,7 @@ import { database, onValue, ref } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper';
 import ActionBar from '../ActionBar';
-import { formatDate } from '@/constants/commonFunctions';
+import { formatDate } from '@/utils/commons';
 
 const { width } = Dimensions.get('window');
 const dataTours = [

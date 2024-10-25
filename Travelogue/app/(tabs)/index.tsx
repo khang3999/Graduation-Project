@@ -24,7 +24,6 @@ const Home = () => {
 
   }
   return (
-    <HomeProvider>
       <View style={styles.container}>
         {/* Search bar */}
         <View>
@@ -52,7 +51,6 @@ const Home = () => {
         </View>
         <PostList></PostList>
       </View>
-    </HomeProvider>
   )
 }
 
