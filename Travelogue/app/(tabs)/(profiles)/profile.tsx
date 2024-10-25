@@ -12,22 +12,14 @@ import React, { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { database, auth } from "@/firebase/firebaseConfig";
 import { ref, onValue, off } from "firebase/database";
+import { useAccount } from "@/contexts/AccountProvider";
+
 
 export default function ProfileScreen() {
-  const [userData, setUserData] = React.useState(null);
+  const { accountData, setAccountData } = useAccount();
   const [loading, setLoading] = React.useState(true);
   const userId = auth.currentUser?.uid;
 
-  const fetchStoredUserData = async () => {
-    try {
-      const storedData = await AsyncStorage.getItem("userData");
-      if (storedData) {
-        setUserData(JSON.parse(storedData));
-      }
-    } catch (error) {
-      console.error("Error fetching data from AsyncStorage", error);
-    }
-  };
 
   const syncUserDataWithFirebase = async () => {
     const userRef = ref(database, `accounts/${userId}`);
@@ -36,16 +28,14 @@ export default function ProfileScreen() {
     onValue(userRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setUserData(data); // Update state
-        await AsyncStorage.setItem("userData", JSON.stringify(data)); // Update AsyncStorage
+        setAccountData(data); // Update state      
       }
     });
   };
 
   useEffect(() => {
     const initialize = async () => {
-      setLoading(true);
-      await fetchStoredUserData(); // Try to fetch from AsyncStorage first
+      setLoading(true);      
       await syncUserDataWithFirebase(); // Set up Firebase listener for real-time updates
       setLoading(false);
     };
@@ -62,7 +52,7 @@ export default function ProfileScreen() {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
-  if (!userData) {
+  if (!accountData) {
     return <Text>No user data available</Text>;
   }
 
@@ -70,7 +60,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <HeaderProfile userData={userData} />
+      <HeaderProfile userData={accountData} />
       <GalleryTabView />
     </>
   );

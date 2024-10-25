@@ -7,6 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -20,9 +24,18 @@ import CheckedInChip from "@/components/chips/CheckedInChip";
 import RenderHtml from "react-native-render-html";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Rating, AirbnbRating } from "react-native-ratings";
+import { useLocalSearchParams } from "expo-router";
+import { usePost } from "@/contexts/PostProvider";
+import TabBar from "@/components/navigation/TabBar";
+import { database } from "@/firebase/firebaseConfig";
+import { ref, push, set } from "firebase/database";
+import { useAccount } from "@/contexts/AccountProvider";
 
 const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
+
 type Comment = {
+  id: string;
   accountID: {
     avatar: any; // Change to ImageSourcePropType if needed
     username: string;
@@ -35,6 +48,7 @@ type Comment = {
 };
 
 type Post = {
+  id: string;
   author: {
     avatar: any; // Change to ImageSourcePropType if needed
     username: string;
@@ -54,131 +68,31 @@ type Post = {
 
 type PostItemProps = {
   item: Post;
-  showFullDescription: boolean;
-  toggleDescription: () => void;
+  setIsScrollEnabled: (value: boolean) => void;
 };
 
-const post: Post[] = [
-  {
-    author: {
-      avatar: require("@/assets/images/tom.png"),
-      username: "Tran Phuc",
-    },
-    comments: {
-      comment_1: {
-        accountID: {
-          avatar: require("@/assets/images/trua_he.png"),
-          username: "Joker PC",
-        },
-        comment_status: "active",
-        content: "Dep lam",
-        reports: 0,
-        created_at: "04 August, 2024",
-        children: [
-          {
-            accountID: {
-              avatar: require("@/assets/images/jerry.png"),
-              username: "Heo PC",
-            },
-            comment_status: "active",
-            content: "Cam on!",
-            reports: 0,
-            created_at: "04 August, 2024",
-          },
-        ],
-      },
-      comment_2: {
-        accountID: {
-          avatar: require("@/assets/images/tom.png"),
-          username: "khang",
-        },
-        comment_status: "active",
-        content: "Dep lam",
-        reports: 0,
-        created_at: "04 August, 2024",
-      },
-      comment_3: {
-        accountID: {
-          avatar: require("@/assets/images/tom.png"),
-          username: "Thu",
-        },
-        comment_status: "active",
-        content: "Tam Tam",
-        reports: 0,
-        created_at: "04 August, 2024",
-        children: [
-          {
-            accountID: {
-              avatar: require("@/assets/images/jerry.png"),
-              username: "Heo PC",
-            },
-            comment_status: "active",
-            content: "Cam on!",
-            reports: 0,
-            created_at: "04 August, 2024",
-          },
-        ],
-      },
-    },
-    content:
-      "<h1>HEADER</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit es se cillum dolore eu fugiat nulla pariatur.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</p>",
-    created_at: "04 August, 2024",
-    hashtag: "#vietnam #travel #hanoi",
-    images: [
-      "data:image/png;base64,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",
-      "data:image/png;base64,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",
-    ],
+const flattenComments = (comments: Comment[], level = 0) => {  
+  
+  let flatComments: { comment: Comment; level: number }[] = [];
+  
+  comments.forEach((comment) => {
+    flatComments.push({ comment, level });
+    if (comment.children) {
+      const childComments = convertFirebaseObjectToArray(comment.children);
+      flatComments = flatComments.concat(flattenComments(childComments, level + 1));
+    }
+  });
 
-    likes: 3,
-    locations: {
-      vietnam: {
-        "1": "Hà Nội",
-        "2": "Cao Bằng",
-      },
-    },
-    post_status: "active",
-    price_id: 1,
-    reports: 0,
-    view_mode: true,
-  },
-];
+  return flatComments;
+};
 
-const renderComments = (comments: Comment[], level = 0) => {
-  return comments.map((comment, index) => (
-    <View
-      key={index}
-      style={[styles.commentContainer, { marginLeft: level * 20 }]}
-    >
-      {/* Avatar */}
-      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-        <Image source={comment.accountID.avatar} style={styles.miniAvatar} />
-        {/* Username */}
-        <View style={{ flexDirection: "column", marginLeft: 10 }}>
-          <Text style={styles.commentUsername}>
-            {comment.accountID.username}
-          </Text>
-          {/* Comment Content */}
-          <Text style={styles.commentText}>{comment.content}</Text>
-
-          <View style={{ flexDirection: "row" }}>
-            {/* Reply Button*/}
-            <TouchableOpacity>
-              <Text style={styles.replyButton}>Reply</Text>
-            </TouchableOpacity>
-            {/* Report Button*/}
-            <TouchableOpacity>
-              <Text style={styles.replyButton}>Report</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        {/* Comment Time */}
-        <Text style={styles.commentTime}>{comment.created_at}</Text>
-      </View>
-
-      {/* Nested Children Comments */}
-      {comment.children && renderComments(comment.children, level + 1)}
-    </View>
-  ));
+// Helper function to convert Firebase objects to an array
+const convertFirebaseObjectToArray = (obj: any) => {
+  if (!obj) return [];
+  return Object.keys(obj).map((key) => ({
+    id: key,
+    ...obj[key],
+  }));
 };
 
 type RatingButtonProps = {
@@ -203,16 +117,112 @@ const RatingButton: React.FC<RatingButtonProps> = ({
 
 const PostItem: React.FC<PostItemProps> = ({
   item,
-  showFullDescription,
-  toggleDescription,
+  setIsScrollEnabled,
 }) => {
   const commentModalRef = useRef<Modalize>(null);
   const ratingModalRef = useRef<Modalize>(null);
+
+  const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
+  const { accountData } = useAccount();
+  
+  const [comments, setComments] = useState(Object.values(item.comments));
   const MAX_LENGTH = 100;
+  const flattenedComments = flattenComments(comments);
+  const totalComments = flattenedComments.length;
+
+  const addComment = async () => {
+    if (commentText.trim().length > 0) {
+      const newComment = {
+        accountID: {
+          avatar:
+          accountData.avatar,
+          username: accountData.fullname,
+        },
+        comment_status: "active",
+        reports: 0,
+        content: commentText,
+        children: [],
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      };
+      try {
+        if (replyingTo) {
+          // Add as a reply to an existing comment
+          const parentCommentRef = ref(
+            database,
+            `postsPhuc/${item.id}/comments/${replyingTo.id}/children`
+          );
+          const newReplyRef = push(parentCommentRef);
+          
+          // Check if a key is generated
+          if (newReplyRef.key) {
+            
+            const newReply = { ...newComment, id: newReplyRef.key };
+            await set(newReplyRef, newReply);
+
+            setComments((prevComments) =>
+              addReplyToComment(prevComments, replyingTo.id, newReply)
+            );
+            setReplyingTo(null); // Reset reply state
+          } else {
+            console.error(
+              "Error: Unable to generate a unique key for the reply."
+            );
+            // You might want to show a user-friendly error message here
+          }
+        } else {
+          // Add as a new top-level comment
+          const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
+
+          const newCommentRef = push(CommentsRef);
+          if (newCommentRef.key) {
+            const newTopLevelComment = { ...newComment, id: newCommentRef.key };
+            await set(newCommentRef, newTopLevelComment);
+
+            setComments((prevComments) => [newTopLevelComment, ...prevComments]);
+        }
+      }
+        setCommentText(""); // Clear the input field
+      } catch (error) {
+        console.error("Error adding comment:", error);
+      }
+    }
+  };
+  const addReplyToComment = (
+    comments: Comment[],
+    commentId: string,
+    reply: Comment
+  ): Comment[] => {
+    return comments.map((comment) => {
+      if (comment.id === commentId) {
+        // If the comment is the one we're replying to
+        return {
+          // Return a new comment object with the reply added to its children
+          ...comment,
+          children: comment.children ? [...comment.children, reply] : [reply],
+        };
+      } else if (comment.children) {
+        // If the comment has children, recursively add the reply to the children
+        return {
+          ...comment,
+          children: addReplyToComment(comment.children, commentId, reply), // Recursively add the reply to the children
+        };
+      }
+      return comment;
+    });
+  };
 
   const openCommentModal = () => {
     if (commentModalRef.current) {
       commentModalRef.current.open(); // Safely access the ref
+      setIsScrollEnabled(false);
     } else {
       console.error("Modalize reference is null");
     }
@@ -224,9 +234,26 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
+  const closeRatingModal = () => {
+    if (ratingModalRef.current) {      
+      ratingModalRef.current.close();
+    } else {
+      console.error("Modalize reference is null");
+    }
+  };
+  const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
+
+    const toggleDescription = (postId: string) => {
+      setExpandedPosts((prev) => ({
+        ...prev,
+        [postId]: !prev[postId],
+      }));
+    };
+  
+  const isExpanded = expandedPosts[item.id] || false;
 
   const desc = {
-    html: showFullDescription
+    html: isExpanded
       ? item.content
       : `${item.content.slice(0, MAX_LENGTH)} ...`,
   };
@@ -235,7 +262,10 @@ const PostItem: React.FC<PostItemProps> = ({
       {/* Post Header */}
       <View style={styles.row}>
         <View style={styles.row}>
-          <Image source={item.author.avatar} style={styles.miniAvatar} />
+          <Image
+            source={{ uri: item.author.avatar }}
+            style={styles.miniAvatar}
+          />
           <View style={styles.column}>
             <Text style={styles.username}>{item.author.username}</Text>
             <Text style={styles.time}>{item.created_at}</Text>
@@ -275,6 +305,7 @@ const PostItem: React.FC<PostItemProps> = ({
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
+            <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
           <SaveButton style={styles.buttonItem} />
         </View>
@@ -287,79 +318,170 @@ const PostItem: React.FC<PostItemProps> = ({
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
         <RenderHtml contentWidth={windowWidth} source={desc} />
-        <TouchableOpacity onPress={toggleDescription}>
-          <Text>{showFullDescription ? "Show less" : "Show more"}</Text>
+        <TouchableOpacity onPress={()=>toggleDescription(item.id)}>
+          <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
-      <Divider style={styles.divider} bold={true} />
+      <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
       <Modalize
         ref={commentModalRef}
+        // adjustToContentHeight={false}
         modalHeight={600}
-        avoidKeyboardLikeIOS={true}
+        alwaysOpen={0}
         handlePosition="inside"
+        avoidKeyboardLikeIOS={true}
+        onClosed={() => setIsScrollEnabled(true)}
       >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalHeaderText}>
-            Comments for {item.author.username}'s post
-          </Text>
-          {Object.values(item.comments).length > 0 ? (
-            renderComments(Object.values(item.comments))
-          ) : (
-            <Text>No comments yet. Be the first to comment!</Text>
-          )}
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeaderText}>
+              Comments for {item.author.username}'s post
+            </Text>
+            {/* Sticky comment */}
+            {replyingTo && (
+              <View style={styles.replyingToContainer}>
+                <Text>Replying to {replyingTo.username}</Text>
+                <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                  <Text style={styles.cancelReplyButton}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.commentInputContainer}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Write a comment..."
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.commentButton}
+                onPress={addComment}
+              >
+                <Text style={styles.commentButtonText}>Post</Text>
+              </TouchableOpacity>
+            </View>
+            {flattenedComments.length > 0 ? (
+              <FlatList
+                data={flattenedComments}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.commentContainer,
+                      { marginLeft: item.level * 20 },
+                    ]}
+                  >
+                    <View
+                      style={{ flexDirection: "row", alignItems: "flex-start" }}
+                    >
+                      <Image
+                        source={{ uri: item.comment.accountID.avatar }}
+                        style={styles.miniAvatar}
+                      />
+                      <View style={{ flexDirection: "column", marginLeft: 10 }}>
+                        <Text style={styles.commentUsername}>
+                          {item.comment.accountID.username}
+                        </Text>
+                        <Text style={styles.commentText}>
+                          {item.comment.content}
+                        </Text>
+                        <View style={{ flexDirection: "row" }}>
+                          <TouchableOpacity
+                            onPress={() =>
+                              setReplyingTo({
+                                id: item.comment.id,
+                                username: item.comment.accountID.username,
+                              })
+                            }
+                          >
+                            <Text style={styles.replyButton}>Reply</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity>
+                            <Text style={styles.replyButton}>Report</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <Text style={styles.commentTime}>
+                        {item.comment.created_at}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                contentContainerStyle={{ paddingBottom: 60 }}
+              />
+            ) : (
+              <Text>No comments yet. Be the first to comment!</Text>
+            )}
+          </View>
+        </KeyboardAvoidingView>
       </Modalize>
       {/* Rating Bottom Sheet */}
       <Modalize
         ref={ratingModalRef}
-        modalHeight={500}
+        modalHeight={400}
         handlePosition="inside"
         avoidKeyboardLikeIOS={true}
       >
         <View style={styles.ratingContainer}>
           <Rating
             showRating
-            onFinishRating={(rating:number) => console.log(rating)}
+            onFinishRating={(rating: number) => console.log(rating)}
+            startingValue={5}            
             imageSize={60}
             minValue={1}
-            style={{marginBottom:10}}
+            style={{ marginBottom: 10 }}
+            
           />
           <View style={styles.ratingButtonWrapper}>
-            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]}>
+            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={closeRatingModal}>
               <Icon name="check" size={30} color="white" />
               <Text style={styles.ratingTitle}>Đánh Giá</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modalize>
+    
     </View>
   );
 };
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  
+  const { selectedPost, setSelectedPost } = usePost();
+  const { initialIndex } = useLocalSearchParams();
+  const initialPage = parseInt(initialIndex as string, 10);
+  const [isScrollEnabled, setIsScrollEnabled] = useState(true);
 
-  // Function to toggle description
-  const toggleDescription = useCallback(() => {
-    setShowFullDescription((prev) => !prev);
-  }, []);
-  const memoriedPostItem = useMemo(() => post, []);
+
+  const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   return (
-    <FlatList
-      data={memoriedPostItem}
-      renderItem={({ item }) => (
-        <PostItem
-          item={item}
-          showFullDescription={showFullDescription}
-          toggleDescription={toggleDescription}
-        />
-      )}
-      keyExtractor={(item, index) => index.toString()}
-      style={styles.container}
-    ></FlatList>
+    <>
+      <FlatList
+        data={memoriedPostItem}
+        renderItem={({ item }) => (
+          <PostItem
+            item={item}            
+            setIsScrollEnabled={setIsScrollEnabled}
+          />
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.container}
+        scrollEnabled={isScrollEnabled}
+        initialScrollIndex={initialPage}
+        getItemLayout={(data, index) => ({
+          length: windowHeight,
+          offset: index * windowHeight,
+          index,
+        })}
+      ></FlatList>
+    </>
   );
 }
 const styles = StyleSheet.create({
@@ -370,16 +492,21 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 3,
   },
-  ratingContainer: { marginTop: 50, paddingVertical: 10, flexDirection:'column' },
+  ratingContainer: {
+    marginTop: 50,
+    paddingVertical: 10,
+    flexDirection: "column",
+  },
   ratingLabel: { fontSize: 16, marginRight: 5, fontWeight: "bold" },
   ratingValue: { marginLeft: 10, fontWeight: "bold", marginTop: 10 },
   ratingButton: {
-    flexDirection: "row",},
+    flexDirection: "row",
+  },
   ratingButtonWrapper: {
     marginHorizontal: 130,
     marginTop: 30,
-    backgroundColor:'red',
-    borderRadius:10,
+    backgroundColor: "red",
+    borderRadius: 10,
   },
   ratingButtonContainer: {
     marginLeft: 15,
@@ -391,6 +518,15 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  totalComments:{
+    marginRight: 10,
+    marginTop: 1,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  commentsContainer: {
+    marginBottom: 100,
   },
   carouselText: {
     color: "#fff",
@@ -426,8 +562,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 7,
   },
+  replyingToContainer: {
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  cancelReplyButton: {
+    color: "#FF0000",
+    marginTop: 5,
+  },
   container: {
     flex: 1,
+    width: "100%",
   },
   row: {
     flexDirection: "row",
@@ -463,6 +610,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 20,
+    marginBottom: 80,
   },
   modalHeaderText: {
     fontSize: 18,
@@ -480,6 +628,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#333",
+    marginRight:10,
   },
   commentText: {
     fontSize: 14,
@@ -491,5 +640,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     marginRight: 10,
+  },
+  commentInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
+    marginBottom: 20,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 20,
+    padding: 10,
+    marginRight: 10,
+  },
+  commentButton: {
+    backgroundColor: "#007BFF",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  commentButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
