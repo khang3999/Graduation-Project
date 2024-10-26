@@ -20,6 +20,7 @@ import { usePost } from "@/contexts/PostProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
 import { initial } from "lodash";
+import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -71,6 +72,7 @@ export default function GalleryTabView() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
+  const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
   const [routes] = React.useState([
     { key: "first" },
     { key: "second" },
@@ -119,14 +121,58 @@ export default function GalleryTabView() {
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
+  };
+
+  //fetching created posts from firebase
+  const fetchSavedList = async () => {
+    try {
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}/savedList`);
+        onValue(userRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Get the post IDs as an array
+            const postIds = Object.keys(data);
+
+            // Use an array to store listeners so you can unsubscribe later
+            const unsubscribeListeners: Unsubscribe[] = []; 
+
+            // Create an array to hold posts
+            const posts: Post[] = [];
+
+            postIds.forEach((postId, index) => {
+              const postRef = ref(database, `postsPhuc/${postId}`);
+
+              // Listen for changes to each post using nested onValue
+              const unsubscribe = onValue(postRef, (postSnapshot) => {
+                const postData = postSnapshot.val();
+                if (postData) {
+                  // Update the post at the correct index
+                  posts[index] = postData;
+                  setSavedPosts([...posts]); // Update state with a new array reference to trigger re-render
+                }
+              });
+
+              // Add each unsubscribe function to the array for cleanup
+              unsubscribeListeners.push(() => unsubscribe());
+            });
+            // Clean up listeners when the component unmounts
+            return () => {
+              unsubscribeListeners.forEach((unsubscribe) => unsubscribe());
+            };
+          }
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    } 
   };
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
       await fetchCreatedPosts(); // Set up Firebase listener for real-time updates      
+      await fetchSavedList(); // Set up Firebase listener for real-time updates
       setIsLoading(false);
     };
     initialize();
@@ -134,7 +180,9 @@ export default function GalleryTabView() {
     return () => {
       if (userId) {
         const userRef = ref(database, `accounts/${userId}/createdPosts`);
+        const savedListRef = ref(database, `accounts/${userId}/savedList`);        
         off(userRef);
+        off(savedListRef)
       }
     };
   }, [userId]);
@@ -173,15 +221,17 @@ export default function GalleryTabView() {
     <View style={{ flex: 1, paddingBottom: 70, backgroundColor: "orange" }}>
       <FlatList
         style={{ flex: 1 }}
-        data={createdPosts}
+        data={savedPosts}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => {
-              router.push({
-                pathname: "/post",
-              });
-            }}
-          >
+          onPress={() => {
+            router.push({
+              pathname: "/post",
+              params: { initialIndex: index.toString() },
+            }); 
+            setSelectedPost(savedPosts);
+          }}
+        >
             <Image
               source={{ uri: item.thumbnail }}
               style={styles.imagesGallery}
@@ -247,14 +297,11 @@ export default function GalleryTabView() {
   );
 
   if (isLoading) {
-    return;
-    <View style={{ flex: 2.2 }}>
-      <ActivityIndicator size="large" color="#0000ff" />;
-    </View>;
+    return <GalleryTabViewSkeleton />;
   }
 
   return (
-    <View style={{ flex: 2.2 }}>
+    <View style={{ flex: 2.3 }}>
       <TabView
         lazy
         navigationState={{ index, routes }}

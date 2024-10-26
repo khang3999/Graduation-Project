@@ -12,14 +12,15 @@ import React from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
 import MenuItem from "@/components/buttons/MenuProfileButton";
+import HeaderProfileSkeleton from "../skeletons/HeaderProfileSkeleton";
+
 
 const Plus = () => (
   <IconButton
     icon="plus"
     iconColor={MD3Colors.error10}
     size={24}
-    onPress={() => console.log("Plus button pressed")}
-    // onPress={() => router.push("/(user)/ChangePassword")}
+    onPress={() => console.log("Plus button pressed")}    
     style={styles.button}
     accessible={true}
     accessibilityLabel="Add button"
@@ -38,8 +39,11 @@ const Bell = () => (
   />
 );
 
-
 export default function HeaderProfile({userData}:any) {
+  if(!userData) {
+    return <HeaderProfileSkeleton />;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>           

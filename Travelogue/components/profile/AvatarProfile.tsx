@@ -18,42 +18,11 @@ import { set } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AvatarProfile({ userData }: any) {
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAvatarUrl = async () => {
-      try {
-        //check if the avatar URL is cached in the local storage
-        const cachedUrl = await AsyncStorage.getItem(`avatar_${userData.id}`);
-        if(cachedUrl){
-          setAvatarUrl(cachedUrl);
-        }else{
-        // Fetch the avatar URL from the server
-        const url = await getImageUrl(userData.avatar);
-        setAvatarUrl(url);
-        // Cache the avatar URL in the local storage
-        await AsyncStorage.setItem(`avatar_${userData.id}`, url);
-
-      }
-      } catch (error) {
-        console.error("Error fetching avatar URL:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAvatarUrl();    
-  }, [userData.avatar]);
-  
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
+ 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{ uri: avatarUrl }} />
+        <Image style={styles.avatar} source={{ uri: userData.avatar }} />
         <View style={styles.column}>
           <Text style={styles.infoText}>{userData.totalLikes ?? null}</Text>
           <Text style={styles.infoText}>thich</Text>

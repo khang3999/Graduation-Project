@@ -13,13 +13,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { database, auth } from "@/firebase/firebaseConfig";
 import { ref, onValue, off } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
-
+import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton";
 
 export default function ProfileScreen() {
   const { accountData, setAccountData } = useAccount();
-  const [loading, setLoading] = React.useState(true);
   const userId = auth.currentUser?.uid;
-
 
   const syncUserDataWithFirebase = async () => {
     const userRef = ref(database, `accounts/${userId}`);
@@ -28,16 +26,14 @@ export default function ProfileScreen() {
     onValue(userRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setAccountData(data); // Update state      
+        setAccountData(data); // Update state
       }
     });
   };
 
   useEffect(() => {
     const initialize = async () => {
-      setLoading(true);      
       await syncUserDataWithFirebase(); // Set up Firebase listener for real-time updates
-      setLoading(false);
     };
     initialize();
 
@@ -48,15 +44,9 @@ export default function ProfileScreen() {
     };
   }, [userId]);
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
   if (!accountData) {
     return <Text>No user data available</Text>;
   }
-
-  // console.log(userData);
 
   return (
     <>
