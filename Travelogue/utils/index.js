@@ -1,3 +1,4 @@
+// Hàm trộn mảng tour và bài viết 
 // Hàm slug text
 export const slug = (str) => {
     return String(str)

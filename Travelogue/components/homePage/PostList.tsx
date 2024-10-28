@@ -8,6 +8,7 @@ import { get, off, onValue } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import SkeletonPost from '@/components/skeletons/SkeletonPost'
 import { formatDate } from '@/utils/commons'
+import { AntDesign, FontAwesome6 } from '@expo/vector-icons'
 
 const PostList = () => {
 
@@ -15,21 +16,71 @@ const PostList = () => {
     dataPosts,
     setAllLocationIdFromPost,
     setPostIdCurrent,
-    setAllLocationNameFromPost,
-    refeshingPost,
-    setRefreshingPost,
-    loadingPost,
-    setLoadingPost } = useHomeProvider();
+    notifyNewPost,
+    setDataPosts,
+    currentPostCount,
+    setCurrentPostCount,
+    newPostCount,
+    searching,
+    setSearching,
+    behavior,
+    setBehavior }: any = useHomeProvider();
 
-  // // Hàm refesh
-  // const onRefresh = useCallback(() => {
-  //   setRefreshingPost(true);
+  // Hàm handleClick load new post button
+  // Hàm để tải bài viết từ Firebase
+  // useEffect để tải dữ liệu ban đầu
 
-  //   // Mô phỏng việc tải lại dữ liệu sau 2 giây
-  //   setTimeout(() => {
-  //     setRefreshingPost(false);
-  //   }, 2000);
-  // }, []);
+  const fetchPosts = async () => {
+    try {
+      const refPosts = ref(database, 'posts/')
+      const snapshot = await get(refPosts);
+      if (snapshot.exists()) {
+        const dataPostsJson = snapshot.val()
+        // Chuyển đổi object thành array bang values cua js
+        const jsonArrayPosts = Object.values(dataPostsJson).sort((a: any, b: any) => b.created_at - a.created_at)
+        // Chuyển mảng data thành 2 mảng con : theo behavior và không theo behavior và thực hiện trộn 2 mảng
+        // Phân loại bài viết thành 2 mảng dựa trên behavior
+        const behaviorPosts = [];
+        const nonBehaviorPosts = [];
+
+        jsonArrayPosts.forEach((post:any) => {
+          // const locationIds = post. // TỚI ĐÂY RỒI LÀM TIẾP NHÉ :((((((((((((((((((()))))))))))))))))))
+          if (/* Điều kiện behavior */ post.behavior) {
+            behaviorPosts.push(post);
+          } else {
+            nonBehaviorPosts.push(post);
+          }
+        });
+
+
+        // 1.Gọi hàm trộn 2 mảng
+        // 2. set mảng đã trộn cho dataPost
+        // Tạm thời xếp theo thời gian
+        setDataPosts(jsonArrayPosts)
+        // Set lại số lượng bài post đang hiển thị
+        setCurrentPostCount(jsonArrayPosts.length)
+      } else {
+        console.log("No data available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  }
+  // Gọi lần đầu
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  // Hàm reload bài viết
+  const handleReloadNewPost = () => {
+    fetchPosts(); // Tải lại bài viết
+  };
+
+  // Hàm reload bài viết
+  const handleReloadHomePage = () => {
+    setSearching(false)
+    fetchPosts(); // Tải lại bài viết
+  };
 
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
@@ -74,8 +125,8 @@ const PostList = () => {
       }))
     );
     return (
-      <>
-        {loadingPost && (<SkeletonPost></SkeletonPost>)}
+      <View key={post.item.id}>
+        {/* {loadingPost && (<SkeletonPost></SkeletonPost>)} */}
         < PaperProvider >
           <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
           }>
@@ -134,14 +185,28 @@ const PostList = () => {
             <ActionBar style={styles.actionBar} postID={post.item.id}></ActionBar>
           </Pressable>
         </PaperProvider>
-      </>
+      </View>
     )
   }
 
   // VIEW
   return (
     <View style={styles.container}>
-      <Text style={styles.textCategory}>Những bài viết mới</Text>
+      <View style={styles.titlePostContainer}>
+        <Text style={styles.textCategory}>Những bài viết mới</Text>
+
+        {/* {((currentPostCount != newPostCount) && (searching == false)) && ( */}
+        <TouchableOpacity style={styles.loadNewPost} onPress={handleReloadNewPost}>
+          <FontAwesome6 name="newspaper" size={20} color="black" />
+          <Text style={styles.iconPost}>Có bài viết mới</Text>
+        </TouchableOpacity>
+        {/* )} */}
+
+        <TouchableOpacity style={styles.refreshBtn} onPress={handleReloadHomePage}>
+          <AntDesign name="reload1" size={22} color="grey" />
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         showsVerticalScrollIndicator={false}
         data={dataPosts}
@@ -157,6 +222,27 @@ const PostList = () => {
   )
 }
 const styles = StyleSheet.create({
+  refreshBtn: {
+    position: 'absolute',
+    right: 30,
+    top: 4,
+  },
+  iconPost: {
+    paddingLeft: 4,
+    fontWeight: '500'
+  },
+  loadNewPost: {
+    flexDirection: 'row',
+    position: 'absolute',
+    left: "40%",
+    borderRadius: 8,
+    padding: 4,
+    backgroundColor: 'grey',
+    transformOrigin: 'center'
+  },
+  titlePostContainer: {
+    flexDirection: 'row'
+  },
   textCategory: {
     marginBottom: 10,
     fontSize: 14,

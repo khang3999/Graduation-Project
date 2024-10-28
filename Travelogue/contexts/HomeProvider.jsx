@@ -1,8 +1,9 @@
-import { View, Text } from 'react-native'
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react'
+import { View, Text, AppState } from 'react-native'
+import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import { onValue, ref } from 'firebase/database';
 import { auth, database, get } from '@/firebase/firebaseConfig';
 import { slug, sortTour } from '@/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // Định nghĩa kiểu cho context
 // interface HomeContextType {=
 //     dataPosts: any[]; // Bạn có thể thay thế `any[]` bằng kiểu chính xác nếu biết
@@ -12,12 +13,12 @@ import { slug, sortTour } from '@/utils';
 // const defaultContextValue: HomeContextType = {
 //     dataPosts: [], // Giá trị mặc định cho dataPosts
 // };
-const HomeContext = createContext();
+const HomeContext = createContext(null);
 const HomeProvider = ({ children }) => {
     const [dataAccount, setDataAccount] = useState(null)
     const [dataPosts, setDataPosts] = useState([])
+    const dataPostsRef = useRef([])
     const [dataTours, setDataTours] = useState([])
-    const [dataFactorsPost, setDataFactorsPost] = useState(null)
     const [postIdCurrent, setPostIdCurrent] = useState(-1);
     // Mảng chứa id tất cả location theo từng bài viết
     const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
@@ -26,8 +27,58 @@ const HomeProvider = ({ children }) => {
     const [loadingPost, setLoadingPost] = useState(true)
     const [loadingTour, setLoadingTour] = useState(true)
     const [notifyNewPost, setNotifyNewPost] = useState(false)
+    const appStateRef = useRef(AppState.currentState)
+    const [currentPostCount, setCurrentPostCount] = useState(0);
+    const [newPostCount, setNewPostCount] = useState(0);
+    const [searching, setSearching] = useState(false)
+    const [behavior, setBehavior] = useState({})
+
+    /// App state
+    // useEffect(() => {
+    //     console.log('Trạng thái AppState ban đầu:', AppState.currentState);
+    // }, []);
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', async nextAppState => {
+            console.log('Trạng thái AppState trước khi thay đổi:', appStateRef.current);
+            console.log('Trạng thái AppState mới:', nextAppState);
+
+            // Lưu trạng thái hiện tại vào AsyncStorage trước khi cập nhật
+            await AsyncStorage.setItem("APP_STATE", nextAppState)
+            // appStateRef.current = nextAppState;
+            // setAppState(appState.current);     
+            try {
+                const value = await AsyncStorage.getItem("APP_STATE");
+                if (value !== null) {
+                    console.log('Giá trị đọc được từ AsyncStorage:', value);
+                    // Xử lý giá trị đọc được (convert từ JSON nếu cần)
+                } else {
+                    console.log('Không có dữ liệu');
+                }
+            } catch (e) {
+                console.error('Lỗi khi đọc dữ liệu từ AsyncStorage:', e);
+            }
+
+            // console.log('AppState: ', await AsyncStorage.getItem("APP_STATE"));
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [])
 
     /// ------------------------ FUNCTION -------------------
+    // Hàm set lại dữ liệu get được từ firebase được gọi mỗi khi mở app và khi có thay đổi từ firebase và bấm vào button reload 
+
+
+    // Hàm set lại behavior mỗi khi vào lại app
+    // useEffect(() => {
+    //     if (appState == AppState.ac) {
+
+    //     }
+    // }, [appState])
+    // Hàm thực hiện sort list khi load lại dữ liệu mới
+
+
     // Hàm tính điểm hành vi cho tour(hoặc bài viết theo content và location)
     // ****** Cần reset behavior sau mỗi phiên đăng nhập *********
     const calculateByContentAndLocation = (account, content, locationsIdOfTour, dataFactorsPost) => {
@@ -45,49 +96,10 @@ const HomeProvider = ({ children }) => {
         return 0
         // 2. [lẩu, gà] tìm trong " Hôm nay đi ăn lẩu, có bò heo gà"
     }
-
-
-    // // Hàm tính điểm tổng
-    // const calculateTourPoint = (tour, factorsPost) => {
-    //     // Tinh diem luot like
-    //     const likes = tour.likes
-    //     const objLike = factorsPost.like.detail
-    //     const likePoint = getPointByQuantity(likes, objLike)
-
-    //     // Tinh diem luot comment
-    //     const comments = tour.comments.quantity
-    //     const objComment = factorsPost.comment.detail
-    //     const commentPoint = getPointByQuantity(comments, objComment)
-
-    //     // Tính điểm rating
-    //     const ratingPoint = tour.rating >= 3 ? 1 : 0
-
-    //     // Tính điểm gói sử dụng
-    //     const pricePackagePoint = tour.package.factor
-
-    //     // Tinh điểm theo match hành vi cần mảng location name và location id (lưu global)
-    //     const locations = tour.locations
-    //     const allLocationNamesOfTour = Object.keys(locations).flatMap((country) => // ["Ha noi","Cao bang"] cua tour
-    //         Object.values(locations[country])
-    //     );
-    //     const contentPost = tour.content + "-" + allLocationNamesOfTour.join('-')
-
-    //     const locationsIdOfTour = Object.keys(tour.locations).flatMap((country) =>
-    //         Object.keys(locations[country])
-    //     );
-    //     console.log(locationsIdOfTour);
-
-
-    //     const behaviorPoint = calculateByContentAndLocation(dataAccount, contentPost, locationsIdOfTour, dataFactorsPost)
-    //     console.log(behaviorPoint);
-
-    //     const mark = likePoint + commentPoint + ratingPoint + pricePackagePoint + behaviorPoint
-    //     console.log(mark);
-    //     return mark
     // } // ------------------------ END FUNCTION --------------------------
 
     /// ------------------------ FETCH NO REALTIME --------------------------
-    // Fetch không realtime
+    // Fetch tour theo post không realtime
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -119,6 +131,8 @@ const HomeProvider = ({ children }) => {
             if (snapshot.exists()) {
                 // Lấy tất cả factor của post dùng cho tính điểm
                 const jsonDataAccount = snapshot.val();
+                // Set behavior
+                setBehavior(jsonDataAccount.behavior)
                 // Set du lieu
                 setDataAccount(jsonDataAccount)
             } else {
@@ -132,39 +146,15 @@ const HomeProvider = ({ children }) => {
             unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
     }, [])
-    // Lấy factor dùng cho tính điểm bài viết (dùng chung cho tour)
-    useEffect(() => {
-        // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-        const refFactorsPost = ref(database, 'factors/post')
-        const unsubscribe = onValue(refFactorsPost, (snapshot) => {
-            if (snapshot.exists()) {
-                // Lấy tất cả factor của post dùng cho tính điểm
-                const jsonDataFactosrPost = snapshot.val();
-                // Set du lieu
-                setDataFactorsPost(jsonDataFactosrPost)
-            } else {
-                console.log("No data available");
-            }
-        }, (error) => {
-            console.error("Error fetching data:", error);
-        });
 
-        return () => {
-            unsubscribe(); // Sử dụng unsubscribe để hủy listener
-        };
-    }, [])
-    // Lấy bài viết
+    // Hàm lắng nghe thay khi có bài viết mới từ firebase để hiển thị button reload
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
         const refPosts = ref(database, 'posts/')
         const unsubscribe = onValue(refPosts, (snapshot) => {
             if (snapshot.exists()) {
-                const jsonDataPosts = snapshot.val();
-                // Chuyển đổi object thành array bang values cua js
-                const jsonArrayPosts = Object.values(jsonDataPosts).sort((a, b) => b.created_at - a.created_at)
-                setNotifyNewPost(true)
-                // Set du lieu
-                setDataPosts(jsonArrayPosts)
+                const countNewPost = snapshot.size;
+                setNewPostCount(countNewPost)
             } else {
                 console.log("No data available");
             }
@@ -187,6 +177,15 @@ const HomeProvider = ({ children }) => {
                 loadingPost,
                 loadingTour,
                 notifyNewPost,
+                dataPostsRef,
+                currentPostCount,
+                newPostCount,
+                searching, 
+                behavior,
+                setBehavior,
+                setSearching,
+                setCurrentPostCount,
+                setDataPosts,
                 setLoadingPost,
                 setLoadingTour,
                 setAllLocationIdFromPost,
