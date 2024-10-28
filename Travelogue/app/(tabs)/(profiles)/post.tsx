@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import React, { useCallback, useMemo, useState, useRef } from "react";
+import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
 import { Modalize } from "react-native-modalize";
 import LikeButton from "@/components/buttons/HeartButton";
@@ -464,7 +464,7 @@ export default function PostsScreen() {
 
 
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
-
+  // Simulate loading data (replace this with your data fetching logic)
   return (
     <>
       <FlatList
@@ -484,11 +484,30 @@ export default function PostsScreen() {
           offset: index * windowHeight,
           index,
         })}
-      ></FlatList>
+      />
+        {/* Loader overlay */}
+      {/* {loading && (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#B1B1B1" />
+        </View>
+      )} */}
+      
+      
     </>
   );
 }
 const styles = StyleSheet.create({
+  loaderContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 24, 27, 0.62)', // Semi-transparent background
+    zIndex: 1, // Ensures loader appears above FlatList
+  },
   ratingTitle: {
     marginLeft: 10,
     fontWeight: "bold",

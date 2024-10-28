@@ -18,29 +18,29 @@ import { set } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AvatarProfile({ userData }: any) {
- 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
         <Image style={styles.avatar} source={{ uri: userData.avatar }} />
+
         <View style={styles.column}>
-          <Text style={styles.infoText}>{userData.totalLikes ?? null}</Text>
-          <Text style={styles.infoText}>thich</Text>
-        </View>
-        <View style={styles.column}>
-          <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
-          <Text style={styles.infoText}>bai viet</Text>
+          <Text style={styles.username}>{userData.fullname}</Text>
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
+              <Text style={styles.infoText}>posts</Text>
+            </View>
+            <Pressable
+              style={styles.button}
+              onPressIn={() =>
+                router.push({ pathname: "/editing", params: userData })
+              }
+            >
+              <Text style={styles.editText}>Edit Profile</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
-      <Text style={styles.username}>{userData.fullname}</Text>
-      <Pressable
-        style={styles.button}
-        onPressIn={() =>
-          router.push({ pathname: "/editing", params: userData })
-        }
-      >
-        <Text style={styles.editText}>Edit Profile</Text>
-      </Pressable>
     </View>
   );
 }
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   avatar: {
-    width: 100,
-    height: 100,
+    width: 130,
+    height: 130,
     resizeMode: "contain",
     borderColor: "grey",
     borderWidth: 2,
@@ -74,16 +74,13 @@ const styles = StyleSheet.create({
   username: {
     fontWeight: "bold",
     fontSize: 18,
-    padding: 10,
-    marginLeft: 10,
+    marginBottom: 10,
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 1,
-    paddingHorizontal: 32,
-    borderRadius: 6,
-    elevation: 2,
+    paddingHorizontal: 5,
+    borderRadius: 6,    
     backgroundColor: "#CDCDCD",
     marginHorizontal: 15,
   },
