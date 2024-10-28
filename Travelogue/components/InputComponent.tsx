@@ -1,14 +1,16 @@
-import {EyeSlash} from 'iconsax-react-native';
-import React, {ReactNode, useState} from 'react';
+import { EyeSlash } from 'iconsax-react-native';
+import React, { ReactNode, useState } from 'react';
 import {
   KeyboardType,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
+  TextStyle,
+  ViewStyle,
 } from 'react-native';
-import {appColors} from '../constants/appColors';
-import {globalStyle} from '../styles/globalStyles';
+import { appColors } from '../constants/appColors';
+import { globalStyle } from '../styles/globalStyles';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -21,6 +23,10 @@ interface Props {
   isPassword?: boolean;
   allowClear?: boolean;
   type?: KeyboardType;
+  textStyle?: TextStyle; 
+  inputStyle?: ViewStyle; 
+  multiline?: boolean;
+  disabled?: boolean;
 }
 
 const InputComponent = (props: Props) => {
@@ -33,20 +39,28 @@ const InputComponent = (props: Props) => {
     isPassword,
     allowClear,
     type,
+    textStyle, 
+    inputStyle, 
+    multiline,
+    disabled,
+    
   } = props;
   const [isShowPass, setIsShowPass] = useState(isPassword ?? false);
+
   return (
-    <View style={styles.inputContainer}>
+    <View style={[styles.inputContainer, inputStyle]}>
       {affix ?? affix}
       <TextInput
-        style={[styles.input, globalStyle.text]}
+        style={[styles.input, globalStyle.text, textStyle]} 
         value={value}
         placeholder={placeholder ?? ''}
         onChangeText={val => onChange(val)}
         secureTextEntry={isShowPass}
         placeholderTextColor={'#747688'}
         keyboardType={type ?? 'default'}
-        autoCapitalize='none'
+        autoCapitalize="none"
+        multiline={multiline}
+        editable={!disabled}
       />
       {suffix ?? suffix}
       <TouchableOpacity
@@ -77,7 +91,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: appColors.gray3,
     width: '100%',
-    minHeight: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 15,
