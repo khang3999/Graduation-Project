@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
 import TabBarButton from './TabBarButton'
 
-const TabBar = ({ state, descriptors, navigation }) => {
+const TabBar = ({ state, descriptors, navigation ,isTabBarVisible = true }) => {
   // Color
   const focusedColor = '#0891b2'
-  const greyColor = '#444444'
+  const greyColor = '#444444'  
+  if(!isTabBarVisible) return null
 
   return (
       <View style={styles.tabbar}>
