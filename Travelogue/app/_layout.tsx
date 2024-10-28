@@ -1,11 +1,13 @@
-import React from 'react';
-import { Stack } from 'expo-router/stack';
+import React from "react";
+import { Stack } from "expo-router/stack";
 import { createStackNavigator, Header } from "@react-navigation/stack";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';  
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import  AppProvider  from "../contexts/AppProvider";
 
 export default function Layout() {
-    return (
-        <GestureHandlerRootView style={{flex:1}}> 
+  return (
+    <AppProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack
             screenOptions={{
                 headerShown: false,
@@ -15,7 +17,9 @@ export default function Layout() {
             <Stack.Screen name="(user)" options={{headerShown: false}}/>
             <Stack.Screen name="(article)" options={{headerShown: false}}/>
             <Stack.Screen name="(admin)"/>
+      
         </Stack>
-        </GestureHandlerRootView>
-    );
+      </GestureHandlerRootView>
+    </AppProvider>
+  );
 }
