@@ -86,6 +86,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
                   <Text style={styles.menuText}>Đăng xuất</Text>
                 </View>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                <View>
+                  <Text style={styles.menuText}>Thay đổi hồ sơ</Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </Modal>

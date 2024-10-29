@@ -23,7 +23,8 @@ import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton"
 import { TouchableOpacity } from "react-native-gesture-handler";
 import IconEntypo from "react-native-vector-icons/Entypo";
 import IconAntDesign from "react-native-vector-icons/AntDesign";
-
+import { router } from "expo-router";
+import { set } from "lodash";
 
 export default function ProfileScreen() {
   interface AccountData {
@@ -32,20 +33,16 @@ export default function ProfileScreen() {
     avatar: string;
   }
 
-  const { accountData, setAccountData } = useAccount();
+  const { accountData, setAccountData, setSearchedAccountData } = useAccount();
   const userId = auth.currentUser?.uid;
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const modalAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [recentSearches, setRecentSearches] = useState<string[]>([
-    "React Native",
-    "Clean Architecture",
-    "Machine Learning",
-  ]);
+
   //search bar state
   const [searchedAccountsData, setSearchedAccountsData] = useState<AccountData[]>([]);
   const [filteredData, setFilteredData] = useState<AccountData[]>([]);
-
+  const [recentSearches, setRecentSearches] = useState<AccountData[]>([]);
 
   const syncUserDataWithFirebase = async () => {
     const userRef = ref(database, `accounts/${userId}`);
@@ -90,18 +87,22 @@ export default function ProfileScreen() {
   }, []);
 
   const handleSearch = (term: string) => {
-    if (term == "") return;
+    if (term.trim() === "") {
+      setFilteredData(recentSearches.slice(0, 5));
+    } else {
 
-    const lowerTerm = term.trim().toLowerCase();
+      const lowerTerm = term.trim().toLowerCase();
 
-    const results = searchedAccountsData.filter((item, index) => {
-      const itemName = item.fullname ? item.fullname.toLowerCase() : "";
-      return itemName.includes(lowerTerm);
-    });
+      const results = searchedAccountsData.filter((item, index) => {
+        const itemName = item.fullname ? item.fullname.toLowerCase() : "";
+        return itemName.includes(lowerTerm);
+      });
 
-    setFilteredData(results);
-
+      setFilteredData(results.slice(0, 5));
+    }
   };
+
+
 
   const openSearchModal = () => {
     setIsSearchModalVisible(true);
@@ -128,7 +129,8 @@ export default function ProfileScreen() {
   return (
     <>
       <HeaderProfile userData={accountData} onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} />
-      <GalleryTabView />
+      <GalleryTabView userId={accountData.id} isSearched={false} />
+
       {/* Recent Search Modal */}
       {isSearchModalVisible && (
         <Animated.View
@@ -138,20 +140,26 @@ export default function ProfileScreen() {
           ]}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.recentSearchText}>Recent Searches</Text>
+            <View style={styles.row}>
+              <Text style={styles.recentSearchText}>Recent searches</Text>
+            </View>
             <FlatList
               data={filteredData}
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => console.log(item.avatar, "item")}>
+                <TouchableOpacity onPress={() => {
+                  router.push({ pathname: "/searchResult" });
+                  setSearchedAccountData(item);
+                  setRecentSearches([...recentSearches, item]);
+                }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <View style={{ flexDirection: 'row' }}>
                       <Image style={styles.searchedAvatar} source={{ uri: item.avatar }} />
                       <Text style={styles.searchItem}>{item.fullname}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => console.log("Followed")}>
-                      <IconAntDesign name="arrowright" size={30} style={styles.threeDot} />
-                    </TouchableOpacity>
+
+                    <IconAntDesign name="arrowright" size={30} style={styles.threeDot} />
+
                   </View>
                 </TouchableOpacity>
               )}
@@ -222,4 +230,13 @@ const styles = StyleSheet.create({
     left: 0,
     position: "absolute",
   },
+  row: {
+    flexDirection: "row",
+    justifyContent: 'space-between'
+  },
+  clearAll: {
+    color: '#007aff',
+    fontWeight: "bold",
+    marginVertical: 10,
+  }
 });

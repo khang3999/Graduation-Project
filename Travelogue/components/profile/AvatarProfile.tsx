@@ -13,9 +13,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { getImageUrl } from "@/services/userService";
-import { set } from "lodash";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function AvatarProfile({ userData }: any) {
   return (
@@ -23,24 +21,24 @@ export default function AvatarProfile({ userData }: any) {
       <View style={styles.row}>
         <Image style={styles.avatar} source={{ uri: userData.avatar }} />
 
+        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{userData.fullname}</Text>
+
         <View style={styles.column}>
-          <Text style={styles.username}>{userData.fullname}</Text>
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
-              <Text style={styles.infoText}>posts</Text>
-            </View>
-            <Pressable
+          <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
+          <Text style={styles.infoText}>posts</Text>
+        </View>
+        {/* <Pressable
               style={styles.button}
               onPressIn={() =>
                 router.push({ pathname: "/editing", params: userData })
               }
             >
               <Text style={styles.editText}>Edit Profile</Text>
-            </Pressable>
-          </View>
-        </View>
+            </Pressable> */}
+
+
       </View>
+
     </View>
   );
 }
@@ -74,13 +72,15 @@ const styles = StyleSheet.create({
   username: {
     fontWeight: "bold",
     fontSize: 18,
-    marginBottom: 10,
+    margin: 2,
+    marginTop: 20,
+    maxWidth: 120,
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 5,
-    borderRadius: 6,    
+    borderRadius: 6,
     backgroundColor: "#CDCDCD",
     marginHorizontal: 15,
   },

@@ -58,15 +58,9 @@ type Post = {
   view_mode: boolean;
 };
 
-type PostItemProps = {
-  item: Post;
-  showFullDescription: boolean;
-  toggleDescription: () => void;
-};
 
-export default function GalleryTabView() {
+export default function GalleryTabView({ userId, isSearched }: { userId: string, isSearched: boolean }) {
   const layout = useWindowDimensions();
-  const userId = auth.currentUser?.uid;
   const { selectedPost, setSelectedPost } = usePost();
 
   const [isLoading, setIsLoading] = React.useState(true);
@@ -74,11 +68,16 @@ export default function GalleryTabView() {
   const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = React.useState<Post[]>([]);
-  const [routes] = React.useState([
-    { key: "first" },
-    { key: "second" },
-    { key: "third" },
-  ]);
+  
+  const [routes] = React.useState(
+    isSearched
+      ? [{ key: "first" }]
+      : [
+          { key: "first" },
+          { key: "second" },
+          { key: "third" },
+        ]
+  );
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -192,7 +191,6 @@ export default function GalleryTabView() {
   }, [userId]);
 
   const FirstRoute = () => {
-    // console.log(createdPosts[0].author.avatar, "avatar 1");
     return (
       <View style={{ flex: 1, paddingBottom: 70 }}>
         {createdPosts.length === 0 ? (
@@ -320,8 +318,8 @@ export default function GalleryTabView() {
             route.key === "first"
               ? "logo-tableau"
               : route.key === "second"
-              ? "pricetags-outline"
-              : "heart-outline"
+                ? "pricetags-outline"
+                : "heart-outline"
           }
           size={24}
           color={focused ? "black" : "grey"}
