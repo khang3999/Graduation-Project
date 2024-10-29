@@ -15,17 +15,20 @@ import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
 interface MenuPopupButtonProps {
   menuIcon: string;
+  isDisplay: boolean;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
-  const buttonRef = useRef(null); // To measure the button's position
-  // Function to toggle modal visibility
+   // Position of the menu
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<TouchableOpacity>(null);
+  
+
   const toggleModal = () => {
     if (!isModalVisible) {
       // Measure the position of the button before showing the menu
-      buttonRef.current.measure((fx, fy, width, height, px, py) => {
+      buttonRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
         setMenuPosition({
           top: py + height - 20, // Place the menu right below the button
           left: px - 130, // Align it with the left side of the button
@@ -44,6 +47,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
       Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
     }
   };
+  if (!isDisplay) {
+    return;
+  }
 
   return (
     <View style={styles.container}>

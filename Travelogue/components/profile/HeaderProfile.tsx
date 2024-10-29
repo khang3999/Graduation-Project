@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet,Dimensions,Animated,Easing, TouchableOpacity, TextInput } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AvatarProfile from "./AvatarProfile";
 import {
@@ -6,26 +6,16 @@ import {
   MD3Colors,
   Menu,
   Provider,
-  Divider,
+  Divider,  
 } from "react-native-paper";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
 import MenuItem from "@/components/buttons/MenuProfileButton";
-import HeaderProfileSkeleton from "../skeletons/HeaderProfileSkeleton";
-
-
-const Plus = () => (
-  <IconButton
-    icon="plus"
-    iconColor={MD3Colors.error10}
-    size={24}
-    onPress={() => console.log("Plus button pressed")}    
-    style={styles.button}
-    accessible={true}
-    accessibilityLabel="Add button"
-  />
-);
+import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton";
+import SearchButton from "@/components/buttons/SearchButton";
+import IconFeather from 'react-native-vector-icons/Feather';
+import { set } from "lodash";
 
 const Bell = () => (
   <IconButton
@@ -39,7 +29,15 @@ const Bell = () => (
   />
 );
 
-export default function HeaderProfile({userData}:any) {
+interface HeaderProfileProps {
+  userData: any; 
+  onModalOpen: () => void;
+  onModalClose: () => void;
+}
+
+export default function HeaderProfile({ userData, onModalOpen ,onModalClose}: HeaderProfileProps) {
+  const [isDisplay, setIsDisplay] = useState(true);
+  
   if(!userData) {
     return <HeaderProfileSkeleton />;
   }
@@ -47,10 +45,10 @@ export default function HeaderProfile({userData}:any) {
   return (
     <View style={styles.container}>
       <View style={styles.row}>           
-        <View style={styles.headerButton}>
-          <Plus />
-          <Bell />          
-          <MenuItem menuIcon="menu" />
+        <View style={styles.headerButton}>          
+          {/* <Bell />           */}
+          <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose}/>
+          <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>
       <AvatarProfile userData={userData}/>
@@ -78,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",    
   },
   button: {
-    margin: 0,
+    margin: 0,        
   },
   menuContent: {
     backgroundColor: "#f2f2f2",

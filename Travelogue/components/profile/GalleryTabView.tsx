@@ -337,7 +337,7 @@ export default function GalleryTabView() {
   }
 
   return (
-    <View style={{ flex: 2.5 }}>
+    <View style={{ flex: 3 }}>
       <TabView
         lazy
         navigationState={{ index, routes }}
