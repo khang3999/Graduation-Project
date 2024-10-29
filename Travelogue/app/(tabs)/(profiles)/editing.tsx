@@ -15,19 +15,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { getImageUrl, updateUserData } from "@/services/userService";
 import debounce from "lodash/debounce";
-import { update } from "lodash";
+import { set, update } from "lodash";
 import { auth } from "@/firebase/firebaseConfig";
+import { useAccount } from "@/contexts/AccountProvider";
 
-export default function EditingProfileScreen() {
-  const userData = useLocalSearchParams();
+export default function EditingProfileScreen() {  
+  const {accountData} = useAccount();
 
-  const initialAvatarUrl = Array.isArray(userData.avatar)
-    ? userData.avatar[0]
-    : userData.avatar;
+  const initialAvatarUrl =  accountData.avatar;
   const [selectedImage, setSelectedImage] = React.useState<string | null>(
     initialAvatarUrl || null
   );
-  const [localUserData, setLocalUserData] = React.useState(userData);
+  const [localUserData, setLocalUserData] = React.useState(accountData);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const pickImageAsync = async () => {
@@ -44,18 +43,7 @@ export default function EditingProfileScreen() {
     }
   };
 
-  useEffect(() => {
-    const fetchAvatarUrl = async () => {
-      try {
-        const url = await getImageUrl(initialAvatarUrl);
-        setSelectedImage(url);
-      } catch (error) {
-        console.error("Error fetching avatar URL:", error);
-      }
-    };
-
-    fetchAvatarUrl();
-  }, [initialAvatarUrl]);
+  
 
   const validateInputs = () => {
     let valid = true;
@@ -91,9 +79,9 @@ export default function EditingProfileScreen() {
     }
 
     const currentUser = auth.currentUser;
-    if (currentUser) {
+    if (accountData) {
       setIsLoading(true);
-      updateUserData(currentUser.uid, localUserData, selectedImage)
+      updateUserData(accountData.id, localUserData, selectedImage)
         .then(() => {
           alert("User data updated successfully!");
           router.back();
@@ -110,7 +98,7 @@ export default function EditingProfileScreen() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setLocalUserData((prev) => ({
+    setLocalUserData((prev: typeof localUserData) => ({
       ...prev,
       [field]: value,
     }));

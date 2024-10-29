@@ -128,7 +128,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <HeaderProfile userData={accountData} onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} />
+      <HeaderProfile onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} />
       <GalleryTabView userId={accountData.id} isSearched={false} />
 
       {/* Recent Search Modal */}

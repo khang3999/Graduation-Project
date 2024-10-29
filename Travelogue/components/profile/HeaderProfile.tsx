@@ -16,6 +16,7 @@ import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton"
 import SearchButton from "@/components/buttons/SearchButton";
 import IconFeather from 'react-native-vector-icons/Feather';
 import { set } from "lodash";
+import { useAccount } from "@/contexts/AccountProvider";
 
 const Bell = () => (
   <IconButton
@@ -29,17 +30,16 @@ const Bell = () => (
   />
 );
 
-interface HeaderProfileProps {
-  userData: any; 
+interface HeaderProfileProps {  
   onModalOpen: () => void;
   onModalClose: () => void;
   handleSearch: (searchTerm: string) => void;
 }
 
-export default function HeaderProfile({ userData, onModalOpen ,onModalClose,handleSearch}: HeaderProfileProps) {
+export default function HeaderProfile({ onModalOpen ,onModalClose,handleSearch}: HeaderProfileProps) {
   const [isDisplay, setIsDisplay] = useState(true);
-  
-  if(!userData) {
+  const { accountData } = useAccount();
+  if(!accountData) {
     return <HeaderProfileSkeleton />;
   }
 
@@ -52,7 +52,7 @@ export default function HeaderProfile({ userData, onModalOpen ,onModalClose,hand
           <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>
-      <AvatarProfile userData={userData}/>
+      <AvatarProfile/>
     </View>
   );
 }

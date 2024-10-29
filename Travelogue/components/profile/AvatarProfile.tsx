@@ -13,18 +13,20 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useAccount } from "@/contexts/AccountProvider";
 
 
-export default function AvatarProfile({ userData }: any) {
+export default function AvatarProfile() {
+  const { accountData } = useAccount();
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{ uri: userData.avatar }} />
+        <Image style={styles.avatar} source={{ uri: accountData.avatar }} />
 
-        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{userData.fullname}</Text>
+        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{accountData.fullname}</Text>
 
         <View style={styles.column}>
-          <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
+          <Text style={styles.infoText}>{accountData.totalPosts ?? null}</Text>
           <Text style={styles.infoText}>posts</Text>
         </View>
         {/* <Pressable

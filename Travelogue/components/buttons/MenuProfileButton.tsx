@@ -47,6 +47,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
       Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
     }
   };
+  const handleEditProfile = () => {
+    router.push("/editing");
+  }
   if (!isDisplay) {
     return;
   }
@@ -86,7 +89,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
                   <Text style={styles.menuText}>Đăng xuất</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+              <TouchableOpacity style={styles.menuItem} onPress={handleEditProfile}>
                 <View>
                   <Text style={styles.menuText}>Thay đổi hồ sơ</Text>
                 </View>
