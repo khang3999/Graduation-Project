@@ -33,9 +33,10 @@ interface HeaderProfileProps {
   userData: any; 
   onModalOpen: () => void;
   onModalClose: () => void;
+  handleSearch: (searchTerm: string) => void;
 }
 
-export default function HeaderProfile({ userData, onModalOpen ,onModalClose}: HeaderProfileProps) {
+export default function HeaderProfile({ userData, onModalOpen ,onModalClose,handleSearch}: HeaderProfileProps) {
   const [isDisplay, setIsDisplay] = useState(true);
   
   if(!userData) {
@@ -47,7 +48,7 @@ export default function HeaderProfile({ userData, onModalOpen ,onModalClose}: He
       <View style={styles.row}>           
         <View style={styles.headerButton}>          
           {/* <Bell />           */}
-          <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose}/>
+          <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch}/>
           <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>

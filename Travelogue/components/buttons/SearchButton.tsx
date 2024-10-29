@@ -19,11 +19,13 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SearchButton = ({
   setDisplay,
   onModalOpen,
-  onModalClose
+  onModalClose,
+  handleSearch
 }: {
   setDisplay: (value: boolean) => void;
   onModalOpen: () => void;
   onModalClose: () => void;
+  handleSearch: (searchTerm: string) => void;
 }) => {
   const [searchText, setSearchText] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -36,7 +38,7 @@ const SearchButton = ({
   useEffect(() => {
     Animated.timing(widthAnim, {
       toValue: isExpanded ? SCREEN_WIDTH * 0.8 : 50, // Expand or collapse
-      duration: 400,
+      duration: 300,
       easing: Easing.inOut(Easing.ease),
       useNativeDriver: false,
     }).start();
@@ -69,8 +71,12 @@ const SearchButton = ({
             placeholder="Search"
             placeholderTextColor="#888"
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={(text) => {
+              setSearchText(text);
+              handleSearch(text);
+            }}
             autoFocus={true}
+            
           />
         )}
       </Animated.View>
@@ -107,8 +113,13 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    padding: 8,
+    paddingVertical: 3,
+    paddingLeft: 10,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 20,
     fontSize: 16,
+    backgroundColor: '#fff',
   },
   icon: {
     marginHorizontal: 5,
@@ -116,6 +127,7 @@ const styles = StyleSheet.create({
   cancelButton: {    
     color: '#007aff',
     fontSize: 16,
+    marginLeft:3,
   },  
 });
 export default SearchButton;

@@ -21,8 +21,17 @@ import { ref, onValue, off } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import IconEntypo from "react-native-vector-icons/Entypo";
+import IconAntDesign from "react-native-vector-icons/AntDesign";
+
 
 export default function ProfileScreen() {
+  interface AccountData {
+    id: string;
+    fullname: string;
+    avatar: string;
+  }
+
   const { accountData, setAccountData } = useAccount();
   const userId = auth.currentUser?.uid;
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -34,9 +43,9 @@ export default function ProfileScreen() {
     "Machine Learning",
   ]);
   //search bar state
-  const [accountsData, setAccountsData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchedAccountsData, setSearchedAccountsData] = useState<AccountData[]>([]);
+  const [filteredData, setFilteredData] = useState<AccountData[]>([]);
+
 
   const syncUserDataWithFirebase = async () => {
     const userRef = ref(database, `accounts/${userId}`);
@@ -48,19 +57,51 @@ export default function ProfileScreen() {
       }
     });
   };
-  
+
   useEffect(() => {
     const initialize = async () => {
-      await syncUserDataWithFirebase(); 
+      await syncUserDataWithFirebase();
     };
     initialize();
 
     // Clean up the listener when the component unmounts
     return () => {
-      const userRef = ref(database, `users/${userId}`);
-      off(userRef); 
+      const userRef = ref(database, `accounts/${userId}`);
+      off(userRef);
     };
   }, [userId]);
+
+  //get all accounts data
+  useEffect(() => {
+    const fetchData = () => {
+      const usersRef = ref(database, "accounts");
+
+      onValue(usersRef, (snapshot) => {
+        const results: AccountData[] = [];
+        snapshot.forEach((childSnapshot) => {
+          const item = childSnapshot.val();
+          results.push({ id: childSnapshot.key!, ...item });
+        });
+        setSearchedAccountsData(results);
+      });
+    };
+
+    fetchData();
+  }, []);
+
+  const handleSearch = (term: string) => {
+    if (term == "") return;
+
+    const lowerTerm = term.trim().toLowerCase();
+
+    const results = searchedAccountsData.filter((item, index) => {
+      const itemName = item.fullname ? item.fullname.toLowerCase() : "";
+      return itemName.includes(lowerTerm);
+    });
+
+    setFilteredData(results);
+
+  };
 
   const openSearchModal = () => {
     setIsSearchModalVisible(true);
@@ -86,7 +127,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <HeaderProfile userData={accountData} onModalOpen={openSearchModal} onModalClose={closeSearchModal} />
+      <HeaderProfile userData={accountData} onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} />
       <GalleryTabView />
       {/* Recent Search Modal */}
       {isSearchModalVisible && (
@@ -95,18 +136,26 @@ export default function ProfileScreen() {
             styles.searchModal,
             { transform: [{ translateY: modalAnim }] },
           ]}
-        >       
+        >
           <View style={styles.modalContent}>
             <Text style={styles.recentSearchText}>Recent Searches</Text>
             <FlatList
-              data={recentSearches}
+              data={filteredData}
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => console.log(`${item} Tapped!`)}>
-                <Text style={styles.searchItem}>{item}</Text>
+                <TouchableOpacity onPress={() => console.log(item.avatar, "item")}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row' }}>
+                      <Image style={styles.searchedAvatar} source={{ uri: item.avatar }} />
+                      <Text style={styles.searchItem}>{item.fullname}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => console.log("Followed")}>
+                      <IconAntDesign name="arrowright" size={30} style={styles.threeDot} />
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
               )}
-            /> 
+            />
           </View>
         </Animated.View>
       )}
@@ -115,10 +164,22 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  searchedAvatar: {
+    width: 60,
+    height: 60,
+    resizeMode: "cover",
+    borderRadius: 60,
+    marginBottom: 20,
+  },
   searchItem: {
-    paddingVertical: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     fontSize: 16,
     color: '#333',
+  },
+  threeDot: {
+    paddingVertical: 15,
+    color: 'grey'
   },
   searchModal: {
     position: "absolute",
