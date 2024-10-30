@@ -9,6 +9,7 @@ import {
   Switch,
   Image,
   FlatList,
+  Alert,
 } from "react-native";
 import IconA from "react-native-vector-icons/AntDesign";
 import Icon from "react-native-vector-icons/Fontisto";
@@ -26,26 +27,45 @@ import {
 import { Modal } from "react-native-paper";
 import { database, onValue, ref } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
+import * as ImagePicker from "expo-image-picker";
 
 const AddPostUser = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [citiesData, setCitiesData] = useState<
-    { id: string; name: string; id_nuoc: string }[]
-  >([]);
+  const [citiesData, setCitiesData] = useState<{ id: string; name: string }[]>(
+    []
+  );
 
   const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
-  const [modalVisibleCity, setModalVisibleCity] = useState(false);
 
+  //Modal
+  const [modalVisibleCity, setModalVisibleCity] = useState(false);
+  const [modalVisibleMap, setModalVisibleMap] = useState(false);
+  const [modalVisibleCityImages, setModalVisibleCityImages] = useState(false);
+  const [modalVisibleImage, setModalVisibleImage] = useState(false);
+
+  //Chosse ảnh
+  //lưu trữ ảnh được chọn tạm thời
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  //lưu trữ thông tin thành phố đã chọn
+  const [selectedCityForImages, setSelectedCityForImages] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  // lưu trữ hình ảnh cùng với thành phố tương ứng
+  const [images, setImages] = useState<
+    { city: { id: string; name: string } | null; images: string[] }[]
+  >([]);
+
+  //map
   const [region, setRegion] = useState({
     latitude: 14.0583,
     longitude: 108.2772,
     latitudeDelta: 8.5,
     longitudeDelta: 8.5,
   });
-  const [modalVisibleMap, setModalVisibleMap] = useState(false);
   interface Location {
     name: string;
     latitude: number;
@@ -99,11 +119,10 @@ const AddPostUser = () => {
     });
   }, []);
   //Cac tinh thanh duoc chon
-  const handCityPress =
-    (city: { id: string; name: string; id_nuoc: string }) => () => {
-      setCities([{ id: city.id, name: city.name }, ...cities]);
-      setModalVisibleCity(false);
-    };
+  const handCityPress = (city: { id: string; name: string }) => () => {
+    setCities([{ id: city.id, name: city.name }, ...cities]);
+    setModalVisibleCity(false);
+  };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: String) => {
@@ -193,14 +212,15 @@ const AddPostUser = () => {
   const handleSaveLocation = () => {
     if (selectedLocation) {
       if (selectedDayIndex !== null && selectedActivityIndex !== null) {
-        const activity = days[selectedDayIndex].activities[selectedActivityIndex];
-        
+        const activity =
+          days[selectedDayIndex].activities[selectedActivityIndex];
+
         // Kiểm tra xem đã chọn giờ hay chưa
         if (!activity.time) {
           alert("Vui lòng chọn giờ cho hoạt động trước khi lưu địa điểm.");
           return;
         }
-  
+
         // Cập nhật hoạt động với địa điểm đã chọn
         updateActivity(
           selectedDayIndex,
@@ -216,11 +236,14 @@ const AddPostUser = () => {
       alert("Vui lòng chọn vị trí trước khi lưu.");
     }
   };
-  
+
   // *********************************************************************
   // Xử lý Chọn Địa Điểm
   // *********************************************************************
 
+  // *********************************************************************
+  // Xử lý Chọn Ngày và Hoạt Động
+  // *********************************************************************
   const addDay = () => {
     setDays([
       ...days,
@@ -283,6 +306,65 @@ const AddPostUser = () => {
     }
     hideTimePicker();
   };
+
+  // *********************************************************************
+  // Xử lý Chọn Ngày và Hoạt Động
+  // *********************************************************************
+
+  // *********************************************************************
+  // Xử lý Thêm Ảnh
+  // *********************************************************************
+  //Xử lý chỗ thành phố chọn ảnh
+  const handCityImagesPress = (city: any) => () => {
+    const selectedCity = { id: city.id, name: city.name };
+    setSelectedCityForImages(selectedCity);
+    setModalVisibleCityImages(false);
+  };
+  // console.log("City:", selectedCityForImages);
+
+  //Xử lý chọn ảnh từ thư viện
+  const handleChooseImages = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedUris = result.assets.map((item) => item.uri);
+      setSelectedImages([...selectedUris, ...selectedImages]);
+    }
+  };
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = [...selectedImages];
+    updatedImages.splice(index, 1);
+    setSelectedImages(updatedImages);
+  };
+  //Lưu ảnh
+  const handleSaveImages = () => {
+    if (selectedImages.length === 0) {
+      Alert.alert("Thông Báo", "Vui lòng chọn ảnh trước khi lưu.");
+      return;
+    }
+    if (!selectedCityForImages) {
+      Alert.alert(
+        "Thông Báo",
+        "Vui lòng chọn thành phố cho ảnh trước khi lưu."
+      );
+      return;
+    }
+    setImages([
+      { city: selectedCityForImages, images: selectedImages },
+      ...images,
+    ]);
+    console.log("Images:", images);
+    setSelectedImages([]);
+    setSelectedCityForImages(null);
+    setModalVisibleImage(false);
+  };
+  // *********************************************************************
+  // Xử lý Thêm Ảnh
+  // *********************************************************************
 
   return (
     <View style={styles.container}>
@@ -437,11 +519,11 @@ const AddPostUser = () => {
             <View style={{ marginTop: 20 }}>
               {day.activities.map((activity, activityIndex) => (
                 <View key={activityIndex} style={{ marginTop: -10 }}>
-                  <RowComponent justify="center" styles={{maxHeight: 70}}>
+                  <RowComponent justify="center" styles={{ maxHeight: 70 }}>
                     <TouchableOpacity
                       style={{
                         width: 100,
-                        height: '75%',
+                        height: "75%",
                         borderRadius: 0,
                         marginTop: -18,
                         backgroundColor: appColors.btnaddActivity,
@@ -468,7 +550,7 @@ const AddPostUser = () => {
                         }}
                         textStyle={{ color: "#000" }}
                         placeholder="Địa điểm hoạt động"
-                        multiline = {true}
+                        multiline={true}
                         value={activity.activity}
                         onChange={(text) =>
                           updateActivity(
@@ -535,12 +617,78 @@ const AddPostUser = () => {
         </SectionComponent>
 
         {/* Hình ảnh */}
-        <SectionComponent styles={{ marginTop: 20 }}>
-          <Image
-            source={require("../../assets/images/addImage.png")}
-            style={{ width: 120, height: 120, marginBottom: 0 }}
-          />
+        <SectionComponent styles={{ marginTop: 10 }}>
+          {images.length > 0 ? (
+            <View>
+              <TouchableOpacity
+                style={styles.festivalImage}
+                onPress={() => setModalVisibleImage(true)}
+              >
+                <Image
+                  source={require("../../assets/images/addImage.png")}
+                  style={[styles.festivalImage, { height: 90, width: 90 }]}
+                />
+              </TouchableOpacity>
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                style={{ maxHeight: 100, marginTop: -50 }}
+              >
+                {images.map((image, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={{ marginRight: 10 }}
+                    onPress={() => {
+                      console.log("Chuyển trang xem ảnh");
+                    }}
+                  >
+                    <Image
+                      source={{ uri: image.images[0] }}
+                      style={[
+                        styles.festivalImage,
+                        { maxWidth: 100, maxHeight: 100 },
+                      ]}
+                    />
+                    <View
+                      style={{
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        width: 100,
+                        height: 30,
+                      }}
+                    >
+                      {/* <Text>{image.city?.name}</Text> */}
+                      <Text
+                        style={{
+                          position: "absolute",
+                          bottom: 2,
+                          left: 10,
+                          fontSize: 20,
+                          color: "rgba(255,255,255,0.8)",
+                        }}
+                      >
+                        {image.city?.name}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.festivalImage}
+              onPress={() => setModalVisibleImage(true)}
+            >
+              <Image
+                source={require("../../assets/images/addImage.png")}
+                style={styles.festivalImage}
+              />
+            </TouchableOpacity>
+          )}
         </SectionComponent>
+
         {/* Chọn giờ */}
         <DateTimePickerModal
           isVisible={isTimePickerVisible}
@@ -600,7 +748,7 @@ const AddPostUser = () => {
         color={appColors.primary}
         onPress={() => {}}
       />
-      {/* Chọn tỉnh thành */}
+      {/* Chọn tỉnh thành cho bài viết */}
       <Modal
         visible={modalVisibleCity}
         onDismiss={() => setModalVisibleCity(false)}
@@ -647,6 +795,7 @@ const AddPostUser = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
       {/* Chon map */}
       <Modal
         visible={modalVisibleMap}
@@ -668,7 +817,12 @@ const AddPostUser = () => {
               style={styles.searchButton}
               onPress={handleSearch}
             >
-               <Icon name="search" size={16} color="white" style={{ marginRight: 5 }} />
+              <Icon
+                name="search"
+                size={16}
+                color="white"
+                style={{ marginRight: 5 }}
+              />
             </TouchableOpacity>
           </View>
           <MapView
@@ -699,15 +853,199 @@ const AddPostUser = () => {
               <Text style={styles.closeButtonText}>Lưu</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.closeButton,
-                {  marginTop: 10 },
-              ]}
+              style={[styles.closeButton, { marginTop: 10 }]}
               onPress={() => setModalVisibleMap(false)}
             >
               <Text style={[styles.closeButtonText]}>Đóng</Text>
             </TouchableOpacity>
           </RowComponent>
+        </View>
+      </Modal>
+
+      {/* Modal thêm ảnh  */}
+      <Modal
+        visible={modalVisibleImage}
+        onDismiss={() => {
+          setSelectedImages([]);
+          setSelectedCityForImages(null);
+          setModalVisibleImage(false);
+        }}
+      >
+        <View style={styles.modalContent}>
+          <View style={{ padding: 10 }}>
+            <Text style={styles.modalTitle}>Thêm Ảnh</Text>
+          </View>
+          <View>
+            {selectedImages.length > 0 ? (
+              <View>
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  style={{ maxHeight: 100 }}
+                >
+                  {selectedImages.map((imageUri, index) => (
+                    <View key={index}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={[
+                          styles.festivalImage,
+                          {
+                            width: 100,
+                            height: 100,
+                            marginRight: 2,
+                            resizeMode: "cover",
+                          },
+                        ]}
+                      />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => handleRemoveImage(index)}
+                      >
+                        <IconA name="close" size={20} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={handleChooseImages}>
+                <Image
+                  source={require("../../assets/images/addImage.png")}
+                  style={[styles.festivalImage, { height: 100, width: 100 }]}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.separator} />
+          {selectedImages.length > 0 ? (
+            <RowComponent>
+              <TouchableOpacity onPress={handleChooseImages}>
+                <Image
+                  source={require("../../assets/images/addImage.png")}
+                  style={[
+                    styles.festivalImage,
+                    { height: 50, width: 50, marginRight: 40 },
+                  ]}
+                />
+              </TouchableOpacity>
+              {selectedCityForImages ? (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 130 }]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    {selectedCityForImages.name}{" "}
+                    <IconA name="retweet" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    Chọn tỉnh{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </RowComponent>
+          ) : (
+            <>
+              {selectedCityForImages ? (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 130 }]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    {selectedCityForImages.name}{" "}
+                    <IconA name="retweet" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    Chọn tỉnh{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          {/* Các nút xử lý */}
+          <RowComponent>
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                { backgroundColor: "green", margin: 10, marginTop: 20 },
+              ]}
+              onPress={handleSaveImages}
+            >
+              <Text style={styles.closeButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.closeButton, { margin: 10, marginTop: 20 }]}
+              onPress={() => {
+                setSelectedImages([]);
+                setSelectedCityForImages(null);
+                setModalVisibleImage(false);
+              }}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </RowComponent>
+        </View>
+      </Modal>
+
+      {/* Chọn tỉnh thành cho ảnh */}
+      <Modal
+        visible={modalVisibleCityImages}
+        onDismiss={() => setModalVisibleCityImages(false)}
+      >
+        <View style={[styles.modalContentCityImages]}>
+          <Text style={styles.modalTitle}>Chọn Tỉnh Thành Cho Ảnh</Text>
+          {citiesData.length > 0 ? (
+            <FlatList
+              data={citiesData}
+              keyExtractor={(item) => item.id}
+              style={[styles.countryList]}
+              renderItem={({ item }) => {
+                //Loc ra nhung thanh pho da chon
+                const isCitySelected = images.some(
+                  (image) => image.city?.id === item.id
+                );
+                return (
+                  <TouchableOpacity
+                    style={styles.countryOption}
+                    onPress={handCityImagesPress(item)}
+                    disabled={isCitySelected}
+                  >
+                    <Text
+                      style={[
+                        styles.countryLabel,
+                        isCitySelected && { color: "gray" },
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          ) : (
+            <Text>No cities</Text>
+          )}
+          <View style={styles.separator} />
+
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisibleCityImages(false)}
+          >
+            <Text style={styles.closeButtonText}>Đóng</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -812,6 +1150,16 @@ const styles = StyleSheet.create({
   },
   //Modal city
   modalContent: {
+    zIndex: 10,
+    width: "90%",
+    padding: 20,
+    marginLeft: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalContentCityImages: {
+    zIndex: 100,
     width: "90%",
     padding: 20,
     marginLeft: 20,
@@ -851,8 +1199,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   festivalImage: {
-    width: 350,
-    height: 200,
+    width: 160,
+    height: 160,
   },
   closeButton: {
     width: 100,
@@ -903,6 +1251,15 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  //modal ảnh
+  removeImageButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
+    padding: 1,
   },
 });
 
