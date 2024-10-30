@@ -13,6 +13,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 interface MenuPopupButtonProps {
   menuIcon: string;
   isDisplay: boolean;
@@ -41,6 +42,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      await AsyncStorage.removeItem('userToken'); 
       Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
       router.replace("/LoginScreen");
     } catch (error) {

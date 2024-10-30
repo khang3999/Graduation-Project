@@ -1,6 +1,6 @@
 import { View, Text, Button, Image, StyleSheet } from 'react-native'
 import React, { useState } from 'react'
-import { Tabs } from 'expo-router'
+import { router, Tabs } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
 import PlusButton from '@/components/buttons/PlusButton'
 import BellButton from '@/components/buttons/BellButton'
@@ -30,7 +30,7 @@ const _layout = () => {
             ,
             headerRight: () => (
               <View style={styles.headerRight}>
-                <PlusButton style={styles.buttonRight}></PlusButton>
+                <PlusButton onPress={() => {router.push('../(article)/addPostUser') }} style={styles.buttonRight}></PlusButton>
                 <BellButton style={styles.buttonRight}></BellButton>
               </View>
             ),

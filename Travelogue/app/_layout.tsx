@@ -9,14 +9,15 @@ export default function Layout() {
     <AppProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(user)" options={{ headerShown: false }} />
-          <Stack.Screen name="(admin)" />
+            screenOptions={{
+                headerShown: false,
+            }}>
+            <Stack.Screen name="(auth)" options={{headerShown: false}}/>
+            <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+            <Stack.Screen name="(user)" options={{headerShown: false}}/>
+            <Stack.Screen name="(article)" options={{headerShown: false}}/>
+            <Stack.Screen name="(admin)"/>
+      
         </Stack>
       </GestureHandlerRootView>
     </AppProvider>
