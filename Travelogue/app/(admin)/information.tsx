@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const Festival = () => {
+const Information = () => {
   return (
     <View>
-      <Text>Festival</Text>
+      <Text>Information</Text>
     </View>
   )
 }
 
-export default Festival
+export default Information

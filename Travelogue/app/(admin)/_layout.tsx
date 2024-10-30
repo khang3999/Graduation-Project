@@ -60,7 +60,7 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="factor" 
+          name="factorA" 
           options={{
             drawerLabel: 'Factor',
             title: 'Factor',
@@ -96,19 +96,26 @@ export default function Layout() {
             title: 'Packages',
             drawerIcon: ({color, size}) => (
               <MaterialCommunityIcons name="package" size={size} color={color} />
-            ),
-            headerRight : ()=>(
-              <Text>Pluss</Text>
             )
           }}
           
         />
         
         <Drawer.Screen
-          name="(information)" 
+          name="information" 
           options={{
             drawerLabel: 'Information Locations',
             title: 'Information Locations',
+            drawerIcon: ({color, size}) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
+        <Drawer.Screen
+          name="payment" 
+          options={{
+            drawerLabel: 'Payment',
+            title: 'Payment',
             drawerIcon: ({color, size}) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )

@@ -79,43 +79,59 @@ export default function CompanyManagementScreen() {
     return () => factor();
   }, []);
 
-  //Render icon
-  const renderIcon = (status_id: any) => {
-    switch (status_id) {
-      case "1":
-        return (
-          <View style={{flexDirection:'row'}}>
-            <Feather name="check-square" size={24} color="green" style={{ left: -25 }} />
-            <Feather name="x-square" size={25} color="red" />
-          </View>);
-      case "2":
-        return (
-          <View>
-            <AntDesign name="lock" size={28} color="black" />
-          </View>);
-      case "3":
-        return (
-          <View style={{flexDirection:'row'}}>
-            <MaterialIcons name="clear" size={28} color="#3366CC"style={{ bottom: 0 , left: -22}} />
-            <AntDesign name="lock" size={28} color="black" />
-          </View>);
-      case "4":
-        return (
-          <View>
-            <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} />
-          </View>);
-      default:
-        return null;
-    }
-  }
-
-  // Hàm gỡ lock cho account
-  const unlockPost = (accountId: string) => {
+ // Hàm lock cho account,  user  status la (1) ve 2
+ const acceptAcc = (accountId: string) => {
+  const refAcc = ref(database, `accounts/${[accountId]}`)
+  Alert.alert(
+    "Accept account",
+    "Are you sure you want to accept this account?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "OK", onPress: () => {
+          //Cap nhat report cho post sau khi unlock
+          update(refAcc, { status_id: "2" })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+        }
+      }
+    ]
+  );
+};
+// Hàm lock cho account,  user  status la (1) ve 5
+const rejectAcc = (accountId: string) => {
+  const refAcc = ref(database, `accounts/${[accountId]}`)
+  Alert.alert(
+    "Reject account",
+    "Are you sure you want to reject this account?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "OK", onPress: () => {
+          //Cap nhat report cho post sau khi unlock
+          update(refAcc, { status_id: "5" })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+        }
+      }
+    ]
+  );
+};
+  // Hàm gỡ report cho account, khi user co status la 3 ve lai 2
+  const unReportAcc = (accountId: string) => {
     const refRemove = ref(database, `reports/account/${[accountId]}`)
-    const refPost = ref(database, `accounts/${[accountId]}`)
+    const refAcc = ref(database, `accounts/${[accountId]}`)
     Alert.alert(
-      "Unlock post",
-      "Are you sure you want to unlock this post?",
+      "Clear report for this account",
+      "Are you sure you want to clear report this account?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -128,7 +144,54 @@ export default function CompanyManagementScreen() {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
             //Cap nhat report cho post sau khi unlock
-            update(refPost, { reports: 0 })
+            update(refAcc, { status_id: "2" })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }
+      ]
+    );
+  };
+  // Hàm gỡ lock cho account, khi user co status la 4 ve lai 2
+  const unLockAcc = (accountId: string) => {
+    const refAcc = ref(database, `accounts/${[accountId]}`)
+    Alert.alert(
+      "Clear report for this account",
+      "Are you sure you want to clear report this account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat report cho post sau khi unlock
+            update(refAcc, { status_id: "2" })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }
+      ]
+    );
+  };
+
+  // Hàm lock cho account,  user  status la (2,3) ve 4
+  const lockAcc = (accountId: string) => {
+    const refAcc = ref(database, `accounts/${[accountId]}`)
+    Alert.alert(
+      "Lock account",
+      "Are you sure you want to lock this account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat report cho post sau khi unlock
+            update(refAcc, { status_id: "4" })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -142,6 +205,38 @@ export default function CompanyManagementScreen() {
   };
 
 
+
+
+  //Render icon
+  const renderIcon = (item: any) => {
+    switch (item.status_id) {
+      case "1":
+        return (
+          <View style={{flexDirection:'row'}}>
+            <Feather name="check-square" size={24} color="green" style={{ left: -25 }} onPress={()=>acceptAcc(item.id)}/>
+            <Feather name="x-square" size={25} color="red" onPress={()=>rejectAcc(item.id)}/>
+          </View>);
+      case "2":
+        return (
+          <View>
+            <AntDesign name="lock" size={28} color="black" onPress={()=>lockAcc(item.id)}/>
+          </View>);
+      case "3":
+        return (
+          <View style={{flexDirection:'row'}}>
+            <MaterialIcons name="clear" size={28} color="#3366CC"style={{ bottom: 0 , left: -22}} onPress={()=>unReportAcc(item.id)}/>
+            <AntDesign name="lock" size={28} color="black" onPress={()=>lockAcc(item.id)}/>
+          </View>);
+      case "4":
+        return (
+          <View>
+            <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={()=>unLockAcc(item.id)}/>
+          </View>);
+      default:
+        return null;
+    }
+  }
+
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     console.log('stu', dataStatus[account.item.status_id]);
@@ -153,7 +248,7 @@ export default function CompanyManagementScreen() {
           <Text style={[styles.reason, { color: color[account.item.status_id] }]}>{dataStatus[account.item.status_id]}</Text>
         </View>
 
-        {(renderIcon(account.item.status_id))}
+        {(renderIcon(account.item))}
 
       </View>
     )

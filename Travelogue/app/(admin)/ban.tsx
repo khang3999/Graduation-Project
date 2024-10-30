@@ -48,6 +48,8 @@ const Ban = () => {
 
       // Tạo key tu dong cua firebase
       const newItemKey = push(wordsRef);
+      console.log(newItemKey);
+      
 
       // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
       await set(newItemKey, inputText)

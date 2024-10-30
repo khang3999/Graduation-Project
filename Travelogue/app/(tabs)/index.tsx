@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import React from 'react'
 import HeaderIndex from '@/components/header/HeaderIndex'
 import ActionBar from '@/components/ActionBar'
 import {router } from 'expo-router'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/firebase/firebaseConfig'
 
 console.log('App is running from (tabs)/index.tsx');
 
