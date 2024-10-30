@@ -158,10 +158,11 @@ const RegisterScreen = ({ navigation }: any) => {
             password,
             behavior,
             avatar,
+            balance: null,
+            accumulate : null,
             currentDate,
             status_id: status,
             role: role,
-            expense: null,
             numberCCCD: null,
             imageFrontUrlCCCD: null,
             imageBackUrlCCCD: null,
@@ -244,7 +245,8 @@ const RegisterScreen = ({ navigation }: any) => {
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
-          const expense = 0;
+          const balance = 0;
+          const accumulate = 0;
           const currentDate = new Date().toLocaleDateString();
           const status = "1";
           const role = "business";
@@ -261,7 +263,8 @@ const RegisterScreen = ({ navigation }: any) => {
             password,
             behavior,
             avatar,
-            expense,
+            balance,
+            accumulate,
             currentDate,
             numberCCCD,
             imageFrontUrlCCCD: frontCCCDImage,
@@ -313,7 +316,8 @@ const RegisterScreen = ({ navigation }: any) => {
             business_license_id: newUser.business_license_id,
             createdAt: newUser.currentDate,
             status_id: newUser.status_id,
-            expense: newUser.expense,
+            balance: newUser.balance,
+            accumulate: newUser.accumulate,
             role: newUser.role,
           });
         }

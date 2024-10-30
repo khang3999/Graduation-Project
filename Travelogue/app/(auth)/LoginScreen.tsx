@@ -111,7 +111,7 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0343764637'), 
+                onPress: () => Linking.openURL('tel:0384946973'), 
               },
               {
                 text: "Gửi email",
@@ -129,7 +129,7 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0343764637'), 
+                onPress: () => Linking.openURL('tel:0384946973'), 
               },
               {
                 text: "Gửi email",
@@ -149,6 +149,10 @@ const LoginScreen = ({ navigation }: any) => {
           router.replace("/(tabs)");
         }
       }
+      const userId = userCredential.user.uid;
+      await AsyncStorage.setItem("userToken", userId);
+      // const storedUserId = await AsyncStorage.getItem("userToken");  
+      // console.log(storedUserId);
 
       setLoading(false);
       setTextLoading("Đăng nhập");
