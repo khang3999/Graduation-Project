@@ -28,6 +28,7 @@ import { Modal } from "react-native-paper";
 import { database, onValue, ref } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
+import { ImageSlider } from "react-native-image-slider-banner";
 
 const AddPostUser = () => {
   const [title, setTitle] = useState("");
@@ -45,7 +46,9 @@ const AddPostUser = () => {
   const [modalVisibleMap, setModalVisibleMap] = useState(false);
   const [modalVisibleCityImages, setModalVisibleCityImages] = useState(false);
   const [modalVisibleImage, setModalVisibleImage] = useState(false);
+  const [modalVisibleImageInfEdit, setModalVisibleImageInfEdit] = useState(false);
 
+  
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -58,7 +61,9 @@ const AddPostUser = () => {
   const [images, setImages] = useState<
     { city: { id: string; name: string } | null; images: string[] }[]
   >([]);
-
+  //Lưu vi trí muốn sửa tt ảnh
+  const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
+ 
   //map
   const [region, setRegion] = useState({
     latitude: 14.0583,
@@ -314,7 +319,7 @@ const AddPostUser = () => {
   // *********************************************************************
   // Xử lý Thêm Ảnh
   // *********************************************************************
-  //Xử lý chỗ thành phố chọn ảnh
+  //Xử lý chỗ chọn thành phố của ảnh
   const handCityImagesPress = (city: any) => () => {
     const selectedCity = { id: city.id, name: city.name };
     setSelectedCityForImages(selectedCity);
@@ -335,12 +340,13 @@ const AddPostUser = () => {
       setSelectedImages([...selectedUris, ...selectedImages]);
     }
   };
+  //Xử lý xóa ảnh chỗ chọn ảnh chưa lưu
   const handleRemoveImage = (index: number) => {
     const updatedImages = [...selectedImages];
     updatedImages.splice(index, 1);
     setSelectedImages(updatedImages);
   };
-  //Lưu ảnh
+  //Xử lý lưu ảnh
   const handleSaveImages = () => {
     if (selectedImages.length === 0) {
       Alert.alert("Thông Báo", "Vui lòng chọn ảnh trước khi lưu.");
@@ -357,11 +363,42 @@ const AddPostUser = () => {
       { city: selectedCityForImages, images: selectedImages },
       ...images,
     ]);
-    console.log("Images:", images);
     setSelectedImages([]);
     setSelectedCityForImages(null);
     setModalVisibleImage(false);
   };
+  //Xử lý xóa ảnh và xóa city của ảnh
+  const handleRemoveImagesAndCity = (index: number) => {
+    const updatedImages = [...images];
+    updatedImages.splice(index, 1);
+    setImages(updatedImages);
+  };
+  console.log("Images:", images);
+  //Xử lý chọn ảnh để chỉnh sửa thông tin
+  const handleChangleInfoImage = (index: number) => () => {
+    setSelectedImages(images[index].images);
+    setSelectedCityForImages(images[index].city);
+    setIndexEditImage(index);
+    setModalVisibleImageInfEdit(true);
+  };
+  //Lưu thông tin ảnh sau khi chỉnh sửa
+  const handleSaveImagesEditInfo = () => {
+    if (selectedImages.length === 0) {
+      Alert.alert("Thông Báo", "Vui lòng chọn ảnh trước khi lưu.");
+      return;
+    }
+    const updatedImages = [...images];
+    if (indexEditImage !== null) {
+      updatedImages[indexEditImage].images = selectedImages;
+      updatedImages[indexEditImage].city = selectedCityForImages;
+    }
+    setImages(updatedImages);
+    setSelectedImages([]);
+    setSelectedCityForImages(null);
+    setIndexEditImage(null);
+    setModalVisibleImageInfEdit(false);
+  };
+
   // *********************************************************************
   // Xử lý Thêm Ảnh
   // *********************************************************************
@@ -634,21 +671,20 @@ const AddPostUser = () => {
                 showsHorizontalScrollIndicator={false}
                 style={{ maxHeight: 100, marginTop: -50 }}
               >
-                {images.map((image, index) => (
+                {images.map((imageCity, index) => (
                   <TouchableOpacity
                     key={index}
                     style={{ marginRight: 10 }}
-                    onPress={() => {
-                      console.log("Chuyển trang xem ảnh");
-                    }}
+                    onPress={handleChangleInfoImage(index)}
                   >
                     <Image
-                      source={{ uri: image.images[0] }}
+                      source={{ uri: imageCity.images[0] }}
                       style={[
                         styles.festivalImage,
                         { maxWidth: 100, maxHeight: 100 },
                       ]}
                     />
+
                     <View
                       style={{
                         backgroundColor: "rgba(0,0,0,0.5)",
@@ -659,19 +695,45 @@ const AddPostUser = () => {
                         height: 30,
                       }}
                     >
-                      {/* <Text>{image.city?.name}</Text> */}
                       <Text
                         style={{
-                          position: "absolute",
-                          bottom: 2,
-                          left: 10,
-                          fontSize: 20,
+                          textAlign: "center",
+                          marginTop: 5,
+                          fontSize: 16,
                           color: "rgba(255,255,255,0.8)",
                         }}
                       >
-                        {image.city?.name}
+                        {imageCity.city?.name}
                       </Text>
                     </View>
+                    <View
+                      style={{
+                        position: "absolute",
+                        left: 5,
+                        width: 30,
+                        height: 30,
+                        backgroundColor: "rgba(0,0,0,0.2)",
+                        borderRadius: 50,
+                        marginTop: 2.7,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "white",
+                          fontWeight: "bold",
+                          textAlign: "center",
+                          fontSize: 20,
+                        }}
+                      >
+                        {imageCity.images.length}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => handleRemoveImagesAndCity(index)}
+                    >
+                      <IconA name="close" size={20} color="white" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -992,6 +1054,143 @@ const AddPostUser = () => {
                 setSelectedImages([]);
                 setSelectedCityForImages(null);
                 setModalVisibleImage(false);
+              }}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </RowComponent>
+        </View>
+      </Modal>
+      {/* Modal sua tt anh */}
+      <Modal
+        visible={modalVisibleImageInfEdit}
+        onDismiss={() => {
+          setSelectedImages([]);
+          setSelectedCityForImages(null);
+          setModalVisibleImageInfEdit(false);
+        }}
+      >
+        <View style={styles.modalContent}>
+          <View style={{ padding: 10 }}>
+            <Text style={styles.modalTitle}>Sửa Thông Tin Ảnh</Text>
+          </View>
+          <View>
+            {selectedImages.length > 0 ? (
+              <View>
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  style={{ maxHeight: 100 }}
+                >
+                  {selectedImages.map((imageUri, index) => (
+                    <View key={index}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={[
+                          styles.festivalImage,
+                          {
+                            width: 100,
+                            height: 100,
+                            marginRight: 2,
+                            resizeMode: "cover",
+                          },
+                        ]}
+                      />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => handleRemoveImage(index)}
+                      >
+                        <IconA name="close" size={20} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={handleChooseImages}>
+                <Image
+                  source={require("../../assets/images/addImage.png")}
+                  style={[styles.festivalImage, { height: 100, width: 100 }]}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.separator} />
+          {selectedImages.length > 0 ? (
+            <RowComponent>
+              <TouchableOpacity onPress={handleChooseImages}>
+                <Image
+                  source={require("../../assets/images/addImage.png")}
+                  style={[
+                    styles.festivalImage,
+                    { height: 50, width: 50, marginRight: 40 },
+                  ]}
+                />
+              </TouchableOpacity>
+              {selectedCityForImages ? (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 130 }]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    {selectedCityForImages.name}{" "}
+                    <IconA name="retweet" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    Chọn tỉnh{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </RowComponent>
+          ) : (
+            <>
+              {selectedCityForImages ? (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 130 }]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    {selectedCityForImages.name}{" "}
+                    <IconA name="retweet" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton]}
+                  onPress={() => setModalVisibleCityImages(true)}
+                >
+                  <Text>
+                    Chọn tỉnh{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          {/* Các nút xử lý */}
+          <RowComponent>
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                { backgroundColor: "green", margin: 10, marginTop: 20 },
+              ]}
+              onPress={handleSaveImagesEditInfo}
+            >
+              <Text style={styles.closeButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.closeButton, { margin: 10, marginTop: 20 }]}
+              onPress={() => {
+                setSelectedImages([]);
+                setSelectedCityForImages(null);
+                setModalVisibleImageInfEdit(false);
               }}
             >
               <Text style={styles.closeButtonText}>Đóng</Text>
