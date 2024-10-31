@@ -48,9 +48,13 @@ const AddPostUser = () => {
   const [modalVisibleImage, setModalVisibleImage] = useState(false);
   const [modalVisibleImageInfEdit, setModalVisibleImageInfEdit] =
     useState(false);
+  const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
 
   //loading
   const [loadingLocation, setLoadingLocation] = useState(false);
+
+  //Chon giờ 
+  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
@@ -69,8 +73,8 @@ const AddPostUser = () => {
 
   //map
   const [region, setRegion] = useState({
-    latitude: 11.0583,
-    longitude: 108.2772,
+    latitude: 17.65005783136121,
+    longitude: 106.40283940732479,
     latitudeDelta: 9,
     longitudeDelta: 9,
   });
@@ -93,7 +97,7 @@ const AddPostUser = () => {
       activities: { time: string; activity: string }[];
     }[]
   >([]);
-  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState<
     number | null
@@ -147,7 +151,7 @@ const AddPostUser = () => {
     setLoadingLocation(true);
     // console.log("Map Pressed:", event.nativeEvent);
     const { latitude, longitude } = event.nativeEvent.coordinate;
-    console.log("Map Pressed:", latitude, longitude);
+    // console.log("Map Pressed:", latitude, longitude);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
@@ -225,7 +229,7 @@ const AddPostUser = () => {
       );
     }
   };
-
+  //Lưu vi tri chon cho hoat dong
   const handleSaveLocation = () => {
     if (selectedLocation) {
       if (selectedDayIndex !== null && selectedActivityIndex !== null) {
@@ -234,10 +238,12 @@ const AddPostUser = () => {
 
         // Kiểm tra xem đã chọn giờ hay chưa
         if (!activity.time) {
-          alert("Vui lòng chọn giờ cho hoạt động trước khi lưu địa điểm.");
+          Alert.alert(
+            "Thông báo",
+            "Vui lòng chọn giờ cho hoạt động trước khi lưu địa điểm."
+          );
           return;
         }
-
         // Cập nhật hoạt động với địa điểm đã chọn
         updateActivity(
           selectedDayIndex,
@@ -245,12 +251,23 @@ const AddPostUser = () => {
           "activity",
           selectedLocation.name
         );
+        //Huy all index
+        // setSelectedDayIndex(null);
+        // setSelectedActivityIndex(null);
+       
         setModalVisibleMap(false);
+        setSelectedLocation(null);
+        setRegion({
+          latitude: 17.65005783136121,
+          longitude: 106.40283940732479,
+          latitudeDelta: 9,
+          longitudeDelta: 9,
+        });
       } else {
-        alert("Vui lòng chọn ngày và hoạt động trước khi lưu.");
+        Alert.alert("Thông báo", "V Tr");
       }
     } else {
-      alert("Vui lòng chọn vị trí trước khi lưu.");
+      Alert.alert("Thông báo", "Vui lòng chọn vị trí trước khi lưu.");
     }
   };
 
@@ -265,30 +282,41 @@ const AddPostUser = () => {
   const addDay = () => {
     setDays([...days, { title: "", description: "", activities: [] }]);
   };
+
+  //Xóa ngày hoạt động bài viết
   const deleteDay = (dayIndex: number) => {
     const newDays = [...days];
     newDays.splice(dayIndex, 1);
     setDays(newDays);
   };
 
-  type DayKey = "title" | "description" | "time";
-  const updateDay = (index: number, key: DayKey, value: string) => {
+  //Cập nhật dữ liệu title or description của ngày
+  const updateDay = (
+    index: number,
+    key: "title" | "description",
+    value: string
+  ) => {
     const newDays = [...days];
+    // console.log("newDays:", newDays);
+    // console.log("newDays:", newDays[0]['title']);
     newDays[index][key] = value;
     setDays(newDays);
   };
-
+  // Them hoat dong cho ngay do
   const addActivity = (dayIndex: number) => {
     const newDays = [...days];
+    //Thêm đối tượng time and activity vào mảng activities
     newDays[dayIndex].activities.push({ time: "", activity: "" });
     setDays(newDays);
   };
+  // xoa hoat dong cho ngay do
   const deleteActivity = (dayIndex: number, activityIndex: number) => {
     const newDays = [...days];
+    // console.log("newDays:", newDays[dayIndex].activities);
     newDays[dayIndex].activities.splice(activityIndex, 1);
     setDays(newDays);
   };
-
+  // Cap nhat hoat dong cho ngay do
   const updateActivity = (
     dayIndex: number,
     activityIndex: number,
@@ -300,27 +328,133 @@ const AddPostUser = () => {
     setDays(newDays);
   };
 
-  const showTimePicker = (dayIndex: number, activityIndex: number) => {
+  //Chọn gio
+  const showTimePicker = (dayIndex: number, activityIndex: number, time: string) => {
+    // console.log("Chon gio");
+    setSelectedTime(new Date(`2024-01-01T${time || "00:00"}`));
+    // console.log("Time:", time);
+    console.log(selectedTime);
     setSelectedDayIndex(dayIndex);
     setSelectedActivityIndex(activityIndex);
-    setTimePickerVisibility(true);
+    setModalVisibleTimePicker(true);
   };
-  // Ẩn modal chọn giờ
-  const hideTimePicker = () => {
-    setTimePickerVisibility(false);
-  };
-
-  // Xử lý khi chọn giờ xong
-  const handleConfirm = (time: Date) => {
+ 
+   // Xử lý khi chọn giờ xong
+   const handleConfirm = (time: Date) => {
     if (selectedDayIndex !== null && selectedActivityIndex !== null) {
       const newDays = [...days];
-      const formattedTime = `${time.getHours()}:${time.getMinutes()}`;
-      newDays[selectedDayIndex].activities[selectedActivityIndex].time =
-        formattedTime;
+      const formattedTime = `${time
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+  
+      if (selectedActivityIndex > 0) {
+        const previousTime = newDays[selectedDayIndex].activities[selectedActivityIndex - 1].time;
+        
+        if (previousTime) {
+          const currentTime = new Date(`2024-01-01T${formattedTime}:00`);
+          const prevTime = new Date(`2024-01-01T${previousTime}:00`);
+  
+          console.log("currentTime:", currentTime);
+  
+          if (currentTime <= prevTime) {
+            Alert.alert("Thông báo", "Thời gian của hoạt động này phải lớn hơn hoạt động trước.");
+            setModalVisibleTimePicker(false);
+            return;
+          }
+        }
+      }
+      if (selectedActivityIndex < newDays[selectedDayIndex].activities.length - 1) {
+        const nextTime = newDays[selectedDayIndex].activities[selectedActivityIndex + 1].time;
+  
+        if (nextTime) {
+          const currentTime = new Date(`2024-01-01T${formattedTime}:00`);
+          const nexTime = new Date(`2024-01-01T${nextTime}:00`);
+  
+          if (currentTime >= nexTime) {
+            Alert.alert("Thông báo", "Thời gian của hoạt động này phải nhỏ hơn hoạt động sau.");
+            setModalVisibleTimePicker(false);
+            return;
+          }
+        }
+      }
+  
+      // cập nhật thời gian
+      newDays[selectedDayIndex].activities[selectedActivityIndex].time = formattedTime;
       setDays(newDays);
     }
+  
+    // ẩn
     hideTimePicker();
   };
+  
+  // Ẩn modal chọn giờ
+  const hideTimePicker = () => {
+    setModalVisibleTimePicker(false);
+  };
+  //Mo modal map
+  const handleOpenMap = (dayIndex: number, activityIndex: number) => {
+    console.log("Chuyen map");
+    setModalVisibleMap(true);
+    setSelectedDayIndex(dayIndex);
+    setSelectedActivityIndex(activityIndex);
+  };
+  //Mo modal map de sua
+  const handleOpenMapEdit = async (
+    dayIndex: number,
+    activityIndex: number,
+    activity: string 
+  ) => {
+    console.log(activity);
+    setLoadingLocation(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          activity
+        )}&format=json&limit=1`,
+        {
+          headers: {
+            "User-Agent": "travelogue/1.0 (dongochieu333@gmail.com)",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        setLoadingLocation(false);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const location = data[0];
+        setRegion({
+          latitude: parseFloat(location.lat),
+          longitude: parseFloat(location.lon),
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        });
+
+        setSelectedLocation({
+          name: activity,
+          latitude: parseFloat(location.lat),
+          longitude: parseFloat(location.lon),
+        });
+        setLoadingLocation(false);
+      }
+    } catch (error) {
+      setLoadingLocation(false);
+      Alert.alert(
+        " Vui lòng kiểm tra lại kết nối mạng."
+      );
+    }
+    setSelectedDayIndex(dayIndex);
+    setSelectedActivityIndex(activityIndex);
+    setModalVisibleMap(true);
+  };
+
+ 
+  
 
   // *********************************************************************
   // Xử lý Chọn Ngày và Hoạt Động
@@ -383,7 +517,7 @@ const AddPostUser = () => {
     updatedImages.splice(index, 1);
     setImages(updatedImages);
   };
-  console.log("Images:", images);
+  // console.log("Images:", images);
   //Xử lý chọn ảnh để chỉnh sửa thông tin
   const handleChangleInfoImage = (index: number) => () => {
     setSelectedImages(images[index].images);
@@ -563,6 +697,7 @@ const AddPostUser = () => {
 
             {/* Activities */}
             <View style={{ marginTop: 20 }}>
+              {/* Danh sach hoat dong cua ngay do */}
               {day.activities.map((activity, activityIndex) => (
                 <View key={activityIndex} style={{ marginTop: -10 }}>
                   <RowComponent justify="center" styles={{ maxHeight: 70 }}>
@@ -576,7 +711,8 @@ const AddPostUser = () => {
                         justifyContent: "center",
                         alignItems: "center",
                       }}
-                      onPress={() => showTimePicker(dayIndex, activityIndex)}
+                      //Chon gio
+                      onPress={() => showTimePicker(dayIndex, activityIndex, activity.time)}
                     >
                       <Text style={{ color: "#000" }}>
                         {activity.time || "Chọn giờ"}
@@ -584,7 +720,12 @@ const AddPostUser = () => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
-                        setModalVisibleMap(true);
+                        // console.log(activity);
+                        if (activity.activity) {
+                          handleOpenMapEdit(dayIndex, activityIndex, activity.activity);
+                        } else {
+                          handleOpenMap(dayIndex, activityIndex);
+                        }
                       }}
                     >
                       <InputComponent
@@ -762,8 +903,9 @@ const AddPostUser = () => {
 
         {/* Chọn giờ */}
         <DateTimePickerModal
-          isVisible={isTimePickerVisible}
+          isVisible={modalVisibleTimePicker}
           mode="time"
+          date={selectedTime || new Date()}
           onConfirm={handleConfirm}
           onCancel={hideTimePicker}
         />
@@ -870,7 +1012,16 @@ const AddPostUser = () => {
       {/* Chon map */}
       <Modal
         visible={modalVisibleMap}
-        onDismiss={() => setModalVisibleMap(false)}
+        onDismiss={() => {
+          setSelectedLocation(null);
+          setRegion({
+            latitude: 17.65005783136121,
+            longitude: 106.40283940732479,
+            latitudeDelta: 9,
+            longitudeDelta: 9,
+          });
+          setModalVisibleMap(false);
+        }}
       >
         <View style={[styles.containerMap]}>
           <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
@@ -931,7 +1082,16 @@ const AddPostUser = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.closeButton, { marginTop: 10 }]}
-                onPress={() => setModalVisibleMap(false)}
+                onPress={() => {
+                  setSelectedLocation(null);
+                  setRegion({
+                    latitude: 17.65005783136121,
+                    longitude: 106.40283940732479,
+                    latitudeDelta: 9,
+                    longitudeDelta: 9,
+                  });
+                  setModalVisibleMap(false);
+                }}
               >
                 <Text style={[styles.closeButtonText]}>Đóng</Text>
               </TouchableOpacity>
