@@ -1,4 +1,26 @@
-// Hàm trộn mảng tour và bài viết 
+
+
+// Hàm trộn mảng tour và bài viết theo tỉ lệ bất kì truyền vào
+export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
+    const mergedArray = [];
+    let i = 0; // Chỉ số cho arr1
+    let j = 0; // Chỉ số cho arr2
+  
+    // Lặp cho đến khi hết phần tử trong cả hai mảng
+    while (i < arr1.length || j < arr2.length) {
+      // Thêm `ratio1` phần tử từ arr1 nếu còn phần tử
+      for (let r = 0; r < ratio1 && i < arr1.length; r++) {
+        mergedArray.push(arr1[i++]);
+      }
+      // Thêm `ratio2` phần tử từ arr2 nếu còn phần tử
+      for (let r = 0; r < ratio2 && j < arr2.length; r++) {
+        mergedArray.push(arr2[j++]);
+      }
+    }
+  
+    return mergedArray;
+  }
+
 // Hàm slug text
 export const slug = (str) => {
     return String(str)

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, Dimensions, TextInput } from "react-native";
 import React, { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
@@ -7,7 +7,10 @@ import SearchBar from '@/components/homePage/SearchBar'
 import PostList from '@/components/homePage/PostList'
 import TourSection from "@/components/homePage/TourSection";
 import HomeProvider, { useHomeProvider } from "@/contexts/HomeProvider";
-import { FontAwesome6 } from "@expo/vector-icons";
+import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
+import { AntDesign } from "@expo/vector-icons";
+import { Badge } from "react-native-paper";
+
 
 const handleLogout = async () => {
   try {
@@ -17,70 +20,53 @@ const handleLogout = async () => {
     Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
   }
 };
+
 const Home = () => {
-  // const { notifyNewPost } = useHomeProvider();
+  const {
+    dataModalSelected,
+    setDataModalSelected,
+    dataAllCities,
+    setDataAllCities }: any = useHomeProvider();
 
-  const handleLoadNewPosts = () => {
+  console.log('bbbb', dataAllCities);
 
-  }
+  console.log('bbbb', dataModalSelected);
+
   return (
-      <View style={styles.container}>
-        {/* Search bar */}
-        <View>
-          <SearchBar></SearchBar>
-        </View>
-        {/* Tour section */}
-        <View style={{display: 'flex', flexDirection:'row'}}>
-          <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
-          <TouchableOpacity className='mt-5' onPress={() => { router.push('/(admin)/(account)/account') }}>
-            <Text>admin</Text>
-          </TouchableOpacity>
-        </View>
-        <TourSection></TourSection>
-        {/* Post Section */}
-
-        <View className="relative">
-          {/* {notifyNewPost && (
-            <TouchableOpacity style={styles.buttonLoadNewPost}>
-              <View style={{}}>
-                <FontAwesome6 name="newspaper" size={20} color="black" />
-              </View>
-              <Text style={{ fontSize: 13, alignSelf: 'center', marginLeft: 4 }}>Có bài viết mới</Text>
-            </TouchableOpacity>
-          )} */}
-        </View>
-        <PostList></PostList>
+    <View style={styles.container}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 10, gap: 6 }}>
+        <Text>Hiển thị: </Text>
+        {dataModalSelected == null ?
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Tất cả bài viết</Badge>
+          :
+          <>
+            {dataModalSelected.input !== '' && <Badge>{dataModalSelected.input}</Badge>}
+            {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
+              <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.country}</Badge>
+              :
+              dataModalSelected.cities.map((cityId: any) => {
+                const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
+                console.log(found);
+                return <Badge size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
+              })
+            }
+          </>}
       </View>
+
+      {/* Tour section */}
+      <TourSection></TourSection>
+      {/* Post Section */}
+      <PostList></PostList>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  buttonLoadNewPost: {
-    display: 'flex',
-    backgroundColor: 'white',
-    flexDirection: 'row',
-    left: '40%',
-    position: 'absolute',
-    zIndex: 100,
-    elevation: 8,
-    padding: 4,
-    borderRadius: 8
-  },
   container: {
+    paddingTop: 10,
     flex: 1,
     backgroundColor: 'white'
   },
-  textCategory: {
-    fontSize: 14,
-    backgroundColor: '#f0f0f0',
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontWeight: '500',
-    alignSelf: 'flex-start',
-    elevation: 10
-  }
 })
 
 export default Home;

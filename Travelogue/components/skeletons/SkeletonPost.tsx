@@ -11,7 +11,7 @@ const SkeletonPost = () => {
         width={400}
         height={410}
         viewBox="0 0 400 410"
-        backgroundColor="#eaeaea"
+        backgroundColor="#E5E2E5"
         foregroundColor="#fcfcfc"
       >
         <Rect x="0" y="0" rx="30" ry="30" width={width - 20} height="410" />

@@ -16,6 +16,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const HomeContext = createContext(null);
 const HomeProvider = ({ children }) => {
     const [dataAccount, setDataAccount] = useState(null)
+    const [dataCountries, setDataCountries] = useState([])
+    const [dataAllCities, setDataAllCities] = useState([])
+    const [loadedDataAccount, setLoadedDataAccount] = useState(false)
     const [dataPosts, setDataPosts] = useState([])
     const dataPostsRef = useRef([])
     const [dataTours, setDataTours] = useState([])
@@ -24,19 +27,40 @@ const HomeProvider = ({ children }) => {
     const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
     const [allLocationNameFromPost, setAllLocationNameFromPost] = useState([])
     const [refreshingPost, setRefreshingPost] = useState(false);
-    const [loadingPost, setLoadingPost] = useState(true)
-    const [loadingTour, setLoadingTour] = useState(true)
+    const [loadedPosts, setLoadedPosts] = useState(false)
+    const [loadedTours, setLoadedTours] = useState(false)
     const [notifyNewPost, setNotifyNewPost] = useState(false)
     const appStateRef = useRef(AppState.currentState)
     const [currentPostCount, setCurrentPostCount] = useState(0);
     const [newPostCount, setNewPostCount] = useState(0);
     const [searching, setSearching] = useState(false)
-    const [behavior, setBehavior] = useState({})
+    const [accountBehavior, setAccountBehavior] = useState({})
+    const [user, setUser] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [isSearchingMode, setIsSearchingMode] = useState(false)
+    const [dataModalSelected, setDataModalSelected] = useState(null)
 
+    // Login state
+    useEffect(() => {
+        // Đăng ký lắng nghe thay đổi trạng thái đăng nhập
+        const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+            if (currentUser) {
+                // Người dùng đã đăng nhập
+                console.log("User logged in:");
+                setUser(currentUser);
+                // Thực hiện các hành động khi đăng nhập, ví dụ: tải dữ liệu người dùng
+            } else {
+                // Người dùng đã đăng xuất
+                console.log("User logged out");
+                setUser(null);
+                // Thực hiện các hành động khi đăng xuất, ví dụ: xóa dữ liệu người dùng
+            }
+        });
+
+        // Cleanup để ngừng lắng nghe khi component unmount
+        return () => unsubscribe();
+    }, []);
     /// App state
-    // useEffect(() => {
-    //     console.log('Trạng thái AppState ban đầu:', AppState.currentState);
-    // }, []);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async nextAppState => {
             console.log('Trạng thái AppState trước khi thay đổi:', appStateRef.current);
@@ -101,42 +125,45 @@ const HomeProvider = ({ children }) => {
     /// ------------------------ FETCH NO REALTIME --------------------------
     // Fetch tour theo post không realtime
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const refTours = ref(database, 'tours/')
-                const snapshot = await get(refTours);
-                if (snapshot.exists()) {
-                    const dataToursJson = snapshot.val()
-                    const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
-                    // Sắp xếp lại list tour theo thứ tự
-                    const sortedTours = sortTour(dataToursArray, allLocationIdFromPost)
-                    setDataTours(sortedTours)
-                } else {
-                    console.log("No data available");
+        if (loadedDataAccount && user) {
+            const fetchData = async () => {
+                try {
+                    const refTours = ref(database, 'tours/')
+                    const snapshot = await get(refTours);
+                    if (snapshot.exists()) {
+                        const dataToursJson = snapshot.val()
+                        const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
+                        // Sắp xếp lại list tour theo thứ tự
+                        const sortedTours = sortTour(dataToursArray, allLocationIdFromPost)
+                        setDataTours(sortedTours)
+                    } else {
+                        console.log("No data available");
+                    }
+                } catch (error) {
+                    console.error("Error fetching data: ", error);
                 }
-            } catch (error) {
-                console.error("Error fetching data: ", error);
             }
+            fetchData();
         }
-        fetchData();
         // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
-    }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
+    }, [user, postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
 
     /// ----------------------- FETCH REAL TIME ----------------------
-    // Lấy data account
+    // Lấy các thành phố
     useEffect(() => {
-        const userId = auth.currentUser?.uid; // Lấy id user đang đăng nhập
-        const refAccount = ref(database, `accounts/${userId}`)
-        const unsubscribe = onValue(refAccount, (snapshot) => {
+        const refCities = ref(database, `cities/`)
+        const unsubscribe = onValue(refCities, (snapshot) => {
             if (snapshot.exists()) {
                 // Lấy tất cả factor của post dùng cho tính điểm
-                const jsonDataAccount = snapshot.val();
-                // Set behavior
-                setBehavior(jsonDataAccount.behavior)
-                // Set du lieu
-                setDataAccount(jsonDataAccount)
+                const jsonDataCities = snapshot.val();
+                const result = Object.entries(jsonDataCities).flatMap(([country, cityObj]) =>
+                    Object.entries(cityObj).map(([cityCode, cityInfo]) => ({
+                        [cityCode]: cityInfo.name
+                    }))
+                );
+                setDataAllCities(result);
             } else {
-                console.log("No data available");
+                console.log("No data available1");
             }
         }, (error) => {
             console.error("Error fetching data:", error);
@@ -146,7 +173,61 @@ const HomeProvider = ({ children }) => {
             unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
     }, [])
+    // Lấy các quốc gia 
+    useEffect(() => {
+        const refCountries = ref(database, `countries/`)
+        const unsubscribe = onValue(refCountries, (snapshot) => {
+            if (snapshot.exists()) {
+                // Lấy tất cả factor của post dùng cho tính điểm
+                const jsonDataCountries = snapshot.val();
 
+                const countriesArray = Object.keys(jsonDataCountries).map(key => ({
+                    key,
+                    value: jsonDataCountries[key].label
+                }));
+                setDataCountries(countriesArray)
+                // setAccountBehavior(jsonDataAccount.behavior)
+                // Set du lieu
+                // setDataAccount(jsonDataAccount)
+                // setLoadedDataAccount(true)
+            } else {
+                console.log("No data available1");
+            }
+        }, (error) => {
+            console.error("Error fetching data:", error);
+        });
+
+        return () => {
+            unsubscribe(); // Sử dụng unsubscribe để hủy listener
+        };
+    }, [])
+    // Lấy data account
+    useEffect(() => {
+        const userId = auth.currentUser?.uid; // Lấy id user đang đăng nhập
+        if (userId) {
+            const refAccount = ref(database, `accounts/${userId}`)
+            const unsubscribe = onValue(refAccount, (snapshot) => {
+                if (snapshot.exists()) {
+                    // Lấy tất cả factor của post dùng cho tính điểm
+                    const jsonDataAccount = snapshot.val();
+                    // Set behavior
+                    console.log(jsonDataAccount.behavior);
+                    setAccountBehavior(jsonDataAccount.behavior)
+                    // Set du lieu
+                    setDataAccount(jsonDataAccount)
+                    setLoadedDataAccount(true)
+                } else {
+                    console.log("No data available1");
+                }
+            }, (error) => {
+                console.error("Error fetching data:", error);
+            });
+
+            return () => {
+                unsubscribe(); // Sử dụng unsubscribe để hủy listener
+            };
+        }
+    }, [user])
     // Hàm lắng nghe thay khi có bài viết mới từ firebase để hiển thị button reload
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
@@ -174,20 +255,33 @@ const HomeProvider = ({ children }) => {
                 dataPosts,
                 dataTours,
                 refreshingPost,
-                loadingPost,
-                loadingTour,
                 notifyNewPost,
                 dataPostsRef,
                 currentPostCount,
+                allLocationIdFromPost,
                 newPostCount,
-                searching, 
-                behavior,
-                setBehavior,
+                searching,
+                accountBehavior,
+                loadedDataAccount,
+                loadedPosts,
+                loadedTours,
+                modalVisible,
+                dataCountries,
+                isSearchingMode,
+                dataModalSelected,
+                dataAllCities,
+                setDataAllCities,
+                setDataModalSelected,
+                setIsSearchingMode,
+                setDataCountries,
+                setModalVisible,
+                setLoadedPosts,
+                setLoadedTours,
+                setLoadedDataAccount,
+                setAccountBehavior,
                 setSearching,
                 setCurrentPostCount,
                 setDataPosts,
-                setLoadingPost,
-                setLoadingTour,
                 setAllLocationIdFromPost,
                 setAllLocationNameFromPost,
                 setPostIdCurrent,

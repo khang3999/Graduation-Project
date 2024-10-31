@@ -14,7 +14,7 @@ const _layout = () => {
         tabBar={(props: any) => <TabBar {...props} />}
         screenOptions={{
           headerStyle: {
-            height: 100,
+            height: 105,
           },
           headerTitle: (props) =>
             // Bỏ image vào đây

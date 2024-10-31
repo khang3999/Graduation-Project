@@ -4,53 +4,12 @@ import Carousel from 'react-native-reanimated-carousel';
 import { database, onValue, ref } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
+import SkeletonTourHome from '../skeletons/SkeletonTourHome';
 
 const { width } = Dimensions.get('window');
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
-    const { dataTours }: any = useHomeProvider();
-
-    // useEffect(() => {
-    //     // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-    //     const refTours = ref(database, 'tours/')
-    //     const unsubscribe = onValue(refTours, (snapshot) => {
-    //         if (snapshot.exists()) {
-    //             const jsonDataTours = snapshot.val();
-    //             // Chuyển đổi object thành array bang values cua js
-    //             const jsonArrayTours: any = Object.values(jsonDataTours)
-    //             // Set du lieu
-    //             setDataTours(jsonArrayTours)
-    //         } else {
-    //             console.log("No data available");
-    //         }
-    //     }, (error) => {
-    //         console.error("Error fetching data:", error);
-    //     });
-
-    //     return () => {
-    //         unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    //     };
-    // }, [])
-    const carouselLocation = () => {
-        <View style={{ flex: 1 }}>
-            <Carousel
-                loop
-                width={width}
-                height={width / 2}
-                autoPlay={true}
-                data={[...new Array(6).keys()]}
-                scrollAnimationDuration={1000}
-                onSnapToItem={(index) => console.log('current index:', index)}
-                renderItem={({ index }) => (
-                    <View style={{ flex: 1, borderWidth: 1, justifyContent: 'center', }}>
-                        <Text style={{ textAlign: 'center', fontSize: 30 }}>
-                            {index}
-                        </Text>
-                    </View>
-                )}
-            />
-        </View>
-    }
+    const { dataTours, loadedTours }: any = useHomeProvider();
 
     const tourItem = (tour: any) => {
         const locations = tour.item.locations
@@ -74,24 +33,16 @@ const TourSection = () => {
                             autoPlayInterval={0}
                             scrollAnimationDuration={3000}
                             // onSnapToItem={(index) => console.log('current index:', index)}
-                            renderItem={({item}) => (
-                                <View key={item.id} style={{ flex: 1, justifyContent: 'center'}}>
-                                    <View style={{backgroundColor:'grey', opacity:0.6, width:'100%', height: 30, position:'absolute'}}></View>
-                                    <Text style={{ textAlign: 'center', fontSize: 14, color:'white' }}>
-                                        {item.name+""}
+                            renderItem={({ item }) => (
+                                <View key={item.id} style={{ flex: 1, justifyContent: 'center' }}>
+                                    <View style={{ backgroundColor: 'grey', opacity: 0.6, width: '100%', height: 30, position: 'absolute' }}></View>
+                                    <Text style={{ textAlign: 'center', fontSize: 14, color: 'white' }}>
+                                        {item.name + ""}
                                     </Text>
                                 </View>
                             )}
                         />
                     </View>
-                    {/* <View style={styles.locationWrap}>
-                        {nameTours.map((nameTour: any) => {
-                            return (
-                                <Text style={styles.textLocation} key={nameTour.id}>{nameTour.name}</Text>
-                            )
-                        })}
-                    </View> */}
-
                     <Image
                         style={styles.image}
                         source={{ uri: tour.item.images }}
@@ -104,20 +55,40 @@ const TourSection = () => {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                horizontal={true}
-                // scrollToOffset={}
-                data={dataTours}
-                renderItem={tourItem}
-                keyExtractor={(tour: any) => tour.id}
-                contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
-                ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                pagingEnabled>
-            </FlatList>
-        </View>
+            <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
+            {loadedTours ?
+                <FlatList
+                    horizontal={true}
+                    // scrollToOffset={ }
+                    data={dataTours}
+                    renderItem={tourItem}
+                    keyExtractor={(tour: any) => tour.id}
+                    contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
+                    ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
+                    pagingEnabled>
+                </FlatList>
+                :
+                <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
+                    <SkeletonTourHome />
+                    <SkeletonTourHome />
+                    <SkeletonTourHome />
+                </View>
+            }
+        </View >
     )
 }
 const styles = StyleSheet.create({
+    textCategory: {
+        fontSize: 14,
+        backgroundColor: '#f0f0f0',
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        fontWeight: '500',
+        alignSelf: 'flex-start',
+        elevation: 10
+    },
     textLocation: {
         color: 'white'
     },
@@ -134,7 +105,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 4,
         height: 30,
-        top:30
+        top: 30
     },
     image: {
         width: (width - 40) / 3,
@@ -154,7 +125,7 @@ const styles = StyleSheet.create({
         elevation: 6
     },
     container: {
-        flexDirection: 'row',
+        flexDirection: 'column',
         justifyContent: 'center',
     }
 })
