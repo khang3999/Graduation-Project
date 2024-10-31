@@ -26,7 +26,13 @@ const Exchange = () => {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         const dataArray: any = Object.values(jsonData);
-        setDataExchanges(dataArray);
+        const dataPending = dataArray.sort((a: any, b: any) => {
+          if (b.status_id == a.status_id) {
+            return b.created_at - a.created_at
+          }
+          return a.status_id - b.status_id
+        });
+        setDataExchanges(dataPending);
       } else {
         setDataExchanges([]);
         setFilteredData([]);

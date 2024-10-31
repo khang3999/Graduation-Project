@@ -146,7 +146,6 @@ const Payment = () => {
         }
     };
 
-    console.log('aaa ', inputText);
     
     //Enable Request button
     useEffect(() => {
