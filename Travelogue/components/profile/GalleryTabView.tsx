@@ -20,6 +20,7 @@ import { usePost } from "@/contexts/PostProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
 import { initial } from "lodash";
+import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -57,25 +58,26 @@ type Post = {
   view_mode: boolean;
 };
 
-type PostItemProps = {
-  item: Post;
-  showFullDescription: boolean;
-  toggleDescription: () => void;
-};
 
-export default function GalleryTabView() {
+export default function GalleryTabView({ userId, isSearched }: { userId: string, isSearched: boolean }) {
   const layout = useWindowDimensions();
-  const userId = auth.currentUser?.uid;
   const { selectedPost, setSelectedPost } = usePost();
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
-  const [routes] = React.useState([
-    { key: "first" },
-    { key: "second" },
-    { key: "third" },
-  ]);
+  const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = React.useState<Post[]>([]);
+  
+  const [routes] = React.useState(
+    isSearched
+      ? [{ key: "first" }]
+      : [
+          { key: "first" },
+          { key: "second" },
+          { key: "third" },
+        ]
+  );
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -88,72 +90,167 @@ export default function GalleryTabView() {
             // Get the post IDs as an array
             const postIds = Object.keys(data);
 
-            // Use an array to store listeners so you can unsubscribe later
-            const unsubscribeListeners: Unsubscribe[] = []; 
-
-            // Create an array to hold posts
-            const posts: Post[] = [];
-
-            postIds.forEach((postId, index) => {
+            const postFetches = postIds.map(async (postId) => {
               const postRef = ref(database, `postsPhuc/${postId}`);
-
-              // Listen for changes to each post using nested onValue
-              const unsubscribe = onValue(postRef, (postSnapshot) => {
-                const postData = postSnapshot.val();
-                if (postData) {
-                  // Update the post at the correct index
-                  posts[index] = postData;
-                  setCreatedPosts([...posts]); // Update state with a new array reference to trigger re-render
-                }
-              });
-
-              // Add each unsubscribe function to the array for cleanup
-              unsubscribeListeners.push(() => unsubscribe());
+              const postSnapshot = await get(postRef);
+              return postSnapshot.val();
             });
-            // Clean up listeners when the component unmounts
-            return () => {
-              unsubscribeListeners.forEach((unsubscribe) => unsubscribe());
-            };
+
+            const posts = await Promise.all(postFetches);
+            setCreatedPosts(posts.filter(Boolean));
+          } else {
+            setCreatedPosts([]);
           }
         });
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  //fetching created posts from firebase
+  const fetchSavedPosts = async () => {
+    try {
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}/savedPosts`);
+        onValue(userRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Get the post IDs as an array
+            const postIds = Object.keys(data);
+
+            const postFetches = postIds.map(async (postId) => {
+              const postRef = ref(database, `postsPhuc/${postId}`);
+              const postSnapshot = await get(postRef);
+              return postSnapshot.val();
+            });
+
+            const posts = await Promise.all(postFetches);
+            setSavedPosts(posts.filter(Boolean));
+          } else {
+            setSavedPosts([]);
+          }
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //fetching hide posts from firebase
+  const fetchLikedPosts = async () => {
+    try {
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}/likedPosts`);
+        onValue(userRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Get the post IDs as an array
+            const postIds = Object.keys(data);
+
+            const postFetches = postIds.map(async (postId) => {
+              const postRef = ref(database, `postsPhuc/${postId}`);
+              const postSnapshot = await get(postRef);
+              return postSnapshot.val();
+            });
+
+            const posts = await Promise.all(postFetches);
+            setLikedPosts(posts.filter(Boolean));
+          } else {
+            setLikedPosts([]);
+          }
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    const initialize = async () => {
-      setIsLoading(true);
-      await fetchCreatedPosts(); // Set up Firebase listener for real-time updates      
-      setIsLoading(false);
-    };
-    initialize();
+    setIsLoading(true);
+
+    fetchCreatedPosts();
+    fetchSavedPosts();
+    fetchLikedPosts();
+
+    setIsLoading(false);
 
     return () => {
       if (userId) {
-        const userRef = ref(database, `accounts/${userId}/createdPosts`);
-        off(userRef);
+        const createdPostsRef = ref(
+          database,
+          `accounts/${userId}/createdPosts`
+        );
+        const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
+        const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
+        off(createdPostsRef);
+        off(savedPostsRef);
+        off(likedPostRef);
       }
     };
   }, [userId]);
 
   const FirstRoute = () => {
-    // console.log(createdPosts[0].author.avatar, "avatar 1");
     return (
       <View style={{ flex: 1, paddingBottom: 70 }}>
+        {createdPosts.length === 0 ? (
+          <>
+            <Image
+              source={require("@/assets/images/camera-circle.png")}
+              style={styles.cameraCircle}
+            />
+            <Text style={styles.noPostText}>No posts yet</Text>
+          </>
+        ) : (
+          <FlatList
+            style={{ flex: 1 }}
+            data={createdPosts}
+            renderItem={({ item, index }) => (
+              <Pressable
+                onPress={() => {
+                  router.push({
+                    pathname: "/post",
+                    params: { initialIndex: index.toString() },
+                  });
+                  setSelectedPost(createdPosts);
+                }}
+              >
+                <Image
+                  source={{ uri: item.thumbnail }}
+                  style={styles.imagesGallery}
+                />
+              </Pressable>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={3}
+          />
+        )}
+      </View>
+    );
+  };
+
+  const SecondRoute = () => (
+    <View style={{ flex: 1, paddingBottom: 70 }}>
+      {savedPosts.length === 0 ? (
+        <>
+          <Image
+            source={require("@/assets/images/camera-circle.png")}
+            style={styles.cameraCircle}
+          />
+          <Text style={styles.noPostText}>No posts yet</Text>
+        </>
+      ) : (
         <FlatList
           style={{ flex: 1 }}
-          data={createdPosts}
+          data={savedPosts}
           renderItem={({ item, index }) => (
             <Pressable
               onPress={() => {
                 router.push({
                   pathname: "/post",
                   params: { initialIndex: index.toString() },
-                }); 
-                setSelectedPost(createdPosts);
+                });
+                setSelectedPost(savedPosts);
               }}
             >
               <Image
@@ -162,60 +259,47 @@ export default function GalleryTabView() {
               />
             </Pressable>
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           numColumns={3}
         />
-      </View>
-    );
-  };
-
-  const SecondRoute = () => (
-    <View style={{ flex: 1, paddingBottom: 70, backgroundColor: "orange" }}>
-      <FlatList
-        style={{ flex: 1 }}
-        data={createdPosts}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => {
-              router.push({
-                pathname: "/post",
-              });
-            }}
-          >
-            <Image
-              source={{ uri: item.thumbnail }}
-              style={styles.imagesGallery}
-            />
-          </Pressable>
-        )}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-      />
+      )}
     </View>
   );
 
   const ThirdRoute = () => (
-    <View style={{ flex: 1, paddingBottom: 70, backgroundColor: "green" }}>
-      <FlatList
-        style={{ flex: 1 }}
-        data={createdPosts}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => {
-              router.push({
-                pathname: "/post",
-              });
-            }}
-          >
-            <Image
-              source={{ uri: item.thumbnail }}
-              style={styles.imagesGallery}
-            />
-          </Pressable>
-        )}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-      />
+    <View style={{ flex: 1, paddingBottom: 70 }}>
+      {likedPosts.length === 0 ? (
+        <>
+          <Image
+            source={require("@/assets/images/camera-circle.png")}
+            style={styles.cameraCircle}
+          />
+          <Text style={styles.noPostText}>No posts yet</Text>
+        </>
+      ) : (
+        <FlatList
+          style={{ flex: 1 }}
+          data={likedPosts}
+          renderItem={({ item, index }) => (
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: "/post",
+                  params: { initialIndex: index.toString() },
+                });
+                setSelectedPost(likedPosts);
+              }}
+            >
+              <Image
+                source={{ uri: item.thumbnail }}
+                style={styles.imagesGallery}
+              />
+            </Pressable>
+          )}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+        />
+      )}
     </View>
   );
 
@@ -234,8 +318,8 @@ export default function GalleryTabView() {
             route.key === "first"
               ? "logo-tableau"
               : route.key === "second"
-              ? "pricetags-outline"
-              : "map-outline"
+                ? "pricetags-outline"
+                : "heart-outline"
           }
           size={24}
           color={focused ? "black" : "grey"}
@@ -247,14 +331,11 @@ export default function GalleryTabView() {
   );
 
   if (isLoading) {
-    return;
-    <View style={{ flex: 2.2 }}>
-      <ActivityIndicator size="large" color="#0000ff" />;
-    </View>;
+    return <GalleryTabViewSkeleton />;
   }
 
   return (
-    <View style={{ flex: 2.2 }}>
+    <View style={{ flex: 3 }}>
       <TabView
         lazy
         navigationState={{ index, routes }}
@@ -274,5 +355,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: 0,
     marginRight: 2,
+  },
+  cameraCircle: {
+    alignSelf: "center",
+    marginTop: 30,
+  },
+  noPostText: {
+    alignSelf: "center",
+    marginTop: 10,
+    fontSize: 30,
+    fontWeight: "bold",
+    color: "#000",
   },
 });
