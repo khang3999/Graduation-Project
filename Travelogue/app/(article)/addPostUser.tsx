@@ -10,6 +10,7 @@ import {
   Image,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import IconA from "react-native-vector-icons/AntDesign";
 import Icon from "react-native-vector-icons/Fontisto";
@@ -28,7 +29,6 @@ import { Modal } from "react-native-paper";
 import { database, onValue, ref } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
-import { ImageSlider } from "react-native-image-slider-banner";
 
 const AddPostUser = () => {
   const [title, setTitle] = useState("");
@@ -46,9 +46,12 @@ const AddPostUser = () => {
   const [modalVisibleMap, setModalVisibleMap] = useState(false);
   const [modalVisibleCityImages, setModalVisibleCityImages] = useState(false);
   const [modalVisibleImage, setModalVisibleImage] = useState(false);
-  const [modalVisibleImageInfEdit, setModalVisibleImageInfEdit] = useState(false);
+  const [modalVisibleImageInfEdit, setModalVisibleImageInfEdit] =
+    useState(false);
 
-  
+  //loading
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -63,29 +66,30 @@ const AddPostUser = () => {
   >([]);
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
- 
+
   //map
   const [region, setRegion] = useState({
-    latitude: 14.0583,
+    latitude: 11.0583,
     longitude: 108.2772,
-    latitudeDelta: 8.5,
-    longitudeDelta: 8.5,
+    latitudeDelta: 9,
+    longitudeDelta: 9,
   });
-  interface Location {
+  // interface Location {
+  //   name: string;
+  //   latitude: number;
+  //   longitude: number;
+  // }
+
+  const [selectedLocation, setSelectedLocation] = useState<{
     name: string;
     latitude: number;
     longitude: number;
-  }
-
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
-    null
-  );
+  } | null>(null);
 
   const [days, setDays] = useState<
     {
       title: string;
       description: string;
-      time: string;
       activities: { time: string; activity: string }[];
     }[]
   >([]);
@@ -138,9 +142,12 @@ const AddPostUser = () => {
   // *********************************************************************
   // Xử lý Chọn Địa Điểm
   // *********************************************************************
+  //Xử lý dot
   const handleMapPress = async (event: any) => {
+    setLoadingLocation(true);
+    // console.log("Map Pressed:", event.nativeEvent);
     const { latitude, longitude } = event.nativeEvent.coordinate;
-
+    console.log("Map Pressed:", latitude, longitude);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
@@ -152,26 +159,32 @@ const AddPostUser = () => {
       );
 
       if (!response.ok) {
+        setLoadingLocation(false);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
       const data = await response.json();
+      // console.log("Data:", data);
       if (data && data.address) {
         setSelectedLocation({
           name: data.display_name,
           latitude,
           longitude,
         });
+        setLoadingLocation(false);
       } else {
+        setLoadingLocation(false);
         alert("Không tìm thấy thông tin vị trí.");
       }
     } catch (error) {
-      console.error("Error fetching location details:", error);
+      setLoadingLocation(false);
+      console.error("Error", error);
       alert("Có lỗi xảy ra khi lấy thông tin vị trí.");
     }
   };
-
+  //Search map
   const handleSearch = async () => {
+    setLoadingLocation(true);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -185,12 +198,8 @@ const AddPostUser = () => {
       );
 
       if (!response.ok) {
+        setLoadingLocation(false);
         throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Invalid content-type. Expected JSON.");
       }
 
       const data = await response.json();
@@ -203,10 +212,13 @@ const AddPostUser = () => {
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         });
+        setLoadingLocation(false);
       } else {
+        setLoadingLocation(false);
         alert("Không tìm thấy địa điểm.");
       }
     } catch (error) {
+      setLoadingLocation(false);
       console.error("Error fetching location:", error);
       alert(
         "Có lỗi xảy ra khi tìm kiếm. Vui lòng kiểm tra lại kết nối mạng hoặc từ khóa tìm kiếm."
@@ -249,11 +261,9 @@ const AddPostUser = () => {
   // *********************************************************************
   // Xử lý Chọn Ngày và Hoạt Động
   // *********************************************************************
+  //Thêm ngày hoạt động bài viết
   const addDay = () => {
-    setDays([
-      ...days,
-      { title: "", description: "", time: "", activities: [] },
-    ]);
+    setDays([...days, { title: "", description: "", activities: [] }]);
   };
   const deleteDay = (dayIndex: number) => {
     const newDays = [...days];
@@ -398,7 +408,6 @@ const AddPostUser = () => {
     setIndexEditImage(null);
     setModalVisibleImageInfEdit(false);
   };
-
   // *********************************************************************
   // Xử lý Thêm Ảnh
   // *********************************************************************
@@ -887,40 +896,47 @@ const AddPostUser = () => {
               />
             </TouchableOpacity>
           </View>
-          <MapView
-            style={styles.map}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            onPress={handleMapPress}
-            mapType="hybrid"
-          >
-            {selectedLocation && (
-              <Marker
-                coordinate={{
-                  latitude: selectedLocation.latitude,
-                  longitude: selectedLocation.longitude,
-                }}
-                title={selectedLocation.name}
-              />
+          <View style={{ height: 550 }}>
+            <MapView
+              style={styles.map}
+              region={region}
+              onRegionChangeComplete={setRegion}
+              onPress={handleMapPress}
+              mapType="hybrid"
+            >
+              {selectedLocation && (
+                <Marker
+                  coordinate={{
+                    latitude: selectedLocation.latitude,
+                    longitude: selectedLocation.longitude,
+                  }}
+                  title={selectedLocation.name}
+                />
+              )}
+            </MapView>
+            {loadingLocation && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={appColors.danger} />
+              </View>
             )}
-          </MapView>
-          <RowComponent justify="space-around">
-            <TouchableOpacity
-              style={[
-                styles.closeButton,
-                { marginRight: 10, backgroundColor: "green" },
-              ]}
-              onPress={handleSaveLocation}
-            >
-              <Text style={styles.closeButtonText}>Lưu</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.closeButton, { marginTop: 10 }]}
-              onPress={() => setModalVisibleMap(false)}
-            >
-              <Text style={[styles.closeButtonText]}>Đóng</Text>
-            </TouchableOpacity>
-          </RowComponent>
+            <RowComponent justify="space-around" styles={{ marginTop: 10 }}>
+              <TouchableOpacity
+                style={[
+                  styles.closeButton,
+                  { marginRight: 10, backgroundColor: "green" },
+                ]}
+                onPress={handleSaveLocation}
+              >
+                <Text style={styles.closeButtonText}>Lưu</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.closeButton, { marginTop: 10 }]}
+                onPress={() => setModalVisibleMap(false)}
+              >
+                <Text style={[styles.closeButtonText]}>Đóng</Text>
+              </TouchableOpacity>
+            </RowComponent>
+          </View>
         </View>
       </Modal>
 
@@ -1459,6 +1475,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 50,
     padding: 1,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: 420,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
 });
 
