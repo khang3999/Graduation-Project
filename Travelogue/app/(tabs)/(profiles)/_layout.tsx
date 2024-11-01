@@ -27,7 +27,7 @@ export default function ProfileLayout() {
         headerTitleAlign: "center", // Align title to center
       }}
     >
-      <Stack.Screen name="profile" options={{ headerShown: false }} />      
+      <Stack.Screen name="Profile" options={{ headerShown: false }} />      
       <Stack.Screen
         name="notification"
         options={{
@@ -45,7 +45,7 @@ export default function ProfileLayout() {
         }}
       />
       <Stack.Screen
-        name="editing"
+        name="Editing"
         options={{
           headerShown: true,
           title: "Edit Profile",
@@ -61,7 +61,7 @@ export default function ProfileLayout() {
         }}
       />
         <Stack.Screen
-        name="post"
+        name="Post"
         options={{
           headerShown: true,
           title: "Posts",
@@ -77,7 +77,7 @@ export default function ProfileLayout() {
         }}
         
       />
-      <Stack.Screen name="searchResult" 
+      <Stack.Screen name="SearchResult" 
        options={{
         headerShown: true,
         title: "Search Result",
@@ -91,6 +91,21 @@ export default function ProfileLayout() {
         },
         headerTitleAlign: "center",
       }}/>
+       <Stack.Screen name="ChangePassword" 
+       options={{
+        headerShown: true,
+        title: "Change Password",
+        headerStyle: {
+          backgroundColor:
+            Colors[colorScheme ? colorScheme : "light"].background,
+        },
+        headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
+        headerTitleAlign: "center",
+      }}/>
     </Stack>
+    
   );
 }

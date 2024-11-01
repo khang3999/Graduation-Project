@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 import SearchBar from '@/components/homePage/SearchBar'
 import TourList from '@/components/homePage/TourList'
 import PostList from '@/components/homePage/PostList'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const handleLogout = async () => {
   try {
@@ -16,6 +17,13 @@ const handleLogout = async () => {
   }
 };
 const Home = () => {
+  const currentUser = auth.currentUser;
+  useEffect(() => {
+    const storeUser = async () => {
+      await AsyncStorage.setItem("user", JSON.stringify(currentUser));
+    };
+    storeUser();
+  }, []);
   return (
     <View style={styles.container}>
       {/* Search bar */}

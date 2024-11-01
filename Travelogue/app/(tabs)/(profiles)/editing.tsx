@@ -21,7 +21,7 @@ import { useAccount } from "@/contexts/AccountProvider";
 
 export default function EditingProfileScreen() {  
   const {accountData} = useAccount();
-
+  
   const initialAvatarUrl =  accountData.avatar;
   const [selectedImage, setSelectedImage] = React.useState<string | null>(
     initialAvatarUrl || null
@@ -77,8 +77,7 @@ export default function EditingProfileScreen() {
     if(!validateInputs()) {
       return;
     }
-
-    const currentUser = auth.currentUser;
+    
     if (accountData) {
       setIsLoading(true);
       updateUserData(accountData.id, localUserData, selectedImage)
@@ -176,7 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   editButton: {
-    backgroundColor: "#4949D3",
+    backgroundColor: "#e74c3c",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -220,7 +219,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   saveButton: {
-    backgroundColor: "#4949D3",
+    backgroundColor: "#e74c3c",
     paddingVertical: 15,
     borderRadius: 5,
     alignItems: "center",

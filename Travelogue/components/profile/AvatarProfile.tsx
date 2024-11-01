@@ -21,10 +21,10 @@ interface AvatarProfileProps {
 }
 
 export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
-  const { accountData,searchedAccountData } = useAccount();
-  
+  const { accountData, searchedAccountData } = useAccount();
+
   const data = isSearched ? searchedAccountData : accountData;
-  console.log(searchedAccountData,"Searched data");
+  console.log(searchedAccountData, "Searched data");
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -36,7 +36,7 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
           <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
           <Text style={styles.infoText}>posts</Text>
         </View>
-       
+
       </View>
 
     </View>
@@ -45,9 +45,9 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding:24,
+    padding: 24,
     paddingTop: 30,
-    
+
   },
   row: {
     flexDirection: "row",

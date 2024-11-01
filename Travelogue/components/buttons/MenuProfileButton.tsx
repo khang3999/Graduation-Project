@@ -8,23 +8,23 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
-import { appColors } from "@/constants/appColors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 interface MenuPopupButtonProps {
   menuIcon: string;
   isDisplay: boolean;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}) => {
+const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-   // Position of the menu
+  // Position of the menu
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<TouchableOpacity>(null);
-  
+
 
   const toggleModal = () => {
     if (!isModalVisible) {
@@ -42,7 +42,8 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      await AsyncStorage.removeItem('userToken'); 
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('user');
       Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
       router.replace("/LoginScreen");
     } catch (error) {
@@ -50,10 +51,14 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
     }
   };
   const handleEditProfile = () => {
-    router.push("/editing");
+    router.push("/Editing");
   }
   if (!isDisplay) {
     return;
+  }
+  const handleChangePassword =() =>{
+    router.push('/ChangePassword')
+    return
   }
 
   return (
@@ -64,7 +69,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
         onPress={toggleModal}
         style={styles.button}
       >
-        <Icon size={24} name={menuIcon}></Icon>
+        <Icon size={24} name="menu" style={styles.icon} />
       </TouchableOpacity>
 
       {/* Menu Modal */}
@@ -72,32 +77,38 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
         <Modal
           transparent={true}
           visible={isModalVisible}
-          animationType="none"
+          animationType="fade"
           onRequestClose={toggleModal}
         >
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPressOut={toggleModal}
-          >
-            <View
-              style={[
-                styles.menu,
-                { top: menuPosition.top, left: menuPosition.left },
-              ]}
-            >
-              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                <View>
-                  <Text style={styles.menuText}>Đăng xuất</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={handleEditProfile}>
-                <View>
+          <TouchableWithoutFeedback onPress={toggleModal}>
+            <View style={styles.overlay}>
+              <View
+                style={[
+                  styles.menu,
+                  { top: menuPosition.top, left: menuPosition.left },
+                ]}
+              >
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleEditProfile}
+                >
                   <Text style={styles.menuText}>Thay đổi hồ sơ</Text>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                onPress={handleChangePassword}
+                >
+                  <Text style={styles.menuText}>Thay đổi mật khẩu</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                  <Text style={styles.menuText}>Đăng xuất</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </TouchableOpacity>
+
+          </TouchableWithoutFeedback>
+
         </Modal>
       )}
     </View>
@@ -107,46 +118,42 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon , isDisplay}
 // Styles for the components
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   button: {
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 25,
+    backgroundColor: '#f0f0f0',
   },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
+  icon: {
+    color: '#333',
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'transparent',
   },
   menu: {
-    position: "absolute",
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 15,
-    alignItems: "center",
+    position: 'absolute',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingVertical: 5,
+    width: 180,
     elevation: 5, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
   menuItem: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    width: 150,
-    alignItems: "center",
-    backgroundColor: "#FF9B45",
-    borderRadius: 5,
   },
   menuText: {
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
 });
 
-export default MenuPopupButton;
+export default MenuProfileButton;
