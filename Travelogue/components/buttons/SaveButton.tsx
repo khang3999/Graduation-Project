@@ -12,7 +12,7 @@ const SaveButton = (props: any) => {
   // Render 1 lần từ db để load các bài đã save
   useEffect(() => {
     const checkIfSaved = async () => {
-      const refPost = ref(database, `accounts/${userID}/savedList/${props.postID}`);
+      const refPost = ref(database, `accounts/${userID}/savedPosts/${props.postID}`);
       const snapshot = await get(refPost);
 
       // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
@@ -31,8 +31,8 @@ const SaveButton = (props: any) => {
 
   // Hàm set save
   const handleSave = async (postID: any, userID: any) => {
-    const refSavedList = ref(database, `accounts/${userID}/savedList/`);
-    const refPost = ref(database, `accounts/${userID}/savedList/${postID}`)
+    const refSavedList = ref(database, `accounts/${userID}/savedPosts/`);
+    const refPost = ref(database, `accounts/${userID}/savedPosts/${postID}`)
     const snapshot = await get(refPost); // Kiểm tra xem postID đã tồn tại chưa
 
     try {
@@ -45,10 +45,10 @@ const SaveButton = (props: any) => {
         await update(refSavedList, {
           [postID]: true, // Thêm postID vào savedList
         });
-        console.log(`Đã thêm ${postID} vào savedList`);
+        console.log(`Đã thêm ${postID} vào savedPosts`);
       }
     } catch (error) {
-      console.error('Lỗi khi cập nhật savedList:', error);
+      console.error('Lỗi khi cập nhật savedPosts:', error);
     }
     finally { // Đổi state
       setSaved(!saved);

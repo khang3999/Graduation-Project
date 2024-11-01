@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet,Dimensions,Animated,Easing, TouchableOpacity, TextInput } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AvatarProfile from "./AvatarProfile";
 import {
@@ -6,25 +6,17 @@ import {
   MD3Colors,
   Menu,
   Provider,
-  Divider,
+  Divider,  
 } from "react-native-paper";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
 import MenuItem from "@/components/buttons/MenuProfileButton";
-
-const Plus = () => (
-  <IconButton
-    icon="plus"
-    iconColor={MD3Colors.error10}
-    size={24}
-    onPress={() => console.log("Plus button pressed")}
-    // onPress={() => router.push("/(user)/ChangePassword")}
-    style={styles.button}
-    accessible={true}
-    accessibilityLabel="Add button"
-  />
-);
+import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton";
+import SearchButton from "@/components/buttons/SearchButton";
+import IconFeather from 'react-native-vector-icons/Feather';
+import { set } from "lodash";
+import { useAccount } from "@/contexts/AccountProvider";
 
 const Bell = () => (
   <IconButton
@@ -38,18 +30,29 @@ const Bell = () => (
   />
 );
 
+interface HeaderProfileProps {  
+  onModalOpen: () => void;
+  onModalClose: () => void;
+  handleSearch: (searchTerm: string) => void;
+}
 
-export default function HeaderProfile({userData}:any) {
+export default function HeaderProfile({ onModalOpen ,onModalClose,handleSearch}: HeaderProfileProps) {
+  const [isDisplay, setIsDisplay] = useState(true);
+  const { accountData } = useAccount();
+  if(!accountData) {
+    return <HeaderProfileSkeleton />;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>           
-        <View style={styles.headerButton}>
-          <Plus />
-          <Bell />          
-          <MenuItem menuIcon="menu" />
+        <View style={styles.headerButton}>          
+          {/* <Bell />           */}
+          <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch}/>
+          <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>
-      <AvatarProfile userData={userData}/>
+      <AvatarProfile isSearched={false}/>
     </View>
   );
 }
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",    
   },
   button: {
-    margin: 0,
+    margin: 0,        
   },
   menuContent: {
     backgroundColor: "#f2f2f2",
