@@ -52,7 +52,7 @@ export default function HeaderProfile({ onModalOpen ,onModalClose,handleSearch}:
           <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>
-      <AvatarProfile/>
+      <AvatarProfile isSearched={false}/>
     </View>
   );
 }

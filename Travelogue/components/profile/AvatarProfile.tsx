@@ -16,29 +16,27 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "@/contexts/AccountProvider";
 
 
-export default function AvatarProfile() {
-  const { accountData } = useAccount();
+interface AvatarProfileProps {
+  isSearched: boolean;
+}
+
+export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
+  const { accountData,searchedAccountData } = useAccount();
+  
+  const data = isSearched ? searchedAccountData : accountData;
+  console.log(searchedAccountData,"Searched data");
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{ uri: accountData.avatar }} />
+        <Image style={styles.avatar} source={{ uri: data.avatar }} />
 
-        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{accountData.fullname}</Text>
+        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{data.fullname}</Text>
 
         <View style={styles.column}>
-          <Text style={styles.infoText}>{accountData.totalPosts ?? null}</Text>
+          <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
           <Text style={styles.infoText}>posts</Text>
         </View>
-        {/* <Pressable
-              style={styles.button}
-              onPressIn={() =>
-                router.push({ pathname: "/editing", params: userData })
-              }
-            >
-              <Text style={styles.editText}>Edit Profile</Text>
-            </Pressable> */}
-
-
+       
       </View>
 
     </View>
@@ -47,7 +45,9 @@ export default function AvatarProfile() {
 
 const styles = StyleSheet.create({
   container: {
+    padding:24,
     paddingTop: 30,
+    
   },
   row: {
     flexDirection: "row",

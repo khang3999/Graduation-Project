@@ -9,7 +9,7 @@ export default function searchResult() {
     
   return (
     <>
-        <AvatarProfile userData={searchedAccountData}/>
+        <AvatarProfile isSearched={true}/>
         <GalleryTabView userId={searchedAccountData.id} isSearched={true}/>
     </>
   )
