@@ -4,7 +4,7 @@ import { useAccount } from '@/contexts/AccountProvider'
 import AvatarProfile from '@/components/profile/AvatarProfile';
 import { Gallery } from 'iconsax-react-native';
 import GalleryTabView from '@/components/profile/GalleryTabView';
-export default function searchResult() {
+export default function SearchResult() {
     const {searchedAccountData} = useAccount();
     
   return (
