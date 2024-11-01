@@ -161,6 +161,7 @@ const LoginScreen = ({ navigation }: any) => {
       }
       const userId = userCredential.user.uid;
       await AsyncStorage.setItem("userToken", userId);
+      
       // const storedUserId = await AsyncStorage.getItem("userToken");  
       // console.log(storedUserId);
 

@@ -23,7 +23,7 @@ const Bell = () => (
     icon="bell-outline"
     iconColor={MD3Colors.error10}
     size={24}
-    onPress={() => router.push("/notification")}
+    onPress={() => router.push("/Notification")}
     style={styles.button}
     accessible={true}
     accessibilityLabel="Notifications button"
@@ -58,8 +58,7 @@ export default function HeaderProfile({ onModalOpen ,onModalClose,handleSearch}:
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
+  container: {    
     flex: 1,
     marginTop: 20,
   },
@@ -73,6 +72,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerButton: {
+    paddingHorizontal:24,
+    paddingTop:5,
     flexDirection: "row",
     justifyContent: "space-evenly",    
   },

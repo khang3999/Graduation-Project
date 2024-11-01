@@ -5,9 +5,12 @@ import { ArrowLeft, Lock } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
 import { auth } from "@/firebase/firebaseConfig";
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "@firebase/auth";
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, User } from "@firebase/auth";
+import { useAccount } from "@/contexts/AccountProvider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ChangePassword = () => {
+  const {accountData} = useAccount();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,16 +33,25 @@ const ChangePassword = () => {
       Alert.alert('Thông báo', 'Mật khẩu mới không được trùng với mật khẩu cũ');
       return
     }
+    
+    
   try {
-  const user = auth.currentUser;
+    const userString = await AsyncStorage.getItem("user");
+    let user;
+    if (userString) {
+      user = JSON.parse(userString);
+      console.log(user.email);
+      
+    } else {
+      throw new Error('User not found');
+    }
+  
   if (user && user.email) {
     const credential = EmailAuthProvider.credential(user.email, password);
-    console.log(credential);
+    
     
     try {
-      console.log(user.uid);
       await reauthenticateWithCredential(user, credential);
-      
       await updatePassword(user, newPassword);
       console.log('Đổi mật khẩu Success');
       router.replace('/(auth)/LoginScreen');
@@ -59,13 +71,8 @@ const ChangePassword = () => {
   }
 
   return (
-    <View style={{backgroundColor: 'white',flex: 1}}>      
-      <SectionComponent>
-        <TextComponent
-          text="Đổi Mật Khẩu"
-          size={24}
-          styles={{ fontWeight: "800", margin: 5, marginBottom: 20 }}
-        />
+    <View style={{backgroundColor: 'white',flex: 1}}>
+      <SectionComponent styles={styles.container}>        
         <InputComponent
           value={password}
           placeholder="Nhập mật khẩu cũ"
@@ -104,6 +111,11 @@ const ChangePassword = () => {
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container:{
+    paddingHorizontal:24,
+    paddingTop:50
+  }
+});
 
 export default ChangePassword;
