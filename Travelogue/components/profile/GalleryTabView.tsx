@@ -209,7 +209,7 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
               <Pressable
                 onPress={() => {
                   router.push({
-                    pathname: "/post",
+                    pathname: "/Post",
                     params: { initialIndex: index.toString() },
                   });
                   setSelectedPost(createdPosts);
@@ -247,7 +247,7 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/post",
+                  pathname: "/Post",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedPost(savedPosts);
@@ -284,7 +284,7 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/post",
+                  pathname: "/Post",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedPost(likedPosts);

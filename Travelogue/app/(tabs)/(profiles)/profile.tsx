@@ -158,7 +158,7 @@ export default function ProfileScreen() {
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push({ pathname: "/searchResult" });
+                  router.push({ pathname: "/SearchResult" });
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>
