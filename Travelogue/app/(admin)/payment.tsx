@@ -1,7 +1,9 @@
 import { auth, database, onValue, ref, set } from '@/firebase/firebaseConfig';
 import { push } from '@firebase/database';
 import React, { useEffect, useState } from 'react';
-import { View, Image, ActivityIndicator, Text, TextInput, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Image, Text, TextInput, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+
+
 
 const Payment = () => {
     const [qrDataURL, setQrDataURL] = useState(null);
@@ -75,10 +77,7 @@ const Payment = () => {
         setInputText('');
     };
 
-    const saveImage = () => {
-        console.log("Image saved!");
-        closeDialog(); // Close dialog after saving
-    };
+
 
     const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
 
@@ -146,7 +145,10 @@ const Payment = () => {
         }
     };
 
-    
+
+
+
+
     //Enable Request button
     useEffect(() => {
         inputText.length > 4 ? setIsDisabled(false) : setIsDisabled(true);
@@ -236,9 +238,9 @@ const Payment = () => {
                             <Text>No QR code available</Text>
                         )}
                         <Text style={styles.dialogText}>QR code has a one-time value only</Text>
-                        <TouchableOpacity style={styles.saveButton} onPress={saveImage}>
+                        {/* <TouchableOpacity style={styles.saveButton}  >
                             <Text style={styles.saveButtonText}>Save Image</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                     </View>
                 </View>
             </Modal>
@@ -349,8 +351,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     image: {
-        width: 200,
-        height: 200,
+        width: 300,
+        height: 300,
         marginBottom: 20,
     },
     dialogText: {
