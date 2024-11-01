@@ -8,6 +8,7 @@ import { database } from "@/firebase/firebaseConfig";
 
 const Layout = () => {
   const [isAuth, setIsAuth] = useState(false);
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -16,6 +17,7 @@ const Layout = () => {
         const userRef = ref(database, "accounts/" + token);
         const snapshot = await get(userRef);
         const data = snapshot.val();
+        setRole(data.role);
 
         if (data && data.status_id === "2") {  
           setIsAuth(true);
@@ -49,7 +51,15 @@ const Layout = () => {
 
   useEffect(() => {
     if (isAuth) {
-      router.push("/(tabs)/");  
+      if (role=== "admin"){
+        router.replace('/(admin)/(account)/account')
+      }
+      else if (role === "user"){
+        router.replace("/(tabs)");
+      }
+      else {
+        console.log("Day la trang doanh ngh");
+      }
     }
   }, [isAuth]);
 

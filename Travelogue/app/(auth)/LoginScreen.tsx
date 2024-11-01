@@ -26,7 +26,7 @@ import { auth, set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
-import Toast from "react-native-toast-message";
+import Toast from "react-native-toast-message-custom";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -103,6 +103,7 @@ const LoginScreen = ({ navigation }: any) => {
       // console.log(data);
       if (data) {
         const statusId = data.status_id;
+        const role = data.role;
         console.log(statusId);
         if (statusId === "4") {
           Alert.alert(
@@ -144,9 +145,18 @@ const LoginScreen = ({ navigation }: any) => {
             type: "success",
             text1: "Đăng nhập thành công",
             text2: `Chào mừng ${data.fullname}`,
-            visibilityTime: 3000,
+            // visibilityTime: 3000,
           });
-          router.replace("/(tabs)");
+          if (role=== "admin"){
+            router.replace('/(admin)/(account)/account')
+          }
+          else if (role === "user"){
+            router.replace("/(tabs)");
+          }
+          else {
+            console.log("Day la trang doanh ngh");
+          }
+          
         }
       }
       const userId = userCredential.user.uid;
