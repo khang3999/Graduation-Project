@@ -34,7 +34,7 @@ export default function ProfileScreen() {
   }
 
   const { accountData, setAccountData, setSearchedAccountData } = useAccount();
-  const userId = auth.currentUser?.uid;
+  const [userId, setUserId] = useState<String | null>()  
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const modalAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -43,6 +43,16 @@ export default function ProfileScreen() {
   const [searchedAccountsData, setSearchedAccountsData] = useState<AccountData[]>([]);
   const [filteredData, setFilteredData] = useState<AccountData[]>([]);
   const [recentSearches, setRecentSearches] = useState<AccountData[]>([]);
+  
+  useEffect(() => {
+    const getCurrentUserToken = async () => {
+      const userToken = await AsyncStorage.getItem("userToken");
+      setUserId(userToken)    
+    }
+    getCurrentUserToken();
+  },[])
+  
+
 
   const syncUserDataWithFirebase = async () => {
     const userRef = ref(database, `accounts/${userId}`);
