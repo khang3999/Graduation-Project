@@ -27,9 +27,9 @@ export default function ProfileLayout() {
         headerTitleAlign: "center", // Align title to center
       }}
     >
-      <Stack.Screen name="Profile" options={{ headerShown: false }} />      
+      <Stack.Screen name="Profile" options={{ headerShown: false }} />
       <Stack.Screen
-        name="notification"
+        name="Notification"
         options={{
           headerShown: true,
           title: "Notifications",
@@ -60,7 +60,7 @@ export default function ProfileLayout() {
           headerTitleAlign: "center",
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="Post"
         options={{
           headerShown: true,
@@ -75,37 +75,37 @@ export default function ProfileLayout() {
           },
           headerTitleAlign: "center",
         }}
-        
+
       />
-      <Stack.Screen name="SearchResult" 
-       options={{
-        headerShown: true,
-        title: "Search Result",
-        headerStyle: {
-          backgroundColor:
-            Colors[colorScheme ? colorScheme : "light"].background,
-        },
-        headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-        headerTitleStyle: {
-          fontWeight: "bold",
-        },
-        headerTitleAlign: "center",
-      }}/>
-       <Stack.Screen name="ChangePassword" 
-       options={{
-        headerShown: true,
-        title: "Change Password",
-        headerStyle: {
-          backgroundColor:
-            Colors[colorScheme ? colorScheme : "light"].background,
-        },
-        headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-        headerTitleStyle: {
-          fontWeight: "bold",
-        },
-        headerTitleAlign: "center",
-      }}/>
+      <Stack.Screen name="SearchResult"
+        options={{
+          headerShown: true,
+          title: "Search Result",
+          headerStyle: {
+            backgroundColor:
+              Colors[colorScheme ? colorScheme : "light"].background,
+          },
+          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }} />
+      <Stack.Screen name="ChangePassword"
+        options={{
+          headerShown: true,
+          title: "Change Password",
+          headerStyle: {
+            backgroundColor:
+              Colors[colorScheme ? colorScheme : "light"].background,
+          },
+          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }} />
     </Stack>
-    
+
   );
 }
