@@ -24,7 +24,7 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
   const { accountData, searchedAccountData } = useAccount();
 
   const data = isSearched ? searchedAccountData : accountData;
-  console.log(searchedAccountData, "Searched data");
+  
   return (
     <View style={styles.container}>
       <View style={styles.row}>
