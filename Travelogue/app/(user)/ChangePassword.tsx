@@ -38,7 +38,7 @@ const ChangePassword = () => {
     
     try {
       console.log(user.uid);
-      await reauthenticateWithCredential(user, credential);
+      // await reauthenticateWithCredential(user, credential);
       
       await updatePassword(user, newPassword);
       console.log('Đổi mật khẩu Success');
