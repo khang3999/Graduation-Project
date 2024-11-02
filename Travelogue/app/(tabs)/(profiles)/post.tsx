@@ -41,10 +41,10 @@ type Comment = {
     avatar: any; // Change to ImageSourcePropType if needed
     username: string;
   };
-  comment_status: string;
+  status_id: number;
   content: string;
   reports: number;
-  children?: Comment[];
+  parentId: string | null;
   created_at: string;
 };
 
@@ -72,29 +72,6 @@ type PostItemProps = {
   setIsScrollEnabled: (value: boolean) => void;
 };
 
-const flattenComments = (comments: Comment[], level = 0) => {  
-  
-  let flatComments: { comment: Comment; level: number }[] = [];
-  
-  comments.forEach((comment) => {
-    flatComments.push({ comment, level });
-    if (comment.children) {
-      const childComments = convertFirebaseObjectToArray(comment.children);
-      flatComments = flatComments.concat(flattenComments(childComments, level + 1));
-    }
-  });
-
-  return flatComments;
-};
-
-// Helper function to convert Firebase objects to an array
-const convertFirebaseObjectToArray = (obj: any) => {
-  if (!obj) return [];
-  return Object.keys(obj).map((key) => ({
-    id: key,
-    ...obj[key],
-  }));
-};
 
 type RatingButtonProps = {
   ratingValue: number;
@@ -134,9 +111,8 @@ const PostItem: React.FC<PostItemProps> = ({
   const { accountData } = useAccount();
   
   const [comments, setComments] = useState(Object.values(item.comments));
-  const MAX_LENGTH = 100;
-  const flattenedComments = flattenComments(comments);
-  const totalComments = flattenedComments.length;
+  const MAX_LENGTH = 100;  
+  const totalComments = comments.length;
 
   const addComment = async () => {
     if (commentText.trim().length > 0) {
@@ -146,10 +122,10 @@ const PostItem: React.FC<PostItemProps> = ({
           accountData.avatar,
           username: accountData.fullname,
         },
-        comment_status: "active",
+        status_id: 1,
         reports: 0,
         content: commentText,
-        children: [],
+        parentId: replyingTo ? replyingTo.id : null,
         created_at: new Date().toLocaleString("en-US", {
           day: "numeric",
           month: "long",
@@ -157,42 +133,25 @@ const PostItem: React.FC<PostItemProps> = ({
         }),
       };
       try {
-        if (replyingTo) {
-          // Add as a reply to an existing comment
-          const parentCommentRef = ref(
-            database,
-            `postsPhuc/${item.id}/comments/${replyingTo.id}/children`
-          );
-          const newReplyRef = push(parentCommentRef);
-          
-          // Check if a key is generated
-          if (newReplyRef.key) {
-            
-            const newReply = { ...newComment, id: newReplyRef.key };
-            await set(newReplyRef, newReply);
+        const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
+        const newCommentRef = push(CommentsRef);
 
-            setComments((prevComments) =>
-              addReplyToComment(prevComments, replyingTo.id, newReply)
-            );
-            setReplyingTo(null); // Reset reply state
-          } else {
-            console.error(
-              "Error: Unable to generate a unique key for the reply."
-            );
-            // You might want to show a user-friendly error message here
-          }
-        } else {
-          // Add as a new top-level comment
-          const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
+        if (newCommentRef.key) {
+          const newCommentWithId = { ...newComment, id: newCommentRef.key };
+          await set(newCommentRef, newCommentWithId);
 
-          const newCommentRef = push(CommentsRef);
-          if (newCommentRef.key) {
-            const newTopLevelComment = { ...newComment, id: newCommentRef.key };
-            await set(newCommentRef, newTopLevelComment);
+          setComments((prevComments) => {
+            if (replyingTo) {
+              // Add as a reply with the correct `parentId`
+              return addReplyToComment(prevComments, replyingTo.id, newCommentWithId);
+            } else {
+              // Add as a top-level comment
+              return [newCommentWithId, ...prevComments];
+            }
+          });
 
-            setComments((prevComments) => [newTopLevelComment, ...prevComments]);
+          setReplyingTo(null); // Reset reply state after posting
         }
-      }
         setCommentText(""); // Clear the input field
       } catch (error) {
         console.error("Error adding comment:", error);
@@ -201,26 +160,17 @@ const PostItem: React.FC<PostItemProps> = ({
   };
   const addReplyToComment = (
     comments: Comment[],
-    commentId: string,
+    parentId: string,
     reply: Comment
   ): Comment[] => {
     return comments.map((comment) => {
-      if (comment.id === commentId) {
-        // If the comment is the one we're replying to
-        return {
-          // Return a new comment object with the reply added to its children
-          ...comment,
-          children: comment.children ? [...comment.children, reply] : [reply],
-        };
-      } else if (comment.children) {
-        // If the comment has children, recursively add the reply to the children
-        return {
-          ...comment,
-          children: addReplyToComment(comment.children, commentId, reply), // Recursively add the reply to the children
-        };
+      if (comment.id === parentId) {
+        // Set the `parentId` for the new reply
+        reply.parentId = parentId;
+        return [comment, reply]; 
       }
       return comment;
-    });
+    }).flat(); 
   };
 
   const openCommentModal = () => {
@@ -369,52 +319,24 @@ const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.commentButtonText}>Post</Text>
               </TouchableOpacity>
             </View>
-            {flattenedComments.length > 0 ? (
+            {comments.length > 0 ? (
               <FlatList
-                data={flattenedComments}
+                data={comments}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.commentContainer,
-                      { marginLeft: item.level * 20 },
-                    ]}
-                  >
-                    <View
-                      style={{ flexDirection: "row", alignItems: "flex-start" }}
-                    >
-                      <Image
-                        source={{ uri: item.comment.accountID.avatar }}
-                        style={styles.miniAvatar}
-                      />
-                      <View style={{ flexDirection: "column", marginLeft: 10 }}>
-                        <Text style={styles.commentUsername}>
-                          {item.comment.accountID.username}
-                        </Text>
-                        <Text style={styles.commentText}>
-                          {item.comment.content}
-                        </Text>
-                        <View style={{ flexDirection: "row" }}>
-                          <TouchableOpacity
-                            onPress={() =>
-                              setReplyingTo({
-                                id: item.comment.id,
-                                username: item.comment.accountID.username,
-                              })
-                            }
-                          >
-                            <Text style={styles.replyButton}>Reply</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity>
-                            <Text style={styles.replyButton}>Report</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.commentTime}>
-                        {item.comment.created_at}
-                      </Text>
+                  <View style={[styles.commentContainer, { marginLeft: item.parentId ? 20 : 0 }]}>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                    <Image source={{ uri: item.accountID.avatar }} style={styles.miniAvatar} />
+                    <View style={{ marginLeft: 10 }}>
+                      <Text style={styles.commentUsername}>{item.accountID.username}</Text>
+                      <Text style={styles.commentText}>{item.content}</Text>
+                      <TouchableOpacity onPress={() => setReplyingTo({ id: item.id, username: item.accountID.username })}>
+                        <Text style={styles.replyButton}>Reply</Text>
+                      </TouchableOpacity>
                     </View>
+                    <Text style={styles.commentTime}>{item.created_at}</Text>
                   </View>
+                </View>
                 )}
                 contentContainerStyle={{ paddingBottom: 60 }}
               />
