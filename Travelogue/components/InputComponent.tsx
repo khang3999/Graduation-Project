@@ -27,6 +27,7 @@ interface Props {
   inputStyle?: ViewStyle; 
   multiline?: boolean;
   disabled?: boolean;
+  scrollEnabled?: boolean;
 }
 
 const InputComponent = (props: Props) => {
@@ -43,6 +44,7 @@ const InputComponent = (props: Props) => {
     inputStyle, 
     multiline,
     disabled,
+    scrollEnabled,
     
   } = props;
   const [isShowPass, setIsShowPass] = useState(isPassword ?? false);
@@ -61,6 +63,7 @@ const InputComponent = (props: Props) => {
         autoCapitalize="none"
         multiline={multiline}
         editable={!disabled}
+        scrollEnabled={scrollEnabled}
       />
       {suffix ?? suffix}
       <TouchableOpacity

@@ -39,7 +39,8 @@ const AddPostUser = () => {
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-
+  const [isActivityDisable, setActivityDisable] = useState(false);
+  const [isDayDisable, setDayDisable] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -160,26 +161,23 @@ const AddPostUser = () => {
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
 
-      onValue(cityRef, (snapshot) => {
-        const data = snapshot.val() || {};
+      // Duyệt qua tất cả các quốc gia
+      const formattedData = Object.keys(data).flatMap((countryKey) => {
+        // console.log()
+        const countryData = data[countryKey];
+        // console.log("countryData:", countryData);
 
-        // Duyệt qua tất cả các quốc gia
-        const formattedData = Object.keys(data).flatMap((countryKey) => {
-          const countryData = data[countryKey];
-          // console.log("countryData:", countryData);
-
-          return Object.keys(countryData).map((cityKey) => ({
-            id: cityKey,
-            id_nuoc: countryData[cityKey].id_nuoc,
-            ...countryData[cityKey],
-          }));
-        });
-
-        setCitiesData(formattedData);
-        // console.log("$$$$$$$$$$$$$$$$$$");
-        // console.log("Cty:", formattedData);
-        // console.log(citiesData)
+        return Object.keys(countryData).map((cityKey) => ({
+          id: cityKey,
+          id_nuoc: countryData[cityKey].id_nuoc,
+          ...countryData[cityKey],
+        }));
       });
+
+      setCitiesData(formattedData);
+      // console.log("$$$$$$$$$$$$$$$$$$");
+      // console.log("Cty:", formattedData);
+      // console.log(citiesData)
     });
   }, []);
   //Lọc tỉnh thành theo nước
@@ -191,6 +189,8 @@ const AddPostUser = () => {
       setCitiesDataFilter(filteredCities);
     }
   }, [selectedCountry]);
+
+  // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress = (city: { id: string; name: string }) => () => {
     setCities([{ id: city.id, name: city.name }, ...cities]);
@@ -353,6 +353,15 @@ const AddPostUser = () => {
   // *********************************************************************
   //Thêm ngày hoạt động bài viết
   const addDay = () => {
+    //so sanh title, description, activity trước khi có thêm ngày mới
+    const existingDay = days.find(
+      (day) => day.title === "" || day.description === "" || day.activities.length === 0
+    );
+    if(existingDay){
+      Alert.alert("Thông báo", "Vui lòng hoàn thành ngày hiện tại trước khi thêm ngày mới.");
+      return;
+    }
+
     setDays([...days, { title: "", description: "", activities: [] }]);
   };
 
@@ -377,7 +386,23 @@ const AddPostUser = () => {
   };
   // Them hoat dong cho ngay do
   const addActivity = (dayIndex: number) => {
+    // so sanh time, address, activity trước khi có thêm hoạt động mới
     const newDays = [...days];
+    const existingActivity = newDays[dayIndex].activities.find(
+      (act) =>
+        act.time === "" ||
+        act.address === "" ||
+        act.activity === ""
+    );
+
+    if (existingActivity) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng hoàn thành hoạt động hiện tại trước khi thêm hoạt động mới."
+      );
+      return;
+    }
+
     //Thêm đối tượng time and activity vào mảng activities
     newDays[dayIndex].activities.push({ time: "", address: "", activity: "" });
     setDays(newDays);
@@ -484,7 +509,7 @@ const AddPostUser = () => {
   };
   //Mo modal map
   const handleOpenMap = (dayIndex: number, activityIndex: number) => {
-    console.log("Chuyen map");
+    // console.log("Chuyen map");
     setModalVisibleMap(true);
     setSelectedDayIndex(dayIndex);
     setSelectedActivityIndex(activityIndex);
@@ -496,7 +521,7 @@ const AddPostUser = () => {
     activityIndex: number,
     address: string
   ) => {
-    console.log(address);
+    // console.log(address);
     setLoadingLocation(true);
     try {
       const response = await fetch(
@@ -636,7 +661,97 @@ const AddPostUser = () => {
   // *********************************************************************
   // Xử lý Thêm Ảnh
   // *********************************************************************
+  // *********************************************************************
+  //  Xử lý Thêm Bài Viết
+  // *********************************************************************
+  const handlePushPost = () => {
+    if (cities.length === 0) {
+      Alert.alert("Thông báo", "Vui lòng chọn tỉnh thành checkin.");
+      return;
+    }
+    if (title === "") {
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (content === "") {
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
+      return;
+    }
+    
+    if (days.length === 0) {
+      Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+    // kiểm tra xem đã chọn giờ cho tất cả các hoạt động chưa
+    const existingDay = days.find(
+      (day) =>
+        day.title === "" || day.description === "" || day.activities.length === 0
+    );
+    if (existingDay) {
+      // console.log("Existing Day:", existingDay);
+       const dayIndex = days.findIndex((day) => day === existingDay);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+    const existingActivity = days.find((day) =>
+      day.activities.find(
+        (act) =>
+          act.time === "" ||
+          act.address === "" ||
+          act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = days.findIndex((day) =>
+        //So sánh ngày hiện tại với ngày có hoạt động chưa hoàn thành
+      day.activities.includes(existingActivity.activities[0])
+      );
+      Alert.alert(
+      "Thông báo",
+      `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+   
+    if (images.length === 0) {
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết.");
+      return;
+    }
 
+    // Sau khi kiểm tra hết thì push bài viết
+    //tạo markdown cho bài viết gồm tiêu đề và nội dung và day và activity
+    const markdown = `# ${title}\n\n${content}\n\n${days
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}\n\n${day.description}\n\n${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}\n\n**Địa điểm:** ${activity.address}`
+            )
+            .join("\n\n")}`
+      )
+      .join("\n\n")}`;
+      console.log(markdown);
+
+
+
+
+   
+
+    // console.log("Title:", title);
+    // console.log("Content:", content);
+    // console.log("Country:", selectedCountry);
+    // console.log("Cities:", cities);
+    // console.log("Days:", days);
+    // console.log("Images:", images);
+    // console.log("Public:", isPublic);
+  };
+
+  // Xu ly disable button
+  
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -739,7 +854,7 @@ const AddPostUser = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Chưa có tỉnh Check In
+                  Chưa có tỉnh CheckIn
                 </Text>
               ) : (
                 cities.map((city) => (
@@ -773,7 +888,13 @@ const AddPostUser = () => {
               <TouchableOpacity
                 style={[
                   styles.fixedRightButton,
-                  { width: 40, paddingLeft: 10, marginLeft: 10 },
+                  {
+                    width: 40,
+                    paddingLeft: 10,
+                    paddingBottom: 6,
+                    paddingRight: 1,
+                    marginLeft: 10,
+                  },
                 ]}
                 onPress={() => setModalVisibleCity(true)}
               >
@@ -797,6 +918,7 @@ const AddPostUser = () => {
               onChange={(val) => setTitle(val)}
               textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
               inputStyle={{
+                borderColor: appColors.gray,
                 height: 40,
                 backgroundColor: appColors.gray3,
                 borderRadius: 5,
@@ -826,6 +948,7 @@ const AddPostUser = () => {
                 height: 140,
                 borderRadius: 0,
                 backgroundColor: appColors.gray3,
+                borderColor: appColors.gray,
               }}
               multiline={true}
             />
@@ -858,7 +981,9 @@ const AddPostUser = () => {
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ marginTop: -20, fontSize: 15 }}>
+                  <Text
+                    style={{ marginTop: -20, fontSize: 15, fontWeight: "bold" }}
+                  >
                     Ngày {dayIndex + 1}
                   </Text>
                   <InputComponent
@@ -867,7 +992,8 @@ const AddPostUser = () => {
                       height: 30,
                       marginLeft: 5,
                       borderRadius: 0,
-                      backgroundColor: appColors.btnDay,
+                      backgroundColor: appColors.white,
+                      borderColor: appColors.gray,
                     }}
                     textStyle={{ color: "#000" }}
                     placeholder={`Mô tả tiêu đề ngày ${dayIndex + 1}`}
@@ -881,13 +1007,15 @@ const AddPostUser = () => {
                   {/* Danh sach hoat dong cua ngay do */}
                   {day.activities.map((activity, activityIndex) => (
                     <View key={activityIndex}>
-                      <RowComponent justify="center" styles={{ maxHeight: 70 }}>
+                      <RowComponent
+                        justify="center"
+                        styles={{ maxHeight: 70, marginBottom: 20 }}
+                      >
                         <TouchableOpacity
                           style={{
                             width: 70,
-                            height: "75%",
+                            height: "100%",
                             borderRadius: 0,
-                            marginTop: -20,
                             backgroundColor: appColors.btnaddActivity,
                             justifyContent: "center",
                             alignItems: "center",
@@ -905,45 +1033,52 @@ const AddPostUser = () => {
                             {activity.time || "Chọn giờ"}
                           </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => {
-                            // console.log(activity);
-                            if (activity.address) {
-                              handleOpenMapEdit(
-                                dayIndex,
-                                activityIndex,
-                                activity.address
-                              );
-                            } else {
-                              handleOpenMap(dayIndex, activityIndex);
-                            }
-                          }}
-                        >
-                          <InputComponent
-                            disabled={true}
-                            inputStyle={{
-                              width: 255,
-                              borderRadius: 0,
-                              backgroundColor: appColors.white,
+
+                        {/* hoat dong */}
+                        <View style={{ flex: 1 }}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              // console.log(activity);
+                              if (activity.address) {
+                                handleOpenMapEdit(
+                                  dayIndex,
+                                  activityIndex,
+                                  activity.address
+                                );
+                              } else {
+                                handleOpenMap(dayIndex, activityIndex);
+                              }
                             }}
-                            textStyle={{ color: "#000" }}
-                            placeholder={`Địa điểm hoạt động ${
-                              activityIndex + 1
-                            }`}
-                            multiline={true}
-                            value={activity.address}
-                            onChange={(text) =>
-                              updateActivity(
-                                dayIndex,
-                                activityIndex,
-                                "address",
-                                text
-                              )
-                            }
-                          />
-                        </TouchableOpacity>
+                          >
+                            <InputComponent
+                              disabled={true}
+                              inputStyle={{
+                                width: "100%",
+                                height: "83.4%",
+                                marginTop: 7,
+                                borderRadius: 0,
+                                borderColor: appColors.btnDay,
+                                backgroundColor: appColors.white,
+                              }}
+                              textStyle={{ color: "#000" }}
+                              placeholder={`Địa điểm hoạt động ${
+                                activityIndex + 1
+                              }`}
+                              multiline={true}
+                              value={activity.address}
+                              onChange={(text) =>
+                                updateActivity(
+                                  dayIndex,
+                                  activityIndex,
+                                  "address",
+                                  text
+                                )
+                              }
+                            />
+                          </TouchableOpacity>
+                        </View>
                         <TouchableOpacity
-                          style={{ marginTop: -20, marginLeft: 2 }}
+                          style={{ marginTop: 0, marginLeft: 5 }}
                           onPress={() =>
                             deleteActivity(dayIndex, activityIndex)
                           }
@@ -963,6 +1098,7 @@ const AddPostUser = () => {
                           borderRadius: 0,
                           height: 80,
                           width: "100%",
+                          borderColor: appColors.gray,
                         }}
                         placeholder={`Nhập mô tả cho hoạt động ${
                           activityIndex + 1
@@ -998,6 +1134,7 @@ const AddPostUser = () => {
                     borderRadius: 0,
                     backgroundColor: appColors.inputDay,
                     height: 100,
+                    borderColor: appColors.gray,
                   }}
                   placeholder="Nhập mô tả cho ngày"
                   value={day.description}
@@ -1027,7 +1164,7 @@ const AddPostUser = () => {
             {images.length > 0 ? (
               <View>
                 <TouchableOpacity
-                  style={styles.festivalImage}
+                  style={{ height: 160, width: 160 }}
                   onPress={() => setModalVisibleImage(true)}
                 >
                   <Image
@@ -1062,6 +1199,8 @@ const AddPostUser = () => {
                           left: 0,
                           width: 100,
                           height: 30,
+                          borderBottomEndRadius: 10,
+                          borderBottomStartRadius: 10,
                         }}
                       >
                         <Text
@@ -1161,6 +1300,8 @@ const AddPostUser = () => {
                 borderRadius: 50,
                 padding: 5,
                 width: 100,
+                borderColor: appColors.gray,
+                borderWidth: 1,
                 height: 26,
                 textAlign: "center",
               }}
@@ -1178,6 +1319,8 @@ const AddPostUser = () => {
                   ? appColors.success
                   : appColors.gray3,
                 borderRadius: 50,
+                borderColor: appColors.gray,
+                borderWidth: 1,
                 padding: 5,
                 width: 100,
                 height: 26,
@@ -1190,10 +1333,10 @@ const AddPostUser = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           <ButtonComponent
-            text="Chia sẽ"
+            text="Đăng bài"
             textStyles={{ fontWeight: "bold", fontSize: 30 }}
             color={appColors.primary}
-            onPress={() => {}}
+            onPress={handlePushPost}
           />
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
@@ -1317,7 +1460,7 @@ const AddPostUser = () => {
                 />
               </TouchableOpacity>
             </View>
-            <RowComponent styles={{marginTop: 0 }}>
+            <RowComponent styles={{ marginTop: 0 }}>
               <Text style={{ fontWeight: "bold" }}>Lưu ý: </Text>
               <Text style={{ fontSize: 12, color: appColors.danger }}>
                 Nhấn giữ để chọn vị trí trên bản đồ
@@ -1733,12 +1876,13 @@ const styles = StyleSheet.create({
   },
   //checkin
   checkin: {
+    borderWidth: 1,
+    borderColor: "#ccc",
     width: "48%",
     marginLeft: 15,
     height: 30,
     backgroundColor: appColors.gray3,
     borderRadius: 8,
-    borderColor: "#000",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -1754,9 +1898,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   leftButtons: {
+    paddingLeft: 5,
+    paddingTop: 1.3,
     flexDirection: "row",
   },
   fixedRightButton: {
+    borderWidth: 1,
+    borderColor: appColors.gray2,
     shadowColor: "#000",
     padding: 10,
     height: 40,
@@ -1775,6 +1923,10 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.btncity,
     borderRadius: 30,
     marginRight: 10,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3.5,
+    elevation: 10,
   },
   textbtncities: {
     textAlign: "center",
@@ -1788,6 +1940,8 @@ const styles = StyleSheet.create({
   },
   //them ngay
   dayContainer: {
+    borderColor: appColors.gray,
+    borderWidth: 1,
     margin: 15,
     padding: 10,
     backgroundColor: appColors.gray3,
@@ -1803,6 +1957,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   addButton: {
+    borderWidth: 1,
     borderRadius: 50,
     backgroundColor: appColors.btnDay,
     width: 150,
@@ -1863,6 +2018,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   festivalImage: {
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 12,
     width: 160,
     height: 160,
   },
