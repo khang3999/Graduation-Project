@@ -28,7 +28,7 @@ import {
   TextComponent,
 } from "@/components";
 import { Checkbox, Modal } from "react-native-paper";
-import { database, onValue, ref } from "@/firebase/firebaseConfig";
+import { database, onValue, ref, push, auth } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
 
@@ -54,10 +54,12 @@ const AddPostUser = () => {
     }[]
   >([]);
   const [citiesDataFilter, setCitiesDataFilter] = useState<
-    { id: string; name: string }[]
+    { id: string; name: string; id_nuoc: string }[]
   >([]);
 
-  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
+  const [cities, setCities] = useState<
+    { id: string; name: string; id_nuoc: string }[]
+  >([]);
 
   //Modal
   const [modalVisibleCity, setModalVisibleCity] = useState(false);
@@ -85,10 +87,14 @@ const AddPostUser = () => {
   const [selectedCityForImages, setSelectedCityForImages] = useState<{
     id: string;
     name: string;
+    id_nuoc: string;
   } | null>(null);
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
-    { city: { id: string; name: string } | null; images: string[] }[]
+    {
+      city: { id: string; name: string; id_nuoc: string } | null;
+      images: string[];
+    }[]
   >([]);
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
@@ -192,10 +198,14 @@ const AddPostUser = () => {
 
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
-  const handCityPress = (city: { id: string; name: string }) => () => {
-    setCities([{ id: city.id, name: city.name }, ...cities]);
-    setModalVisibleCity(false);
-  };
+  const handCityPress =
+    (city: { id: string; name: string; id_nuoc: string }) => () => {
+      setCities([
+        { id: city.id, name: city.name, id_nuoc: city.id_nuoc },
+        ...cities,
+      ]);
+      setModalVisibleCity(false);
+    };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: String) => {
@@ -355,10 +365,16 @@ const AddPostUser = () => {
   const addDay = () => {
     //so sanh title, description, activity trước khi có thêm ngày mới
     const existingDay = days.find(
-      (day) => day.title === "" || day.description === "" || day.activities.length === 0
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
     );
-    if(existingDay){
-      Alert.alert("Thông báo", "Vui lòng hoàn thành ngày hiện tại trước khi thêm ngày mới.");
+    if (existingDay) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng hoàn thành ngày hiện tại trước khi thêm ngày mới."
+      );
       return;
     }
 
@@ -389,10 +405,7 @@ const AddPostUser = () => {
     // so sanh time, address, activity trước khi có thêm hoạt động mới
     const newDays = [...days];
     const existingActivity = newDays[dayIndex].activities.find(
-      (act) =>
-        act.time === "" ||
-        act.address === "" ||
-        act.activity === ""
+      (act) => act.time === "" || act.address === "" || act.activity === ""
     );
 
     if (existingActivity) {
@@ -581,7 +594,11 @@ const AddPostUser = () => {
   // *********************************************************************
   //Xử lý chỗ chọn thành phố của ảnh
   const handCityImagesPress = (city: any) => () => {
-    const selectedCity = { id: city.id, name: city.name };
+    const selectedCity = {
+      id: city.id,
+      name: city.name,
+      id_nuoc: city.id_nuoc,
+    };
     setSelectedCityForImages(selectedCity);
     setModalVisibleCityImages(false);
   };
@@ -677,7 +694,7 @@ const AddPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
-    
+
     if (days.length === 0) {
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
       return;
@@ -685,11 +702,13 @@ const AddPostUser = () => {
     // kiểm tra xem đã chọn giờ cho tất cả các hoạt động chưa
     const existingDay = days.find(
       (day) =>
-        day.title === "" || day.description === "" || day.activities.length === 0
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
     );
     if (existingDay) {
       // console.log("Existing Day:", existingDay);
-       const dayIndex = days.findIndex((day) => day === existingDay);
+      const dayIndex = days.findIndex((day) => day === existingDay);
       Alert.alert(
         "Thông báo",
         `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
@@ -698,35 +717,35 @@ const AddPostUser = () => {
     }
     const existingActivity = days.find((day) =>
       day.activities.find(
-        (act) =>
-          act.time === "" ||
-          act.address === "" ||
-          act.activity === ""
+        (act) => act.time === "" || act.address === "" || act.activity === ""
       )
     );
     if (existingActivity) {
       const dayIndex = days.findIndex((day) =>
         //So sánh ngày hiện tại với ngày có hoạt động chưa hoàn thành
-      day.activities.includes(existingActivity.activities[0])
+        day.activities.includes(existingActivity.activities[0])
       );
       Alert.alert(
-      "Thông báo",
-      `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1}.`
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
       );
       return;
     }
-   
+
     if (images.length === 0) {
       Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết.");
       return;
     }
 
     // Sau khi kiểm tra hết thì push bài viết
-    //tạo markdown cho bài viết gồm tiêu đề và nội dung và day và activity
-    const markdown = `# ${title}\n\n${content}\n\n${days
+    const contents = `# ${title}\n\n${content}\n\n${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}\n\n${day.description}\n\n${day.activities
+          `## **Ngày ${index + 1}:** ${day.title}\n\n${
+            day.description
+          }\n\n${day.activities
             .map(
               (activity) =>
                 `### ${activity.time} - ${activity.activity}\n\n**Địa điểm:** ${activity.address}`
@@ -734,24 +753,81 @@ const AddPostUser = () => {
             .join("\n\n")}`
       )
       .join("\n\n")}`;
-      console.log(markdown);
+    // console.log(markdown);
 
-
-
-
-   
-
-    // console.log("Title:", title);
-    // console.log("Content:", content);
-    // console.log("Country:", selectedCountry);
-    // console.log("Cities:", cities);
-    // console.log("Days:", days);
     // console.log("Images:", images);
-    // console.log("Public:", isPublic);
-  };
+    // console.log("Cities:", cities);
 
-  // Xu ly disable button
-  
+    //Lưu lên firebase
+    const postData = {
+      countries: cities.reduce((acc: { [key: string]: any }, city) => {
+        const { id_nuoc, id, name } = city;
+
+        // Kiểm tra nếu chưa có country (id_nuoc) trong acc thì thêm mới
+        if (id_nuoc && !acc[id_nuoc]) {
+          acc[id_nuoc] = {
+            id_nuoc: id_nuoc,
+            cities: [],
+            images: [],
+          };
+        }
+        // Thêm city vào country tương ứng
+        acc[id_nuoc].cities.push({
+          id: id,
+          name: name,
+        });
+
+        return acc;
+      }, {}),
+      contents,
+      isPublic,
+      isCheckIn,
+      images: images.reduce((acc: { [key: string]: any }, image) => {
+        const { id_nuoc, id, name } = image.city || {};
+
+        if (id_nuoc) {
+          // Kiểm tra nếu chưa có country (id_nuoc) trong acc thì thêm mới
+          if (!acc[id_nuoc]) {
+            acc[id_nuoc] = {
+              id_nuoc: id_nuoc,
+              cities: [],
+              images: [],
+            };
+          }
+
+          // Thêm mảng hình ảnh vào country tương ứng
+          acc[id_nuoc].images.push({
+            city: {
+              id: id,
+              name: name,
+            },
+            images: image.images,
+          });
+        }
+
+        return acc;
+      }, {}),
+
+      timestamp: new Date().toISOString(),
+    };
+
+    const db = database;
+    const postsRef = ref(db, "posts");
+    push(postsRef, postData)
+      .then(() => {
+        //Code đi
+        Alert.alert("Thông báo", "Thêm bài viết thành công");
+        router.replace("/(tabs)/");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Alert.alert("Lỗi", "Không thể thêm bài viết.");
+      });
+  };
+  // *********************************************************************
+  //  Xử lý Thêm Bài Viết
+  // *********************************************************************
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
