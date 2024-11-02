@@ -17,13 +17,8 @@ const handleLogout = async () => {
   }
 };
 const Home = () => {
-  const currentUser = auth.currentUser;
-  useEffect(() => {
-    const storeUser = async () => {
-      await AsyncStorage.setItem("user", JSON.stringify(currentUser));
-    };
-    storeUser();
-  }, []);
+
+ 
   return (
     <View style={styles.container}>
       {/* Search bar */}
