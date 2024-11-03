@@ -28,9 +28,22 @@ import {
   TextComponent,
 } from "@/components";
 import { Checkbox, Modal } from "react-native-paper";
-import { database, onValue, ref, push, auth } from "@/firebase/firebaseConfig";
+import {
+  database,
+  onValue,
+  ref,
+  push,
+  auth,
+  storageRef,
+  uploadBytes,
+  getDownloadURL,
+  set,
+} from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
+import { getStorage } from "firebase/storage";
+import { child } from "firebase/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddPostUser = () => {
   interface Country {
@@ -39,13 +52,11 @@ const AddPostUser = () => {
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-  const [isActivityDisable, setActivityDisable] = useState(false);
-  const [isDayDisable, setDayDisable] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const [citiesData, setCitiesData] = useState<
     {
       id_nuoc: string;
@@ -208,7 +219,17 @@ const AddPostUser = () => {
     };
 
   //Remove tinh thanh de chon
-  const removeCity = (cityId: String) => {
+  const removeCity = (cityId: string) => {
+    //kiểm tra thử mảng ảnh có chứa thành phố đó không
+    const isExist = images.find((image) => image.city?.id === cityId);
+    if (isExist) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng xóa ảnh chứa thành phố này trước khi xóa thành phố."
+      );
+      return;
+    }
+    //Xóa thành phố
     const newCities = cities.filter((city) => city.id !== cityId);
     setCities(newCities);
   };
@@ -681,7 +702,7 @@ const AddPostUser = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
-  const handlePushPost = () => {
+  const handlePushPost = async () => {
     if (cities.length === 0) {
       Alert.alert("Thông báo", "Vui lòng chọn tỉnh thành checkin.");
       return;
@@ -694,12 +715,11 @@ const AddPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
-
     if (days.length === 0) {
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
       return;
     }
-    // kiểm tra xem đã chọn giờ cho tất cả các hoạt động chưa
+
     const existingDay = days.find(
       (day) =>
         day.title === "" ||
@@ -707,7 +727,6 @@ const AddPostUser = () => {
         day.activities.length === 0
     );
     if (existingDay) {
-      // console.log("Existing Day:", existingDay);
       const dayIndex = days.findIndex((day) => day === existingDay);
       Alert.alert(
         "Thông báo",
@@ -715,6 +734,7 @@ const AddPostUser = () => {
       );
       return;
     }
+
     const existingActivity = days.find((day) =>
       day.activities.find(
         (act) => act.time === "" || act.address === "" || act.activity === ""
@@ -722,7 +742,6 @@ const AddPostUser = () => {
     );
     if (existingActivity) {
       const dayIndex = days.findIndex((day) =>
-        //So sánh ngày hiện tại với ngày có hoạt động chưa hoàn thành
         day.activities.includes(existingActivity.activities[0])
       );
       Alert.alert(
@@ -739,90 +758,120 @@ const AddPostUser = () => {
       return;
     }
 
-    // Sau khi kiểm tra hết thì push bài viết
-    const contents = `# ${title}\n\n${content}\n\n${days
+    const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}\n\n${
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
             day.description
-          }\n\n${day.activities
+          }<br><br>${day.activities
             .map(
               (activity) =>
-                `### ${activity.time} - ${activity.activity}\n\n**Địa điểm:** ${activity.address}`
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
             )
-            .join("\n\n")}`
+            .join("<br><br>")}`
       )
-      .join("\n\n")}`;
-    // console.log(markdown);
+      .join("<br><br>")}`;
 
-    // console.log("Images:", images);
-    // console.log("Cities:", cities);
+    const today = new Date().toISOString().split("T")[0];
 
-    //Lưu lên firebase
-    const postData = {
-      countries: cities.reduce((acc: { [key: string]: any }, city) => {
-        const { id_nuoc, id, name } = city;
+    const storage = getStorage();
+    const uploadedImageUrls: {
+      [key: string]: {
+        [key: string]: { city_name: string; images_value: string[] };
+      };
+    } = {};
 
-        // Kiểm tra nếu chưa có country (id_nuoc) trong acc thì thêm mới
-        if (id_nuoc && !acc[id_nuoc]) {
-          acc[id_nuoc] = {
-            id_nuoc: id_nuoc,
-            cities: [],
-            images: [],
-          };
+    try {
+      const db = database;
+      const postsRef = ref(db, "posts");
+      const newPostRef = push(postsRef);
+      const postId = newPostRef.key;
+
+      for (const image of images) {
+        const { city, images: imageUris } = image;
+        const { id_nuoc, id, name: cityName } = city || {};
+
+        for (const uri of imageUris) {
+          const name = uri.split("/").pop();
+
+          if (id_nuoc && id) {
+            const imageRef = storageRef(
+              storage,
+              `posts/${postId}/images/${name}`
+            );
+            const response = await fetch(uri);
+            const blob = await response.blob();
+
+            // Tải ảnh lên Firebase Storage
+            await uploadBytes(imageRef, blob);
+            const downloadURL = await getDownloadURL(imageRef);
+
+            // Cấu trúc URL ảnh theo tỉnh thành
+            if (!uploadedImageUrls[id_nuoc]) {
+              uploadedImageUrls[id_nuoc] = {};
+            }
+            if (!uploadedImageUrls[id_nuoc][id]) {
+              uploadedImageUrls[id_nuoc][id] = {
+                city_name: cityName || "",
+                images_value: [],
+              };
+            }
+            uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
+          }
         }
-        // Thêm city vào country tương ứng
-        acc[id_nuoc].cities.push({
-          id: id,
-          name: name,
+
+        //Lay avatar fullname id user
+        const userId = await AsyncStorage.getItem("userToken");
+        console.log("userId:", userId);
+        const userRef = ref(database, `accounts/${userId}`);
+        let avatar = "";
+        let fullname = "";
+        onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            avatar = data.avatar;
+            fullname = data.fullname;
+          }
         });
 
-        return acc;
-      }, {}),
-      contents,
-      isPublic,
-      isCheckIn,
-      images: images.reduce((acc: { [key: string]: any }, image) => {
-        const { id_nuoc, id, name } = image.city || {};
+        // Cấu trúc dữ liệu bài viết với URL ảnh
+        const postData = {
+          locations: cities.reduce(
+            (acc: { [key: string]: { [key: string]: string } }, city) => {
+              const { id_nuoc, id, name } = city;
 
-        if (id_nuoc) {
-          // Kiểm tra nếu chưa có country (id_nuoc) trong acc thì thêm mới
-          if (!acc[id_nuoc]) {
-            acc[id_nuoc] = {
-              id_nuoc: id_nuoc,
-              cities: [],
-              images: [],
-            };
-          }
+              if (id_nuoc && !acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
 
-          // Thêm mảng hình ảnh vào country tương ứng
-          acc[id_nuoc].images.push({
-            city: {
-              id: id,
-              name: name,
+              acc[id_nuoc][id] = name;
+
+              return acc;
             },
-            images: image.images,
-          });
+            {}
+          ),
+          contents,
+          isPublic,
+          isCheckIn,
+          author: { id: userId, avatar: avatar, fullname: fullname },
+          images: uploadedImageUrls,
+          datePost: today,
+        };
+
+        // Lưu bài viết vào Realtime Database
+        if (postId) {
+          await set(newPostRef, postData);
+        } else {
+          throw new Error("Failed to generate post ID.");
         }
 
-        return acc;
-      }, {}),
-
-      timestamp: new Date().toISOString(),
-    };
-
-    const db = database;
-    const postsRef = ref(db, "posts");
-    push(postsRef, postData)
-      .then(() => {
-        //Code đi
         Alert.alert("Thông báo", "Thêm bài viết thành công");
         router.replace("/(tabs)/");
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        Alert.alert("Lỗi", "Không thể thêm bài viết.");
-      });
+      }
+    } catch (error) {
+      console.error("Error uploading images or saving post:", error);
+      Alert.alert("Lỗi", "Không thể thêm bài viết.");
+    }
   };
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
@@ -1368,37 +1417,41 @@ const AddPostUser = () => {
             justify="space-between"
           >
             <TextComponent
-              text="Public"
+              text="Private"
               size={14}
               styles={{
-                fontWeight: "light",
-                backgroundColor: isPublic ? appColors.success : appColors.gray3,
+                fontWeight: "heavy",
+                backgroundColor: !isPublic
+                  ? appColors.danger
+                  : appColors.gray3,
+                color: !isPublic ? appColors.white : "#000",
                 borderRadius: 50,
-                padding: 5,
-                width: 100,
                 borderColor: appColors.gray,
                 borderWidth: 1,
+                padding: 5,
+                width: 100,
                 height: 26,
                 textAlign: "center",
               }}
             />
             <Switch
               value={isPublic}
+              trackColor={{ true: appColors.success, false: appColors.danger }}
+              thumbColor={isPublic ? appColors.success : appColors.danger }
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
-              text="Private"
+              text="Public"
               size={14}
               styles={{
-                fontWeight: "heavy",
-                backgroundColor: !isPublic
-                  ? appColors.success
-                  : appColors.gray3,
+                fontWeight: "light",
+                color: isPublic ? appColors.gray : "#000",
+                backgroundColor: isPublic ? appColors.success : appColors.gray3,
                 borderRadius: 50,
-                borderColor: appColors.gray,
-                borderWidth: 1,
                 padding: 5,
                 width: 100,
+                borderColor: appColors.gray,
+                borderWidth: 1,
                 height: 26,
                 textAlign: "center",
               }}
@@ -1881,9 +1934,9 @@ const AddPostUser = () => {
             <Text style={[styles.modalTitle, { fontSize: 23 }]}>
               Chọn Tỉnh Thành Cho Ảnh
             </Text>
-            {citiesDataFilter.length > 0 ? (
+            {cities.length > 0 ? (
               <FlatList
-                data={citiesDataFilter}
+                data={cities}
                 keyExtractor={(item) => item.id}
                 style={[styles.countryList]}
                 renderItem={({ item }) => {
@@ -1910,7 +1963,10 @@ const AddPostUser = () => {
                 }}
               />
             ) : (
-              <Text>Chưa chọn quốc gia trước khi chọn thành phố</Text>
+              <View>
+                <Text>Chưa có tỉnh thành nào cho ảnh. </Text>
+                <Text>Vui lòng thêm tỉnh thành cho bài viết trước.</Text>
+              </View>
             )}
             <View style={styles.separator} />
 

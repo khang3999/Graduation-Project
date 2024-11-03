@@ -86,7 +86,6 @@ const LoginScreen = ({ navigation }: any) => {
         password
       );
       const user = userCredential.user;
-
       if (!user.emailVerified) {
         Alert.alert(
           "Email chưa xác nhận",

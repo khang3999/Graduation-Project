@@ -35,7 +35,7 @@ const Home = () => {
       <TourList></TourList>
       {/* Post Section */}
       <Text style={[styles.textCategory]}>Những bài viết mới</Text>
-      <PostList></PostList>
+      {/* <PostList></PostList> */}
       {/* <ButtonComponent
         text="Đăng xuất"
         color={appColors.danger}
