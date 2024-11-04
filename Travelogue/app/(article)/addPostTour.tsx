@@ -27,7 +27,7 @@ import {
   InputComponent,
   TextComponent,
 } from "@/components";
-import { Checkbox, Modal } from "react-native-paper";
+import { Checkbox, Modal, RadioButton } from "react-native-paper";
 import {
   database,
   onValue,
@@ -45,8 +45,10 @@ import { getStorage } from "firebase/storage";
 import { child } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
+import PackageCard from "@/components/cart/PackageCard";
+import { UserRegister } from "@/model/UserRegister";
 
-const AddPostUser = () => {
+const AddPostTour = () => {
   interface Country {
     id: string;
     [key: string]: any;
@@ -140,6 +142,34 @@ const AddPostUser = () => {
     number | null
   >(null);
 
+  //Packages
+  const [selectedPackage, setSelectedPackage] = useState("");
+  const [packages, setPackages] = useState<any[]>([]);
+  const [packageData, setPackageData] = useState<any[]>([]);
+
+  //Lưu trữ thông tin người dùng
+  const [account, setAccount] = useState<UserRegister | null>(null);
+
+  //*********************************************************************
+  // Xử lý ngươi dùng
+  //*********************************************************************
+  //Lấy thông tin người dùng
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await AsyncStorage.getItem("userToken");
+      console.log("User:", userId);
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}`);
+        onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          console.log("Data:", data);
+          setAccount(data);
+        });
+      }
+    };
+    fetchUserId();
+  }, []);
+  console.log("Account:", account);
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -769,10 +799,10 @@ const AddPostUser = () => {
     }
     //So sanh xem tinh thanh do da co anh chua
     // const exist = images.map((image) => image.city?.id)
-             
+
     // console.log("888", exist)
     // const missingCities = cities.filter(city => !exist.includes(city.id));
-     
+
     // if (missingCities.length > 0) {
     //   setButtonPost(false);
     //   Alert.alert(
@@ -796,7 +826,7 @@ const AddPostUser = () => {
       )
       .join("<br><br>")}`;
 
-      const timestamp = Date.now();
+    const timestamp = Date.now();
 
     const storage = getStorage();
     const uploadedImageUrls: {
@@ -806,7 +836,7 @@ const AddPostUser = () => {
     } = {};
 
     try {
-        //Tạo bảng
+      //Tạo bảng
       const postsRef = ref(database, "postsH");
       //Tạo id bài viết
       const newPostRef = push(postsRef);
@@ -819,19 +849,19 @@ const AddPostUser = () => {
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
         const { id_nuoc, id, name: cityName } = city || {};
-        
+
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
           //lấy phần tử cuối để đặc tên ảnh
           const name = uri.split("/").pop();
-            // console.log("Name", name);
-            
+          // console.log("Name", name);
+
           if (id_nuoc && id) {
             const imageRef = storageRef(
               storage,
               `posts/${postId}/images/${name}`
             );
-             //gửi yêu cầu HTTP để tải ảnh từ uri
+            //gửi yêu cầu HTTP để tải ảnh từ uri
             const response = await fetch(uri);
             //chuyển đổi dữ liệu thành Blob trc khi tải lên
             const blob = await response.blob();
@@ -863,7 +893,7 @@ const AddPostUser = () => {
 
         //Lay avatar fullname id user
         const userId = await AsyncStorage.getItem("userToken");
-        // console.log("userId:", userId);
+        console.log("userId:", userId);
         const userRef = ref(database, `accounts/${userId}`);
         let avatar = "";
         let fullname = "";
@@ -913,7 +943,7 @@ const AddPostUser = () => {
           text2: "Thêm bài viết thành công",
           visibilityTime: 2000,
         });
-         router.replace("/(tabs)/");
+        // router.replace("/(tabs)/");
       }
     } catch (error) {
       setButtonPost(false);
@@ -923,6 +953,46 @@ const AddPostUser = () => {
   };
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
+  // *********************************************************************
+
+  // *********************************************************************
+  // Xử lý Packages
+  // *********************************************************************
+ //Đọc dữ liệu từ firebase
+  useEffect(() => {
+    const packagesRef = ref(database, "packages");
+
+    onValue(packagesRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const formattedPackages = Object.keys(data).map((key) => ({
+        packageId: key,
+        ...data[key],
+      }));
+      setPackages(formattedPackages);
+    });
+    
+  }, []);
+   
+  useEffect(() => {
+     //Sắp xếp tăng dần theo giá đã tính cả giảm giá
+     const sortedPackages = [...packages].sort((a, b) => {
+      const finalPriceA = a.price - (a.price * a.discount) / 100;
+      const finalPriceB = b.price - (b.price * b.discount) / 100;
+      return finalPriceA - finalPriceB;
+    });
+    setPackageData(sortedPackages);
+
+    // console.log("Packages:", packageData);
+    //Chọn gói đầu tiên
+    if (sortedPackages.length > 0) {
+      setSelectedPackage(sortedPackages[0].packageId);
+    }
+  },[packages]);
+
+
+
+  // *********************************************************************
+  // Xử lý Packages
   // *********************************************************************
 
   return (
@@ -1078,8 +1148,111 @@ const AddPostUser = () => {
             )}
           </SectionComponent>
 
+          {/* packages */}
+          <SectionComponent
+            styles={{
+              height: 230,
+              borderRadius: 10,
+              marginHorizontal: 15,
+              padding: 10,
+              backgroundColor: appColors.gray3,
+            }}
+          >
+            <View style={{ marginBottom: 10 }}>
+              <RowComponent>
+                <TextComponent
+                  text="Tài khoản: "
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                />
+                {(account?.balance ?? 0) > 0 && (
+                  <TextComponent
+                    text= {new Intl.NumberFormat('vi-VN', {
+                      style: 'decimal',
+                    }).format(account?.balance || 0)}
+                    size={14}
+                    styles={{
+                      fontWeight: "400",
+                      color: appColors.danger,
+                      marginBottom: 5,
+                      fontStyle: "italic",
+                    }}
+                  />
+                )}
+                <TextComponent
+                  text=" VNĐ"
+                  size={14}
+                  styles={{
+                    fontWeight: "regular",
+                    color: "#000",
+                    marginBottom: 5,
+                  }}
+                />
+              </RowComponent>
+              <RowComponent>
+                <TextComponent
+                  text="Chọn gói "
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                />
+                <TextComponent
+                  text="*"
+                  size={14}
+                  styles={{
+                    fontWeight: "400",
+                    color: appColors.danger,
+                    marginBottom: 5,
+                  }}
+                />
+                <TextComponent
+                  text=" :"
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                />
+              </RowComponent>
+              <SectionComponent>
+                {/* Chọn package */}
+
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  style={{ width: "100%" }}
+                >
+                  {packageData.map((item, index) =>
+                    // không đủ tiền thì disable
+                    (account?.balance ?? 0) <
+                    item.price - item.price * (item.discount / 100) ? (
+                      <PackageCard
+                        key={index}
+                        name={item.name}
+                        price={item.price}
+                        discount={item.discount}
+                        hashtag={item.hashtag}
+                        packageId={item.id}
+                        selectedPackage={selectedPackage}
+                        disabled={true}
+                        onSelect={(id: any) => setSelectedPackage(id)}
+                      />
+                    ) : (
+                      <PackageCard
+                        key={index}
+                        name={item.name}
+                        price={item.price}
+                        discount={item.discount}
+                        hashtag={item.hashtag}
+                        packageId={item.id}
+                        selectedPackage={selectedPackage}
+                        onSelect={(id: any) => setSelectedPackage(id)}
+                      />
+                    )
+                  )}
+                </ScrollView>
+              </SectionComponent>
+            </View>
+          </SectionComponent>
+
           {/* Title */}
-          <SectionComponent styles={{ marginTop: -135, marginBottom: -15 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: -15 }}>
             <TextComponent
               text="Tiêu đề"
               size={16}
@@ -1469,9 +1642,7 @@ const AddPostUser = () => {
               size={14}
               styles={{
                 fontWeight: "heavy",
-                backgroundColor: !isPublic
-                  ? appColors.danger
-                  : appColors.gray3,
+                backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
                 color: !isPublic ? appColors.white : "#000",
                 borderRadius: 50,
                 borderColor: appColors.gray,
@@ -1485,7 +1656,7 @@ const AddPostUser = () => {
             <Switch
               value={isPublic}
               trackColor={{ true: appColors.success, false: appColors.danger }}
-              thumbColor={isPublic ? appColors.success : appColors.danger }
+              thumbColor={isPublic ? appColors.success : appColors.danger}
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
@@ -1509,23 +1680,21 @@ const AddPostUser = () => {
 
         {/* Nút chia sẻ */}
         <SectionComponent>
-         {
-          buttonPost ? (
+          {buttonPost ? (
             <ButtonComponent
-            text="Đang đăng bài ..."
-            textStyles={{ fontWeight: "bold", fontSize: 30 }}
-            color={appColors.primary}
-            disabled={true}
-          />
+              text="Đang đăng bài ..."
+              textStyles={{ fontWeight: "bold", fontSize: 30 }}
+              color={appColors.primary}
+              disabled={true}
+            />
           ) : (
             <ButtonComponent
-            text="Đăng bài"
-            textStyles={{ fontWeight: "bold", fontSize: 30 }}
-            color={appColors.primary}
-            onPress={handlePushPost}
-          />
-          )
-         }
+              text="Đăng bài"
+              textStyles={{ fontWeight: "bold", fontSize: 30 }}
+              color={appColors.primary}
+              onPress={handlePushPost}
+            />
+          )}
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
         {/* Modal chọn quốc gia */}
@@ -2037,7 +2206,6 @@ const AddPostUser = () => {
             </TouchableOpacity>
           </View>
         </Modal>
-        
       </View>
     </KeyboardAvoidingView>
   );
@@ -2086,7 +2254,7 @@ const styles = StyleSheet.create({
   //cities
   cities: {
     flexDirection: "row",
-    height: 200,
+    height: 70,
     justifyContent: "flex-start",
   },
   leftButtons: {
@@ -2285,7 +2453,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
- 
+
   // Chọn đất nước
   countrySelector: {
     backgroundColor: "#ccc",
@@ -2321,4 +2489,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPostUser;
+export default AddPostTour;

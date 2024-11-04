@@ -653,7 +653,7 @@ const Map = () => {
           </View>
         </Modal>
         {/* BottomSheet le hoi */}
-        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={480}>
+        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={460}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
@@ -876,12 +876,12 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   sheetContent: {
-    padding: 30,
+    padding: 16,
     borderRadius: 20,
   },
   festivalImage: {
-    width: 350,
-    height: 200,
+    width: "100%",
+    height: 250,
   },
   closeButton: {
     width: 100,
