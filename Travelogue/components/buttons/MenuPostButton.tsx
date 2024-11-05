@@ -38,6 +38,10 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
     setModalVisible(!isModalVisible);
   };
 
+  const handleReportPost = () => {
+    
+  }
+
   return (
     <View style={styles.container}>
     {/* Button to open the menu */}
@@ -73,10 +77,6 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
                 <Icon name="trash-can-outline" size={20} style={styles.menuIcon} />
                 <Text style={styles.menuText}>Xóa</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity style={styles.menuItem}>
-                <Icon name="send" size={20} style={styles.menuIcon} />
-                <Text style={styles.menuText}>Báo cáo</Text>
-              </TouchableOpacity> */}
             </View>
           </View>
 
@@ -98,7 +98,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
               { top: menuPosition.top, left: menuPosition.left },
             ]}
           >           
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleReportPost}>
               <Icon name="send" size={20} style={styles.menuIcon} />
               <Text style={styles.menuText}>Báo cáo</Text>
             </TouchableOpacity>

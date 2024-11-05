@@ -309,9 +309,12 @@ const PostItem: React.FC<PostItemProps> = ({
       { cancelable: true }
     );
   };
-  
-  
 
+  //handle report comment
+  const handleReportComment = (comment: Comment) => {
+
+  }
+  
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
@@ -504,7 +507,7 @@ const PostItem: React.FC<PostItemProps> = ({
             style={styles.actionOption}
             onPress={() => {
               if (selectedComment) {                
-                handleDeleteComment(selectedComment);
+                handleReportComment(selectedComment);
               }
 
             }}
