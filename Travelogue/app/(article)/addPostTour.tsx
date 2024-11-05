@@ -15,6 +15,7 @@ import {
   Platform,
 } from "react-native";
 import IconA from "react-native-vector-icons/AntDesign";
+import IconSend from "react-native-vector-icons/FontAwesome";
 import Icon from "react-native-vector-icons/Fontisto";
 import { ArrowLeft } from "iconsax-react-native";
 import { router } from "expo-router";
@@ -150,6 +151,10 @@ const AddPostTour = () => {
   //Lưu trữ thông tin người dùng
   const [account, setAccount] = useState<UserRegister | null>(null);
 
+  //Hashtag
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [inputVisible, setInputVisible] = useState(false);
+  const [newHashtag, setNewHashtag] = useState('');
   //*********************************************************************
   // Xử lý ngươi dùng
   //*********************************************************************
@@ -157,12 +162,12 @@ const AddPostTour = () => {
   useEffect(() => {
     const fetchUserId = async () => {
       const userId = await AsyncStorage.getItem("userToken");
-      console.log("User:", userId);
+      // console.log("User:", userId);
       if (userId) {
         const userRef = ref(database, `accounts/${userId}`);
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
-          console.log("Data:", data);
+          // console.log("Data:", data);
           setAccount(data);
         });
       }
@@ -970,24 +975,31 @@ const AddPostTour = () => {
       }));
       setPackages(formattedPackages);
     });
-    
   }, []);
+  // console.log("Packages:", packages);
+
    
   useEffect(() => {
      //Sắp xếp tăng dần theo giá đã tính cả giảm giá
      const sortedPackages = [...packages].sort((a, b) => {
       const finalPriceA = a.price - (a.price * a.discount) / 100;
       const finalPriceB = b.price - (b.price * b.discount) / 100;
+      // nếu dương thì b đẩy lên trước, âm thì a đẩy lên trước
       return finalPriceA - finalPriceB;
     });
-    setPackageData(sortedPackages);
+    console.log("Sorted:", account?.accumulate);
+    // xem thử tài khoản nay có được ưu đãi gói nào
+    const sortLastes = sortedPackages.map((item) => item).filter((item) => item.minAccumulated <= (account?.accumulate ?? 0));
+
+    console.log("Sorted:", sortLastes);    
+    setPackageData(sortLastes);
 
     // console.log("Packages:", packageData);
     //Chọn gói đầu tiên
-    if (sortedPackages.length > 0) {
-      setSelectedPackage(sortedPackages[0].packageId);
+    if (sortLastes.length > 0) {
+      setSelectedPackage(sortLastes[0].packageId);
     }
-  },[packages]);
+  },[packages, account?.accumulate]);
 
 
 
@@ -995,6 +1007,45 @@ const AddPostTour = () => {
   // Xử lý Packages
   // *********************************************************************
 
+  // *********************************************************************
+  // Xử lý hashtag
+  // *********************************************************************
+  //Thêm hashtag
+  const handleAddHashtag = () => {
+    if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
+      const sanitizedHashtag = newHashtag.replace(/\s+/g, ''); 
+      setHashtags([sanitizedHashtag, ...hashtags]);
+      setNewHashtag('');
+      setInputVisible(false);
+    }else {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được để trống",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  };
+  // console.log("Hashtags:", hashtags);
+  useEffect(() => {
+    if (newHashtag.length >= 25) {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được quá 25 ký tự",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  }, [newHashtag]);
+
+  const removeHashtag = (indexChosse: any) => {
+    setHashtags(hashtags.filter((_, index) => index !== indexChosse)); 
+  };
+  // *********************************************************************
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -1231,7 +1282,7 @@ const AddPostTour = () => {
                         packageId={item.id}
                         selectedPackage={selectedPackage}
                         disabled={true}
-                        onSelect={(id: any) => setSelectedPackage(id)}
+                        // onSelect={(id: any) => setSelectedPackage(id)}
                       />
                     ) : (
                       <PackageCard
@@ -1242,7 +1293,23 @@ const AddPostTour = () => {
                         hashtag={item.hashtag}
                         packageId={item.id}
                         selectedPackage={selectedPackage}
-                        onSelect={(id: any) => setSelectedPackage(id)}
+                        onSelect={(id: any) => {
+                          const currentHashtagsCount = hashtags.length;
+                          const allowedHashtagsCount = packageData.find((pkg) => pkg.id === item.id)?.hashtag;
+                          // console.log("allowedHashtagsCount:", allowedHashtagsCount);
+                          if (currentHashtagsCount <=  allowedHashtagsCount) {
+                            setSelectedPackage(id);
+                          } else {
+                            Toast.show({
+                              type: "error",
+                              text1: "Thông báo",
+                              text2: `Hãy xóa ${currentHashtagsCount-allowedHashtagsCount} hagtag để chỉnh về gói thấp hơn.`,
+                              text1Style: { fontSize: 14 },
+                              text2Style: { fontSize: 11 },
+                              visibilityTime: 2000,
+                            });
+                          }
+                        }}
                       />
                     )
                   )}
@@ -1503,6 +1570,127 @@ const AddPostTour = () => {
               <Text style={{ fontSize: 16 }}>Thêm ngày</Text>
               <IconA name="pluscircleo" size={15} color="#000" />
             </TouchableOpacity>
+          </SectionComponent>
+
+
+          {/* Hashtag */}
+          <SectionComponent styles={styles.cities}>
+          <ScrollView
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.leftButtons}
+      >
+        {hashtags.length === 0 ? (
+          <Text
+            style={{
+              color: appColors.primary,
+              padding: 10,
+              fontWeight: "600",
+            }}
+          >
+            Chưa có hashtag
+          </Text>
+        ) : (
+          hashtags.map((hashtag, index) => (
+            <TouchableOpacity
+              disabled={true}
+              key={index}
+              style={styles.buttonHashtags}
+            >
+              <Text style={styles.textbtnHashtags}>#{hashtag}</Text>
+              <TouchableOpacity
+                style={styles.iconMUL}
+                onPress={() => removeHashtag(index)}
+              >
+                <IconA name="minuscircleo" color="red" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+
+      {hashtags.length === 0 && !inputVisible ? (
+        <RowComponent>
+          <TouchableOpacity
+            style={[styles.fixedRightButton, { width: 160, padding: 10 }]}
+            onPress={() => setInputVisible(true)}
+          >
+            <Text>
+              Thêm hashtag <IconA name="pluscircleo" size={15} color="#000" />
+            </Text>
+          </TouchableOpacity>
+          <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text>
+        </RowComponent>
+      ) : null}
+
+      {inputVisible && (
+        <RowComponent>
+          <TextInput
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 10,
+              width: 200,
+              borderRadius: 5,
+              position: 'absolute',
+              right: 0,
+              top: -50,
+              backgroundColor: '#fff',
+            }}
+            maxLength={25}
+            placeholder="Nhập hashtag"
+            value={newHashtag}
+            onChangeText={setNewHashtag}
+          />
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#007bff',
+              padding:12,
+              marginLeft: 10,
+              borderRadius: 5,
+            }}
+            onPress={handleAddHashtag}
+          >
+            <IconSend name="send" size={20} color="#fff" />
+          </TouchableOpacity>
+        </RowComponent>
+      )}
+
+      {hashtags.length > 0 && (
+        <RowComponent>
+        <TouchableOpacity
+          style={[
+            styles.fixedRightButton,
+            {
+              width: 40,
+              paddingLeft: 10,
+              paddingBottom: 6,
+              paddingRight: 1,
+              marginLeft: 10,
+            },
+          ]}
+          onPress={() => {
+            if (hashtags.length >= packageData.find(item => item.packageId === selectedPackage)?.hashtag) {
+              Toast.show({
+                type: 'error',
+                text1: 'Thông báo',
+                text2: `Số lượng hashtag vượt quá giới hạn cho phép (${packageData.find(item => item.packageId === selectedPackage)?.hashtag}).`,
+                text2Style: { fontSize: 11 },
+                text1Style: { fontSize: 14 },
+                visibilityTime: 2000,
+              });
+            } else {
+              setInputVisible(true);
+            }
+          }}
+        >
+          <Text>
+            <IconA name="pluscircleo" size={20} color="#000" />
+          </Text>
+        </TouchableOpacity>
+        <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text>
+        </RowComponent>
+      )}
           </SectionComponent>
 
           {/* Hình ảnh */}
@@ -2290,6 +2478,20 @@ const styles = StyleSheet.create({
   },
   textbtncities: {
     textAlign: "center",
+  },
+  buttonHashtags: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  textbtnHashtags: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
   },
   iconMUL: {
     position: "absolute",
