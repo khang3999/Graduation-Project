@@ -65,7 +65,8 @@ const TourSection = () => {
                     keyExtractor={(tour: any) => tour.id}
                     contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
                     ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                    pagingEnabled>
+                    // pagingEnabled
+                    >
                 </FlatList>
                 :
                 <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>

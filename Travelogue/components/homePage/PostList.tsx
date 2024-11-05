@@ -1,47 +1,38 @@
-import { View, Text, StyleSheet, FlatList, Image, Button, Touchable, TouchableOpacity, Pressable, RefreshControl, Modal, Alert, TextInput, Dimensions } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import ActionBar from '../ActionBar'
-import Icon from 'react-native-vector-icons/FontAwesome'
-import { DefaultTheme, Divider, IconButton, MD3Colors, Menu, PaperProvider, Provider } from 'react-native-paper'
-import { auth, database, ref } from '@/firebase/firebaseConfig'
-import { equalTo, get, off, onValue, orderByChild, query, update } from '@firebase/database'
+import { View, Text, StyleSheet, FlatList, Image,TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
+import React, { useEffect, useImperativeHandle, useState } from 'react'
+import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper'
+import { database, ref } from '@/firebase/firebaseConfig'
+import { get, update } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import SkeletonPost from '@/components/skeletons/SkeletonPost'
 import { formatDate } from '@/utils/commons'
 import { AntDesign, FontAwesome6 } from '@expo/vector-icons'
-import { mergeWithRatio, slug } from '@/utils'
+import { countMatchingLocations, mergeWithRatio, slug } from '@/utils'
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import ActionBar from '../actionBars/ActionBar'
 
 const { width } = Dimensions.get('window')
+
+
 const PostList = () => {
+  const TYPE = 0;
   const {
-    dataPosts,
-    allLocationIdFromPost,
-    setAllLocationIdFromPost,
+    dataPosts, setDataPosts,
+    allLocationIdFromPost, setAllLocationIdFromPost,
     setPostIdCurrent,
     notifyNewPost,
-    setDataPosts,
-    currentPostCount,
-    setCurrentPostCount,
+    currentPostCount, setCurrentPostCount,
     newPostCount,
-    searching,
-    setSearching,
-    accountBehavior,
-    setAccountBehavior,
-    loadedDataAccount,
-    setLoadedDataAccount,
-    loadedPosts,
-    setLoadedPosts,
-    loadedTours,
-    setLoadedTours,
-    modalVisible,
-    setModalVisible,
-    dataCountries,
-    setDataCountries,
-    isSearchingMode,
-    setIsSearchingMode,
-    dataModalSelected,
-    setDataModalSelected
+    accountBehavior, setAccountBehavior,
+    loadedDataAccount, setLoadedDataAccount,
+    loadedPosts, setLoadedPosts,
+    loadedTours, setLoadedTours,
+    modalVisible, setModalVisible,
+    dataCountries, setDataCountries,
+    isSearchingMode, setIsSearchingMode,
+    dataModalSelected, setDataModalSelected,
+    dataAccount
   }: any = useHomeProvider();
 
 
@@ -54,11 +45,13 @@ const PostList = () => {
 
   // ĐỊNH NGHĨA CÁC HÀM 
   // Hàm search . Khi tap vào button search thì lưu giá trị các biến đã chọn qua 1 biến khác để hiển thị ở home, và set lại giá trị default cho các biến đó
-  const handleTapOnSortButton = async (dataInput: any, selectedCountry: any, selectedCities: any) => {
+  const handleTapOnSearchButton = async (dataInput: any, selectedCountry: any, selectedCities: any) => {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
-      const userId = auth.currentUser?.uid;
+      setLoadedTours(false) // Load skeleton tour section
+      setLoadedPosts(false) // Load skeleton posts list
+      const userId = await AsyncStorage.getItem("userToken")
       // Chuyển sang chế độ searching
-      setSearching(true)
+      setIsSearchingMode(true)
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
@@ -67,7 +60,6 @@ const PostList = () => {
       }
       await update(refBehaviors, dataUpdate);
       // Đọc xuống các mảng các bài viết theo tiêu chí search 
-      setLoadedTours(false) // Trangj thai loading 
       try {
         const refPosts = ref(database, 'posts/')
         const snapshot = await get(refPosts);
@@ -77,76 +69,71 @@ const PostList = () => {
           const jsonArrayPosts = Object.values(dataPostsJson)
           // Bước 1: Lấy mảng theo tiêu chí
           let matchingPost: any[] = []
-          if (selectedCities && selectedCities.length > 0) {
-            console.log("case1");
+          if (selectedCities && selectedCities.length > 0) { // Chọn nhiều city
+            console.log("case1"); // Trùng nội dung và thành phố thì mới add vào mảng
             jsonArrayPosts.forEach((post: any) => {
               post.match = 0
               // Tieu chi 1: co tat ca selectedCities trong postLocation
               const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) => {
                 return Object.keys(post.locations[country])
-              }
-              ); //["vn_1", 'jp_2']
+              }); //["vn_1", 'jp_2']
               // Kiểm tra nội dung
-              if (dataInput !== '' && slug(post.content).includes(slug(dataInput))) {
+              if (slug(post.content).includes(slug(dataInput))) { // Đúng cả 2 case: không nhâp nội dung và nhập nội dung
                 post.match += 1
               }
               // Đếm city trùng
-              const count = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
-              post.match += count // cập nhật match
+              const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
+              post.match += matchLocation // cập nhật match
               // Push vào mảng
-              if (post.match > 0) {
+              if (post.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
                 matchingPost.push(post)
               }
             })
-            // Sắp xếp theo match
-          } else if (selectedCountry !== null) {
-            console.log("case2");
+          } else if (selectedCountry !== null) { // không chọn city chỉ chọn quốc gia
+            console.log("case2");// Trùng nội dung và quốc gia mới add vào mảng
 
             jsonArrayPosts.forEach((post: any) => {
               post.match = 0
               // Tieu chi 1: co tat ca selectedCities trong postLocation
               const listCountriesId = Object.keys(post.locations)//["avietnam", 'japan']
-
               // Kiểm tra nội dung
-              if (dataInput !== '' && slug(post.content).includes(slug(dataInput))) {
+              if (slug(post.content).includes(slug(dataInput))) {
                 post.match += 1
               }
-
-              console.log('check1',listCountriesId);
-              console.log('check1',selectedCountry);
-              
+              // console.log('check1',listCountriesId);
+              // console.log('check1',selectedCountry);
               // Kiểm tra có quốc gia không
               if (listCountriesId.includes(selectedCountry.key)) {
                 post.match += 1
               }
               // Push vào mảng
-              if (post.match > 0) {
+              if (post.match >= 2) {
                 matchingPost.push(post)
               }
             })
-          } else {
-            console.log("case3");
+          } else { // Tìm kiếm theo nội dung 
+            console.log("case3"); // trùng nội dung mới add vào
             jsonArrayPosts.forEach((post: any) => {
               post.match = 0
               // Kiểm tra nội dung
-              if (dataInput !== '' && slug(post.content).includes(slug(dataInput))) {
+              if (slug(post.content).includes(slug(dataInput))) {
                 post.match += 1
+                // Push vào mảng
+                matchingPost.push(post)
               }
             })
           }
           // Bước 2: Sort mảng
-          matchingPost.filter((post: any) => post.match > 0)
-            .sort((postA: any, postB: any) => {
-              // So sánh theo match trước
-              if (postB.match !== postA.match) {
-                return postB.match - postA.match; // Sắp xếp giảm dần theo match
-              }
-              // Nếu match bằng nhau, so sánh theo created_at
-              return (postB.created_at || 0) - (postA.created_at || 0); // Sắp xếp giảm dần theo created_at
-            });
+          matchingPost.sort((postA: any, postB: any) => {
+            // So sánh theo match trước
+            if (postB.match !== postA.match) {
+              return postB.match - postA.match; // Sắp xếp giảm dần theo match
+            }
+            // Nếu match bằng nhau, so sánh theo created_at
+            return (postB.created_at || 0) - (postA.created_at || 0); // Sắp xếp giảm dần theo created_at
+          });
           // Bước 3: 
           setDataPosts(matchingPost)
-          setLoadedTours(true)
         } else {
           console.log("No data post available");
         }
@@ -156,7 +143,7 @@ const PostList = () => {
       // Luu gia tri qua bien khacs
       const dataOfModalSelected = {
         'input': dataInput,
-        'country': selectedCountry?selectedCountry.value:'', // Chỉ cần lưu tên để hiển thị
+        'country': selectedCountry ? selectedCountry.value : '', // Chỉ cần lưu tên để hiển thị
         'cities': selectedCities
       }
       setDataModalSelected(dataOfModalSelected)
@@ -165,7 +152,9 @@ const PostList = () => {
       setSelectedCountry(null)
       setSelectedCities([])
       setDataCities([])
-    } else{
+      setLoadedPosts(true) // UnLoad skeleton
+      setLoadedTours(true) // UnLoad skeleton
+    } else {
       fetchPosts()
     }
     // Đóng modal
@@ -191,12 +180,13 @@ const PostList = () => {
   //   setSelectedCities(temp)
   // }, [selectedCitiesTemp])
 
-  useEffect(() => {
-    console.log('input', dataInput);
-    console.log(selectedCountry)
-    console.log('cities',selectedCities);
+  /// Log
+  // useEffect(() => {
+  //   console.log('input', dataInput);
+  //   console.log(selectedCountry)
+  //   console.log('cities',selectedCities);
 
-  }, [selectedCities, dataInput, selectedCountry])
+  // }, [selectedCities, dataInput, selectedCountry])
 
   // Hàm chọn một quốc gia: thực hiện 2 việc: 1. Fetch data city, 2. Lưu quốc gia đó ra biến thành phần {key:'a', value:'b'}
   const handleSelecteCountry = (val: any) => {
@@ -207,7 +197,7 @@ const PostList = () => {
     setSelectedCountry(country)
 
     // Set giá trị đang chọn cho list (Chính)
-    console.log('valCountry', country);
+    // console.log('valCountry', country);
     // setSelectedCitiesTemp([])
     // setSelectedCountry(val)
   }
@@ -234,7 +224,7 @@ const PostList = () => {
 
   // Hàm lấy các bài viết khi có tương tác
   const fetchPosts = async () => {
-    setLoadedTours(false)
+    setLoadedPosts(false)
     try {
       const refPosts = ref(database, 'posts/')
       const snapshot = await get(refPosts);
@@ -255,33 +245,21 @@ const PostList = () => {
             Object.keys(post.locations[country])
           ); //["vn_1", 'jp_2']
           const listBehaviorLocation = accountBehavior.location ? accountBehavior.location : []
-          // Điều kiện phân loại mảng
+          // Điều kiện phân loại mảng: Trùng content  + 1, đếm match hành vi + match
           if (contentSlug.includes(behaviorContentSlug)) {
             post.match += 1
           }
-          const count = listLocationIdOfPost.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
-          post.match += count // cập nhật match
+          const countMatchingLocation = countMatchingLocations(listBehaviorLocation, listLocationIdOfPost)
+          // const countMatchingLocation = listLocationIdOfPost.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
+          post.match += countMatchingLocation // cập nhật match
+
           // Phân loại 
           if (post.match > 0) {
             behaviorPosts.push(post)
           } else {
             nonBehaviorPosts.push(post)
           }
-          // if (contentSlug.includes(behaviorContentSlug) && listLocationIdOfPost.includes(accountBehavior.location)) {
-          //   // Cập nhật match
-          //   post.match = 2
-          //   // Lưu vào mảng
-          //   behaviorPosts.push(post)
-          // }
-          // else if (contentSlug.includes(behaviorContentSlug) || listLocationIdOfPost.includes(accountBehavior.location)) {
-          //   // Cập nhật macth
-          //   post.match = 1
-          //   // Lưu vào mảng
-          //   behaviorPosts.push(post)
-          // } else {
-          //   nonBehaviorPosts.push(post);
-          // }
-          // console.log(post.id + "-" + post.match);
+
 
         });
         // Bước 2: Sort
@@ -302,32 +280,22 @@ const PostList = () => {
         const mergedPosts = mergeWithRatio(behaviorPosts, nonBehaviorPosts, 2, 1)
         // mergedPosts.map((post) => console.log(post.id));
         // SET DỮ LIÊU
-        // 2. set mảng đã trộn cho dataPost
+        //set mảng đã trộn cho dataPost
         setDataPosts(mergedPosts)
         // setDataPosts(jsonArrayPosts)
         // Set lại số lượng bài post đang hiển thị(Là 1 trong 2 điều kiện để không hiển thị button loadNewPosts
         setCurrentPostCount(jsonArrayPosts.length)
         // Set loadedTourHome
+        setLoadedPosts(true)
         setLoadedTours(true)
       } else {
         console.log("No data post available");
       }
     } catch (error) {
-      console.error("Error fetching post data first time: ", error);
+      console.error("Error fetching post data: ", error);
     }
     setDataModalSelected(null)
   }
-
-  ///
-  // Lấy post lần đầu sau khi đã có dữ liệu của account
-  useEffect(() => {
-    if (loadedDataAccount && !isSearchingMode) {
-      // console.log(loadedDataAccount);
-      setLoadedPosts(true)
-      fetchPosts();
-    }
-  }, [loadedDataAccount]);
-
   // Hàm reload bài viết
   const handleReloadNewPost = () => {
     setIsSearchingMode(false)
@@ -335,7 +303,8 @@ const PostList = () => {
   };
 
   // Hàm reload bài viết
-  const handleReloadHomePage = () => {
+  const handleReloadHomeScreen = () => {
+    setLoadedTours(false)
     setDataInput('')
     setSelectedCountry(null)
     setDataCities([])
@@ -343,6 +312,17 @@ const PostList = () => {
     setDataModalSelected(null)
     fetchPosts(); // Tải lại bài viết
   };
+
+  /// Các Hook
+  // Lấy post lần đầu sau khi đã có dữ liệu của account
+  useEffect(() => {
+    if (loadedDataAccount && !isSearchingMode) {
+      // console.log(loadedDataAccount);
+      fetchPosts();
+    }
+  }, [loadedDataAccount, dataAccount]);
+
+
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
@@ -393,13 +373,13 @@ const PostList = () => {
               <TouchableOpacity style={styles.avatarWrap}>
                 <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
               </TouchableOpacity>
-              <View className='justify-center mx-2'>
+              <View style={{justifyContent:'center', marginHorizontal: 4}}>
                 <TouchableOpacity>
-                  <Text className='font-semibold w-[120px]'>
+                  <Text style={{fontWeight:'600'}} numberOfLines={1}>
                     {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
-                <Text className='italic text-xs'>{formatDate(post.item.created_at)}</Text>
+                <Text style={{fontStyle:'italic', fontSize:12}}>{formatDate(post.item.created_at)}</Text>
               </View>
             </View>
             {/* Location */}
@@ -440,7 +420,7 @@ const PostList = () => {
             </View>
 
             {/* Button like, comment, save */}
-            <ActionBar style={styles.actionBar} postID={post.item.id}></ActionBar>
+            <ActionBar style={styles.actionBar} data={post.item} type={TYPE}></ActionBar>
           </Pressable>
         </PaperProvider>
       </View>
@@ -465,7 +445,7 @@ const PostList = () => {
           <AntDesign name="filter" size={22} color="black" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.refreshBtn} onPress={handleReloadHomePage}>
+        <TouchableOpacity style={styles.refreshBtn} onPress={handleReloadHomeScreen}>
           <AntDesign name="reload1" size={22} color="black" />
         </TouchableOpacity>
       </View>
@@ -526,7 +506,7 @@ const PostList = () => {
             <View style={{ flexDirection: 'row', position: 'absolute', bottom: 0 }}>
               <Pressable
                 style={styles.buttonSearch}
-                onPress={() => handleTapOnSortButton(dataInput, selectedCountry, selectedCities)}>
+                onPress={() => handleTapOnSearchButton(dataInput, selectedCountry, selectedCities)}>
                 <Text style={styles.textStyle}>Search</Text>
               </Pressable>
               <Pressable
@@ -587,9 +567,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingTop: 10,
     paddingBottom: 60,
-    // height:400,
     width: width,
-    // height: 400,
     alignItems: 'center',
     zIndex: 4,
     shadowColor: '#000',
@@ -657,10 +635,6 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 5,
   },
-
-
-
-
   iconPost: {
     paddingLeft: 4,
     fontWeight: '500'
@@ -734,7 +708,7 @@ const styles = StyleSheet.create({
     top: 10,
     flexDirection: 'row',
     backgroundColor: 'white',
-    width: 185,
+    maxWidth: 200,
     padding: 6,
     borderRadius: 90,
     zIndex: 3
@@ -749,6 +723,7 @@ const styles = StyleSheet.create({
   },
   actionBar: {
     position: 'absolute',
+    // width: 220,
     bottom: 10,
     left: 10,
     zIndex: 3

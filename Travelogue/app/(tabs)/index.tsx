@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, Dimensions, TextInput } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth, database, onValue, ref } from "@/firebase/firebaseConfig";
@@ -10,27 +10,18 @@ import HomeProvider, { useHomeProvider } from "@/contexts/HomeProvider";
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
 import { AntDesign } from "@expo/vector-icons";
 import { Badge } from "react-native-paper";
+import { useFocusEffect } from "@react-navigation/native";
 
 
-const handleLogout = async () => {
-  try {
-    await signOut(auth);
-    router.replace("/LoginScreen");
-  } catch (error) {
-    Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
-  }
-};
 
 const Home = () => {
+
   const {
     dataModalSelected,
     setDataModalSelected,
     dataAllCities,
-    setDataAllCities }: any = useHomeProvider();
-
-  console.log('bbbb', dataAllCities);
-
-  console.log('bbbb', dataModalSelected);
+    setDataAllCities,
+    isFocus, setIsFocus }: any = useHomeProvider();
 
   return (
     <View style={styles.container}>
@@ -40,7 +31,7 @@ const Home = () => {
           <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Tất cả bài viết</Badge>
           :
           <>
-            {dataModalSelected.input !== '' && <Badge>{dataModalSelected.input}</Badge>}
+            {dataModalSelected.input !== '' && <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.input}</Badge>}
             {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
               <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.country}</Badge>
               :
@@ -56,7 +47,7 @@ const Home = () => {
       {/* Tour section */}
       <TourSection></TourSection>
       {/* Post Section */}
-      <PostList></PostList>
+      <PostList ></PostList>
     </View>
   )
 }

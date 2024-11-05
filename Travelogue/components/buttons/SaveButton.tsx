@@ -4,20 +4,40 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { AntDesign } from '@expo/vector-icons';
 import { auth, database, ref } from '@/firebase/firebaseConfig';
 import { get, remove, update } from '@firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SaveButton = (props: any) => {
-  const userID = auth.currentUser?.uid
-
+  // const userID = auth.currentUser?.uid
+  const type = props.type
   const [saved, setSaved] = useState(false);
+  const [userID, setUserID] = useState('')
+  // Lấy UserID
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userToken");
+        if (userId) {
+          setUserID(userId);
+        } else {
+          console.log("User ID not found");
+        }
+      } catch (error) {
+        console.error("Failed to retrieve user ID:", error);
+      }
+    };
+    getUserId();
+  }, [])
+
   // Render 1 lần từ db để load các bài đã save
   useEffect(() => {
     const checkIfSaved = async () => {
-      const refPost = ref(database, `accounts/${userID}/savedList/${props.postID}`);
-      const snapshot = await get(refPost);
+      const refColumn = type == 0 ? 'savedPostsList':'savedToursList'
+      const refAccountList = ref(database, `accounts/${userID}/${refColumn}/${props.dataID}`);
+      const snapshot = await get(refAccountList);
 
       // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
       if (snapshot.exists()) {
-        setSaved(true); // Nếu postID đã tồn tại, đánh dấu là saved
+        setSaved(true); // Nếu dataID đã tồn tại, đánh dấu là saved
       } else {
         setSaved(false); // Nếu không tồn tại, đánh dấu là unsaved
       }
@@ -26,26 +46,29 @@ const SaveButton = (props: any) => {
     if (userID) {
       checkIfSaved(); // Gọi hàm kiểm tra nếu có userID
     }
-  }, []);
+  }, [userID]);
 
 
   // Hàm set save
-  const handleSave = async (postID: any, userID: any) => {
-    const refSavedList = ref(database, `accounts/${userID}/savedList/`);
-    const refPost = ref(database, `accounts/${userID}/savedList/${postID}`)
-    const snapshot = await get(refPost); // Kiểm tra xem postID đã tồn tại chưa
+  const handleSave = async (dataID: any, userID: any) => {
+    // Phân loại vì account có 2 cột saved : bài viết và tour
+    const refColumn = type == 0 ? 'savedPostsList':'savedToursList'
+
+    const refSavedList = ref(database, `accounts/${userID}/${refColumn}/`);
+    const refItemInSavedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`)
+    const snapshot = await get(refItemInSavedList); // Kiểm tra xem dataID đã tồn tại chưa
 
     try {
       if (snapshot.exists()) {
-        // Nếu đã tồn tại, xóa postID khỏi savedList
-        await remove(refPost);
-        console.log('Đã bỏ lưu '+postID);
+        // Nếu đã tồn tại, xóa dataID khỏi savedList
+        await remove(refItemInSavedList);
+        console.log('Đã bỏ lưu ' + dataID);
       } else {
         // Nếu không tồn tại, thêm vào savedList
         await update(refSavedList, {
-          [postID]: true, // Thêm postID vào savedList
+          [dataID]: true, // Thêm dataID vào savedList
         });
-        console.log(`Đã thêm ${postID} vào savedList`);
+        console.log(`Đã thêm ${dataID} vào savedList`);
       }
     } catch (error) {
       console.error('Lỗi khi cập nhật savedList:', error);
@@ -55,7 +78,7 @@ const SaveButton = (props: any) => {
     }
   }
   return (
-    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(props.postID, userID)} {...props}>
+    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(props.dataID, userID)} {...props}>
       <Icon name={saved ? 'bookmark' : 'bookmark-o'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />
     </TouchableOpacity>
   )

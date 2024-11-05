@@ -2,7 +2,7 @@ import { View, Text, AppState } from 'react-native'
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import { onValue, ref } from 'firebase/database';
 import { auth, database, get } from '@/firebase/firebaseConfig';
-import { slug, sortTour } from '@/utils';
+import { slug, sortTourAtHomeScreen } from '@/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Định nghĩa kiểu cho context
 // interface HomeContextType {=
@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // };
 const HomeContext = createContext(null);
 const HomeProvider = ({ children }) => {
+    const [isFocus, setIsFocus] = useState(false)
     const [dataAccount, setDataAccount] = useState(null)
     const [dataCountries, setDataCountries] = useState([])
     const [dataAllCities, setDataAllCities] = useState([])
@@ -33,7 +34,7 @@ const HomeProvider = ({ children }) => {
     const appStateRef = useRef(AppState.currentState)
     const [currentPostCount, setCurrentPostCount] = useState(0);
     const [newPostCount, setNewPostCount] = useState(0);
-    const [searching, setSearching] = useState(false)
+    // const [searching, setSearching] = useState(false)
     const [accountBehavior, setAccountBehavior] = useState({})
     const [user, setUser] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
@@ -42,25 +43,13 @@ const HomeProvider = ({ children }) => {
 
     // Login state
     useEffect(() => {
-        // Đăng ký lắng nghe thay đổi trạng thái đăng nhập
-        const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-            if (currentUser) {
-                // Người dùng đã đăng nhập
-                console.log("User logged in:");
-                setUser(currentUser);
-                // Thực hiện các hành động khi đăng nhập, ví dụ: tải dữ liệu người dùng
-            } else {
-                // Người dùng đã đăng xuất
-                console.log("User logged out");
-                setUser(null);
-                // Thực hiện các hành động khi đăng xuất, ví dụ: xóa dữ liệu người dùng
-            }
-        });
-
-        // Cleanup để ngừng lắng nghe khi component unmount
-        return () => unsubscribe();
+        const fetchUserId = async () => {
+            const userId = await AsyncStorage.getItem("userToken");
+            setUser(userId);
+        };
+        fetchUserId()
     }, []);
-    /// App state
+    /// App state ý tưởng khi vòa lại app thì reset behavior
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async nextAppState => {
             console.log('Trạng thái AppState trước khi thay đổi:', appStateRef.current);
@@ -90,42 +79,10 @@ const HomeProvider = ({ children }) => {
         };
     }, [])
 
-    /// ------------------------ FUNCTION -------------------
-    // Hàm set lại dữ liệu get được từ firebase được gọi mỗi khi mở app và khi có thay đổi từ firebase và bấm vào button reload 
-
-
-    // Hàm set lại behavior mỗi khi vào lại app
-    // useEffect(() => {
-    //     if (appState == AppState.ac) {
-
-    //     }
-    // }, [appState])
-    // Hàm thực hiện sort list khi load lại dữ liệu mới
-
-
-    // Hàm tính điểm hành vi cho tour(hoặc bài viết theo content và location)
-    // ****** Cần reset behavior sau mỗi phiên đăng nhập *********
-    const calculateByContentAndLocation = (account, content, locationsIdOfTour, dataFactorsPost) => {
-        // Có nhiều cách so sánh
-        // 1. lau-ga tìm trong 'Hom-nay-di-an-lau-ga'
-        const maxPoint = dataFactorsPost.behavior
-        const behaviorSlug = slug(account.behavior.content)
-        const contentSlug = slug(content)
-        const locationId = account.behavior.location
-        if (contentSlug.includes(behaviorSlug) && locationsIdOfTour.includes(locationId)) {
-            return maxPoint
-        } else if (contentSlug.includes(behaviorSlug) || locationsIdOfTour.includes(locationId)) {
-            return maxPoint / 2
-        }
-        return 0
-        // 2. [lẩu, gà] tìm trong " Hôm nay đi ăn lẩu, có bò heo gà"
-    }
-    // } // ------------------------ END FUNCTION --------------------------
-
     /// ------------------------ FETCH NO REALTIME --------------------------
     // Fetch tour theo post không realtime
     useEffect(() => {
-        if (loadedDataAccount && user) {
+        // if (loadedDataAccount) {
             const fetchData = async () => {
                 try {
                     const refTours = ref(database, 'tours/')
@@ -134,8 +91,8 @@ const HomeProvider = ({ children }) => {
                         const dataToursJson = snapshot.val()
                         const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
                         // Sắp xếp lại list tour theo thứ tự
-                        const sortedTours = sortTour(dataToursArray, allLocationIdFromPost)
-                        setDataTours(sortedTours)
+                        sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
+                        setDataTours(dataToursArray)
                     } else {
                         console.log("No data available");
                     }
@@ -144,9 +101,9 @@ const HomeProvider = ({ children }) => {
                 }
             }
             fetchData();
-        }
+        // }
         // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
-    }, [user, postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
+    }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
 
     /// ----------------------- FETCH REAL TIME ----------------------
     // Lấy các thành phố
@@ -202,10 +159,9 @@ const HomeProvider = ({ children }) => {
         };
     }, [])
     // Lấy data account
-    useEffect(() => {
-        const userId = auth.currentUser?.uid; // Lấy id user đang đăng nhập
-        if (userId) {
-            const refAccount = ref(database, `accounts/${userId}`)
+    useEffect(() =>  {
+        if (user) {
+            const refAccount = ref(database, `accounts/${user}`)
             const unsubscribe = onValue(refAccount, (snapshot) => {
                 if (snapshot.exists()) {
                     // Lấy tất cả factor của post dùng cho tính điểm
@@ -260,7 +216,6 @@ const HomeProvider = ({ children }) => {
                 currentPostCount,
                 allLocationIdFromPost,
                 newPostCount,
-                searching,
                 accountBehavior,
                 loadedDataAccount,
                 loadedPosts,
@@ -270,6 +225,7 @@ const HomeProvider = ({ children }) => {
                 isSearchingMode,
                 dataModalSelected,
                 dataAllCities,
+                isFocus, setIsFocus,
                 setDataAllCities,
                 setDataModalSelected,
                 setIsSearchingMode,
@@ -279,7 +235,6 @@ const HomeProvider = ({ children }) => {
                 setLoadedTours,
                 setLoadedDataAccount,
                 setAccountBehavior,
-                setSearching,
                 setCurrentPostCount,
                 setDataPosts,
                 setAllLocationIdFromPost,
