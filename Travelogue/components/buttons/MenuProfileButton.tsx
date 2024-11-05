@@ -62,7 +62,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     return
   }
   // Handle the report user
-  const handleReportUser = () => {
+  const handleReportAcccount = () => {
 
   }
 
@@ -133,7 +133,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
             >             
               <TouchableOpacity
                 style={styles.menuItem}      
-                onPress={handleReportUser}        
+                onPress={handleReportAcccount}        
               >
                 {/* cspell: disable-next-line */}
                 <Text style={styles.menuText}>Báo cáo</Text>
