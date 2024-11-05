@@ -1,21 +1,41 @@
 import { auth, database, onValue, ref, set } from '@/firebase/firebaseConfig';
+import { AntDesign, MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
 import { push } from '@firebase/database';
 import React, { useEffect, useState } from 'react';
-import { View, Image, Text, TextInput, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
-
+import { View, Image, Text, TextInput, StyleSheet, Modal, ActivityIndicator, TouchableOpacity, FlatList, Alert, Platform } from 'react-native';
+import { Button, Checkbox, Divider } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 
 const Payment = () => {
+    const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    //Payment
     const [qrDataURL, setQrDataURL] = useState(null);
     const [inputText, setInputText] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loadingRefresh, setLoadingRefresh] = useState(false);
+    const [loadingFilter, setLoadingFilter] = useState(false);
+    const [loadingQR, setLoadingQR] = useState(false);
     const [error, setError] = useState(null);
     const [balance, setBalance] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const [isVisibleFilter, setIsVisibleFilter] = useState(false);
     const [isDisabled, setIsDisabled] = useState(true);
     const [statusContent, setStatusContent] = useState([]);
     const [dataExchanges, setDataExchanges] = useState([]);
+    let [dataExchangesFilter, setDataExchangesFilter] = useState([]);
     const [name, setName] = useState('')
+    //Modal filter
+    const [timeStart, setTimeStart] = useState<any>(null);
+    const [timeEnd, setTimeEnd] = useState<any>(null);
+    const [showStartPicker, setShowStartPicker] = useState(false);
+    const [showEndPicker, setShowEndPicker] = useState(false);
+
+    const [selectedStatus, setSelectedStatus] = useState('');
+    const [selectedType, setSelectedType] = useState('');
+
+    const statusOptions = [{ id: "1", value: "Pending" }, { id: "2", value: "Success" }, { id: "3", value: "Failure" }];
+    const typeOptions = ["Deduction", "Recharge"];
+    const today = new Date();
 
     // Status content
     useEffect(() => {
@@ -57,8 +77,15 @@ const Payment = () => {
             if (snapshot.exists()) {
                 const jsonData = snapshot.val();
                 const dataArray = Object.values(jsonData);
-                const data: any = dataArray.filter((item: any) => item.account_id === accountId).sort((a: any, b: any) => b.created_at - a.created_at);
+                const data: any = dataArray.filter((item: any) => item.account_id === accountId).sort((a: any, b: any) => {
+                    if (a.status_id == b.status_id) {
+                        return b.created_at - a.created_at
+                    }
+                    return a.status_id - b.status_id
+                });
+                const aaa = data
                 setDataExchanges(data);
+
             } else {
                 console.log("No data available");
             }
@@ -69,21 +96,32 @@ const Payment = () => {
         return () => exchangesListener();
     }, []);
 
+    //Exchange data filter realtime
+    useEffect(() => {
+        if (timeEnd == null) {
+            setDataExchangesFilter(dataExchanges)
+        }
+        else {
+            handleFilter()
+        }
+        // setDataExchangesFilter(data)
+    }, [dataExchanges])
+
     const closeDialog = () => {
         handleAddRequest();
         setIsVisible(false);
+        setIsVisibleFilter(false);
         setQrDataURL(null);
         setIsDisabled(true);
         setInputText('');
     };
 
-
-
-    const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
-
+    //Fetch QR
     const fetchQRCode = async () => {
+
         const rawValue = parseFloat(inputText.replace(/\D/g, ''));
         try {
+            setLoadingQR(true)
             const response = await fetch('https://api.vietqr.io/v2/generate', {
                 method: 'POST',
                 headers: {
@@ -112,10 +150,11 @@ const Payment = () => {
         } catch (error: any) {
             setError(error.message);
         } finally {
-            setLoading(false);
+            setLoadingQR(false);
         }
     };
 
+    //Balance Realtime
     useEffect(() => {
         const onValueChange = ref(database, `accounts/${accountId}`);
         const reportListener = onValue(onValueChange, (snapshot) => {
@@ -144,10 +183,6 @@ const Payment = () => {
             setInputText('');
         }
     };
-
-
-
-
 
     //Enable Request button
     useEffect(() => {
@@ -198,6 +233,101 @@ const Payment = () => {
         );
     };
 
+    //Modal
+
+    const handleSelect = (option: any, list: any, setList: any) => {
+        console.log(option);
+
+        setList((prev: any) =>
+            prev.includes(option) ? prev.filter((item: any) => item !== option) : [...prev, option]
+        );
+    };
+
+    const onChangeStartDate = (event: any, selectedDate: any) => {
+        setShowStartPicker(false);
+        if (selectedDate) {
+            // Check if start date is greater than today
+            if (selectedDate > today) {
+                Alert.alert("Error", "The end date cannot be greater than today.");
+            }
+            // Check if start date is greater than end date
+            else if (timeEnd && selectedDate > timeEnd) {
+                Alert.alert("Error", "The start date cannot be later than the end date.");
+            } else {
+                setTimeStart(selectedDate);
+            }
+        }
+    };
+
+    const onChangeEndDate = (event: any, selectedDate: any) => {
+        setShowEndPicker(false);
+
+        if (selectedDate) {
+            // Check if end date is greater than today
+            if (selectedDate > today) {
+                Alert.alert("Error", "The end date cannot be greater than today.");
+            }
+            // Check if end date is earlier than start date
+            else if (timeStart && selectedDate < timeStart) {
+                Alert.alert("Error", "The end date cannot be earlier than the start date.");
+            } else {
+                setTimeEnd(selectedDate);
+            }
+        }
+    };
+
+    const closeDialogFilter = () => {
+        setIsVisibleFilter(false);
+    };
+    const openDialogFilter = () => {
+        setIsVisibleFilter(true);
+    };
+
+    const handleFilter = () => {
+        if (timeStart && timeEnd) {
+            setLoadingFilter(true); // Bắt đầu hiệu ứng loading
+            setTimeout(() => {
+                const filteredData = dataExchanges.filter((item: any) => {
+                    //Neu ngay ket thuc la ngay hom nay thi lay tai thoi diem filter, neu la ngay trc do thi lay cuoi ngay
+                    const timeEndDate = (timeEnd.setHours(23, 59, 59, 999) == today.setHours(23, 59, 59, 999)) ? new Date(today).setHours(23, 59, 59, 999) : new Date(timeEnd).setHours(23, 59, 59, 999)
+                    // Bat dau tu 0:0:0 cua ngay bat dau
+                    const timeStartDate = new Date(timeStart).setHours(0, 0, 0, 0)
+                    // Kiểm tra điều kiện thời gian, loại giao dịch và trạng thái giao dịch
+                    const isWithinTimeRange = item.created_at >= timeStartDate && item.created_at <= timeEndDate;
+                    const isStatusMatch = selectedStatus.length === 0 || selectedStatus.includes(item.status_id);
+                    // Kiểm tra loại giao dịch
+                    const isTypeMatch = selectedType.length === 0 ||
+                        (selectedType.includes("Deduction") && item.payment < 0) || // Số âm cho Deduction
+                        (selectedType.includes("Recharge") && item.payment > 0); // Số dương cho Recharge
+
+                    return isWithinTimeRange
+                        && isStatusMatch
+                        && isTypeMatch
+                        ;
+                });
+                //Set lai data cho filter
+                setDataExchangesFilter(filteredData);
+                closeDialogFilter()
+                setLoadingFilter(false)
+            }, 1000);
+        } else {
+            Alert.alert("Lỗi", "Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.");
+        }
+
+    };
+
+    const handleRefreshData = () => {
+        setLoadingRefresh(true); // Bắt đầu hiệu ứng loading
+        setTimeout(() => {
+            setDataExchangesFilter(dataExchanges)
+            setSelectedStatus('')
+            setSelectedType('')
+            setTimeEnd(null)
+            setTimeStart(null)
+            setLoadingRefresh(false)
+        }, 1000)
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.balanceContainer}>
@@ -217,7 +347,10 @@ const Payment = () => {
                     onPress={handleRequest}
                     disabled={isDisabled}
                 >
-                    <Text style={styles.addBtnText}>Request</Text>
+                    {loadingQR ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text style={styles.addBtnText}>Request</Text>)}
                 </TouchableOpacity>
             </View>
             <Modal
@@ -227,9 +360,11 @@ const Payment = () => {
                 onRequestClose={closeDialog}
             >
                 <View style={styles.modalOverlay}>
+
                     <View style={styles.dialogContainer}>
                         <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
-                            <Text style={styles.closeButtonText}>X</Text>
+                            <MaterialIcons name="cancel" size={24} color="red" />
+
                         </TouchableOpacity>
                         <Text style={styles.dialogTitle}>Scan QR code</Text>
                         {qrDataURL ? (
@@ -238,17 +373,115 @@ const Payment = () => {
                             <Text>No QR code available</Text>
                         )}
                         <Text style={styles.dialogText}>QR code has a one-time value only</Text>
-                        {/* <TouchableOpacity style={styles.saveButton}  >
-                            <Text style={styles.saveButtonText}>Save Image</Text>
-                        </TouchableOpacity> */}
+
                     </View>
                 </View>
             </Modal>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                {/* Refresh */}
+                <TouchableOpacity onPress={handleRefreshData}>
+                    {loadingRefresh ? (
+
+                        <ActivityIndicator color="red" size={24} style={{ paddingRight: 10 }} />
+                    ) : (
+                        <SimpleLineIcons name="refresh" size={24} color="black" style={{ paddingRight: 10 }} />)}
+                </TouchableOpacity>
+                {/* Filter */}
+                <TouchableOpacity onPress={openDialogFilter}>
+
+                    <AntDesign name="filter" size={24} color={timeEnd != null ? "red" : "black"} />
+                </TouchableOpacity>
+                <Modal
+                    visible={isVisibleFilter}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={closeDialog}
+                >
+                    <View style={styles.modalOverlay}>
+                        {loadingFilter ? (
+                            <ActivityIndicator color="white" size={100} />
+                        ) : (
+                            <View style={styles.dialogContainer}>
+
+                                <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
+                                    <MaterialIcons name="cancel" size={24} color="red" />
+                                </TouchableOpacity>
+                                <View style={{ padding: 5, width: '100%' }}>
+                                    <Text style={{ fontSize: 20, marginBottom: 10 }}>Transaction Filter</Text>
+
+                                    {/* Date pickers for time */}
+                                    <Text style={{ fontWeight: 'bold' }}>Start Date</Text>
+                                    <Button mode="outlined" onPress={() => setShowStartPicker(true)}>
+                                        {timeStart ? timeStart.toLocaleDateString() : "Select Start Date"}
+                                    </Button>
+                                    {showStartPicker && (
+                                        <DateTimePicker
+                                            value={timeStart || new Date()}
+                                            mode="date"
+                                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                            onChange={onChangeStartDate}
+                                        />
+                                    )}
+
+                                    <Text style={{ fontWeight: 'bold', marginTop: 10 }}>End Date</Text>
+                                    <Button mode="outlined" onPress={() => setShowEndPicker(true)}>
+                                        {timeEnd ? timeEnd.toLocaleDateString() : "Select End Date"}
+                                    </Button>
+                                    {showEndPicker && (
+                                        <DateTimePicker
+                                            value={timeEnd || new Date()}
+                                            mode="date"
+                                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                            onChange={onChangeEndDate}
+                                        />
+                                    )}
+
+                                    <Divider style={{ marginVertical: 10 }} />
+
+                                    {/* Transaction Status */}
+                                    <Text style={{ fontWeight: 'bold' }}>Transaction Status</Text>
+                                    {statusOptions.map((option: any) => (
+                                        <View key={option} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Checkbox
+                                                status={selectedStatus.includes(option.id) ? 'checked' : 'unchecked'}
+                                                onPress={() => handleSelect(option.id, selectedStatus, setSelectedStatus)}
+                                            />
+                                            <Text>{option.value}</Text>
+                                        </View>
+                                    ))}
+
+                                    <Divider style={{ marginVertical: 10 }} />
+
+                                    {/* Transaction Type */}
+                                    <Text style={{ fontWeight: 'bold' }}>Transaction Type</Text>
+                                    {typeOptions.map((option, index) => (
+                                        <View key={index} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Checkbox
+                                                status={selectedType.includes(option) ? 'checked' : 'unchecked'}
+                                                onPress={() => handleSelect(option, selectedType, setSelectedType)}
+                                            />
+                                            <Text>{option}</Text>
+                                        </View>
+                                    ))}
+
+                                    <Button
+                                        mode="contained"
+                                        style={{ marginTop: 20 }}
+                                        onPress={handleFilter}
+                                    >
+                                        <Text>Apply Filters</Text>
+                                    </Button>
+                                </View>
+                            </View>)}
+                    </View>
+                </Modal>
+            </View>
             <View style={styles.divider} />
+
             <View style={styles.exchangeList}>
-                {dataExchanges.length > 0 ? (
+                {dataExchangesFilter.length > 0 ? (
                     <FlatList
-                        data={dataExchanges}
+                        data={dataExchangesFilter}
                         renderItem={renderExchange}
                     // keyExtractor={(item) => item.id}
                     />
