@@ -71,7 +71,7 @@ const SaveButton = (props: any) => {
         console.log(`Đã thêm ${dataID} vào savedList`);
       }
     } catch (error) {
-      console.error('Lỗi khi cập nhật savedList:', error);
+      console.error('Lỗi khi cập nhật savedPosts:', error);
     }
     finally { // Đổi state
       setSaved(!saved);

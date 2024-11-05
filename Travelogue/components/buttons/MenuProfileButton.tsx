@@ -8,25 +8,28 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
-import { appColors } from "@/constants/appColors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 interface MenuPopupButtonProps {
   menuIcon: string;
+  isDisplay: boolean;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
+const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
-  const buttonRef = useRef(null); // To measure the button's position
-  // Function to toggle modal visibility
+  // Position of the menu
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<TouchableOpacity>(null);
+
+
   const toggleModal = () => {
     if (!isModalVisible) {
       // Measure the position of the button before showing the menu
-      buttonRef.current.measure((fx, fy, width, height, px, py) => {
+      buttonRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
         setMenuPosition({
           top: py + height - 20, // Place the menu right below the button
           left: px - 130, // Align it with the left side of the button
@@ -39,13 +42,24 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      await AsyncStorage.removeItem('userToken'); 
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('user');
       Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
       router.replace("/LoginScreen");
     } catch (error) {
       Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
     }
   };
+  const handleEditProfile = () => {
+    router.push("/Editing");
+  }
+  if (!isDisplay) {
+    return;
+  }
+  const handleChangePassword =() =>{
+    router.push('/ChangePassword')
+    return
+  }
 
   return (
     <View style={styles.container}>
@@ -55,7 +69,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
         onPress={toggleModal}
         style={styles.button}
       >
-        <Icon size={24} name={menuIcon}></Icon>
+        <Icon size={24} name="menu" style={styles.icon} />
       </TouchableOpacity>
 
       {/* Menu Modal */}
@@ -63,27 +77,38 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
         <Modal
           transparent={true}
           visible={isModalVisible}
-          animationType="none"
+          animationType="fade"
           onRequestClose={toggleModal}
         >
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPressOut={toggleModal}
-          >
-            <View
-              style={[
-                styles.menu,
-                { top: menuPosition.top, left: menuPosition.left },
-              ]}
-            >
-              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                <View>
+          <TouchableWithoutFeedback onPress={toggleModal}>
+            <View style={styles.overlay}>
+              <View
+                style={[
+                  styles.menu,
+                  { top: menuPosition.top, left: menuPosition.left },
+                ]}
+              >
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleEditProfile}
+                >
+                  <Text style={styles.menuText}>Thay đổi hồ sơ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                onPress={handleChangePassword}
+                >
+                  <Text style={styles.menuText}>Thay đổi mật khẩu</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
                   <Text style={styles.menuText}>Đăng xuất</Text>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             </View>
-          </TouchableOpacity>
+
+          </TouchableWithoutFeedback>
+
         </Modal>
       )}
     </View>
@@ -93,46 +118,42 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
 // Styles for the components
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   button: {
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 25,
+    backgroundColor: '#f0f0f0',
   },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
+  icon: {
+    color: '#333',
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'transparent',
   },
   menu: {
-    position: "absolute",
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 15,
-    alignItems: "center",
+    position: 'absolute',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingVertical: 5,
+    width: 180,
     elevation: 5, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
   menuItem: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    width: 150,
-    alignItems: "center",
-    backgroundColor: "#FF9B45",
-    borderRadius: 5,
   },
   menuText: {
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
 });
 
-export default MenuPopupButton;
+export default MenuProfileButton;

@@ -1,16 +1,22 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Define the shape of the context data
-
+interface AccountContextType {
+  accountData: any; 
+  setAccountData: (account: any) => void;
+  searchedAccountData: any;
+  setSearchedAccountData: (account: any) => void;
+}
 
 // Create the context
 const AccountContext = createContext(undefined);
 
 // Provider component
-export const AccountProvider = ({ children }) => {
-  const [accountData, setAccountData] = useState(null);
+export const AccountProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [accountData, setAccountData] = useState<any>(null);
+  const [searchedAccountData, setSearchedAccountData] = useState<any>(null);
   return (
-    <AccountContext.Provider value={{ accountData, setAccountData }}>
+    <AccountContext.Provider value={{ accountData, setAccountData,searchedAccountData,setSearchedAccountData }}>
       {children}
     </AccountContext.Provider>
   );

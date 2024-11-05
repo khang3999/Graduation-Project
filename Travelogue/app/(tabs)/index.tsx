@@ -23,6 +23,13 @@ const Home = () => {
     setDataAllCities,
     isFocus, setIsFocus }: any = useHomeProvider();
 
+  const currentUser = auth.currentUser;
+  useEffect(() => {
+    const storeUser = async () => {
+      await AsyncStorage.setItem("user", JSON.stringify(currentUser));
+    };
+    storeUser();
+  }, []);
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', marginHorizontal: 10, gap: 6 }}>

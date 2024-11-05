@@ -40,13 +40,13 @@ const HeartButton = (props: any) => {
             const refAccountList = ref(database, `accounts/${userID}/${refColumn}/${data.id}`);
             const snapshot = await get(refAccountList);
 
-            // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
-            if (snapshot.exists()) {
-                setLiked(true); // Nếu postID đã tồn tại, đánh dấu là saved
-            } else {
-                setLiked(false); // Nếu không tồn tại, đánh dấu là unsaved
-            }
-        };
+      // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
+      if (snapshot.exists()) {
+        setLiked(true); // Nếu postID đã tồn tại, đánh dấu là saved
+      } else {
+        setLiked(false); // Nếu không tồn tại, đánh dấu là unsaved
+      }
+    };
 
         if (userID) {
             checkIfLiked(); // Gọi hàm kiểm tra nếu có userID
@@ -120,6 +120,6 @@ const HeartButton = (props: any) => {
 }
 
 // Style
-const likedColor = 'red'
-const unlikedColor = 'black'
-export default HeartButton
+const likedColor = "red";
+const unlikedColor = "black";
+export default HeartButton;

@@ -13,80 +13,49 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { getImageUrl } from "@/services/userService";
-import { set } from "lodash";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAccount } from "@/contexts/AccountProvider";
 
-export default function AvatarProfile({ userData }: any) {
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAvatarUrl = async () => {
-      try {
-        //check if the avatar URL is cached in the local storage
-        const cachedUrl = await AsyncStorage.getItem(`avatar_${userData.id}`);
-        if(cachedUrl){
-          setAvatarUrl(cachedUrl);
-        }else{
-        // Fetch the avatar URL from the server
-        const url = await getImageUrl(userData.avatar);
-        setAvatarUrl(url);
-        // Cache the avatar URL in the local storage
-        await AsyncStorage.setItem(`avatar_${userData.id}`, url);
+interface AvatarProfileProps {
+  isSearched: boolean;
+}
 
-      }
-      } catch (error) {
-        console.error("Error fetching avatar URL:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
+  const { accountData, searchedAccountData } = useAccount();
 
-    fetchAvatarUrl();    
-  }, [userData.avatar]);
+  const data = isSearched ? searchedAccountData : accountData;
   
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{ uri: avatarUrl }} />
+        <Image style={styles.avatar} source={{ uri: data.avatar }} />
+
+        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{data.fullname}</Text>
+
         <View style={styles.column}>
-          <Text style={styles.infoText}>{userData.totalLikes ?? null}</Text>
-          <Text style={styles.infoText}>thich</Text>
+          <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
+          <Text style={styles.infoText}>posts</Text>
         </View>
-        <View style={styles.column}>
-          <Text style={styles.infoText}>{userData.totalPosts ?? null}</Text>
-          <Text style={styles.infoText}>bai viet</Text>
-        </View>
+
       </View>
-      <Text style={styles.username}>{userData.fullname}</Text>
-      <Pressable
-        style={styles.button}
-        onPressIn={() =>
-          router.push({ pathname: "/editing", params: userData })
-        }
-      >
-        <Text style={styles.editText}>Edit Profile</Text>
-      </Pressable>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: 24,
     paddingTop: 30,
+
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   avatar: {
-    width: 100,
-    height: 100,
+    width: 130,
+    height: 130,
     resizeMode: "contain",
     borderColor: "grey",
     borderWidth: 2,
@@ -105,16 +74,15 @@ const styles = StyleSheet.create({
   username: {
     fontWeight: "bold",
     fontSize: 18,
-    padding: 10,
-    marginLeft: 10,
+    margin: 2,
+    marginTop: 20,
+    maxWidth: 120,
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 5,
     borderRadius: 6,
-    elevation: 2,
     backgroundColor: "#CDCDCD",
     marginHorizontal: 15,
   },
