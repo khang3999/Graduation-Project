@@ -32,7 +32,7 @@ import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { database } from "@/firebase/firebaseConfig";
-import { ref, push, set, get, refFromURL } from "firebase/database";
+import { ref, push, set, get, refFromURL,update } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
@@ -111,7 +111,7 @@ const PostItem: React.FC<PostItemProps> = ({
   setIsScrollEnabled,
 }) => {
 
-
+  console.log(item.id);
   const MAX_LENGTH = 100;
   const commentModalRef = useRef<Modalize>(null);
   const authorizedCommentAS = useRef<ActionSheetRef>(null);
@@ -152,7 +152,7 @@ const PostItem: React.FC<PostItemProps> = ({
       try {
         const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
         const newCommentRef = push(CommentsRef);
-
+        
         if (newCommentRef.key) {
           const newCommentWithId = { ...newComment, id: newCommentRef.key };
           await set(newCommentRef, newCommentWithId);
@@ -255,7 +255,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const handleDeleteComment = async (comment: Comment) => {
     Alert.alert(
       "Confirm Delete",
-      "Are you sure you want to delete this comment?",
+      "Are you sure you want to delete this comment and all its replies?",
       [
         {
           text: "Cancel",
@@ -266,19 +266,51 @@ const PostItem: React.FC<PostItemProps> = ({
           style: "destructive",
           onPress: async () => {
             try {
-              const commentRef = ref(database, `postsPhuc/${item.id}/comments/${comment.id}`);
-              await set(commentRef, null);
-              setComments((prevComments) => prevComments.filter((c) => c.id !== comment.id));
+              // Fetch all comments once
+              const snapshot = await get(ref(database, `postsPhuc/${item.id}/comments`));
+              const commentsData = snapshot.val() as Record<string, Comment>;
+  
+              
+              if (!commentsData) return;
+  
+              
+              const pathsToDelete: Record<string, null> = {};
+  
+              
+              const addCommentAndRepliesToDelete = (commentId: string) => {
+                pathsToDelete[`postsPhuc/${item.id}/comments/${commentId}`] = null;
+                Object.keys(commentsData).forEach((key) => {
+                  if (commentsData[key].parentId === commentId) {
+                    addCommentAndRepliesToDelete(key); 
+                  }
+                });
+              };
+  
+              
+              addCommentAndRepliesToDelete(comment.id);
+  
+              
+              await update(ref(database), pathsToDelete);
+  
+              
+              setComments((prevComments) => 
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/comments/${c.id}`))
+              );
+
+              console.log('Comment deleted successfully.', comments);
+  
               authorizedCommentAS.current?.hide();
             } catch (error) {
-              console.error('Error deleting comment:', error);
+              console.error("Error deleting comment:", error);
             }
           },
         },
       ],
       { cancelable: true }
     );
-  }
+  };
+  
+  
 
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
@@ -439,28 +471,18 @@ const PostItem: React.FC<PostItemProps> = ({
 
       {/* Action Sheet for author*/}
       <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-        <View>
+        <View>         
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              // Handle edit action
-              authorizedCommentAS.current?.hide();
-            }}
-          >
-            <Text style={styles.actionOptionText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => {
-              if (selectedComment) {
-                console.log('delete comment', selectedComment);
+              if (selectedComment) {                
                 handleDeleteComment(selectedComment);
               }
 
             }}
           >
             <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
-              Delete
+              Xóa bình luận
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -468,7 +490,7 @@ const PostItem: React.FC<PostItemProps> = ({
             onPress={() => authorizedCommentAS.current?.hide()}
           >
             <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
-              Cancel
+              Hủy
             </Text>
           </TouchableOpacity>
         </View>
@@ -477,30 +499,27 @@ const PostItem: React.FC<PostItemProps> = ({
 
       {/* Action Sheet for unauthorized user */}
       <ActionSheet ref={unauthorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-        <View>
+      <View>         
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              // Handle edit action
-              unauthorizedCommentAS.current?.hide();
+              if (selectedComment) {                
+                handleDeleteComment(selectedComment);
+              }
+
             }}
           >
-            <Text>Unauthorized</Text>
+            <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
+              Báo cáo bình luận
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionOption}
-            onPress={() => {
-              // Handle delete action
-              unauthorizedCommentAS.current?.hide();
-            }}
+            onPress={() => authorizedCommentAS.current?.hide()}
           >
-            <Text>Delete</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => unauthorizedCommentAS.current?.hide()}
-          >
-            <Text>Cancel</Text>
+            <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
+              Hủy
+            </Text>
           </TouchableOpacity>
         </View>
       </ActionSheet>

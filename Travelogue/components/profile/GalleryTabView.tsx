@@ -60,10 +60,11 @@ type Post = {
 };
 
 
-export default function GalleryTabView({ userId, isSearched }: { userId: string, isSearched: boolean }) {
+export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const layout = useWindowDimensions();
   const { selectedPost, setSelectedPost } = usePost();
-
+  const { accountData, searchedAccountData } = useAccount();
+  const userId = isSearched ? searchedAccountData.id : accountData?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
@@ -184,8 +185,8 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
         }
       };
   
-      fetchData();
-  
+      fetchData();      
+
       return () => {
         isActive = false; // Avoid state updates if the effect is cleaned up
   
