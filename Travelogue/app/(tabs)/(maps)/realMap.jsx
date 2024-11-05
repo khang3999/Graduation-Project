@@ -348,7 +348,6 @@ const Map = () => {
       <View style={styles.container}>
         <View style={styles.header}></View>
         {/* Map của Google Map */}
-
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
           {filteredPoints.map((point) => {
             // console.log("pointhello:", point);

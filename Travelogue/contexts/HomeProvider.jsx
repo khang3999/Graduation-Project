@@ -83,24 +83,24 @@ const HomeProvider = ({ children }) => {
     // Fetch tour theo post không realtime
     useEffect(() => {
         // if (loadedDataAccount) {
-            const fetchData = async () => {
-                try {
-                    const refTours = ref(database, 'tours/')
-                    const snapshot = await get(refTours);
-                    if (snapshot.exists()) {
-                        const dataToursJson = snapshot.val()
-                        const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
-                        // Sắp xếp lại list tour theo thứ tự
-                        sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
-                        setDataTours(dataToursArray)
-                    } else {
-                        console.log("No data available");
-                    }
-                } catch (error) {
-                    console.error("Error fetching data: ", error);
+        const fetchData = async () => {
+            try {
+                const refTours = ref(database, 'tours/')
+                const snapshot = await get(refTours);
+                if (snapshot.exists()) {
+                    const dataToursJson = snapshot.val()
+                    const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
+                    // Sắp xếp lại list tour theo thứ tự
+                    sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
+                    setDataTours(dataToursArray)
+                } else {
+                    console.log("No data available");
                 }
+            } catch (error) {
+                console.error("Error fetching data: ", error);
             }
-            fetchData();
+        }
+        fetchData();
         // }
         // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
     }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
@@ -132,15 +132,13 @@ const HomeProvider = ({ children }) => {
     }, [])
     // Lấy các quốc gia 
     useEffect(() => {
-        const refCountries = ref(database, `countries/`)
+        const refCountries = ref(database, `countries`)
         const unsubscribe = onValue(refCountries, (snapshot) => {
             if (snapshot.exists()) {
-                // Lấy tất cả factor của post dùng cho tính điểm
                 const jsonDataCountries = snapshot.val();
-
                 const countriesArray = Object.keys(jsonDataCountries).map(key => ({
                     key,
-                    value: jsonDataCountries[key].label
+                    value: jsonDataCountries[key].label,
                 }));
                 setDataCountries(countriesArray)
                 // setAccountBehavior(jsonDataAccount.behavior)
@@ -159,7 +157,7 @@ const HomeProvider = ({ children }) => {
         };
     }, [])
     // Lấy data account
-    useEffect(() =>  {
+    useEffect(() => {
         if (user) {
             const refAccount = ref(database, `accounts/${user}`)
             const unsubscribe = onValue(refAccount, (snapshot) => {

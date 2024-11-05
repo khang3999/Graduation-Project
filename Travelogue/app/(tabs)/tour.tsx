@@ -9,7 +9,6 @@ import { useHomeProvider } from '@/contexts/HomeProvider'
 const Tour = () => {
   const {
     dataModalSelected, setDataModalSelected
-
   }:any = useTourProvider()
   const {dataAllCities}: any = useHomeProvider()
   return (
