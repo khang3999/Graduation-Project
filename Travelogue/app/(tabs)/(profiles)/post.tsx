@@ -13,6 +13,7 @@ import {
   Platform,
   Modal,
   Pressable,
+  Alert,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -35,6 +36,7 @@ import { ref, push, set, get, refFromURL } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
+
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -112,7 +114,8 @@ const PostItem: React.FC<PostItemProps> = ({
 
   const MAX_LENGTH = 100;
   const commentModalRef = useRef<Modalize>(null);
-  const actionSheetRef = useRef<ActionSheetRef>(null);
+  const authorizedCommentAS = useRef<ActionSheetRef>(null);
+  const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const [commentText, setCommentText] = useState("");
@@ -123,7 +126,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
   const { accountData } = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
-
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
 
   const totalComments = comments.length;
 
@@ -241,10 +244,41 @@ const PostItem: React.FC<PostItemProps> = ({
     return false
   }
   const handleLongPressComment = (comment: Comment) => {
-    // Store the selected comment if needed
-    actionSheetRef.current?.show();
+    //handle whether the user is the author of the comment    
+    if (accountData.id === comment.author.id) {
+      setSelectedComment(comment);
+      authorizedCommentAS.current?.show();
+    } else {
+      unauthorizedCommentAS.current?.show();
+    }
   };
-
+  const handleDeleteComment = async (comment: Comment) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this comment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const commentRef = ref(database, `postsPhuc/${item.id}/comments/${comment.id}`);
+              await set(commentRef, null);
+              setComments((prevComments) => prevComments.filter((c) => c.id !== comment.id));
+              authorizedCommentAS.current?.hide();
+            } catch (error) {
+              console.error('Error deleting comment:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }
 
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
@@ -388,9 +422,6 @@ const PostItem: React.FC<PostItemProps> = ({
                             <IconMaterial name="message-reply-text-outline" size={20} color="#B1B1B1" style={{ marginRight: 5 }} />
                             <Text style={styles.replyButton}>Reply</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity style={styles.commentButtons}  >
-                            <IconMaterial name="dots-horizontal" size={20} color="#B1B1B1" />
-                          </TouchableOpacity>
                         </View>
                       </View>
                       <Text style={styles.commentTime}>{item.created_at}</Text>
@@ -406,39 +437,73 @@ const PostItem: React.FC<PostItemProps> = ({
         </KeyboardAvoidingView>
       </Modalize>
 
-      <ActionSheet ref={actionSheetRef} containerStyle={styles.actionSheetContainer}>
+      {/* Action Sheet for author*/}
+      <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
         <View>
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
               // Handle edit action
-              actionSheetRef.current?.hide();
+              authorizedCommentAS.current?.hide();
             }}
           >
-            <Text>Edit</Text>
+            <Text style={styles.actionOptionText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => {
+              if (selectedComment) {
+                console.log('delete comment', selectedComment);
+                handleDeleteComment(selectedComment);
+              }
+
+            }}
+          >
+            <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
+              Delete
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => authorizedCommentAS.current?.hide()}
+          >
+            <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
+              Cancel
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ActionSheet>
+
+
+      {/* Action Sheet for unauthorized user */}
+      <ActionSheet ref={unauthorizedCommentAS} containerStyle={styles.actionSheetContainer}>
+        <View>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => {
+              // Handle edit action
+              unauthorizedCommentAS.current?.hide();
+            }}
+          >
+            <Text>Unauthorized</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
               // Handle delete action
-              actionSheetRef.current?.hide();
+              unauthorizedCommentAS.current?.hide();
             }}
           >
             <Text>Delete</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionOption}
-            onPress={() => actionSheetRef.current?.hide()}
+            onPress={() => unauthorizedCommentAS.current?.hide()}
           >
             <Text>Cancel</Text>
           </TouchableOpacity>
         </View>
       </ActionSheet>
-
-
-
-
-
       {/* Rating Modal */}
       <Modal
         animationType="fade"
@@ -501,24 +566,25 @@ export default function PostsScreen() {
   // Simulate loading data (replace this with your data fetching logic)
   return (
     <>
-      <FlatList
-        data={memoriedPostItem}
-        renderItem={({ item }) => (
-          <PostItem
-            item={item}
-            setIsScrollEnabled={setIsScrollEnabled}
-          />
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        style={styles.container}
-        scrollEnabled={isScrollEnabled}
-        initialScrollIndex={initialPage}
-        getItemLayout={(data, index) => ({
-          length: windowHeight,
-          offset: index * windowHeight,
-          index,
-        })}
-      />
+      
+        <FlatList
+          data={memoriedPostItem}
+          renderItem={({ item }) => (
+            <PostItem
+              item={item}
+              setIsScrollEnabled={setIsScrollEnabled}
+            />
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          style={styles.container}
+          scrollEnabled={isScrollEnabled}
+          initialScrollIndex={initialPage}
+          getItemLayout={(data, index) => ({
+            length: windowHeight,
+            offset: index * windowHeight,
+            index,
+          })}
+        />      
       {/* Loader overlay */}
       {/* {loading && (
         <View style={styles.loaderContainer}>
@@ -532,13 +598,28 @@ export default function PostsScreen() {
 }
 const styles = StyleSheet.create({
   actionSheetContainer: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
   },
   actionOption: {
-    paddingVertical: 12,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  actionOptionText: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  actionOptionTextDelete: {
+    color: '#FF3B30', // Red color for delete option
+  },
+  actionOptionTextCancel: {
+    color: '#555555', // Grey color for cancel option
   },
   commentButtons: {
     flexDirection: "row",

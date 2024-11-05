@@ -60,10 +60,11 @@ export default function ProfileScreen() {
     onValue(userRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setAccountData(data); // Update state
+        setAccountData(data); // Update state        
       }
     });
   };
+
 
   useEffect(() => {
     const initialize = async () => {
@@ -111,8 +112,6 @@ export default function ProfileScreen() {
       setFilteredData(results.slice(0, 5));
     }
   };
-
-
 
   const openSearchModal = () => {
     setIsSearchModalVisible(true);

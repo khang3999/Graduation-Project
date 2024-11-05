@@ -13,7 +13,7 @@ import {
 import { TabView, SceneMap, TabBar, TabBarProps } from "react-native-tab-view";
 import MaterialIcons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useCallback } from "react";
 import { database, auth, get } from "@/firebase/firebaseConfig";
 import { ref, onValue, off, Unsubscribe } from "firebase/database";
 import { usePost } from "@/contexts/PostProvider";
@@ -21,6 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
 import { initial } from "lodash";
 import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -78,6 +79,7 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
           { key: "third" },
         ]
   );
+
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -166,29 +168,41 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-
-    fetchCreatedPosts();
-    fetchSavedPosts();
-    fetchLikedPosts();
-
-    setIsLoading(false);
-
-    return () => {
-      if (userId) {
-        const createdPostsRef = ref(
-          database,
-          `accounts/${userId}/createdPosts`
-        );
-        const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
-        const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
-        off(createdPostsRef);
-        off(savedPostsRef);
-        off(likedPostRef);
-      }
-    };
-  }, [userId]);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+  
+      const fetchData = async () => {
+        setIsLoading(true);
+  
+        await fetchCreatedPosts();
+        await fetchSavedPosts();
+        await fetchLikedPosts();
+  
+        if (isActive) {
+          setIsLoading(false);
+        }
+      };
+  
+      fetchData();
+  
+      return () => {
+        isActive = false; // Avoid state updates if the effect is cleaned up
+  
+        if (userId) {
+          const createdPostsRef = ref(
+            database,
+            `accounts/${userId}/createdPosts`
+          );
+          const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
+          const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
+          off(createdPostsRef);
+          off(savedPostsRef);
+          off(likedPostRef);
+        }
+      };
+    }, [userId])
+  );
 
   const FirstRoute = () => {
     return (
