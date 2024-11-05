@@ -11,6 +11,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -23,22 +25,25 @@ import MenuItem from "@/components/buttons/MenuPostButton";
 import CheckedInChip from "@/components/chips/CheckedInChip";
 import RenderHtml from "react-native-render-html";
 import Icon from "react-native-vector-icons/FontAwesome";
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating, AirbnbRating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { database } from "@/firebase/firebaseConfig";
-import { ref, push, set } from "firebase/database";
+import { ref, push, set, get, refFromURL } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
+import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 type Comment = {
   id: string;
-  accountID: {
-    avatar: any; // Change to ImageSourcePropType if needed
+  author: {
+    id: string
+    avatar: any;
     username: string;
   };
   status_id: number;
@@ -47,11 +52,16 @@ type Comment = {
   parentId: string | null;
   created_at: string;
 };
+type RatingEntity = {
+  totalRatingCounter: number;
+  totalRatingValue: number;
+}
 
 type Post = {
   id: string;
   author: {
-    avatar: any; // Change to ImageSourcePropType if needed
+    id: string;
+    avatar: any;
     username: string;
   };
   comments: Record<string, Comment>;
@@ -61,6 +71,7 @@ type Post = {
   images: string[];
   likes: number;
   locations: Record<string, Record<string, string>>;
+  rating: RatingEntity;
   post_status: string;
   price_id: number;
   reports: number;
@@ -97,29 +108,32 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
-  
 
-  
+
+  const MAX_LENGTH = 100;
   const commentModalRef = useRef<Modalize>(null);
-  const ratingModalRef = useRef<Modalize>(null);
-
+  const actionSheetRef = useRef<ActionSheetRef>(null);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [ratingValue, setRatingValue] = useState(5);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
     username: string;
   } | null>(null);
+
   const { accountData } = useAccount();
-  
-  const [comments, setComments] = useState(Object.values(item.comments));
-  const MAX_LENGTH = 100;  
+  const [comments, setComments] = useState(Object.values(item.comments || {}));
+
+
   const totalComments = comments.length;
 
   const addComment = async () => {
     if (commentText.trim().length > 0) {
       const newComment = {
-        accountID: {
+        author: {
+          id: accountData.id,
           avatar:
-          accountData.avatar,
+            accountData.avatar,
           username: accountData.fullname,
         },
         status_id: 1,
@@ -167,12 +181,11 @@ const PostItem: React.FC<PostItemProps> = ({
       if (comment.id === parentId) {
         // Set the `parentId` for the new reply
         reply.parentId = parentId;
-        return [comment, reply]; 
+        return [comment, reply];
       }
       return comment;
-    }).flat(); 
+    }).flat();
   };
-
   const openCommentModal = () => {
     if (commentModalRef.current) {
       commentModalRef.current.open(); // Safely access the ref
@@ -182,28 +195,67 @@ const PostItem: React.FC<PostItemProps> = ({
     }
   };
   const openRatingModal = () => {
-    if (ratingModalRef.current) {
-      ratingModalRef.current.open(); // Safely access the ref
-    } else {
-      console.error("Modalize reference is null");
+    setIsRatingModalOpen(!isRatingModalOpen);
+  }
+  const handleSubmitRating = async () => {
+    try {
+      const postRef = ref(database, `postsPhuc/${item.id}/rating`);
+      const postSnapshot = await get(postRef);
+
+      if (postSnapshot.exists()) {
+        const currentRating: RatingEntity = postSnapshot.val();
+        const newTotalValue = currentRating.totalRatingValue + ratingValue;
+        const newCounter = currentRating.totalRatingCounter + 1;
+
+        // Update the rating in the database
+        const updatedRating = {
+          totalRatingValue: newTotalValue,
+          totalRatingCounter: newCounter,
+        };
+
+        await set(postRef, updatedRating);
+
+        // Optionally, update local state or UI if needed
+        console.log('Rating submitted successfully.');
+      } else {
+        // If there is no existing rating, create a new one
+        const newRating = {
+          totalRatingValue: ratingValue,
+          totalRatingCounter: 1,
+        };
+
+        await set(postRef, newRating);
+        console.log('New rating created and submitted.');
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error);
+    } finally {
+      setRatingValue(5)
+      setIsRatingModalOpen(false); // Close the modal
     }
   };
-  const closeRatingModal = () => {
-    if (ratingModalRef.current) {      
-      ratingModalRef.current.close();
-    } else {
-      console.error("Modalize reference is null");
+  const handleIsAuthor = () => {
+    if (accountData.id === item.author.id) {
+      return true;
     }
+    return false
+  }
+  const handleLongPressComment = (comment: Comment) => {
+    // Store the selected comment if needed
+    actionSheetRef.current?.show();
   };
+
+
+
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
-    const toggleDescription = (postId: string) => {
-      setExpandedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
-    };
-  
+  const toggleDescription = (postId: string) => {
+    setExpandedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
   const isExpanded = expandedPosts[item.id] || false;
 
   const desc = {
@@ -226,7 +278,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem menuIcon="dots-horizontal" />
+          <MenuItem isAuthor={handleIsAuthor} />
         </View>
       </View>
 
@@ -253,7 +305,7 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} postID={item.id}/>
+            <HeartButton style={styles.buttonItem} postID={item.id} />
             <Text style={styles.totalLikes}>{item.likes}</Text>
             <CommentButton
               style={styles.buttonItem}
@@ -261,18 +313,18 @@ const PostItem: React.FC<PostItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} postID={item.id}/>
+          <SaveButton style={styles.buttonItem} postID={item.id} />
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
-          <RatingButton ratingValue={4} onPress={openRatingModal} />
+          <RatingButton ratingValue={item.rating.totalRatingValue} onPress={openRatingModal} />
         </View>
       </View>
       <CheckedInChip items={Object.values(item.locations.vietnam)} />
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
         <RenderHtml contentWidth={windowWidth} source={desc} />
-        <TouchableOpacity onPress={()=>toggleDescription(item.id)}>
+        <TouchableOpacity onPress={() => toggleDescription(item.id)}>
           <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
@@ -280,7 +332,6 @@ const PostItem: React.FC<PostItemProps> = ({
       {/* Comment Bottom Sheet */}
       <Modalize
         ref={commentModalRef}
-        // adjustToContentHeight={false}
         modalHeight={600}
         alwaysOpen={0}
         handlePosition="inside"
@@ -322,21 +373,29 @@ const PostItem: React.FC<PostItemProps> = ({
             {comments.length > 0 ? (
               <FlatList
                 data={comments}
-                keyExtractor={(item, index) => index.toString()}
+                keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item }) => (
-                  <View style={[styles.commentContainer, { marginLeft: item.parentId ? 20 : 0 }]}>
-                  <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                    <Image source={{ uri: item.accountID.avatar }} style={styles.miniAvatar} />
-                    <View style={{ marginLeft: 10 }}>
-                      <Text style={styles.commentUsername}>{item.accountID.username}</Text>
-                      <Text style={styles.commentText}>{item.content}</Text>
-                      <TouchableOpacity onPress={() => setReplyingTo({ id: item.id, username: item.accountID.username })}>
-                        <Text style={styles.replyButton}>Reply</Text>
-                      </TouchableOpacity>
+                  <TouchableOpacity
+                    onLongPress={() => handleLongPressComment(item)}
+                    style={[styles.commentContainer, { marginLeft: item.parentId ? 20 : 0 }]}>
+                    <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                      <Image source={{ uri: item.author.avatar }} style={styles.miniAvatar} />
+                      <View style={{ marginLeft: 10 }}>
+                        <Text style={styles.commentUsername}>{item.author.username}</Text>
+                        <Text style={styles.commentText}>{item.content}</Text>
+                        <View style={{ flexDirection: 'row' }}>
+                          <TouchableOpacity style={styles.commentButtons} onPress={() => setReplyingTo({ id: item.id, username: item.author.username })}>
+                            <IconMaterial name="message-reply-text-outline" size={20} color="#B1B1B1" style={{ marginRight: 5 }} />
+                            <Text style={styles.replyButton}>Reply</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.commentButtons}  >
+                            <IconMaterial name="dots-horizontal" size={20} color="#B1B1B1" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <Text style={styles.commentTime}>{item.created_at}</Text>
                     </View>
-                    <Text style={styles.commentTime}>{item.created_at}</Text>
-                  </View>
-                </View>
+                  </TouchableOpacity>
                 )}
                 contentContainerStyle={{ paddingBottom: 60 }}
               />
@@ -346,39 +405,92 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </KeyboardAvoidingView>
       </Modalize>
-      {/* Rating Bottom Sheet */}
-      <Modalize
-        ref={ratingModalRef}
-        modalHeight={400}
-        handlePosition="inside"
-        avoidKeyboardLikeIOS={true}
+
+      <ActionSheet ref={actionSheetRef} containerStyle={styles.actionSheetContainer}>
+        <View>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => {
+              // Handle edit action
+              actionSheetRef.current?.hide();
+            }}
+          >
+            <Text>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => {
+              // Handle delete action
+              actionSheetRef.current?.hide();
+            }}
+          >
+            <Text>Delete</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionOption}
+            onPress={() => actionSheetRef.current?.hide()}
+          >
+            <Text>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </ActionSheet>
+
+
+
+
+
+      {/* Rating Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isRatingModalOpen}
+        onRequestClose={() => setIsRatingModalOpen(false)}
       >
-        <View style={styles.ratingContainer}>
-          <Rating
-            showRating
-            onFinishRating={(rating: number) => console.log(rating)}
-            startingValue={5}            
-            imageSize={60}
-            minValue={1}
-            style={{ marginBottom: 10 }}
-            
-          />
-          <View style={styles.ratingButtonWrapper}>
-            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={closeRatingModal}>
-              <Icon name="check" size={30} color="white" />
-              <Text style={styles.ratingTitle}>Đánh Giá</Text>
-            </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Đánh giá bài viết</Text>
+            <Text style={styles.modalSubtitle}>
+              Xin hãy nhận xét trung thực và đánh giá khách quan nhất.
+            </Text>
+
+            {/* Rating Component */}
+            <View style={styles.ratingWrapper}>
+              <Rating
+                showRating
+                onFinishRating={(value: number) => setRatingValue(value)}
+                startingValue={5}
+                imageSize={60}
+                minValue={1}
+                style={{ marginBottom: 10 }}
+              />
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.buttonModalRow}>
+              <Pressable
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setIsRatingModalOpen(false)}
+              >
+                <Text style={styles.buttonText}>Đóng</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.buttonSubmit]}
+                onPress={handleSubmitRating}
+              >
+                <Text style={styles.buttonText}>Đăng</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </Modalize>
-    
+      </Modal>
+
     </View>
   );
 };
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-  
+
   const { selectedPost, setSelectedPost } = usePost();
   const { initialIndex } = useLocalSearchParams();
   const initialPage = parseInt(initialIndex as string, 10);
@@ -393,7 +505,7 @@ export default function PostsScreen() {
         data={memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
-            item={item}            
+            item={item}
             setIsScrollEnabled={setIsScrollEnabled}
           />
         )}
@@ -407,18 +519,82 @@ export default function PostsScreen() {
           index,
         })}
       />
-        {/* Loader overlay */}
+      {/* Loader overlay */}
       {/* {loading && (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#B1B1B1" />
         </View>
       )} */}
-      
-      
+
+
     </>
   );
 }
 const styles = StyleSheet.create({
+  actionSheetContainer: {
+    backgroundColor: '#f8f8f8',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+  },
+  actionOption: {
+    paddingVertical: 12,
+  },
+  commentButtons: {
+    flexDirection: "row",
+    marginTop: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Dimmed background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  ratingContainer: {
+    marginBottom: 30,
+    // Add styles for your rating component
+  },
+  buttonModalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    marginHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonClose: {
+    backgroundColor: '#cccccc',
+  },
+  buttonSubmit: {
+    backgroundColor: '#2196F3',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   loaderContainer: {
     position: 'absolute',
     top: 0,
@@ -427,8 +603,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 24, 27, 0.62)', // Semi-transparent background
-    zIndex: 1, // Ensures loader appears above FlatList
+    backgroundColor: 'rgba(30, 24, 27, 0.62)',
+    zIndex: 1,
   },
   ratingTitle: {
     marginLeft: 10,
@@ -437,8 +613,8 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 3,
   },
-  ratingContainer: {
-    marginTop: 50,
+  ratingWrapper: {
+
     paddingVertical: 10,
     flexDirection: "column",
   },
@@ -464,7 +640,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  totalComments:{
+  totalComments: {
     marginRight: 10,
     marginTop: 1,
     fontSize: 16,
@@ -573,7 +749,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#333",
-    marginRight:10,
+    marginRight: 10,
   },
   commentText: {
     fontSize: 14,
@@ -581,9 +757,9 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   replyButton: {
-    color: "#1E90FF", // Blue color for the reply button
-    fontSize: 12,
-    marginTop: 5,
+    color: "grey", // Blue color for the reply button
+    fontSize: 13,
+    marginTop: 3,
     marginRight: 10,
   },
   commentInputContainer: {

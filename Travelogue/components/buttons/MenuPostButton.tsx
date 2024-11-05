@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
@@ -16,10 +17,10 @@ import { appColors } from "@/constants/appColors";
 import {Button, Divider} from "react-native-paper";
 
 interface MenuPopupButtonProps {
-  menuIcon: string;
+  isAuthor: () => boolean;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
   const buttonRef = useRef<TouchableOpacity>(null); // To measure the button's position
@@ -30,7 +31,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
       buttonRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
         setMenuPosition({
           top: py + height - 20, // Place the menu right below the button
-          left: px - 130, // Align it with the left side of the button
+          left: px - 140, // Align it with the left side of the button
         });
       });
     }
@@ -39,109 +40,121 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ menuIcon }) => {
 
   return (
     <View style={styles.container}>
-      {/* Button to open the menu */}
-      <TouchableOpacity
-        ref={buttonRef}
-        onPress={toggleModal}
-        style={styles.button}
-      >
-        <Icon size={24} name={menuIcon}></Icon>
-      </TouchableOpacity>
+    {/* Button to open the menu */}
+    <TouchableOpacity
+      ref={buttonRef}
+      onPress={toggleModal}
+      style={styles.button}
+    >
+      <Icon size={24} name="dots-horizontal" style={styles.icon} />
+    </TouchableOpacity>
 
-      {/* Menu Modal */}
-      {isModalVisible && (
-        <Modal
-          transparent={true}
-          visible={isModalVisible}
-          animationType="none"
-          onRequestClose={toggleModal}
-        >
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPressOut={toggleModal}
-          >
+    {/* Menu Modal */}
+    {isAuthor() && isModalVisible ? (
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={toggleModal}
+      >
+        <TouchableWithoutFeedback onPress={toggleModal}>
+          <View style={styles.overlay}>
             <View
               style={[
                 styles.menu,
                 { top: menuPosition.top, left: menuPosition.left },
               ]}
             >
-              <Button
-                icon="image-outline"
-                mode="text"
-                onPress={() => console.log("Pressed")}  
-                textColor="#000"                                              
-              >
-                Edit
-              </Button>
-              <View style={styles.border} />
-              <Button
-                icon="trash-can-outline"
-                mode="text"
-                onPress={() => console.log("Pressed")}  
-                textColor="#000"                              
-              >
-                Trash
-              </Button>
-              <View style={styles.border} />
-              <Button
-                icon="send"
-                mode="text"
-                onPress={() => console.log("Pressed")}  
-                textColor="#000"                              
-              >
-                Report
-              </Button>                          
-           
+              <TouchableOpacity style={styles.menuItem}>
+                <Icon name="image-outline" size={20} style={styles.menuIcon}/>
+                <Text style={styles.menuText}>Chỉnh Sửa</Text> 
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem}>
+                <Icon name="trash-can-outline" size={20} style={styles.menuIcon} />
+                <Text style={styles.menuText}>Xóa</Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity style={styles.menuItem}>
+                <Icon name="send" size={20} style={styles.menuIcon} />
+                <Text style={styles.menuText}>Báo cáo</Text>
+              </TouchableOpacity> */}
             </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
-    </View>
+          </View>
+
+        </TouchableWithoutFeedback>
+
+      </Modal>
+    ) : (
+      <Modal
+      transparent={true}
+      visible={isModalVisible}
+      animationType="fade"
+      onRequestClose={toggleModal}
+    >
+      <TouchableWithoutFeedback onPress={toggleModal}>
+        <View style={styles.overlay}>
+          <View
+            style={[
+              styles.menu,
+              { top: menuPosition.top, left: menuPosition.left },
+            ]}
+          >           
+            <TouchableOpacity style={styles.menuItem}>
+              <Icon name="send" size={20} style={styles.menuIcon} />
+              <Text style={styles.menuText}>Báo cáo</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </TouchableWithoutFeedback>
+
+    </Modal>
+    )}
+  </View>
   );
 };
-
-// Styles for the components
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   button: {
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 25,
+    backgroundColor: '#f0f0f0',
   },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
+  icon: {
+    color: '#333',
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'transparent',
   },
   menu: {
-    position: "absolute",
-    backgroundColor: "white",
-    paddingVertical: 10,
-    borderRadius: 15,
-    alignItems: "center",
+    position: 'absolute',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingVertical: 5,
+    width: 180,
     elevation: 5, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  border: {        
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    width: 150,
-    alignItems: "center",
-    borderRadius: 5,
+  menuItem: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
   },
   menuText: {
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
+  menuIcon: {
+    marginRight: 10,
+
+  }
 });
 
 export default MenuPopupButton;
