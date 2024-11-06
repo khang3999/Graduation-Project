@@ -27,19 +27,33 @@ import CheckedInChip from "@/components/chips/CheckedInChip";
 import RenderHtml from "react-native-render-html";
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
-import { Rating, AirbnbRating } from "react-native-ratings";
+import { Rating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { database } from "@/firebase/firebaseConfig";
-import { ref, push, set, get, refFromURL,update } from "firebase/database";
+import { database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-
+import * as ImagePicker from 'expo-image-picker';
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
+type RatingObject = {
+  content: string;
+  images: string;
+  created_at: string;
+  id: string;
+  rating: number;
+  reports: number;
+  status_id: number;
+};
+
+type RatingSummary = {
+  totalRatingCounter: any;
+  totalRatingValue: any;
+};
 
 type Comment = {
   id: string;
@@ -54,10 +68,6 @@ type Comment = {
   parentId: string | null;
   created_at: string;
 };
-type RatingEntity = {
-  totalRatingCounter: number;
-  totalRatingValue: number;
-}
 
 type Post = {
   id: string;
@@ -73,7 +83,8 @@ type Post = {
   images: string[];
   likes: number;
   locations: Record<string, Record<string, string>>;
-  rating: RatingEntity;
+  ratings: RatingObject;
+  ratingSummary: RatingSummary;
   post_status: string;
   price_id: number;
   reports: number;
@@ -85,22 +96,22 @@ type PostItemProps = {
   setIsScrollEnabled: (value: boolean) => void;
 };
 
-
 type RatingButtonProps = {
-  ratingValue: number;
+  averageRating: number;
   onPress: () => void;
 };
 
 const RatingButton: React.FC<RatingButtonProps> = ({
-  ratingValue,
+  averageRating,
   onPress,
 }) => {
+
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       <Text style={styles.ratingLabel}>Rating: </Text>
       <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
         <Icon name="smile-o" size={40} color="black" />
-        <Text style={styles.ratingValue}>{ratingValue}/5</Text>
+        <Text style={styles.ratingValue}>{averageRating}/5</Text>
       </TouchableOpacity>
     </View>
   );
@@ -111,13 +122,11 @@ const PostItem: React.FC<PostItemProps> = ({
   setIsScrollEnabled,
 }) => {
 
-  console.log(item.id);
+
   const MAX_LENGTH = 100;
   const commentModalRef = useRef<Modalize>(null);
   const authorizedCommentAS = useRef<ActionSheetRef>(null);
   const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
-  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-  const [ratingValue, setRatingValue] = useState(5);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -127,9 +136,12 @@ const PostItem: React.FC<PostItemProps> = ({
   const { accountData } = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
-
+  const [ratingImage, setRatingImage] = useState<string | null>(null);
+  const [ratingCommentText, setRatingCommentText] = useState("");
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [ratingValue, setRatingValue] = useState(5);
   const totalComments = comments.length;
-
+  const [isLoading, setIsLoading] = useState(false);
   const addComment = async () => {
     if (commentText.trim().length > 0) {
       const newComment = {
@@ -152,7 +164,7 @@ const PostItem: React.FC<PostItemProps> = ({
       try {
         const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
         const newCommentRef = push(CommentsRef);
-        
+
         if (newCommentRef.key) {
           const newCommentWithId = { ...newComment, id: newCommentRef.key };
           await set(newCommentRef, newCommentWithId);
@@ -197,46 +209,6 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
-  const openRatingModal = () => {
-    setIsRatingModalOpen(!isRatingModalOpen);
-  }
-  const handleSubmitRating = async () => {
-    try {
-      const postRef = ref(database, `postsPhuc/${item.id}/rating`);
-      const postSnapshot = await get(postRef);
-
-      if (postSnapshot.exists()) {
-        const currentRating: RatingEntity = postSnapshot.val();
-        const newTotalValue = currentRating.totalRatingValue + ratingValue;
-        const newCounter = currentRating.totalRatingCounter + 1;
-
-        // Update the rating in the database
-        const updatedRating = {
-          totalRatingValue: newTotalValue,
-          totalRatingCounter: newCounter,
-        };
-
-        await set(postRef, updatedRating);
-
-        // Optionally, update local state or UI if needed
-        console.log('Rating submitted successfully.');
-      } else {
-        // If there is no existing rating, create a new one
-        const newRating = {
-          totalRatingValue: ratingValue,
-          totalRatingCounter: 1,
-        };
-
-        await set(postRef, newRating);
-        console.log('New rating created and submitted.');
-      }
-    } catch (error) {
-      console.error('Error updating rating:', error);
-    } finally {
-      setRatingValue(5)
-      setIsRatingModalOpen(false); // Close the modal
-    }
-  };
   const handleIsAuthor = () => {
     if (accountData.id === item.author.id) {
       return true;
@@ -244,7 +216,7 @@ const PostItem: React.FC<PostItemProps> = ({
     return false
   }
   const handleLongPressComment = (comment: Comment) => {
-    //handle whether the user is the author of the comment    
+    //handle whether the account is the author of the comment    
     if (accountData.id === comment.author.id) {
       setSelectedComment(comment);
       authorizedCommentAS.current?.show();
@@ -269,36 +241,36 @@ const PostItem: React.FC<PostItemProps> = ({
               // Fetch all comments once
               const snapshot = await get(ref(database, `postsPhuc/${item.id}/comments`));
               const commentsData = snapshot.val() as Record<string, Comment>;
-  
-              
+
+
               if (!commentsData) return;
-  
-              
+
+
               const pathsToDelete: Record<string, null> = {};
-  
-              
+
+
               const addCommentAndRepliesToDelete = (commentId: string) => {
                 pathsToDelete[`postsPhuc/${item.id}/comments/${commentId}`] = null;
                 Object.keys(commentsData).forEach((key) => {
                   if (commentsData[key].parentId === commentId) {
-                    addCommentAndRepliesToDelete(key); 
+                    addCommentAndRepliesToDelete(key);
                   }
                 });
               };
-  
-              
+
+
               addCommentAndRepliesToDelete(comment.id);
-  
-              
+
+
               await update(ref(database), pathsToDelete);
-  
-              
-              setComments((prevComments) => 
+
+
+              setComments((prevComments) =>
                 prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/comments/${c.id}`))
               );
 
               console.log('Comment deleted successfully.', comments);
-  
+
               authorizedCommentAS.current?.hide();
             } catch (error) {
               console.error("Error deleting comment:", error);
@@ -309,12 +281,101 @@ const PostItem: React.FC<PostItemProps> = ({
       { cancelable: true }
     );
   };
+  const openRatingModal = () => {
+    setIsRatingModalOpen(!isRatingModalOpen);
+  }
+  const handleSubmitRating = async () => {
+    const postId = item.id;
+    const userId = accountData.id;
+    setIsLoading(true);
+    try {
+      // Step 1: Reference to the user's rating in Realtime Database
+      const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+
+      // Check if the user has already rated this post
+      const previousRatingSnapshot = await get(userRatingRef);
+
+      if (previousRatingSnapshot.exists()) {
+        Alert.alert("You have already rated this post", "You cannot rate the same post more than once.");
+        return;
+      }
+      let imageUrl = "";
+
+      // Step 2: Upload image to Firebase Storage with a unique ID if imageUri is provided
+      if (ratingImage) {
+
+        const uniqueImageId = push(ref(database)).key;
+        if (uniqueImageId) {
+          const imageRef = storageRef(storage, `posts/${postId}/images/${uniqueImageId}.jpg`);
+          const img = await fetch(ratingImage);
+          const bytes = await img.blob();
+          await uploadBytes(imageRef, bytes);
+          imageUrl = await getDownloadURL(imageRef);
+        }
+      }
+
+      // Step 3: Prepare the rating data
+      const rating = {
+        content: ratingCommentText,
+        images: imageUrl,
+        created_at: new Date().toISOString(),
+        rating: ratingValue,
+        reports: 0,
+        status_id: 0,
+      };
+
+
+      // Step 4: Reference to the rating summary in Realtime Database
+      const summaryRef = ref(database, `postsPhuc/${postId}/ratingSummary`);
+
+      // Step 5: Update the rating summary with new values
+      const summaryUpdate = {
+        totalRatingCounter: increment(1),
+        totalRatingValue: increment(ratingValue),
+      };
+
+      // Step 6: Save the rating and update the summary in parallel
+      await Promise.all([
+        set(userRatingRef, rating),
+        update(summaryRef, summaryUpdate),
+      ]);
+
+      console.log('Rating and image successfully added');
+      
+    } catch (error) {
+      
+      console.error('Error adding rating and image:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
+    if (!(totalRatingCounter && totalRatingValue)) {
+      return 0;
+    }
+    return totalRatingValue / totalRatingCounter;
+  };
+  const pickRatingImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setRatingImage(result.assets[0].uri);
+    }
+  };
 
   //handle report comment
   const handleReportComment = (comment: Comment) => {
 
   }
-  
+
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
@@ -386,7 +447,7 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
-          <RatingButton ratingValue={item.rating.totalRatingValue} onPress={openRatingModal} />
+          <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={openRatingModal} />
         </View>
       </View>
       <CheckedInChip items={Object.values(item.locations.vietnam)} />
@@ -474,11 +535,11 @@ const PostItem: React.FC<PostItemProps> = ({
 
       {/* Action Sheet for author*/}
       <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-        <View>         
+        <View>
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              if (selectedComment) {                
+              if (selectedComment) {
                 handleDeleteComment(selectedComment);
               }
 
@@ -499,14 +560,13 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
       </ActionSheet>
 
-
-      {/* Action Sheet for unauthorized user */}
+      {/* Action Sheet for unauthorized account */}
       <ActionSheet ref={unauthorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-      <View>         
+        <View>
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              if (selectedComment) {                
+              if (selectedComment) {
                 handleReportComment(selectedComment);
               }
 
@@ -543,13 +603,39 @@ const PostItem: React.FC<PostItemProps> = ({
             {/* Rating Component */}
             <View style={styles.ratingWrapper}>
               <Rating
-                showRating
                 onFinishRating={(value: number) => setRatingValue(value)}
                 startingValue={5}
-                imageSize={60}
+                imageSize={50}
                 minValue={1}
                 style={{ marginBottom: 10 }}
               />
+            </View>
+
+            {/* Comment Input */}
+            <View style={styles.ratingCommentInputContainer}>
+              <TextInput
+                placeholder="Nhận xét của bạn..."
+                value={ratingCommentText}
+                onChangeText={setRatingCommentText}
+                style={styles.ratingCommentInput}
+                multiline
+              />
+            </View>
+
+            {/* Image picker */}
+            <View style={styles.imagePickerContainer}>
+              <Pressable style={styles.imagePickerButton} onPress={pickRatingImage}>
+                <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+              </Pressable>
+              {ratingImage &&
+                <View style={styles.selectedImageContainer}>
+                  <Image
+                    source={{ uri: ratingImage }}
+                    style={styles.selectedImage}
+                  />
+                </View>
+              }
             </View>
 
             {/* Action Buttons */}
@@ -569,6 +655,12 @@ const PostItem: React.FC<PostItemProps> = ({
             </View>
           </View>
         </View>
+          {/* Loading Indicator Overlay */}
+          {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
       </Modal>
 
     </View>
@@ -585,28 +677,28 @@ export default function PostsScreen() {
 
 
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
-  // Simulate loading data (replace this with your data fetching logic)
+  
   return (
     <>
-      
-        <FlatList
-          data={memoriedPostItem}
-          renderItem={({ item }) => (
-            <PostItem
-              item={item}
-              setIsScrollEnabled={setIsScrollEnabled}
-            />
-          )}
-          keyExtractor={(item, index) => index.toString()}
-          style={styles.container}
-          scrollEnabled={isScrollEnabled}
-          initialScrollIndex={initialPage}
-          getItemLayout={(data, index) => ({
-            length: windowHeight,
-            offset: index * windowHeight,
-            index,
-          })}
-        />      
+
+      <FlatList
+        data={memoriedPostItem}
+        renderItem={({ item }) => (
+          <PostItem
+            item={item}
+            setIsScrollEnabled={setIsScrollEnabled}
+          />
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.container}
+        scrollEnabled={isScrollEnabled}
+        initialScrollIndex={initialPage}
+        getItemLayout={(data, index) => ({
+          length: windowHeight,
+          offset: index * windowHeight,
+          index,
+        })}
+      />
       {/* Loader overlay */}
       {/* {loading && (
         <View style={styles.loaderContainer}>
@@ -647,6 +739,73 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 5,
   },
+  // rating modal styles
+  selectedImageContainer: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  ratingImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+  },
+  imagePickerTextButton: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  imagePickerIconButton: {
+    marginRight: 10,
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  ratingCommentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#fff',
+  },
+  ratingCommentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    maxHeight: 100,
+  },
+  // rating modal
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent overlay
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10, // Ensures it appears above other content
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)', // Dimmed background
@@ -668,12 +827,11 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
     color: '#666',
   },
   ratingContainer: {
     marginBottom: 30,
-    // Add styles for your rating component
   },
   buttonModalRow: {
     flexDirection: 'row',
@@ -717,7 +875,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   ratingWrapper: {
-
     paddingVertical: 10,
     flexDirection: "column",
   },
