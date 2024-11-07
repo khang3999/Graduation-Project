@@ -223,15 +223,14 @@ const AddPostTour = () => {
 
       // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        // console.log()
-        const countryData = data[countryKey];
-        // console.log("countryData:", countryData);
-
-        return Object.keys(countryData).map((cityKey) => ({
-          id: cityKey,
-          id_nuoc: countryData[cityKey].id_nuoc,
-          ...countryData[cityKey],
-        }));
+        return Object.keys(data[countryKey]).flatMap((area_id) => {
+          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
+            id: cityKey,
+            area_id: area_id,
+            id_nuoc: countryKey,
+            ...data[countryKey][area_id][cityKey],
+          }));
+        });
       });
 
       setCitiesData(formattedData);
@@ -1116,7 +1115,7 @@ const AddPostTour = () => {
             styles={{
               fontWeight: "800",
               margin: 5,
-              marginLeft: "18%",
+              marginLeft: "25%",
               marginBottom: 20,
             }}
           />
@@ -2068,9 +2067,21 @@ const AddPostTour = () => {
           }}
         >
           <View style={[styles.containerMap]}>
+          <RowComponent>
             <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
               Chọn địa điểm
             </Text>
+            <LottieView
+            source={require("../../assets/images/map.json")}
+            autoPlay
+            loop
+            style={{
+              width: 60,
+              height: 35,
+            }}
+          />
+            </RowComponent>
+           
             {/* Search */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -2083,11 +2094,17 @@ const AddPostTour = () => {
                 style={styles.searchButton}
                 onPress={handleSearch}
               >
-                <Icon
-                  name="search"
-                  size={16}
-                  color="white"
-                  style={{ marginRight: 5 }}
+                <LottieView
+                  source={require("../../assets/images/search.json")}
+                  autoPlay
+                  loop
+                  style={{
+                    width: 120,
+                    height: 90,
+                    marginTop: -35,
+                    marginLeft: -50,
+                  }}
+                  colorFilters={[{ keypath: "*", color: "#fff" }]}
                 />
               </TouchableOpacity>
             </View>
@@ -2532,6 +2549,26 @@ const AddPostTour = () => {
             </View>
           </Modal>
         )}
+         {buttonPost ? (
+          <Modal  visible={buttonPost}>
+          <View style={[styles.loadingOverlay, { width: '100%', height: '100%' }]}>
+          <LottieView
+            source={require("../../assets/images/travel.json")}
+            autoPlay
+            loop
+            style={{
+              position: "absolute",
+              top: -270,
+              left: -105,
+              zIndex: 10,
+              width: 600,
+              height: 350,
+            }}
+          />
+          </View>
+        </Modal>
+          
+        ) : null}
       </View>
     </KeyboardAvoidingView>
   );

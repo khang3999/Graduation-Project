@@ -45,6 +45,7 @@ import { getStorage } from "firebase/storage";
 import { child } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
+import LottieView from "lottie-react-native";
 
 const AddPostUser = () => {
   interface Country {
@@ -182,15 +183,14 @@ const AddPostUser = () => {
 
       // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        // console.log()
-        const countryData = data[countryKey];
-        // console.log("countryData:", countryData);
-
-        return Object.keys(countryData).map((cityKey) => ({
-          id: cityKey,
-          id_nuoc: countryData[cityKey].id_nuoc,
-          ...countryData[cityKey],
-        }));
+        return Object.keys(data[countryKey]).flatMap((area_id) => {
+          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
+            id: cityKey,
+            area_id: area_id,
+            id_nuoc: countryKey,
+            ...data[countryKey][area_id][cityKey],
+          }));
+        });
       });
 
       setCitiesData(formattedData);
@@ -769,10 +769,10 @@ const AddPostUser = () => {
     }
     //So sanh xem tinh thanh do da co anh chua
     // const exist = images.map((image) => image.city?.id)
-             
+
     // console.log("888", exist)
     // const missingCities = cities.filter(city => !exist.includes(city.id));
-     
+
     // if (missingCities.length > 0) {
     //   setButtonPost(false);
     //   Alert.alert(
@@ -796,7 +796,7 @@ const AddPostUser = () => {
       )
       .join("<br><br>")}`;
 
-      const timestamp = Date.now();
+    const timestamp = Date.now();
 
     const storage = getStorage();
     const uploadedImageUrls: {
@@ -806,7 +806,7 @@ const AddPostUser = () => {
     } = {};
 
     try {
-        //Tạo bảng
+      //Tạo bảng
       const postsRef = ref(database, "postsH");
       //Tạo id bài viết
       const newPostRef = push(postsRef);
@@ -819,19 +819,19 @@ const AddPostUser = () => {
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
         const { id_nuoc, id, name: cityName } = city || {};
-        
+
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
           //lấy phần tử cuối để đặc tên ảnh
           const name = uri.split("/").pop();
-            // console.log("Name", name);
-            
+          // console.log("Name", name);
+
           if (id_nuoc && id) {
             const imageRef = storageRef(
               storage,
               `posts/${postId}/images/${name}`
             );
-             //gửi yêu cầu HTTP để tải ảnh từ uri
+            //gửi yêu cầu HTTP để tải ảnh từ uri
             const response = await fetch(uri);
             //chuyển đổi dữ liệu thành Blob trc khi tải lên
             const blob = await response.blob();
@@ -913,7 +913,7 @@ const AddPostUser = () => {
           text2: "Thêm bài viết thành công",
           visibilityTime: 2000,
         });
-         router.replace("/(tabs)/");
+        router.replace("/(tabs)/");
       }
     } catch (error) {
       setButtonPost(false);
@@ -1029,6 +1029,7 @@ const AddPostUser = () => {
                 >
                   Chưa có tỉnh CheckIn
                 </Text>
+                
               ) : (
                 cities.map((city) => (
                   <TouchableOpacity
@@ -1469,9 +1470,7 @@ const AddPostUser = () => {
               size={14}
               styles={{
                 fontWeight: "heavy",
-                backgroundColor: !isPublic
-                  ? appColors.danger
-                  : appColors.gray3,
+                backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
                 color: !isPublic ? appColors.white : "#000",
                 borderRadius: 50,
                 borderColor: appColors.gray,
@@ -1485,7 +1484,7 @@ const AddPostUser = () => {
             <Switch
               value={isPublic}
               trackColor={{ true: appColors.success, false: appColors.danger }}
-              thumbColor={isPublic ? appColors.success : appColors.danger }
+              thumbColor={isPublic ? appColors.success : appColors.danger}
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
@@ -1509,23 +1508,21 @@ const AddPostUser = () => {
 
         {/* Nút chia sẻ */}
         <SectionComponent>
-         {
-          buttonPost ? (
+          {buttonPost ? (
             <ButtonComponent
-            text="Đang đăng bài ..."
-            textStyles={{ fontWeight: "bold", fontSize: 30 }}
-            color={appColors.primary}
-            disabled={true}
-          />
+              text="Đang đăng bài ..."
+              textStyles={{ fontWeight: "bold", fontSize: 30 }}
+              color={appColors.primary}
+              disabled={true}
+            />
           ) : (
             <ButtonComponent
-            text="Đăng bài"
-            textStyles={{ fontWeight: "bold", fontSize: 30 }}
-            color={appColors.primary}
-            onPress={handlePushPost}
-          />
-          )
-         }
+              text="Đăng bài"
+              textStyles={{ fontWeight: "bold", fontSize: 30 }}
+              color={appColors.primary}
+              onPress={handlePushPost}
+            />
+          )}
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
         {/* Modal chọn quốc gia */}
@@ -1625,9 +1622,20 @@ const AddPostUser = () => {
           }}
         >
           <View style={[styles.containerMap]}>
+            <RowComponent>
             <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
               Chọn địa điểm
             </Text>
+            <LottieView
+            source={require("../../assets/images/map.json")}
+            autoPlay
+            loop
+            style={{
+              width: 60,
+              height: 35,
+            }}
+          />
+            </RowComponent>
             {/* Search */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -1640,11 +1648,17 @@ const AddPostUser = () => {
                 style={styles.searchButton}
                 onPress={handleSearch}
               >
-                <Icon
-                  name="search"
-                  size={16}
-                  color="white"
-                  style={{ marginRight: 5 }}
+                <LottieView
+                  source={require("../../assets/images/search.json")}
+                  autoPlay
+                  loop
+                  style={{
+                    width: 120,
+                    height: 90,
+                    marginTop: -35,
+                    marginLeft: -50,
+                  }}
+                  colorFilters={[{ keypath: "*", color: "#fff" }]}
                 />
               </TouchableOpacity>
             </View>
@@ -2037,7 +2051,26 @@ const AddPostUser = () => {
             </TouchableOpacity>
           </View>
         </Modal>
-        
+        {buttonPost ? (
+          <Modal  visible={buttonPost}>
+          <View style={[styles.loadingOverlay, { width: '100%', height: '100%' }]}>
+          <LottieView
+            source={require("../../assets/images/travel.json")}
+            autoPlay
+            loop
+            style={{
+              position: "absolute",
+              top: -270,
+              left: -105,
+              zIndex: 10,
+              width: 600,
+              height: 350,
+            }}
+          />
+          </View>
+        </Modal>
+          
+        ) : null}
       </View>
     </KeyboardAvoidingView>
   );
@@ -2285,7 +2318,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
- 
+
   // Chọn đất nước
   countrySelector: {
     backgroundColor: "#ccc",

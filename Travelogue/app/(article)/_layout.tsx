@@ -8,7 +8,8 @@ import AddPostTour from './addPostTour';
 const Layout = () => {
     return (
         <View style={{flex: 1}}>
-          <AddPostTour />
+          <AddPostUser />
+          {/* <AddPostTour/> */}
         </View>
     );
 }

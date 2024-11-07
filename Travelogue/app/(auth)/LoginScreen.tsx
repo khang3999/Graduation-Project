@@ -27,6 +27,7 @@ import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
 import Toast from "react-native-toast-message-custom";
+import LottieView from "lottie-react-native";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -276,7 +277,20 @@ const LoginScreen = ({ navigation }: any) => {
       {loading && (
         <Modal transparent={true} animationType="none" visible={loading}>
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={appColors.danger} />
+          <LottieView
+            source={require("../../assets/images/login.json")}
+            autoPlay
+            loop
+            style={{
+              position: "absolute",
+              top: 190,
+              // top: -190,
+              left: -120,
+              zIndex: -10,
+              width: 650,
+              height: 320,
+            }}
+          />
           </View>
         </Modal>
       )}
