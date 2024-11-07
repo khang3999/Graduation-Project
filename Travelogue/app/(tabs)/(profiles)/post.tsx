@@ -31,24 +31,17 @@ import { Rating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
 import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
-
+import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
+import { CommentType, RatingComment } from '@/types/CommentTypes';
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-type RatingObject = {
-  content: string;
-  images: string;
-  created_at: string;
-  id: string;
-  rating: number;
-  reports: number;
-  status_id: number;
-};
+
 
 type RatingSummary = {
   totalRatingCounter: any;
@@ -83,7 +76,7 @@ type Post = {
   images: string[];
   likes: number;
   locations: Record<string, Record<string, string>>;
-  ratings: RatingObject;
+  ratings: Record<string, RatingComment>;
   ratingSummary: RatingSummary;
   post_status: string;
   price_id: number;
@@ -111,7 +104,7 @@ const RatingButton: React.FC<RatingButtonProps> = ({
       <Text style={styles.ratingLabel}>Rating: </Text>
       <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
         <Icon name="smile-o" size={40} color="black" />
-        <Text style={styles.ratingValue}>{averageRating}/5</Text>
+        <Text style={styles.ratingValue}>{averageRating.toFixed(1)}/5.0</Text>
       </TouchableOpacity>
     </View>
   );
@@ -127,6 +120,9 @@ const PostItem: React.FC<PostItemProps> = ({
   const commentModalRef = useRef<Modalize>(null);
   const authorizedCommentAS = useRef<ActionSheetRef>(null);
   const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
+  const ratingCommentAS = useRef<ActionSheetRef>(null);
+  const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
+
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -135,13 +131,17 @@ const PostItem: React.FC<PostItemProps> = ({
 
   const { accountData } = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
-  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
+  const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const [ratingImage, setRatingImage] = useState<string | null>(null);
   const [ratingCommentText, setRatingCommentText] = useState("");
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const totalComments = comments.length;
+  const isPostAuthor = accountData.id === item.author.id;
   const [isLoading, setIsLoading] = useState(false);
+
+  
+  
   const addComment = async () => {
     if (commentText.trim().length > 0) {
       const newComment = {
@@ -187,6 +187,49 @@ const PostItem: React.FC<PostItemProps> = ({
       }
     }
   };
+  const handleRatingCommentSubmit = (comment: RatingComment, replyText: string) => {
+    const parentId = comment.id;
+    console.log('parentId', parentId);
+    if (replyText.trim().length > 0 && comment) {
+      const newRatingComment = {
+        author: {
+          id: accountData.id,
+          avatar:
+            accountData.avatar,
+          username: accountData.fullname,
+        },
+        image: "",
+        rating:-1,
+        status_id: 1,
+        reports: 0,
+        content: replyText,
+        parentId:parentId ? parentId: null,
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      };
+      try {
+        const ratingsRef = ref(database, `postsPhuc/${item.id}/ratings`);
+        const newRatingCommentRef = push(ratingsRef);
+
+        if (newRatingCommentRef.key) {
+          const newRatingCommentWithId = { ...newRatingComment, id: newRatingCommentRef.key };
+          set(newRatingCommentRef, newRatingCommentWithId);
+
+          setRatingComments((prevComments) => {
+            return [...prevComments, { ...newRatingCommentWithId }];
+          });
+         
+        }        
+
+      } catch (error) {
+        console.error("Error adding rating comment:", error);
+      }
+    }
+
+  };
   const addReplyToComment = (
     comments: Comment[],
     parentId: string,
@@ -209,16 +252,10 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
-  const handleIsAuthor = () => {
-    if (accountData.id === item.author.id) {
-      return true;
-    }
-    return false
-  }
   const handleLongPressComment = (comment: Comment) => {
     //handle whether the account is the author of the comment    
     if (accountData.id === comment.author.id) {
-      setSelectedComment(comment);
+      setLongPressedComment(comment);
       authorizedCommentAS.current?.show();
     } else {
       unauthorizedCommentAS.current?.show();
@@ -281,9 +318,6 @@ const PostItem: React.FC<PostItemProps> = ({
       { cancelable: true }
     );
   };
-  const openRatingModal = () => {
-    setIsRatingModalOpen(!isRatingModalOpen);
-  }
   const handleSubmitRating = async () => {
     const postId = item.id;
     const userId = accountData.id;
@@ -292,13 +326,6 @@ const PostItem: React.FC<PostItemProps> = ({
       // Step 1: Reference to the user's rating in Realtime Database
       const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
 
-      // Check if the user has already rated this post
-      const previousRatingSnapshot = await get(userRatingRef);
-
-      if (previousRatingSnapshot.exists()) {
-        Alert.alert("You have already rated this post", "You cannot rate the same post more than once.");
-        return;
-      }
       let imageUrl = "";
 
       // Step 2: Upload image to Firebase Storage with a unique ID if imageUri is provided
@@ -316,14 +343,24 @@ const PostItem: React.FC<PostItemProps> = ({
 
       // Step 3: Prepare the rating data
       const rating = {
+        author: {
+          id: userId,
+          avatar: accountData.avatar,
+          username: accountData.fullname,
+        },
+        id: userRatingRef.key,
         content: ratingCommentText,
-        images: imageUrl,
-        created_at: new Date().toISOString(),
+        image: imageUrl,
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
         rating: ratingValue,
         reports: 0,
         status_id: 0,
+        parentId: null,
       };
-
 
       // Step 4: Reference to the rating summary in Realtime Database
       const summaryRef = ref(database, `postsPhuc/${postId}/ratingSummary`);
@@ -341,19 +378,46 @@ const PostItem: React.FC<PostItemProps> = ({
       ]);
 
       console.log('Rating and image successfully added');
-      
+
     } catch (error) {
-      
+
       console.error('Error adding rating and image:', error);
     } finally {
       setIsLoading(false);
+      setIsRatingModalOpen(false);
+      ratingCommentAS.current?.show();
     }
   };
+  const handleOpenRatingComments = async () => {
+
+    const postId = item.id;
+    const userId = accountData.id;
+
+    // If the account is the author of the post, show the rating comments
+    if (isPostAuthor) {
+      ratingCommentAS.current?.show();
+      return;
+    } 
+
+    // Reference to the user's rating in Realtime Database
+    const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+    const previousRatingSnapshot = await get(userRatingRef);
+
+    // If the user has already rated this post, show the rating comments
+    if (previousRatingSnapshot.exists()) {
+      ratingCommentAS.current?.show();
+      return;
+    }
+    //Otherwise, open the rating modal
+    setIsRatingModalOpen(true);
+  }
   const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
     if (!(totalRatingCounter && totalRatingValue)) {
       return 0;
     }
-    return totalRatingValue / totalRatingCounter;
+    const average = totalRatingValue / totalRatingCounter;
+    const roundedAverage = Math.ceil(average * 2) / 2;
+    return roundedAverage;
   };
   const pickRatingImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -408,7 +472,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={handleIsAuthor} />
+          <MenuItem isAuthor={isPostAuthor} />
         </View>
       </View>
 
@@ -447,7 +511,7 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
-          <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={openRatingModal} />
+          <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
         </View>
       </View>
       <CheckedInChip items={Object.values(item.locations.vietnam)} />
@@ -539,8 +603,8 @@ const PostItem: React.FC<PostItemProps> = ({
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              if (selectedComment) {
-                handleDeleteComment(selectedComment);
+              if (longPressedComment) {
+                handleDeleteComment(longPressedComment);
               }
 
             }}
@@ -566,8 +630,8 @@ const PostItem: React.FC<PostItemProps> = ({
           <TouchableOpacity
             style={styles.actionOption}
             onPress={() => {
-              if (selectedComment) {
-                handleReportComment(selectedComment);
+              if (longPressedComment) {
+                handleReportComment(longPressedComment);
               }
 
             }}
@@ -655,14 +719,20 @@ const PostItem: React.FC<PostItemProps> = ({
             </View>
           </View>
         </View>
-          {/* Loading Indicator Overlay */}
-          {isLoading && (
+        {/* Loading Indicator Overlay */}
+        {isLoading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#ffffff" />
           </View>
         )}
       </Modal>
-
+      {/* Rating Comments */}
+      <CommentsActionSheet
+        isPostAuthor={isPostAuthor}
+        commentRefAS={ratingCommentAS}
+        commentsData={ratingComments}
+        onSubmitRatingComment={handleRatingCommentSubmit}
+      />
     </View>
   );
 };
@@ -677,7 +747,7 @@ export default function PostsScreen() {
 
 
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
-  
+
   return (
     <>
 
@@ -711,6 +781,123 @@ export default function PostsScreen() {
   );
 }
 const styles = StyleSheet.create({
+  // rating comment styles
+  replyInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
+    marginTop: 15,
+
+  },
+  replyInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingHorizontal: 10,
+  },
+  replySubmitButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  replySubmitButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  replyButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  replyButtonText: {
+    color: '#5a5a5a',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  marginBottom5: {
+    marginBottom: 5,
+  },
+  topBorder: {
+    borderTopWidth: 3,
+    borderTopColor: '#B1B1B1',
+    width: 50,
+    alignSelf: 'center',
+    paddingVertical: 5
+  },
+  ratingCommentsASContainer: {
+    backgroundColor: '#f9f9f9',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    height: '80%',
+  },
+  ratingCommentsHeader: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  ratingCommentCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  ratingCommentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  ratingCommentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  ratingCommentUserInfo: {
+    flexDirection: 'column',
+  },
+  ratingCommentAuthor: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  ratingCommentTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  ratingCommentText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
+  },
+  ratingCommentImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+    marginTop: 10,
+    resizeMode: 'cover',
+  },
+  noCommentsText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  //
   actionSheetContainer: {
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,

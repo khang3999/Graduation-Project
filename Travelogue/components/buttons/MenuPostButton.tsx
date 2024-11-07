@@ -17,7 +17,7 @@ import { appColors } from "@/constants/appColors";
 import {Button, Divider} from "react-native-paper";
 
 interface MenuPopupButtonProps {
-  isAuthor: () => boolean;
+  isAuthor: boolean;
 }
 
 const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
@@ -54,7 +54,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
     </TouchableOpacity>
 
     {/* Menu Modal */}
-    {isAuthor() && isModalVisible ? (
+    {isAuthor && isModalVisible ? (
       <Modal
         transparent={true}
         visible={isModalVisible}
