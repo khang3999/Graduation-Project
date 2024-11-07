@@ -94,6 +94,7 @@ const AddPostTour = () => {
   //loading
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [buttonPost, setButtonPost] = useState(false);
+  const [loadingButtonSearch, setLoadingButtonSearch] = useState(false);
 
   //Chon giờ
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
@@ -322,7 +323,8 @@ const AddPostTour = () => {
   //Search map
   const handleSearch = async () => {
     setSelectedLocation(null);
-
+    setLoadingLocation(true);
+    setLoadingButtonSearch(true);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -337,6 +339,7 @@ const AddPostTour = () => {
 
       if (!response.ok) {
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
@@ -356,12 +359,15 @@ const AddPostTour = () => {
           );
         }
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
       } else {
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
         alert("Không tìm thấy địa điểm.");
       }
     } catch (error) {
       setLoadingLocation(false);
+      setLoadingButtonSearch(false);
       // console.error("Error fetching location:", error);
       alert(
         "Có lỗi xảy ra khi tìm kiếm. Vui lòng kiểm tra lại kết nối mạng hoặc từ khóa tìm kiếm."
@@ -1079,18 +1085,19 @@ const AddPostTour = () => {
   useEffect(() => {
     if (packageData.length > 0) {
       const timeoutId = setTimeout(() => {
-        const discountedPrice = packageData[0].price - (packageData[0].discount * packageData[0].price) / 100;
+        const discountedPrice =
+          packageData[0].price -
+          (packageData[0].discount * packageData[0].price) / 100;
         if ((account?.balance ?? 0) > discountedPrice) {
           setCheckBalance(false);
         } else {
           setCheckBalance(true);
         }
-      }, 100); 
-  
-      return () => clearTimeout(timeoutId); 
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [packageData, account?.balance]);
-  
 
   // *********************************************************************
   return (
@@ -2067,21 +2074,21 @@ const AddPostTour = () => {
           }}
         >
           <View style={[styles.containerMap]}>
-          <RowComponent>
-            <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
-              Chọn địa điểm
-            </Text>
-            <LottieView
-            source={require("../../assets/images/map.json")}
-            autoPlay
-            loop
-            style={{
-              width: 60,
-              height: 35,
-            }}
-          />
+            <RowComponent>
+              <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
+                Chọn địa điểm
+              </Text>
+              <LottieView
+                source={require("../../assets/images/map.json")}
+                autoPlay
+                loop
+                style={{
+                  width: 60,
+                  height: 35,
+                }}
+              />
             </RowComponent>
-           
+
             {/* Search */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -2094,18 +2101,22 @@ const AddPostTour = () => {
                 style={styles.searchButton}
                 onPress={handleSearch}
               >
-                <LottieView
-                  source={require("../../assets/images/search.json")}
-                  autoPlay
-                  loop
-                  style={{
-                    width: 120,
-                    height: 90,
-                    marginTop: -35,
-                    marginLeft: -50,
-                  }}
-                  colorFilters={[{ keypath: "*", color: "#fff" }]}
-                />
+                {loadingButtonSearch ? (
+                  <LottieView
+                    source={require("../../assets/images/search.json")}
+                    autoPlay
+                    loop
+                    style={{
+                      width: 120,
+                      height: 90,
+                      marginTop: -35,
+                      marginLeft: -50,
+                    }}
+                    colorFilters={[{ keypath: "*", color: "#fff" }]}
+                  />
+                ) : (
+                  <IconA name="search1" size={20} color={appColors.white} />
+                )}
               </TouchableOpacity>
             </View>
             <RowComponent styles={{ marginTop: 0 }}>
@@ -2549,25 +2560,26 @@ const AddPostTour = () => {
             </View>
           </Modal>
         )}
-         {buttonPost ? (
-          <Modal  visible={buttonPost}>
-          <View style={[styles.loadingOverlay, { width: '100%', height: '100%' }]}>
-          <LottieView
-            source={require("../../assets/images/travel.json")}
-            autoPlay
-            loop
-            style={{
-              position: "absolute",
-              top: -270,
-              left: -105,
-              zIndex: 10,
-              width: 600,
-              height: 350,
-            }}
-          />
-          </View>
-        </Modal>
-          
+        {buttonPost ? (
+          <Modal visible={buttonPost}>
+            <View
+              style={[styles.loadingOverlay, { width: "100%", height: "100%" }]}
+            >
+              <LottieView
+                source={require("../../assets/images/travel.json")}
+                autoPlay
+                loop
+                style={{
+                  position: "absolute",
+                  top: -270,
+                  left: -105,
+                  zIndex: 10,
+                  width: 600,
+                  height: 350,
+                }}
+              />
+            </View>
+          </Modal>
         ) : null}
       </View>
     </KeyboardAvoidingView>

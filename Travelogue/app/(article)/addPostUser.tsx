@@ -90,6 +90,7 @@ const AddPostUser = () => {
   //loading
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [buttonPost, setButtonPost] = useState(false);
+  const [loadingButtonSearch, setLoadingButtonSearch] = useState(false);
 
   //Chon giờ
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
@@ -282,7 +283,8 @@ const AddPostUser = () => {
   //Search map
   const handleSearch = async () => {
     setSelectedLocation(null);
-
+    setLoadingLocation(true);
+    setLoadingButtonSearch(true);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -297,6 +299,7 @@ const AddPostUser = () => {
 
       if (!response.ok) {
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
@@ -316,12 +319,15 @@ const AddPostUser = () => {
           );
         }
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
       } else {
         setLoadingLocation(false);
+        setLoadingButtonSearch(false);
         alert("Không tìm thấy địa điểm.");
       }
     } catch (error) {
       setLoadingLocation(false);
+      setLoadingButtonSearch(false);
       // console.error("Error fetching location:", error);
       alert(
         "Có lỗi xảy ra khi tìm kiếm. Vui lòng kiểm tra lại kết nối mạng hoặc từ khóa tìm kiếm."
@@ -1644,22 +1650,26 @@ const AddPostUser = () => {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-              <TouchableOpacity
+               <TouchableOpacity
                 style={styles.searchButton}
                 onPress={handleSearch}
               >
-                <LottieView
-                  source={require("../../assets/images/search.json")}
-                  autoPlay
-                  loop
-                  style={{
-                    width: 120,
-                    height: 90,
-                    marginTop: -35,
-                    marginLeft: -50,
-                  }}
-                  colorFilters={[{ keypath: "*", color: "#fff" }]}
-                />
+                {loadingButtonSearch ? (
+                  <LottieView
+                    source={require("../../assets/images/search.json")}
+                    autoPlay
+                    loop
+                    style={{
+                      width: 120,
+                      height: 90,
+                      marginTop: -35,
+                      marginLeft: -50,
+                    }}
+                    colorFilters={[{ keypath: "*", color: "#fff" }]}
+                  />
+                ) : (
+                  <IconA name="search1" size={20} color={appColors.white} />
+                )}
               </TouchableOpacity>
             </View>
             <RowComponent styles={{ marginTop: 0 }}>
