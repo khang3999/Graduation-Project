@@ -65,27 +65,34 @@ const Map = () => {
     // Lấy dữ liệu từ firebase (khu vực)
     onValue(areaRef, (snapshot) => {
       const data = snapshot.val() || {};
+      console.log(data);
       // Chuyển từ đối tượng thành mảng
-      const formattedDataAreas = Object.keys(data).map((key) => ({
-        id: key,
-        ...data[key],
-      }));
+    
+      const formattedDataAreas = Object.keys(data).flatMap((countryId) =>
+         Object.keys(data[countryId]).map((key) => ({
+          id: key,
+          countryId, 
+          ...data[countryId][key], 
+        }))
+      );
       setAreaData(formattedDataAreas);
-      // console.log("Area Data:", areaData);
+      console.log("Area Data:");
     });
+    console.log("Area Data:", areaData);
+
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
 
       // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        const countryData = data[countryKey];
-        // console.log("countryData:", countryData);
-
-        return Object.keys(countryData).map((cityKey) => ({
-          id: cityKey,
-          id_nuoc: countryData[cityKey].id_nuoc,
-          ...countryData[cityKey],
-        }));
+        return Object.keys(data[countryKey]).flatMap((area_id) => {
+          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
+            id: cityKey,
+            area_id: area_id,
+            id_nuoc: countryKey,
+            ...data[countryKey][area_id][cityKey],
+          }));
+        });
       });
 
       setCityData(formattedData);
@@ -97,34 +104,29 @@ const Map = () => {
       const data = snapshot.val() || {};
       // console.log("____________________")
       // console.log(data);
-      const formattedPoints = [];
-      Object.keys(data).forEach((countryId) => {
+    
+      const formattedPoints = Object.keys(data).flatMap((countryId) => {
         const countryPoints = data[countryId];
         // console.log("countryPoints:", countryPoints);
-        Object.keys(countryPoints).forEach((type) => {
+    
+        return Object.keys(countryPoints).flatMap((type) => {
           const typePoints = countryPoints[type];
           // console.log("typePoints:", typePoints);
-          Object.keys(typePoints).forEach((pointId) => {
+    
+          return Object.keys(typePoints).flatMap((pointId) => {
             const point = typePoints[pointId];
             // console.log("point:", point);
-
-            // Chọn tên biến mới
-            const relevantKeys = Object.keys(point);
-            // console.log("relevantKeys:", relevantKeys)
-
-            relevantKeys.forEach((pointKey) => {
-              formattedPoints.push({
-                id: pointKey,
-                countryId: countryId,
-                cityId: pointId,
-                type: type,
-                ...point[pointKey],
-              });
-            });
+            
+            return Object.keys(point).map((pointKey) => ({
+              id: pointKey,
+              countryId: countryId,
+              cityId: pointId,
+              type: type,
+              ...point[pointKey],
+            }));
           });
         });
       });
-
       console.log("formattedPoints:", formattedPoints);
       setPoints(formattedPoints);
     });
@@ -286,9 +288,10 @@ const Map = () => {
     if (!selectedCountry) {
       return points;
     }
+    // hiển thị các point theo điều kiện
     return points.filter((point) => {
       if (selectedFestivalType) {
-        if (selectedFestivalType === "all") {
+        if (selectedFestivalType === "all" ) {
           if (selectedCountry && point.countryId !== selectedCountry) {
             return false;
           }
