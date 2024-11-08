@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import {
@@ -25,7 +26,7 @@ import { auth, set, ref, database, onValue } from "@/firebase/firebaseConfig";
 // import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
-import Toast from 'react-native-toast-message';
+import Toast from "react-native-toast-message-custom";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -49,13 +50,11 @@ const LoginScreen = ({ navigation }: any) => {
   }, []);
 
   const handleLogin = async () => {
-   
     if (isRemember) {
       AsyncStorage.setItem("userEmail", email);
       AsyncStorage.setItem("userPassword", password);
       AsyncStorage.setItem("isRemember", "true");
-    }
-    else {
+    } else {
       AsyncStorage.removeItem("userEmail");
       AsyncStorage.removeItem("userPassword");
       AsyncStorage.removeItem("isRemember");
@@ -87,47 +86,96 @@ const LoginScreen = ({ navigation }: any) => {
         password
       );
       const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        Alert.alert(
+          "Email chưa xác nhận",
+          "Vui lòng xác nhận email trước khi đăng nhập."
+        );
+        setLoading(false);
+        setTextLoading("Đăng nhập");
+        return;
+      }
+
       const userRef = ref(database, "accounts/" + user.uid);
       const snapshot = await get(userRef);
       const data = snapshot.val();
       // console.log(data);
       if (data) {
         const statusId = data.status_id;
+        const role = data.role;
         console.log(statusId);
-        if (statusId === "block") {
+        if (statusId === "4") {
           Alert.alert(
             "Tài khoản đã bị cấm",
-            "Vui lòng liên hệ quản trị viên để biết thêm thông tin."
+            "Vui lòng liên hệ quản trị viên để biết thêm thông tin.",
+            [
+              {
+                text: "Gọi Tổng Đài",
+                onPress: () => Linking.openURL('tel:0384946973'), 
+              },
+              {
+                text: "Gửi email",
+                onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
+              },
+              { text: "Đóng", style: "cancel" } 
+            ],
+            { cancelable: true } 
           );
-        } else if (statusId === "register") {
+        
+        } else if (statusId === "1") {
           Alert.alert(
             "Tài khoản chưa được duyệt",
-            "Hãy chờ quản trị viên duyệt tài khoản."
+            "Hãy chờ quản trị viên duyệt tài khoản. Mọi sự thắc mắc xin liên hệ quản trị viên.",
+            [
+              {
+                text: "Gọi Tổng Đài",
+                onPress: () => Linking.openURL('tel:0384946973'), 
+              },
+              {
+                text: "Gửi email",
+                onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
+              },
+              { text: "Đóng", style: "cancel" } 
+            ],
+            { cancelable: true } 
           );
-        } else if (statusId === "active") {
+        } else if (statusId === "2") {
           Toast.show({
-            type: 'success',
-            text1: 'Đăng nhập thành công',
-            text2: `Chào mừng ${data.fullname }`,
-            visibilityTime: 3000,
+            type: "success",
+            text1: "Đăng nhập thành công",
+            text2: `Chào mừng ${data.fullname}`,
+            // visibilityTime: 3000,
           });
-          router.replace("/(tabs)");
+          if (role=== "admin"){
+            router.replace('/(admin)/(account)/account')
+          }
+          else if (role === "user"){
+            router.replace("/(tabs)");
+          }
+          else {
+            console.log("Day la trang doanh ngh");
+          }
+          
         }
       }
-   
+      const userId = userCredential.user.uid;
+      await AsyncStorage.setItem("userToken", userId);
+      
+      // const storedUserId = await AsyncStorage.getItem("userToken");  
+      // console.log(storedUserId);
+
       setLoading(false);
       setTextLoading("Đăng nhập");
-   
-   } catch (error) {
+    } catch (error) {
       setLoading(false);
       setTextLoading("Đăng nhập");
       Alert.alert(
         "Đăng nhập thất bại",
         "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
       );
-   }
-  }
-   
+    }
+  };
 
   return (
     <ScrollView>

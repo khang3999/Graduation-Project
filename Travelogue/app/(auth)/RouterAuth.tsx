@@ -12,8 +12,9 @@ const RouterAuth = () => {
   return (
     <>
       <Stack.Navigator
+      
         initialRouteName="LoginScreen"
-        screenOptions={{ cardStyle: { backgroundColor: "white" } }}
+        screenOptions={{ cardStyle: { backgroundColor: "white",paddingTop: 40 } }}
       >
         <Stack.Screen
           name="LoginScreen"

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet,Dimensions,Animated,Easing, TouchableOpacity, TextInput } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AvatarProfile from "./AvatarProfile";
 import {
@@ -6,111 +6,59 @@ import {
   MD3Colors,
   Menu,
   Provider,
-  Divider,
+  Divider,  
 } from "react-native-paper";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { Link, router, useRouter} from "expo-router";
 import MenuItem from "@/components/buttons/MenuProfileButton";
-
-const Plus = () => (
-  <IconButton
-    icon="plus"
-    iconColor={MD3Colors.error10}
-    size={24}
-    onPress={() => console.log("Plus button pressed")}
-    // onPress={() => router.push("/(user)/ChangePassword")}
-    style={styles.button}
-    accessible={true}
-    accessibilityLabel="Add button"
-  />
-);
+import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton";
+import SearchButton from "@/components/buttons/SearchButton";
+import IconFeather from 'react-native-vector-icons/Feather';
+import { set } from "lodash";
+import { useAccount } from "@/contexts/AccountProvider";
 
 const Bell = () => (
   <IconButton
     icon="bell-outline"
     iconColor={MD3Colors.error10}
     size={24}
-    onPress={() => router.push("/notification")}
+    onPress={() => router.push("/Notification")}
     style={styles.button}
     accessible={true}
     accessibilityLabel="Notifications button"
   />
 );
 
-const MyComponent = () => {
-  const [visible, setVisible] = React.useState(false);
+interface HeaderProfileProps {  
+  onModalOpen: () => void;
+  onModalClose: () => void;
+  handleSearch: (searchTerm: string) => void;
+}
 
-  const openMenu = () => setVisible(true);
-  const closeMenu = () => setVisible(false);
+export default function HeaderProfile({ onModalOpen ,onModalClose,handleSearch}: HeaderProfileProps) {
+  const [isDisplay, setIsDisplay] = useState(true);
+  const { accountData } = useAccount();
+  if(!accountData) {
+    return <HeaderProfileSkeleton />;
+  }
 
-  return (
-    <Provider>
-      <View>
-        <Menu
-          visible={visible}
-          onDismiss={closeMenu}
-          anchor={
-            <IconButton
-              icon="menu"
-              iconColor={MD3Colors.error10}
-              size={24}
-              onPress={openMenu}
-              style={styles.button}
-              accessible={true}
-              accessibilityLabel="Menu button"
-            />
-          }
-          contentStyle={styles.menuContent}
-        >
-          <Menu.Item
-            onPress={() => console.log("Profile clicked")}
-            title="Profile"
-            leadingIcon={() => <Icon name="account" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-          <Menu.Item
-            onPress={() => console.log("Settings clicked")}
-            title="Settings"
-            leadingIcon={() => <Icon name="cog" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-          <Divider />
-          <Menu.Item
-            onPress={() => console.log("Logout clicked")}
-            title="Logout"
-            leadingIcon={() => <Icon name="logout" size={20} color="black" />}
-            style={styles.menuItem}
-          />
-        </Menu>
-      </View>
-    </Provider>
-  );
-};
-
-export default function HeaderProfile() {
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <View style={styles.row}>
-          <Text style={styles.username}>tranhieuphuc12</Text>
-          <MaterialIcons name="keyboard-arrow-down" size={24} color="black" />
-        </View>
-        <View style={styles.headerButton}>
-          <Plus />
-          <Bell />
-          
-          <MyComponent />
+      <View style={styles.row}>           
+        <View style={styles.headerButton}>          
+          {/* <Bell />           */}
+          <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch}/>
+          <MenuItem menuIcon="menu" isDisplay={isDisplay}/>
         </View>
       </View>
-      <AvatarProfile />
+      <AvatarProfile isSearched={false}/>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
+  container: {    
     flex: 1,
     marginTop: 20,
   },
@@ -120,16 +68,18 @@ const styles = StyleSheet.create({
     margin: 2,
   },
   row: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
   },
   headerButton: {
+    paddingHorizontal:24,
+    paddingTop:5,
     flexDirection: "row",
     justifyContent: "space-evenly",
     marginEnd: 20,
   },
   button: {
-    margin: 0,
+    margin: 0,        
   },
   menuContent: {
     backgroundColor: "#f2f2f2",

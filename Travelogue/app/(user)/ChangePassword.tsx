@@ -59,18 +59,7 @@ const ChangePassword = () => {
   }
 
   return (
-    <View style={{backgroundColor: 'white',flex: 1}}>
-       <SectionComponent>
-        <ArrowLeft
-          size="32"
-          style={{ marginBottom: -10 }}
-          onPress={() => {
-            // router.replace('')
-            console.log('Back')
-          }}
-          color="#000"
-        />
-      </SectionComponent>
+    <View style={{backgroundColor: 'white',flex: 1}}>      
       <SectionComponent>
         <TextComponent
           text="Đổi Mật Khẩu"

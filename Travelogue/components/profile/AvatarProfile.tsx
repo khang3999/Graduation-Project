@@ -1,50 +1,61 @@
-import { Text, View, StyleSheet, Image, Pressable } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import {router} from 'expo-router';
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { useAccount } from "@/contexts/AccountProvider";
 
-export default function AvatarProfile() {
+
+interface AvatarProfileProps {
+  isSearched: boolean;
+}
+
+export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
+  const { accountData, searchedAccountData } = useAccount();
+
+  const data = isSearched ? searchedAccountData : accountData;
+  
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image
-          style={styles.avatar}
-          source={require("../../assets/images/tom.png")}
-        />
+        <Image style={styles.avatar} source={{ uri: data.avatar }} />
+
+        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{data.fullname}</Text>
+
         <View style={styles.column}>
-          <Text style={styles.infoText}>1.000</Text>
-          <Text style={styles.infoText}>thich</Text>
+          <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
+          <Text style={styles.infoText}>posts</Text>
         </View>
-        <View style={styles.column}>
-          <Text style={styles.infoText}>59</Text>
-          <Text style={styles.infoText}>bai viet</Text>
-        </View>
+
       </View>
-      <Text style={styles.username}>Tom</Text>
-      <Pressable
-        style={styles.button}
-        onPressIn={() => router.push("/editing")}
-      >
-        <Text style={styles.editText}>Edit Profile</Text>
-      </Pressable>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: 24,
     paddingTop: 30,
+
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   avatar: {
-    width: 100,
-    height: 100,
+    width: 130,
+    height: 130,
     resizeMode: "contain",
     borderColor: "grey",
     borderWidth: 2,
@@ -63,16 +74,15 @@ const styles = StyleSheet.create({
   username: {
     fontWeight: "bold",
     fontSize: 18,
-    padding: 10,
-    marginLeft: 10,
+    margin: 2,
+    marginTop: 20,
+    maxWidth: 120,
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: 5,
     borderRadius: 6,
-    elevation: 2,
     backgroundColor: "#CDCDCD",
     marginHorizontal: 15,
   },

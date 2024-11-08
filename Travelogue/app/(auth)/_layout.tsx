@@ -1,36 +1,71 @@
 import RouterAuth from "@/app/(auth)/RouterAuth";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Alert, Linking } from "react-native";
 import { router } from "expo-router";
-import { auth } from "@/firebase/firebaseConfig";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ref, get } from "@firebase/database";
+import { database } from "@/firebase/firebaseConfig";
 
 const Layout = () => {
   const [isAuth, setIsAuth] = useState(false);
-  
+  const [role, setRole] = useState(null);
+
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = auth.currentUser; 
-      console.log(user);
-      if (user) {
-        setIsAuth(true);
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem("userToken");
+      if (token) {
+        const userRef = ref(database, "accounts/" + token);
+        const snapshot = await get(userRef);
+        const data = snapshot.val();
+        setRole(data.role);
+
+        if (data && data.status_id === "2") {  
+          setIsAuth(true);
+        } else {
+          Alert.alert(
+            "Tài khoản đã bị cấm",
+            "Vui lòng liên hệ quản trị viên để biết thêm thông tin.",
+            [
+              {
+                text: "Gọi Tổng Đài",
+                onPress: () => Linking.openURL('tel:0384946973'), 
+              },
+              {
+                text: "Gửi email",
+                onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
+              },
+              { text: "Đóng", style: "cancel" } 
+            ],
+            { cancelable: true } 
+          );
+          await AsyncStorage.removeItem("userToken");  
+          setIsAuth(false);
+        }
       } else {
         setIsAuth(false);
       }
-      console.log(user ? "User is authenticated" : "User is not authenticated"); 
     };
-    checkAuth(); 
-  }, []); 
+
+    checkToken();
+  }, []);
 
   useEffect(() => {
     if (isAuth) {
-      router.push("/(tabs)/");
+      if (role=== "admin"){
+        router.replace('/(admin)/(account)/account')
+      }
+      else if (role === "user"){
+        router.replace("/(tabs)");
+      }
+      else {
+        console.log("Day la trang doanh ngh");
+      }
     }
   }, [isAuth]);
 
   return (
     <>
-      {!isAuth ? <RouterAuth /> : null}
+      {!isAuth ? <RouterAuth /> : null} 
     </>
   );
 };

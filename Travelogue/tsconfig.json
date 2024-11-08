@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/(tabs)/MapScreen.jsx", "app/(tabs)/map.jsx", "components/navigation/TabBar.jsx", "app/(admin)/(information)/location.tsx"  ]
+, "app/(tabs)/MapScreen.jsx", "app/(tabs)/(maps)/realMap.jsx", "components/navigation/TabBar.jsx", "model/UserRegister.ts", "app/(article)/h.tsx"  ]
 }
