@@ -944,10 +944,10 @@ const AddPostUser = () => {
             
                     return acc;
                   },
-                  { ...currentData } // Sao chép dữ liệu hiện tại để bắt đầu từ đó
+                  { ...currentData } 
                 );
             
-                // Cập nhật dữ liệu mới vào Firebase
+                // Cập nhật dữ liệu
                 await update(userRef, updatedUserData);
               }
             }
