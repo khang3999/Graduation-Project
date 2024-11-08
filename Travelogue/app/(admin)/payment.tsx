@@ -340,6 +340,7 @@ const Payment = () => {
                     value={inputText}
                     onChangeText={handleTextChange}
                     keyboardType='numeric'
+                    maxLength={15}
                     placeholder='Enter an amount'
                 />
                 <TouchableOpacity

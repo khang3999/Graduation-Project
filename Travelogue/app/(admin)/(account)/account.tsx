@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { AntDesign } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
@@ -20,7 +20,7 @@ export default function AccountManagementScreen() {
         const jsonDataArr: any = Object.values(jsonData)
         console.log(jsonDataArr);
 
-        // Lọc các bài có status != 2, da xu ly
+        // Lọc các account có status != 2, da xu ly
         const filteredData = jsonDataArr.filter((account: any) => (account.status != keyResolve) && (Object.keys(account.reason).length >= factorReport));
 
         setDataAccountReport(filteredData);
@@ -62,7 +62,7 @@ export default function AccountManagementScreen() {
     const refPost = ref(database, `accounts/${[accountId]}`)
     Alert.alert(
       "Unlock post",
-      "Are you sure you want to unlock this post?",
+      "Are you sure you want to unlock this account?",
       [
         { text: "Cancel", style: "cancel" },
         {

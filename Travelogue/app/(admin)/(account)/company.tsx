@@ -42,7 +42,7 @@ export default function CompanyManagementScreen() {
         const jsonDataArr: any = Object.values(jsonData)
         console.log(jsonDataArr);
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((account: any) => (account.business_license_id != ""));
+        const filteredData = jsonDataArr.filter((account: any) => (account.business_license_id != null));
         // Sắp xếp dữ liệu theo status_id
         const sortedData = filteredData.sort((a:any, b:any) => a.status_id - b.status_id);
         setDatCompany(sortedData);

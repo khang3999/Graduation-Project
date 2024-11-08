@@ -119,7 +119,7 @@ export default function Layout() {
         />
 
         <Drawer.Screen
-          name="information"
+          name="(information)"
           options={{
             drawerLabel: 'Information Locations',
             title: 'Information Locations',

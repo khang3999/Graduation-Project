@@ -38,6 +38,89 @@ const PackageComponent = () => {
     return () => packages();
   }, [])
 
+  const handleAddPackage = async () => {
+    console.log('aaa');
+
+    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
+    const packagesRef = ref(database, 'packages/');
+
+    // Tạo key tu dong cua firebase
+    const newItemKey = push(packagesRef);
+    const item = {
+      discount: 0,
+      factor: 0,
+      id: newItemKey.key,
+      minAccumulated: 0,
+      name: 'unknown',
+      price: 0
+    };
+
+    console.log(newItemKey);
+
+    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
+    await set(newItemKey, item)
+      .then(() => {
+        console.log('Data added successfully');
+      })
+      .catch((error) => {
+        console.error('Error adding data: ', error);
+      });
+
+  };
+
+  const handleSavePackage = async () => {
+    console.log('aaa');
+
+    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
+    const packageUpdateRef = ref(database, `packages/${editingPackageId}`);
+    Alert.alert(
+      "Change package",
+      "Are you sure you want to update package ?",
+      [
+        {
+          text: "Cancel", style: "cancel",
+          onPress: () => {
+            setLocalDataPackage([]);
+            setLocalDataPackage(dataPackage);
+            setUpdatedDataPackage({})
+            setEditingPackageId(null)
+          }
+        }, {
+          text: "OK", onPress: () => {
+            update(packageUpdateRef, updatedDataPackage)
+              .then(() => {
+                setUpdatedDataPackage({})
+                setEditingPackageId(null)
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
+        }])
+  };
+
+  const handleRemove = (pkg: any) => {
+    const refRemove = ref(database, `packages/${pkg.id}`)
+    Alert.alert(
+      "Remove package",
+      "Are you sure you want to remove this package?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            remove(refRemove).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+          }
+        }
+      ]
+    );
+
+  };
   //Render
   const renderPackage = (item: any) => {
 
@@ -103,23 +186,8 @@ const PackageComponent = () => {
 
           />
         </View>
-        <View style={styles.item}>
-          <Text style={styles.title}>Factor</Text>
-          <TextInput
-            style={styles.input}
-            defaultValue={String(item.item.factor)}
-            onFocus={() => setEditingPackageId(item.item.id)}
-            onChangeText={(text) => {
-              setUpdatedDataPackage((prevData) => ({
-                ...prevData,
-                "discount": text
-              }));
 
-            }}
 
-          />
-        </View>
-        
         <View style={styles.buttonContainer}>
           {/* Hiển thị nút Save nếu gói đang được chỉnh sửa */}
           {editingPackageId === item.item.id && (
@@ -133,7 +201,7 @@ const PackageComponent = () => {
           )}
           <TouchableOpacity
             style={styles.deleteBtn}
-          // onPress={() => handleDeletePackage(pkg)}
+            onPress={() => handleRemove(item.item)}
           >
             <Text style={styles.buttonText}>Delete</Text>
           </TouchableOpacity>
@@ -146,101 +214,6 @@ const PackageComponent = () => {
   };
 
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('blur', () => {
-  //     setNewPackages([]); // Xóa tất cả các gói chưa lưu
-  //   });
-
-  //   return unsubscribe;
-  // }, [navigation]);
-
-  const handleAddPackage = async () => {
-    console.log('aaa');
-
-    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
-    const packagesRef = ref(database, 'packages/');
-
-    // Tạo key tu dong cua firebase
-    const newItemKey = push(packagesRef);
-    const item = {
-      discount: 0,
-      factor: 0,
-      id: newItemKey.key,
-      minAccumulated: 0,
-      name: 'unknown',
-      price: 0
-    };
-
-    console.log(newItemKey);
-
-    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
-    await set(newItemKey, item)
-      .then(() => {
-        console.log('Data added successfully');
-      })
-      .catch((error) => {
-        console.error('Error adding data: ', error);
-      });
-
-  };
-
-  const handleSavePackage = async () => {
-    console.log('aaa');
-
-    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
-    const packageUpdateRef = ref(database, `packages/${editingPackageId}`);
-    Alert.alert(
-      "Change package",
-      "Are you sure you want to update package ?",
-      [
-        {
-          text: "Cancel", style: "cancel",
-          onPress: () => {
-            setLocalDataPackage([]);
-            setLocalDataPackage(dataPackage);
-            setUpdatedDataPackage({})
-            setEditingPackageId(null)
-          }
-        }, {
-          text: "OK", onPress: () => {
-            update(packageUpdateRef, updatedDataPackage)
-              .then(() => {
-                setUpdatedDataPackage({})
-                setEditingPackageId(null)
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
-          }
-        }])
-  };
-
-
-  // const handleDeletePackage = (pkg: Package) => {
-  //   if (!pkg.isSaved) {
-  //     setNewPackages(newPackages.filter((p) => p.id !== pkg.id));
-  //   } else {
-  //     setPackages(packages.filter((p) => p.id !== pkg.id));
-  //   }
-  // };
-
-
-  // return (
-  //   <View style={{ flex: 1 }}>
-  //     <View style={styles.addBar}>
-  //       <TouchableOpacity style={styles.addBtn} onPress={handleAddPackage}>
-  //         <Text style={{ color: '#ffffff' }}>Add</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //     <FlatList
-  //       data={[...packages, ...newPackages]} // Gộp cả packages đã lưu và chưa lưu
-  //       renderItem={renderPackage}
-  //       keyExtractor={(item) => item.id}
-  //       contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16 }}
-  //     />
-  //   </View>
-  // );
   return (
     <View style={{ marginTop: 30 }}>
       <View style={styles.addBar}>
