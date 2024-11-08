@@ -750,6 +750,7 @@ const AddPostTour = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
+ 
   const handlePushPost = async () => {
     setButtonPost(true);
     if (cities.length === 0) {
@@ -841,7 +842,7 @@ const AddPostTour = () => {
           }<br><br>${day.activities
             .map(
               (activity) =>
-                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm: ** ${activity.address}`
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
             )
             .join("<br><br>")}`
       )

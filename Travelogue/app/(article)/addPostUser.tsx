@@ -38,6 +38,8 @@ import {
   uploadBytes,
   getDownloadURL,
   set,
+  update,
+  get,
 } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
@@ -710,6 +712,11 @@ const AddPostUser = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
+  // useEffect(() => {
+  //   console.log("CheckIn:", isCheckIn);
+
+  // }, [isCheckIn]);
+
   const handlePushPost = async () => {
     setButtonPost(true);
     if (cities.length === 0) {
@@ -796,7 +803,7 @@ const AddPostUser = () => {
           }<br><br>${day.activities
             .map(
               (activity) =>
-                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm: ** ${activity.address}`
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
             )
             .join("<br><br>")}`
       )
@@ -880,6 +887,7 @@ const AddPostUser = () => {
             fullname = data.fullname;
           }
         });
+        
 
         // Cấu trúc dữ liệu bài viết với URL ảnh
         const postData = {
@@ -906,6 +914,46 @@ const AddPostUser = () => {
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
+          if (userId && isCheckIn) {
+            const userRef = ref(database, `accounts/${userId}/checkInList`);
+        
+            const snapshot = await get(userRef);
+            const currentData = snapshot.exists() ? snapshot.val() : {};
+        
+            // Tạo dữ liệu cập nhật mới từ cities
+            if (postId) {
+              if (userId) {
+                const userRef = ref(database, `accounts/${userId}/checkInList`);
+            
+                // Lấy dữ liệu hiện tại từ Firebase
+                const snapshot = await get(userRef);
+                const currentData = snapshot.exists() ? snapshot.val() : {};
+            
+                // Tạo dữ liệu cập nhật mới từ cities
+                const updatedUserData = cities.reduce(
+                  (acc: { [key: string]: { [key: string]: string } }, city) => {
+                    const { id_nuoc, id, name } = city;
+            
+                    // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
+                    if (!acc[id_nuoc]) {
+                      acc[id_nuoc] = {};
+                    }
+            
+                    // Thêm city vào danh sách của id_nuoc
+                    acc[id_nuoc][id] = name;
+            
+                    return acc;
+                  },
+                  { ...currentData } // Sao chép dữ liệu hiện tại để bắt đầu từ đó
+                );
+            
+                // Cập nhật dữ liệu mới vào Firebase
+                await update(userRef, updatedUserData);
+              }
+            }
+           
+          }
+        
           await set(newPostRef, postData);
         } else {
           setButtonPost(false);
@@ -919,7 +967,7 @@ const AddPostUser = () => {
           text2: "Thêm bài viết thành công",
           visibilityTime: 2000,
         });
-        router.replace("/(tabs)/");
+        // router.replace("/(tabs)/");
       }
     } catch (error) {
       setButtonPost(false);

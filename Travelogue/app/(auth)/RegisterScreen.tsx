@@ -64,6 +64,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const [numberCCCD, setNumberCCCD] = useState("");
   const [totalLikes, setTotalLikes] = useState(0);
   const [totalPosts, setTotalPosts] = useState(0);
+  const [checkInList, setCheckInList] = useState("");
   // Lưu ảnh
   const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
   const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
@@ -172,8 +173,9 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD: null,
             business_license_id: null,
             imageUrlBusinessLicense: null,
+            checkInList: checkInList,
           });
-          // console.log(newUser);
+          console.log(newUser);
 
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
@@ -188,6 +190,7 @@ const RegisterScreen = ({ navigation }: any) => {
             createdAt: newUser.currentDate,
             status_id: newUser.status_id,
             role: newUser.role,
+            checkInList: newUser.checkInList,
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -277,6 +280,7 @@ const RegisterScreen = ({ navigation }: any) => {
             imageUrlBusinessLicense: businessLicenseImage,
             status_id: status,
             role: role,
+            checkInList: null,
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;

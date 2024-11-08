@@ -18,6 +18,8 @@ import { RowComponent, SectionComponent } from "@/components";
 import { database, ref, onValue } from "@/firebase/firebaseConfig";
 import { ScrollView } from "react-native-gesture-handler";
 import { set } from "lodash";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { update } from "firebase/database";
 
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
@@ -67,12 +69,12 @@ const Map = () => {
       const data = snapshot.val() || {};
       console.log(data);
       // Chuyển từ đối tượng thành mảng
-    
+
       const formattedDataAreas = Object.keys(data).flatMap((countryId) =>
-         Object.keys(data[countryId]).map((key) => ({
+        Object.keys(data[countryId]).map((key) => ({
           id: key,
-          countryId, 
-          ...data[countryId][key], 
+          countryId,
+          ...data[countryId][key],
         }))
       );
       setAreaData(formattedDataAreas);
@@ -104,19 +106,19 @@ const Map = () => {
       const data = snapshot.val() || {};
       // console.log("____________________")
       // console.log(data);
-    
+
       const formattedPoints = Object.keys(data).flatMap((countryId) => {
         const countryPoints = data[countryId];
         // console.log("countryPoints:", countryPoints);
-    
+
         return Object.keys(countryPoints).flatMap((type) => {
           const typePoints = countryPoints[type];
           // console.log("typePoints:", typePoints);
-    
+
           return Object.keys(typePoints).flatMap((pointId) => {
             const point = typePoints[pointId];
             // console.log("point:", point);
-            
+
             return Object.keys(point).map((pointKey) => ({
               id: pointKey,
               countryId: countryId,
@@ -291,14 +293,14 @@ const Map = () => {
     // hiển thị các point theo điều kiện
     return points.filter((point) => {
       if (selectedFestivalType) {
-        if (selectedFestivalType === "all" ) {
+        if (selectedFestivalType === "all") {
           if (selectedCountry && point.countryId !== selectedCountry) {
             return false;
           }
           if (selectedCity && point.cityId !== selectedCity) {
             return false;
           }
-    
+
           if (idCities) {
             if (idCities.includes(point.cityId)) {
               return true;
@@ -310,8 +312,6 @@ const Map = () => {
           return false;
         }
       }
-    
-     
 
       return true;
     });
@@ -342,6 +342,28 @@ const Map = () => {
 
     if (bottomSheetRef.current) {
       bottomSheetRef.current.show();
+    }
+  };
+
+  //Lưu các vi tri của điểm
+  const handleSavePoint = async (content, type, location) => {
+    const userId = await AsyncStorage.getItem("userToken");
+    // console.log("User:", userId);
+    // console.log("Content:", content);
+    // console.log("Type:", location);
+    if (userId) {
+      const userRef = ref(database, `accounts/${userId}/behavior`);
+       const updatedUserData = {
+        content: content,
+        location: location,
+      };
+        await update(userRef, updatedUserData);
+    }
+    if (type === "post") {
+      Alert.alert("Thông báo", "Đã lưu bài viết");
+    }
+    if (type === "tour") {
+      Alert.alert("Thông báo", "Đã lưu tour");
     }
   };
 
@@ -704,7 +726,11 @@ const Map = () => {
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => {
-                    console.log("Bai Viet: " + selectedFestival.cityId);
+                    handleSavePoint(
+                      selectedFestival.title,
+                      "tour",
+                      selectedFestival.cityId
+                    );
                   }}
                 >
                   <Icon name="file-text-o" size={20} color="#000" />
@@ -714,7 +740,11 @@ const Map = () => {
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => {
-                    console.log("Tour: " + selectedFestival.cityId);
+                    handleSavePoint(
+                      selectedFestival.title,
+                      "post",
+                      selectedFestival.cityId
+                    );
                   }}
                 >
                   <Icon name="picture-o" size={20} color="#000" />
