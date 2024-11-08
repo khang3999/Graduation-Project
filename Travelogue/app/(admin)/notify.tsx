@@ -6,7 +6,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    const accountId = "BXGDUZhaxoQ6BLEoC6rLv6WWEOn1";
 
 
     // Fetch data notifications by account id

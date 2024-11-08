@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 
 const Payment = () => {
-    const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    const accountId = "BXGDUZhaxoQ6BLEoC6rLv6WWEOn1";
     //Payment
     const [qrDataURL, setQrDataURL] = useState(null);
     const [inputText, setInputText] = useState('');
