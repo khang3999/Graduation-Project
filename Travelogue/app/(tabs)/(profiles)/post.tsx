@@ -24,7 +24,7 @@ import SaveButton from "@/components/buttons/SaveButton";
 import { Divider } from "react-native-paper";
 import MenuItem from "@/components/buttons/MenuPostButton";
 import CheckedInChip from "@/components/chips/CheckedInChip";
-import RenderHtml from "react-native-render-html";
+import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating } from "react-native-ratings";
@@ -73,7 +73,7 @@ type Post = {
   content: string;
   created_at: string;
   hashtag: string;
-  images: string[];
+  images: Record<string, Record<string, { city_name: string; images_value: string[] }>>;
   likes: number;
   locations: Record<string, Record<string, string>>;
   ratings: Record<string, RatingComment>;
@@ -109,15 +109,58 @@ const RatingButton: React.FC<RatingButtonProps> = ({
     </View>
   );
 };
+  
+const flattenLocations = (locations: Record<string, Record<string, string>>) => {
+  const flattenedArray = [];
+
+  
+  for (const country in locations) {
+    for (const locationCode in locations[country]) {
+      flattenedArray.push({
+        country,
+        locationCode,
+        locationName: locations[country][locationCode],
+      });
+    }
+  }
+
+  return flattenedArray;
+};
+
+
+const flattenImages = (images: Record<string, Record<string, { city_name: string; images_value: string[] }>>) => {
+  const flattenedArray: any[] = [];
+
+  for (const country in images) {
+    for (const locationCode in images[country]) {
+      const cityData = images[country][locationCode];
+      cityData.images_value.forEach((imageUrl) => {
+        flattenedArray.push({
+          country,
+          locationCode,
+          cityName: cityData.city_name,
+          imageUrl,
+        });
+      });
+    }
+  }
+
+  return flattenedArray;
+};
+
+
+
+
 
 const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
-
-
-  const MAX_LENGTH = 100;
-  const commentModalRef = useRef<Modalize>(null);
+  
+  
+  
+  const MAX_LENGTH = 5;
+  const commentAS = useRef<ActionSheetRef>(null);
   const authorizedCommentAS = useRef<ActionSheetRef>(null);
   const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
@@ -138,12 +181,14 @@ const PostItem: React.FC<PostItemProps> = ({
   const [ratingValue, setRatingValue] = useState(5);
   const totalComments = comments.length;
   const isPostAuthor = accountData.id === item.author.id;
+  const flattenedLocationsArray = flattenLocations(item.locations);
+  const flattenedImagesArray = flattenImages(item.images);
   const [isLoading, setIsLoading] = useState(false);
 
-  
-  
-  const addComment = async () => {
-    if (commentText.trim().length > 0) {
+
+  const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
+    if (replyText.trim().length > 0) {
+      const parentId = parentComment ? parentComment.id : null;
       const newComment = {
         author: {
           id: accountData.id,
@@ -153,8 +198,8 @@ const PostItem: React.FC<PostItemProps> = ({
         },
         status_id: 1,
         reports: 0,
-        content: commentText,
-        parentId: replyingTo ? replyingTo.id : null,
+        content: replyText,
+        parentId: parentId ? parentId : null,
         created_at: new Date().toLocaleString("en-US", {
           day: "numeric",
           month: "long",
@@ -162,8 +207,8 @@ const PostItem: React.FC<PostItemProps> = ({
         }),
       };
       try {
-        const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
-        const newCommentRef = push(CommentsRef);
+        const commentRef = ref(database, `postsPhuc/${item.id}/comments`)
+        const newCommentRef = push(commentRef);
 
         if (newCommentRef.key) {
           const newCommentWithId = { ...newComment, id: newCommentRef.key };
@@ -179,18 +224,16 @@ const PostItem: React.FC<PostItemProps> = ({
             }
           });
 
-          setReplyingTo(null); // Reset reply state after posting
+          setReplyingTo(null);
         }
-        setCommentText(""); // Clear the input field
       } catch (error) {
-        console.error("Error adding comment:", error);
+        console.error("Error adding rating comment:", error);
       }
     }
-  };
-  const handleRatingCommentSubmit = (comment: RatingComment, replyText: string) => {
-    const parentId = comment.id;
-    console.log('parentId', parentId);
-    if (replyText.trim().length > 0 && comment) {
+  }
+  const handleRatingCommentSubmit = (parentComment: RatingComment, replyText: string) => {
+    if (replyText.trim().length > 0) {
+      const parentId = parentComment ? parentComment.id : null;
       const newRatingComment = {
         author: {
           id: accountData.id,
@@ -199,11 +242,11 @@ const PostItem: React.FC<PostItemProps> = ({
           username: accountData.fullname,
         },
         image: "",
-        rating:-1,
+        rating: -1,
         status_id: 1,
         reports: 0,
         content: replyText,
-        parentId:parentId ? parentId: null,
+        parentId: parentId ? parentId : null,
         created_at: new Date().toLocaleString("en-US", {
           day: "numeric",
           month: "long",
@@ -221,8 +264,8 @@ const PostItem: React.FC<PostItemProps> = ({
           setRatingComments((prevComments) => {
             return [...prevComments, { ...newRatingCommentWithId }];
           });
-         
-        }        
+
+        }
 
       } catch (error) {
         console.error("Error adding rating comment:", error);
@@ -245,9 +288,8 @@ const PostItem: React.FC<PostItemProps> = ({
     }).flat();
   };
   const openCommentModal = () => {
-    if (commentModalRef.current) {
-      commentModalRef.current.open(); // Safely access the ref
-      setIsScrollEnabled(false);
+    if (commentAS.current) {
+      commentAS.current.show();
     } else {
       console.error("Modalize reference is null");
     }
@@ -397,7 +439,7 @@ const PostItem: React.FC<PostItemProps> = ({
     if (isPostAuthor) {
       ratingCommentAS.current?.show();
       return;
-    } 
+    }
 
     // Reference to the user's rating in Realtime Database
     const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
@@ -428,13 +470,13 @@ const PostItem: React.FC<PostItemProps> = ({
       quality: 1,
     });
 
-    console.log(result);
 
     if (!result.canceled) {
       setRatingImage(result.assets[0].uri);
     }
   };
 
+  
   //handle report comment
   const handleReportComment = (comment: Comment) => {
 
@@ -453,10 +495,11 @@ const PostItem: React.FC<PostItemProps> = ({
   const isExpanded = expandedPosts[item.id] || false;
 
   const desc = {
-    html: isExpanded
-      ? item.content
-      : `${item.content.slice(0, MAX_LENGTH)} ...`,
+    Markdown: isExpanded
+      ? item.content.replace(/<br>/g, '\n')
+      : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
+
   return (
     <View>
       {/* Post Header */}
@@ -478,23 +521,23 @@ const PostItem: React.FC<PostItemProps> = ({
 
       {/* Post Images Carousel */}
       <Carousel
-        pagingEnabled={true}
-        loop={false}
-        width={windowWidth}
-        height={windowWidth}
-        data={item.images}
-        scrollAnimationDuration={300}
-        renderItem={({ item: imageUri, index }) => (
-          <View style={styles.carouselItem}>
-            <Image style={styles.posts} source={{ uri: imageUri }} />
-            <View style={styles.viewTextStyles}>
-              <Text style={styles.carouselText}>
-                {index + 1}/{item.images.length}
-              </Text>
-            </View>
+      pagingEnabled={true}
+      loop={false}
+      width={windowWidth}
+      height={windowWidth}
+      data={flattenedImagesArray}
+      scrollAnimationDuration={300}
+      renderItem={({ item, index }) => (
+        <View style={styles.carouselItem}>
+          <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+          <View style={styles.viewTextStyles}>
+            <Text style={styles.carouselText}>
+              {index + 1}/{flattenedImagesArray.length} - {item.cityName}
+            </Text>
           </View>
-        )}
-      />
+        </View>
+      )}
+    />
       <View>
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
@@ -514,88 +557,24 @@ const PostItem: React.FC<PostItemProps> = ({
           <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
         </View>
       </View>
-      <CheckedInChip items={Object.values(item.locations.vietnam)} />
+      <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
-        <RenderHtml contentWidth={windowWidth} source={desc} />
+        <Markdown>
+          {desc.Markdown}
+        </Markdown>
         <TouchableOpacity onPress={() => toggleDescription(item.id)}>
           <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
-      <Modalize
-        ref={commentModalRef}
-        modalHeight={600}
-        alwaysOpen={0}
-        handlePosition="inside"
-        avoidKeyboardLikeIOS={true}
-        onClosed={() => setIsScrollEnabled(true)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Comments for {item.author.username}'s post
-            </Text>
-            {/* Sticky comment */}
-            {replyingTo && (
-              <View style={styles.replyingToContainer}>
-                <Text>Replying to {replyingTo.username}</Text>
-                <TouchableOpacity onPress={() => setReplyingTo(null)}>
-                  <Text style={styles.cancelReplyButton}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            <View style={styles.commentInputContainer}>
-              <TextInput
-                style={styles.commentInput}
-                placeholder="Write a comment..."
-                value={commentText}
-                onChangeText={setCommentText}
-                multiline
-              />
-              <TouchableOpacity
-                style={styles.commentButton}
-                onPress={addComment}
-              >
-                <Text style={styles.commentButtonText}>Post</Text>
-              </TouchableOpacity>
-            </View>
-            {comments.length > 0 ? (
-              <FlatList
-                data={comments}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onLongPress={() => handleLongPressComment(item)}
-                    style={[styles.commentContainer, { marginLeft: item.parentId ? 20 : 0 }]}>
-                    <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                      <Image source={{ uri: item.author.avatar }} style={styles.miniAvatar} />
-                      <View style={{ marginLeft: 10 }}>
-                        <Text style={styles.commentUsername}>{item.author.username}</Text>
-                        <Text style={styles.commentText}>{item.content}</Text>
-                        <View style={{ flexDirection: 'row' }}>
-                          <TouchableOpacity style={styles.commentButtons} onPress={() => setReplyingTo({ id: item.id, username: item.author.username })}>
-                            <IconMaterial name="message-reply-text-outline" size={20} color="#B1B1B1" style={{ marginRight: 5 }} />
-                            <Text style={styles.replyButton}>Reply</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.commentTime}>{item.created_at}</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                contentContainerStyle={{ paddingBottom: 60 }}
-              />
-            ) : (
-              <Text>No comments yet. Be the first to comment!</Text>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modalize>
+      <CommentsActionSheet
+        isPostAuthor={isPostAuthor}
+        commentRefAS={commentAS}
+        commentsData={comments}
+        onSubmitComment={handleCommentSubmit}
+      />
 
       {/* Action Sheet for author*/}
       <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
@@ -1126,7 +1105,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     backgroundColor: "#392613",
     top: 10,
-    left: windowWidth - 50,
+    left: windowWidth - 120,
     borderRadius: 20,
     paddingHorizontal: 7,
   },

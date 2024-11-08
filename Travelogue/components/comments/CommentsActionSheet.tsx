@@ -3,7 +3,7 @@ import React, { useState, RefObject, useRef, useEffect } from 'react'
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { Divider } from 'react-native-paper'
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
-import { CommentType,Comment,RatingComment } from '@/types/CommentTypes';
+import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 
 
@@ -12,37 +12,42 @@ interface CommentsActionSheetProps<T extends CommentType> {
     commentRefAS: RefObject<ActionSheetRef>;
     isPostAuthor: boolean;
     commentsData: T[];
-    onSubmitRatingComment?: (comment: RatingComment, replyText: string) => void;
-    onSubmitComment?: (comment: Comment, replyText: string) => void;
+    onSubmitRatingComment?: (parentComment: RatingComment, replyText: string) => void;
+    onSubmitComment?: (parentComment: Comment, replyText: string) => void;
 }
 
 export default function CommentsActionSheet<T extends CommentType>(props: CommentsActionSheetProps<T>) {
     const [replyText, setReplyText] = useState("");
     const [selectedComment, setSelectedComment] = useState<T | null>(null);
-    
+
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
+    
 
 
     const handleReplyButtonPress = (item: T) => {
         setSelectedComment(item);
-        console.log(item);
     };
 
     const handleCancelReply = () => {
         setSelectedComment(null);
         setReplyText("");
+
     };
 
     const handleReplySubmit = () => {
-        if (selectedComment && replyText) {
-            if ("rating" in selectedComment && props.onSubmitRatingComment) {
+
+        if (replyText) {
+            if (selectedComment && "rating" in selectedComment && props.onSubmitRatingComment) {
                 props.onSubmitRatingComment(selectedComment as RatingComment, replyText);
+
             } else if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
+
             }
             setReplyText("");
             setSelectedComment(null);
+
         }
     };
 
@@ -59,7 +64,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjusts for both iOS and Android
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
             style={{ flex: 1 }}
         >
             <ActionSheet
@@ -71,15 +76,16 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                     <Text style={styles.ratingCommentsHeader}>Bình luận đánh giá</Text>
                     <Divider style={styles.marginBottom5} />
                     {/* Input and Reply Button for Post Owner */}
-                    {props.isPostAuthor && selectedComment && (
+                    {props.isPostAuthor && (
                         <View style={styles.replyInputContainer}>
-                            <View style={styles.mentionContainer}>
-                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
-                                <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
-                                    <IconMaterial name="close-circle" size={16} color="#FF3B30" />
-                                </Pressable>
-                            </View>
-
+                            { selectedComment &&(
+                                <View style={styles.mentionContainer}>
+                                    <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
+                                    <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
+                                        <IconMaterial name="close-circle" size={16} color="#FF3B30" />
+                                    </Pressable>
+                                </View>
+                            )}
                             <TextInput
                                 placeholder="Aa"
                                 value={replyText}
@@ -87,7 +93,9 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                 style={styles.replyInput}
                                 multiline
                             />
+
                             {/* Animated Send Button */}
+
                             {replyText.length > 0 && (
                                 <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
                                     <Pressable onPress={handleReplySubmit}>
@@ -96,6 +104,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                 </Animated.View>
                             )}
                         </View>
+
                     )}
                     {props.commentsData.length > 0 ? (
                         <FlatList
@@ -146,7 +155,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                     )}
                                 </View>
                             )}
-                            contentContainerStyle={{ paddingBottom: 100 }}
+                            contentContainerStyle={{ paddingBottom: 120 }}
                         />
                     ) : (
                         <Text style={styles.noCommentsText}>No rating comments yet.</Text>

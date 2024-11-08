@@ -71,6 +71,7 @@
     "react-native-gesture-handler": "~2.16.1",
     "react-native-image-slider-banner": "^1.0.3",
     "react-native-maps": "1.14.0",
+    "react-native-markdown-display": "^7.0.2",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-modalize": "^2.1.1",
     "react-native-pager-view": "6.3.0",
