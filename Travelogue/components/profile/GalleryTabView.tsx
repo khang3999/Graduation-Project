@@ -67,7 +67,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const userId = isSearched ? searchedAccountData.id : accountData?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
-  const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
+  const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
   const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = React.useState<Post[]>([]);
   
@@ -208,7 +208,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const FirstRoute = () => {
     return (
       <View style={{ flex: 1, paddingBottom: 70 }}>
-        {createdPosts.length === 0 ? (
+        {createdPosts ? (
           <>
             <Image
               source={require("@/assets/images/camera-circle.png")}
