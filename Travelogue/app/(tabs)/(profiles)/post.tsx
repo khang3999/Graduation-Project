@@ -602,9 +602,9 @@ const PostItem: React.FC<PostItemProps> = ({
           <SaveButton style={styles.buttonItem} postID={item.id} />
         </View>
         {/* Rating Button */}
-        <View style={styles.ratingButtonContainer}>
+        {/* <View style={styles.ratingButtonContainer}>
           <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
-        </View>
+        </View> */}
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
