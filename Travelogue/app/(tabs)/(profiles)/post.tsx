@@ -149,23 +149,16 @@ const flattenImages = (images: Record<string, Record<string, { city_name: string
 };
 
 
-
-
-
 const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
   
-  
-  
+
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
-  const authorizedCommentAS = useRef<ActionSheetRef>(null);
-  const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
-
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -294,26 +287,18 @@ const PostItem: React.FC<PostItemProps> = ({
       console.error("Modalize reference is null");
     }
   };
-  const handleLongPressComment = (comment: Comment) => {
-    //handle whether the account is the author of the comment    
-    if (accountData.id === comment.author.id) {
-      setLongPressedComment(comment);
-      authorizedCommentAS.current?.show();
-    } else {
-      unauthorizedCommentAS.current?.show();
-    }
-  };
+
   const handleDeleteComment = async (comment: Comment) => {
     Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this comment and all its replies?",
+      "Xóa comment",
+      "Tất cả các comment con của nó cũng sẽ bị xóa. Bạn có chắc chắn muốn xóa comment này ?",
       [
         {
-          text: "Cancel",
+          text: "Hủy",
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: "Xóa",
           style: "destructive",
           onPress: async () => {
             try {
@@ -349,8 +334,63 @@ const PostItem: React.FC<PostItemProps> = ({
               );
 
               console.log('Comment deleted successfully.', comments);
+              
+            } catch (error) {
+              console.error("Error deleting comment:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  const handleDeleteRatingComment = async (comment: RatingComment) => {
+    Alert.alert(
+      "Xóa comment",
+      "Bạn có chắc chắn muốn xóa comment này ?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Fetch all rating once
+              const snapshot = await get(ref(database, `postsPhuc/${item.id}/ratings`));
+              const ratingCommentsData = snapshot.val() as Record<string, RatingComment>;
 
-              authorizedCommentAS.current?.hide();
+
+              if (!ratingCommentsData) return;
+
+
+              const pathsToDelete: Record<string, null> = {};
+
+
+              const addCommentAndRepliesToDelete = (ratingCommentId: string) => {
+                pathsToDelete[`postsPhuc/${item.id}/ratings/${ratingCommentId}`] = null;
+                Object.keys(ratingCommentsData).forEach((key) => {
+                  if (ratingCommentsData[key].parentId === ratingCommentId) {
+                    addCommentAndRepliesToDelete(key);
+                  }
+                });
+              };
+
+
+              addCommentAndRepliesToDelete(comment.id);
+
+
+              await update(ref(database), pathsToDelete);
+
+
+              setComments((prevComments) =>
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/ratings/${c.id}`))
+              );
+
+              console.log('Comment deleted successfully.', comments);
+              
             } catch (error) {
               console.error("Error deleting comment:", error);
             }
@@ -390,7 +430,7 @@ const PostItem: React.FC<PostItemProps> = ({
           avatar: accountData.avatar,
           username: accountData.fullname,
         },
-        id: userRatingRef.key,
+        id: userRatingRef.key!,
         content: ratingCommentText,
         image: imageUrl,
         created_at: new Date().toLocaleString("en-US", {
@@ -418,6 +458,10 @@ const PostItem: React.FC<PostItemProps> = ({
         set(userRatingRef, rating),
         update(summaryRef, summaryUpdate),
       ]);
+      
+      setRatingComments((prevComments) => {
+        return [rating, ...prevComments];
+      });
 
       console.log('Rating and image successfully added');
 
@@ -479,6 +523,11 @@ const PostItem: React.FC<PostItemProps> = ({
   
   //handle report comment
   const handleReportComment = (comment: Comment) => {
+
+  }
+
+  //handle report rating comment
+  const handleReportRatingComment = (comment: RatingComment) => {
 
   }
 
@@ -574,61 +623,12 @@ const PostItem: React.FC<PostItemProps> = ({
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
+        accountId={accountData.id}
+        onDelete={handleDeleteComment}
+        onReport={handleReportComment}
       />
 
-      {/* Action Sheet for author*/}
-      <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-        <View>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => {
-              if (longPressedComment) {
-                handleDeleteComment(longPressedComment);
-              }
-
-            }}
-          >
-            <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
-              Xóa bình luận
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => authorizedCommentAS.current?.hide()}
-          >
-            <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
-              Hủy
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ActionSheet>
-
-      {/* Action Sheet for unauthorized account */}
-      <ActionSheet ref={unauthorizedCommentAS} containerStyle={styles.actionSheetContainer}>
-        <View>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => {
-              if (longPressedComment) {
-                handleReportComment(longPressedComment);
-              }
-
-            }}
-          >
-            <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
-              Báo cáo bình luận
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionOption}
-            onPress={() => authorizedCommentAS.current?.hide()}
-          >
-            <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
-              Hủy
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ActionSheet>
+     
       {/* Rating Modal */}
       <Modal
         animationType="fade"
@@ -711,6 +711,9 @@ const PostItem: React.FC<PostItemProps> = ({
         commentRefAS={ratingCommentAS}
         commentsData={ratingComments}
         onSubmitRatingComment={handleRatingCommentSubmit}
+        accountId={accountData.id}
+        onDelete={handleDeleteRatingComment}
+        onReport={handleReportComment}
       />
     </View>
   );

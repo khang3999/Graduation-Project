@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated } from 'react-native'
+import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert } from 'react-native'
 import React, { useState, RefObject, useRef, useEffect } from 'react'
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { Divider } from 'react-native-paper'
@@ -14,27 +14,30 @@ interface CommentsActionSheetProps<T extends CommentType> {
     commentsData: T[];
     onSubmitRatingComment?: (parentComment: RatingComment, replyText: string) => void;
     onSubmitComment?: (parentComment: Comment, replyText: string) => void;
+    onDelete?: (item: T) => void;
+    onReport?: (item: T) => void;
+    accountId?: string;
 }
 
 export default function CommentsActionSheet<T extends CommentType>(props: CommentsActionSheetProps<T>) {
     const [replyText, setReplyText] = useState("");
     const [selectedComment, setSelectedComment] = useState<T | null>(null);
-
+    const [longPressedComment, setLongPressedComment] = useState<T | null>(null);
+    const authorizedCommentAS = useRef<ActionSheetRef>(null);
+    const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
-    
+
 
 
     const handleReplyButtonPress = (item: T) => {
         setSelectedComment(item);
     };
-
     const handleCancelReply = () => {
         setSelectedComment(null);
         setReplyText("");
 
     };
-
     const handleReplySubmit = () => {
 
         if (replyText) {
@@ -44,12 +47,36 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
             } else if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
 
+            } else if (!selectedComment) {
+                Alert.alert("Thông báo", "Xin hãy chọn 1 bình luận để trả lời");
             }
+
             setReplyText("");
             setSelectedComment(null);
 
         }
+
     };
+    const handleLongPress = (comment: T) => {
+        if (props.accountId === comment.author.id) {
+            setLongPressedComment(comment);
+            authorizedCommentAS.current?.show();
+        } else {
+            unauthorizedCommentAS.current?.show();
+        }
+    }
+    const handleDeleteComment = (comment: T) => {
+        if (props.onDelete && comment) {
+            props.onDelete(comment);
+            authorizedCommentAS.current?.hide();
+        }
+    }
+    const handleReportComment = (comment: T) => {
+        if (props.onReport && comment) {
+            props.onReport(comment);
+            unauthorizedCommentAS.current?.hide();
+        }
+    }
 
 
     // Animate opacity when replyText changes
@@ -64,21 +91,21 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
 
     return (
         <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ flex: 1 }}
         >
             <ActionSheet
                 ref={props.commentRefAS}
                 containerStyle={styles.ratingCommentsASContainer}
             >
-                <View >
+                <View  >
                     <View style={styles.topBorder}></View>
                     <Text style={styles.ratingCommentsHeader}>Bình luận đánh giá</Text>
                     <Divider style={styles.marginBottom5} />
                     {/* Input and Reply Button for Post Owner */}
                     {props.isPostAuthor && (
                         <View style={styles.replyInputContainer}>
-                            { selectedComment &&(
+                            {selectedComment && (
                                 <View style={styles.mentionContainer}>
                                     <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
                                     <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
@@ -111,7 +138,9 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                             data={props.commentsData}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <View style={[styles.ratingCommentCard, { marginLeft: item.parentId ? 20 : 0 }]}>
+                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.parentId ? 20 : 0 },]}
+                                    onLongPress={() => handleLongPress(item)}
+                                >
                                     <View style={styles.ratingCommentHeader}>
                                         <Image
                                             source={{ uri: item.author.avatar }}
@@ -153,7 +182,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                             <Text style={styles.replyButtonText}>Reply</Text>
                                         </Pressable>
                                     )}
-                                </View>
+                                </Pressable>
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />
@@ -163,10 +192,87 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
 
                 </View>
             </ActionSheet>
+            {/* Action Sheet for author*/}
+            <ActionSheet ref={authorizedCommentAS} containerStyle={styles.actionSheetContainer}>
+                <View>
+                    <TouchableOpacity
+                        style={styles.actionOption}
+                        onPress={() => {
+                            if (longPressedComment) {
+                                handleDeleteComment(longPressedComment);
+                            }
+
+                        }}
+                    >
+                        <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
+                            Xóa bình luận
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.actionOption}
+                        onPress={() => authorizedCommentAS.current?.hide()}
+                    >
+                        <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
+                            Hủy
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ActionSheet>
+
+            {/* Action Sheet for unauthorized account */}
+            <ActionSheet ref={unauthorizedCommentAS} containerStyle={styles.actionSheetContainer}>
+                <View>
+                    <TouchableOpacity
+                        style={styles.actionOption}
+                        onPress={() => {
+                            if (longPressedComment) {
+                                handleReportComment(longPressedComment);
+                            }
+
+                        }}
+                    >
+                        <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>
+                            Báo cáo bình luận
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.actionOption}
+                        onPress={() => authorizedCommentAS.current?.hide()}
+                    >
+                        <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
+                            Hủy
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ActionSheet>
         </KeyboardAvoidingView>
     )
 }
 const styles = StyleSheet.create({
+    actionSheetContainer: {
+        backgroundColor: '#ffffff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+    },
+    actionOption: {
+        paddingVertical: 15,
+        borderBottomWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    actionOptionText: {
+        fontSize: 18,
+        color: '#007AFF',
+        fontWeight: '500',
+        textAlign: 'center',
+    },
+    actionOptionTextDelete: {
+        color: '#FF3B30', // Red color for delete option
+    },
+    actionOptionTextCancel: {
+        color: '#555555', // Grey color for cancel option
+    },
     mentionContainer: {
         flexDirection: 'row',
         alignItems: 'center',
