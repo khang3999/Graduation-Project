@@ -208,7 +208,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const FirstRoute = () => {
     return (
       <View style={{ flex: 1, paddingBottom: 70 }}>
-        {createdPosts ? (
+        {createdPosts && createdPosts.length === 0 ? (
           <>
             <Image
               source={require("@/assets/images/camera-circle.png")}
