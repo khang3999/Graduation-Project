@@ -14,7 +14,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="festival"
         options={{
-          title: 'Festival',
+          title: 'Points',
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="group" color={color} />,
           headerShown:false
         }}

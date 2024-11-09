@@ -41,7 +41,6 @@ const Location = () => {
             unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
     }, [])
-    //Cities
     // Fetch data cities theo quốc gia
     const fetchCityByCountry = async (countryId: any) => {
         try {
