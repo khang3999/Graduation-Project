@@ -72,7 +72,7 @@ const AddPostUser = () => {
   const [citiesDataFilter, setCitiesDataFilter] = useState<
     { id: string; name: string; id_nuoc: string,area_id : string}[]
   >([]);
-  console.log("Cities:", citiesDataFilter);
+  // console.log("Cities:", citiesDataFilter);
 
   const [cities, setCities] = useState<
     { id: string; name: string; id_nuoc: string,area_id : string }[]
@@ -116,7 +116,7 @@ const AddPostUser = () => {
     area_id: string;
   } | null>(null);
   useEffect(() => {
-    console.log("selectedCityForImages:", selectedCityForImages);
+    // console.log("selectedCityForImages:", selectedCityForImages);
     [selectedCityForImages]});
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
@@ -845,12 +845,13 @@ const AddPostUser = () => {
        
     try {
       //Tạo bảng
-      const postsRef = ref(database, "postsH");
+      const postsRef = ref(database, "posts");
       //Tạo id bài viết
       const newPostRef = push(postsRef);
       //Lấy id bài post
       const postId = newPostRef.key;
-
+       
+      // console.log("postId:", images);
       //xử lý ảnh và lưu ảnh
       for (const image of images) {
         // console.log("Image:", image);
@@ -897,11 +898,11 @@ const AddPostUser = () => {
             // console.log("id:", uploadedImageUrls[id_nuoc][id]);
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
             // console.log("URL:", uploadedImageUrls);
-
+            //lƯU ẢNH ĐẦU TIÊN
             //Anh cho city
             // URL ảnh theo tỉnh thành  
             // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
-            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/posts/${postId}`), {
+            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`), {
               images: uploadedImageUrls[id_nuoc][id].images_value,
             });
           }
@@ -921,7 +922,12 @@ const AddPostUser = () => {
             fullname = data.fullname;
           }
         });
-        
+        const likes = 0;
+        const reports = 0;
+        const match = 0;
+        const status = "active";
+        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty                                              
+        const thumbnail = uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]]?.images_value?.[0] || '';
 
         // Cấu trúc dữ liệu bài viết với URL ảnh
         const postData = {
@@ -943,6 +949,11 @@ const AddPostUser = () => {
           view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
+          likes,
+          reports,
+          match,
+          status,
+          thumbnail,
           created_at: timestamp,
         };
         
@@ -992,7 +1003,7 @@ const AddPostUser = () => {
           text2: "Thêm bài viết thành công",
           visibilityTime: 2000,
         });
-        // router.replace("/(tabs)/");
+        router.replace("/(tabs)/");
       }
     } catch (error) {
       setButtonPost(false);
@@ -1545,8 +1556,8 @@ const AddPostUser = () => {
             justify="space-between"
           >
             <TextComponent
-              text="Private"
-              size={14}
+              text="Riêng tư"
+              size={12}
               styles={{
                 fontWeight: "heavy",
                 backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
@@ -1567,8 +1578,8 @@ const AddPostUser = () => {
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
-              text="Public"
-              size={14}
+              text="Công khai"
+              size={12}
               styles={{
                 fontWeight: "light",
                 color: isPublic ? appColors.gray : "#000",

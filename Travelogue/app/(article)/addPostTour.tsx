@@ -50,6 +50,7 @@ import Toast from "react-native-toast-message-custom";
 import PackageCard from "@/components/cart/PackageCard";
 import { UserRegister } from "@/model/UserRegister";
 import LottieView from "lottie-react-native";
+import { has } from "lodash";
 
 const AddPostTour = () => {
   interface Country {
@@ -68,14 +69,15 @@ const AddPostTour = () => {
       id_nuoc: string;
       id: string;
       name: string;
+      area_id: string;
     }[]
   >([]);
   const [citiesDataFilter, setCitiesDataFilter] = useState<
-    { id: string; name: string; id_nuoc: string }[]
+    { id: string; name: string; id_nuoc: string,area_id : string}[]
   >([]);
 
   const [cities, setCities] = useState<
-    { id: string; name: string; id_nuoc: string }[]
+    { id: string; name: string; id_nuoc: string,area_id : string }[]
   >([]);
 
   //Modal
@@ -107,14 +109,15 @@ const AddPostTour = () => {
     id: string;
     name: string;
     id_nuoc: string;
+    area_id: string;
   } | null>(null);
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
-    {
-      city: { id: string; name: string; id_nuoc: string } | null;
-      images: string[];
-    }[]
-  >([]);
+  {
+    city: { id: string; name: string; id_nuoc: string , area_id: string } | null;
+    images: string[];
+  }[]
+>([]);
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
 
@@ -253,13 +256,13 @@ const AddPostTour = () => {
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress =
-    (city: { id: string; name: string; id_nuoc: string }) => () => {
-      setCities([
-        { id: city.id, name: city.name, id_nuoc: city.id_nuoc },
-        ...cities,
-      ]);
-      setModalVisibleCity(false);
-    };
+  (city: { id: string; name: string; id_nuoc: string, area_id : string  }) => () => {
+    setCities([
+      { id: city.id, name: city.name, id_nuoc: city.id_nuoc, area_id: city.area_id },
+      ...cities,
+    ]);
+    setModalVisibleCity(false);
+  };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -675,6 +678,7 @@ const AddPostTour = () => {
       id: city.id,
       name: city.name,
       id_nuoc: city.id_nuoc,
+      area_id: city.area_id
     };
     setSelectedCityForImages(selectedCity);
     setModalVisibleCityImages(false);
@@ -878,7 +882,7 @@ const AddPostTour = () => {
         // console.log("Image:", image);
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
-        const { id_nuoc, id, name: cityName } = city || {};
+        const { id_nuoc, id, name: cityName,area_id : id_khuvucimages} = city || {};
 
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
@@ -918,6 +922,12 @@ const AddPostTour = () => {
             // console.log("id:", uploadedImageUrls[id_nuoc][id]);
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
             // console.log("URL:", uploadedImageUrls);
+             //Anh cho city
+            // URL ảnh theo tỉnh thành  
+            // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
+            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`), {
+              images: uploadedImageUrls[id_nuoc][id].images_value,
+            });
           }
         }
 
@@ -940,6 +950,16 @@ const AddPostTour = () => {
           (item) => item.id === selectedPackage
         );
 
+        // lưu hashtag thành dòng chữ
+        const combinedHashtags = hashtags.map(hashtag => hashtag[0] !== "#" ? "#" + hashtag : hashtag).join(" ");
+
+        const likes = 0;
+        const reports = 0;
+        const match = 0;
+        const status = "active";
+        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty                                              
+        const thumbnail = uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]]?.images_value?.[0] || '';
+
         // tap hop du lieu
         const postData = {
           locations: cities.reduce(
@@ -957,12 +977,17 @@ const AddPostTour = () => {
             {}
           ),
           contents,
-          hashtags: hashtags,
+          hashtags: combinedHashtags,
           packages: selectedPackageData,
           view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           created_at: timestamp,
+          thumbnail,
+          likes,
+          reports,
+          match,
+          status,
         };
 
         // Lưu bài viết vào Realtime Database
@@ -1140,22 +1165,6 @@ const AddPostTour = () => {
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
-            <TouchableOpacity style={styles.checkin} disabled={true}>
-              <RowComponent justify="space-between">
-                <Text style={{ fontSize: 12 }}>Check in lên bản đồ</Text>
-                {/* <Icon
-                  name="checkbox-active"
-                  size={14}
-                  style={{ marginLeft: 10 }}
-                  color={appColors.success}
-                /> */}
-                <Checkbox
-                  color="green"
-                  status={isCheckIn ? "checked" : "unchecked"}
-                  onPress={() => setIsCheckIn(!isCheckIn)}
-                />
-              </RowComponent>
-            </TouchableOpacity>
 
             {/* Quốc gia */}
             <SectionComponent>
@@ -1927,8 +1936,8 @@ const AddPostTour = () => {
             justify="space-between"
           >
             <TextComponent
-              text="Private"
-              size={14}
+              text="Riêng tư"
+              size={12}
               styles={{
                 fontWeight: "heavy",
                 backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
@@ -1949,8 +1958,8 @@ const AddPostTour = () => {
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
-              text="Public"
-              size={14}
+              text="Công khai"
+              size={12}
               styles={{
                 fontWeight: "light",
                 color: isPublic ? appColors.gray : "#000",
