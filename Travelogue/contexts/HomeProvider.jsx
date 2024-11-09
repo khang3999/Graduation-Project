@@ -1,6 +1,6 @@
 import { View, Text, AppState } from 'react-native'
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react'
-import { onValue, ref } from 'firebase/database';
+import { equalTo, onValue, orderByChild, query, ref } from 'firebase/database';
 import { auth, database, get } from '@/firebase/firebaseConfig';
 import { slug, sortTourAtHomeScreen } from '@/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,7 +36,7 @@ const HomeProvider = ({ children }) => {
     const [newPostCount, setNewPostCount] = useState(0);
     // const [searching, setSearching] = useState(false)
     const [accountBehavior, setAccountBehavior] = useState({})
-    const [user, setUser] = useState(null);
+    const [userId, setUserId] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [dataModalSelected, setDataModalSelected] = useState(null)
@@ -45,7 +45,7 @@ const HomeProvider = ({ children }) => {
     useEffect(() => {
         const fetchUserId = async () => {
             const userId = await AsyncStorage.getItem("userToken");
-            setUser(userId);
+            setUserId(userId);
         };
         fetchUserId()
     }, []);
@@ -86,7 +86,8 @@ const HomeProvider = ({ children }) => {
         const fetchData = async () => {
             try {
                 const refTours = ref(database, 'tours/')
-                const snapshot = await get(refTours);
+                const toursQuery = query(refTours, orderByChild('view_mode'), equalTo(true));
+                const snapshot = await get(toursQuery);
                 if (snapshot.exists()) {
                     const dataToursJson = snapshot.val()
                     const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
@@ -111,13 +112,17 @@ const HomeProvider = ({ children }) => {
         const refCities = ref(database, `cities/`)
         const unsubscribe = onValue(refCities, (snapshot) => {
             if (snapshot.exists()) {
-                // Lấy tất cả factor của post dùng cho tính điểm
                 const jsonDataCities = snapshot.val();
-                const result = Object.entries(jsonDataCities).flatMap(([country, cityObj]) =>
-                    Object.entries(cityObj).map(([cityCode, cityInfo]) => ({
-                        [cityCode]: cityInfo.name
-                    }))
+                const result = Object.entries(jsonDataCities).flatMap(([country, regions]) =>
+                    Object.entries(regions).flatMap(([region, cityObj]) =>
+                        Object.entries(cityObj).map(([cityCode, cityInfo]) =>
+                        ({
+                            [cityCode]: cityInfo.name
+                        })
+                        )
+                    )
                 );
+                
                 setDataAllCities(result);
             } else {
                 console.log("No data available1");
@@ -158,8 +163,8 @@ const HomeProvider = ({ children }) => {
     }, [])
     // Lấy data account
     useEffect(() => {
-        if (user) {
-            const refAccount = ref(database, `accounts/${user}`)
+        if (userId) {
+            const refAccount = ref(database, `accounts/${userId}`)
             const unsubscribe = onValue(refAccount, (snapshot) => {
                 if (snapshot.exists()) {
                     // Lấy tất cả factor của post dùng cho tính điểm
@@ -181,12 +186,13 @@ const HomeProvider = ({ children }) => {
                 unsubscribe(); // Sử dụng unsubscribe để hủy listener
             };
         }
-    }, [user])
+    }, [userId])
     // Hàm lắng nghe thay khi có bài viết mới từ firebase để hiển thị button reload
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
         const refPosts = ref(database, 'posts/')
-        const unsubscribe = onValue(refPosts, (snapshot) => {
+        const postsQuery = query(refPosts, orderByChild('view_mode'), equalTo(true));
+        const unsubscribe = onValue(postsQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewPost = snapshot.size;
                 setNewPostCount(countNewPost)

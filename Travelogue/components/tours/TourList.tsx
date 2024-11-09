@@ -12,6 +12,7 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { equalTo, orderByChild, query } from 'firebase/database';
 
 const { width } = Dimensions.get('window');
 const ITEM_HEIGHT = 270;
@@ -209,10 +210,12 @@ const TourList = () => {
       const snapshot = await get(refCity);
       if (snapshot.exists()) {
         const dataCityJson = snapshot.val()
-        const dataCitiesArray: any = Object.keys(dataCityJson).map(key => ({
-          key,
-          value: dataCityJson[key].name
-        }));
+        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]:any) => 
+          Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
+            key: cityCode,
+            value: cityInfo.name
+          }))
+        );
         setDataCities(dataCitiesArray)
       } else {
         console.log("No data city available");
@@ -228,7 +231,8 @@ const TourList = () => {
     setLoadedTours(false)
     try {
       const refTours = ref(database, 'tours/')
-      const snapshot = await get(refTours);
+      const toursQuery = query(refTours, orderByChild('view_mode'), equalTo(true));
+      const snapshot = await get(toursQuery);
       if (snapshot.exists()) {
         const dataToursJson = snapshot.val()
         // console.log(dataToursJson)
@@ -276,6 +280,8 @@ const TourList = () => {
         // SET DỮ LIÊU
         // 1. set mảng đã trộn cho dataTour
         setDataTours(mergedTours)
+        // Set lại số lượng bài post đang hiển thị(Là 1 trong 2 điều kiện để không hiển thị button loadNewPosts
+        setCurrentTourCount(jsonArrayTours.length)
         // UnLoad skeleton
         setLoadedTours(true)
       } else {
@@ -362,16 +368,14 @@ const TourList = () => {
       </PaperProvider >
     )
   }
-
-
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', position: 'relative' }}>
         <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
         {((currentTourCount != newTourCount) && (isSearchingMode == false)) && (
-          <TouchableOpacity style={styles.loadNewTour} onPress={handleReloadNewTours}>
+          <TouchableOpacity style={styles.loadNewTour} onPress={handleReloadNewTours}>  
             <FontAwesome6 name="newspaper" size={20} color="black" />
-            <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có bài viết mới</Text>
+            <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có tour mới</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.refreshBtn} onPress={handleRefreshTourScreen}>

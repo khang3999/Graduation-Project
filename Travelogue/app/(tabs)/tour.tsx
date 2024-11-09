@@ -16,7 +16,7 @@ const Tour = () => {
       <View style={{ flexDirection: 'row', margin: 10, gap: 6 }}>
         <Text>Hiển thị: </Text>
         {dataModalSelected == null ?
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Tất cả bài viết</Badge>
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Tất cả tour</Badge>
           :
           <>
             {dataModalSelected.input !== '' && <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.input}</Badge>}

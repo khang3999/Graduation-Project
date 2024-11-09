@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, FlatList, Image,TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
 import React, { useEffect, useImperativeHandle, useState } from 'react'
 import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper'
 import { database, ref } from '@/firebase/firebaseConfig'
-import { get, update } from '@firebase/database'
+import { equalTo, get, orderByChild, query, update } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import SkeletonPost from '@/components/skeletons/SkeletonPost'
 import { formatDate } from '@/utils/commons'
@@ -11,6 +11,7 @@ import { countMatchingLocations, mergeWithRatio, slug } from '@/utils'
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
+import Toast from 'react-native-toast-message-custom'
 
 const { width } = Dimensions.get('window')
 
@@ -195,7 +196,6 @@ const PostList = () => {
     // Lưu lại quốc gia đang chọn ra biến thành phần 2.1. Chuyển thành {key:'a', value:'b'} (để set giá trị mặc định có cũng được không cũng được) khi nào lưu default Option thì mở ra
     const country = dataCountries.find((country: any) => country.key === val);
     setSelectedCountry(country)
-
     // Set giá trị đang chọn cho list (Chính)
     // console.log('valCountry', country);
     // setSelectedCitiesTemp([])
@@ -209,10 +209,12 @@ const PostList = () => {
       const snapshot = await get(refCity);
       if (snapshot.exists()) {
         const dataCityJson = snapshot.val()
-        const dataCitiesArray: any = Object.keys(dataCityJson).map(key => ({
-          key,
-          value: dataCityJson[key].name
-        }));
+        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]: any) =>
+          Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
+            key: cityCode,
+            value: cityInfo.name
+          }))
+        );
         setDataCities(dataCitiesArray)
       } else {
         console.log("No data city available");
@@ -227,7 +229,8 @@ const PostList = () => {
     setLoadedPosts(false)
     try {
       const refPosts = ref(database, 'posts/')
-      const snapshot = await get(refPosts);
+      const postsQuery = query(refPosts, orderByChild('view_mode'), equalTo(true));
+      const snapshot = await get(postsQuery);
       if (snapshot.exists()) {
         const dataPostsJson = snapshot.val()
         // Chuyển đổi object thành array bang values cua js
@@ -259,8 +262,6 @@ const PostList = () => {
           } else {
             nonBehaviorPosts.push(post)
           }
-
-
         });
         // Bước 2: Sort
         //2.1. Sort mảng theo behavior: match > created_at
@@ -302,7 +303,7 @@ const PostList = () => {
     fetchPosts(); // Tải lại bài viết
   };
 
-  // Hàm reload bài viết
+  // Hàm reload trang home
   const handleReloadHomeScreen = () => {
     setLoadedTours(false)
     setDataInput('')
@@ -373,13 +374,13 @@ const PostList = () => {
               <TouchableOpacity style={styles.avatarWrap}>
                 <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
               </TouchableOpacity>
-              <View style={{justifyContent:'center', marginHorizontal: 4}}>
+              <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
                 <TouchableOpacity>
-                  <Text style={{fontWeight:'600'}} numberOfLines={1}>
-                    {post.item.author.fullname}
+                  <Text style={{ fontWeight: '600' }} numberOfLines={1}>
+                    {post.item.author.username}
                   </Text>
                 </TouchableOpacity>
-                <Text style={{fontStyle:'italic', fontSize:12}}>{formatDate(post.item.created_at)}</Text>
+                <Text style={{ fontStyle: 'italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
               </View>
             </View>
             {/* Location */}
@@ -416,7 +417,7 @@ const PostList = () => {
               {/* </Provider> */}
             </View>
             <View style={styles.imagePost}>
-              <Image style={styles.imagePost} source={{ uri: post.item.images }}></Image>
+              <Image style={styles.imagePost} source={{ uri: post.item.thumbnail }}></Image>
             </View>
 
             {/* Button like, comment, save */}
