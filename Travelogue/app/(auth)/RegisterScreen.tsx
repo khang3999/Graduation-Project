@@ -630,11 +630,11 @@ const RegisterScreen = ({ navigation }: any) => {
             loop
             style={{
               position: "absolute",
-              top: 190,
+              top: 200,
               // top: -190,
-              left: 32,
+              // left: 32,
               zIndex: -10,
-              width: 350,
+              width: 300,
               height: 320,
             }}
           />

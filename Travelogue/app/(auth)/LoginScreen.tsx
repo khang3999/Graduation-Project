@@ -285,8 +285,8 @@ const LoginScreen = ({ navigation }: any) => {
               position: "absolute",
               top: 190,
               // top: -190,
-              left: -120,
-              zIndex: -10,
+              // left: -120,
+              // zIndex: -10,
               width: 650,
               height: 320,
             }}

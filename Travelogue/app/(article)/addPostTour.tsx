@@ -933,7 +933,7 @@ const AddPostTour = () => {
 
         //Lay avatar fullname id user
         const userId = await AsyncStorage.getItem("userToken");
-        console.log("userId:", userId);
+        // console.log("userId:", userId);
         const userRef = ref(database, `accounts/${userId}`);
         let avatar = "";
         let fullname = "";
@@ -1045,7 +1045,7 @@ const AddPostTour = () => {
       setPackages(formattedPackages);
     });
   }, []);
-  console.log("Packages:", packages);
+  // console.log("Packages:", packages);
 
   useEffect(() => {
     //Sắp xếp tăng dần theo giá đã tính cả giảm giá
