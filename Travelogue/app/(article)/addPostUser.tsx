@@ -66,15 +66,22 @@ const AddPostUser = () => {
       id_nuoc: string;
       id: string;
       name: string;
+      area_id: string;
     }[]
   >([]);
   const [citiesDataFilter, setCitiesDataFilter] = useState<
-    { id: string; name: string; id_nuoc: string }[]
+    { id: string; name: string; id_nuoc: string,area_id : string}[]
   >([]);
+  console.log("Cities:", citiesDataFilter);
 
   const [cities, setCities] = useState<
-    { id: string; name: string; id_nuoc: string }[]
+    { id: string; name: string; id_nuoc: string,area_id : string }[]
   >([]);
+
+  // useEffect(() => {
+  //   console.log("Cities:", cities);
+  //   [cities];
+  // });
 
   //Modal
   const [modalVisibleCity, setModalVisibleCity] = useState(false);
@@ -100,19 +107,27 @@ const AddPostUser = () => {
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+ 
   //lưu trữ thông tin thành phố đã chọn
   const [selectedCityForImages, setSelectedCityForImages] = useState<{
     id: string;
     name: string;
     id_nuoc: string;
+    area_id: string;
   } | null>(null);
+  useEffect(() => {
+    console.log("selectedCityForImages:", selectedCityForImages);
+    [selectedCityForImages]});
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
     {
-      city: { id: string; name: string; id_nuoc: string } | null;
+      city: { id: string; name: string; id_nuoc: string , area_id: string } | null;
       images: string[];
     }[]
   >([]);
+  // useEffect(() => {
+  //   console.log("Images:", images);
+  //   [images]});
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
 
@@ -215,9 +230,9 @@ const AddPostUser = () => {
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress =
-    (city: { id: string; name: string; id_nuoc: string }) => () => {
+    (city: { id: string; name: string; id_nuoc: string, area_id : string  }) => () => {
       setCities([
-        { id: city.id, name: city.name, id_nuoc: city.id_nuoc },
+        { id: city.id, name: city.name, id_nuoc: city.id_nuoc, area_id: city.area_id },
         ...cities,
       ]);
       setModalVisibleCity(false);
@@ -637,6 +652,7 @@ const AddPostUser = () => {
       id: city.id,
       name: city.name,
       id_nuoc: city.id_nuoc,
+      area_id: city.area_id
     };
     setSelectedCityForImages(selectedCity);
     setModalVisibleCityImages(false);
@@ -825,7 +841,8 @@ const AddPostUser = () => {
         [key: string]: { city_name: string; images_value: string[] };
       };
     } = {};
-
+   
+       
     try {
       //Tạo bảng
       const postsRef = ref(database, "postsH");
@@ -839,7 +856,7 @@ const AddPostUser = () => {
         // console.log("Image:", image);
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
-        const { id_nuoc, id, name: cityName } = city || {};
+        const { id_nuoc, id, name: cityName,area_id : id_khuvucimages} = city || {};
 
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
@@ -862,7 +879,8 @@ const AddPostUser = () => {
             //lấy url ảnh từ storage
             const downloadURL = await getDownloadURL(imageRef);
             // console.log("URL Down:", downloadURL);
-
+             
+            //Anh post
             // URL ảnh theo tỉnh thành
             // tạo id nuoc
             // console.log("id_nuoc1:", uploadedImageUrls[id_nuoc]);
@@ -879,8 +897,16 @@ const AddPostUser = () => {
             // console.log("id:", uploadedImageUrls[id_nuoc][id]);
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
             // console.log("URL:", uploadedImageUrls);
+
+            //Anh cho city
+            // URL ảnh theo tỉnh thành  
+            // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
+            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/posts/${postId}`), {
+              images: uploadedImageUrls[id_nuoc][id].images_value,
+            });
           }
         }
+       
 
         //Lay avatar fullname id user
         const userId = await AsyncStorage.getItem("userToken");
@@ -919,18 +945,12 @@ const AddPostUser = () => {
           images: uploadedImageUrls,
           created_at: timestamp,
         };
+        
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
           if (userId && isCheckIn) {
-            const userRef = ref(database, `accounts/${userId}/checkInList`);
-        
-            const snapshot = await get(userRef);
-            const currentData = snapshot.exists() ? snapshot.val() : {};
-        
-            // Tạo dữ liệu cập nhật mới từ cities
-            if (postId) {
-              if (userId) {
+          
                 const userRef = ref(database, `accounts/${userId}/checkInList`);
             
                 // Lấy dữ liệu hiện tại từ Firebase
@@ -958,10 +978,7 @@ const AddPostUser = () => {
                 // Cập nhật dữ liệu
                 await update(userRef, updatedUserData);
               }
-            }
-           
-          }
-        
+ 
           await set(newPostRef, postData);
         } else {
           setButtonPost(false);
