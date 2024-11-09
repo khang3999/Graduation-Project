@@ -322,7 +322,7 @@ const AddPostTour = () => {
   };
   //Search map
   const handleSearch = async () => {
-    setSelectedLocation(null);
+    // setSelectedLocation(null);
     setLoadingLocation(true);
     setLoadingButtonSearch(true);
     try {
@@ -626,16 +626,24 @@ const AddPostTour = () => {
 
       if (data && data.length > 0) {
         const location = data[0];
-        if (mapViewRef.current) {
-          mapViewRef.current.animateToRegion(
-            {
-              latitude: parseFloat(location.lat),
-              longitude: parseFloat(location.lon),
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            },
-            1000
-          );
+        // if (mapViewRef.current) {
+        //   mapViewRef.current.animateToRegion(
+        //     {
+        //       latitude: parseFloat(location.lat),
+        //       longitude: parseFloat(location.lon),
+        //       latitudeDelta: 0.05,
+        //       longitudeDelta: 0.05,
+        //     },
+        //     1000
+        //   );
+        // }
+        if(location) {
+          setRegion({
+            latitude: parseFloat(location.lat),
+            longitude: parseFloat(location.lon),
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          });
         }
 
         setSelectedLocation({
@@ -2130,7 +2138,7 @@ const AddPostTour = () => {
               <MapView
                 ref={mapViewRef}
                 style={styles.map}
-                region={region}
+                initialRegion={region}
                 onRegionChangeComplete={setRegion}
                 onLongPress={handleMapPress}
                 mapType="hybrid"
