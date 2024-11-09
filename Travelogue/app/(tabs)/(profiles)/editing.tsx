@@ -13,7 +13,7 @@ import React, { useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { getImageUrl, updateUserData } from "@/services/userService";
+import { getImageUrl, updateUserData, updateUserPosts } from "@/services/userService";
 import debounce from "lodash/debounce";
 import { set, update } from "lodash";
 import { auth } from "@/firebase/firebaseConfig";
@@ -43,8 +43,6 @@ export default function EditingProfileScreen() {
     }
   };
 
-  
-
   const validateInputs = () => {
     let valid = true;
     let errors = { fullname: "", phone: "" };
@@ -73,24 +71,30 @@ export default function EditingProfileScreen() {
     return valid;
   };
 
-  const handleSaveChangesButton = () => {
+  const handleSaveChangesButton = async () => {
     if(!validateInputs()) {
       return;
     }
     
     if (accountData) {
+      
+    try {
       setIsLoading(true);
-      updateUserData(accountData.id, localUserData, selectedImage)
-        .then(() => {
-          alert("User data updated successfully!");
-          router.back();
-        })
-        .catch((error) => {
-          alert("Failed to update user data: " + error.message);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      // Step 1: Update user data
+      await updateUserData(accountData.id, localUserData, selectedImage);
+
+      // Immediately set loading to false and notify the user
+      setIsLoading(false);
+      alert("User data updated successfully!");
+      router.back();
+
+      // Step 2: Asynchronously start updating posts in the background
+      await updateUserPosts(accountData.id, localUserData);
+      
+    } catch (error) {
+      alert("Failed to update user data: " + error);
+      setIsLoading(false);
+    }
     } else {
       alert("No user is currently logged in.");
     }

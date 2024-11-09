@@ -46,7 +46,7 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    paddingTop: 30,
+    paddingTop: 10 ,
 
   },
   row: {

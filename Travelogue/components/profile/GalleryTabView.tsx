@@ -94,7 +94,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             const postIds = Object.keys(data);
 
             const postFetches = postIds.map(async (postId) => {
-              const postRef = ref(database, `postsPhuc/${postId}`);
+              const postRef = ref(database, `posts/${postId}`);
               const postSnapshot = await get(postRef);
               return postSnapshot.val();
             });
@@ -123,7 +123,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             const postIds = Object.keys(data);
 
             const postFetches = postIds.map(async (postId) => {
-              const postRef = ref(database, `postsPhuc/${postId}`);
+              const postRef = ref(database, `posts/${postId}`);
               const postSnapshot = await get(postRef);
               return postSnapshot.val();
             });
@@ -152,7 +152,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             const postIds = Object.keys(data);
 
             const postFetches = postIds.map(async (postId) => {
-              const postRef = ref(database, `postsPhuc/${postId}`);
+              const postRef = ref(database, `posts/${postId}`);
               const postSnapshot = await get(postRef);
               return postSnapshot.val();
             });

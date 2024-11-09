@@ -39,6 +39,7 @@ import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
 import { CommentType, RatingComment } from '@/types/CommentTypes';
+import { formatDate } from "@/constants/commonFunctions";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -67,19 +68,18 @@ type Post = {
   author: {
     id: string;
     avatar: any;
-    username: string;
+    fullname: string;
   };
   comments: Record<string, Comment>;
   content: string;
-  created_at: string;
+  created_at: number;
   hashtag: string;
   images: Record<string, Record<string, { city_name: string; images_value: string[] }>>;
   likes: number;
   locations: Record<string, Record<string, string>>;
   ratings: Record<string, RatingComment>;
   ratingSummary: RatingSummary;
-  post_status: string;
-  price_id: number;
+  post_status: string;  
   reports: number;
   view_mode: boolean;
 };
@@ -154,7 +154,7 @@ const PostItem: React.FC<PostItemProps> = ({
   setIsScrollEnabled,
 }) => {
   
-
+  console.log('item', item.author.id);
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
@@ -200,7 +200,7 @@ const PostItem: React.FC<PostItemProps> = ({
         }),
       };
       try {
-        const commentRef = ref(database, `postsPhuc/${item.id}/comments`)
+        const commentRef = ref(database, `posts/${item.id}/comments`)
         const newCommentRef = push(commentRef);
 
         if (newCommentRef.key) {
@@ -247,7 +247,7 @@ const PostItem: React.FC<PostItemProps> = ({
         }),
       };
       try {
-        const ratingsRef = ref(database, `postsPhuc/${item.id}/ratings`);
+        const ratingsRef = ref(database, `posts/${item.id}/ratings`);
         const newRatingCommentRef = push(ratingsRef);
 
         if (newRatingCommentRef.key) {
@@ -303,7 +303,7 @@ const PostItem: React.FC<PostItemProps> = ({
           onPress: async () => {
             try {
               // Fetch all comments once
-              const snapshot = await get(ref(database, `postsPhuc/${item.id}/comments`));
+              const snapshot = await get(ref(database, `posts/${item.id}/comments`));
               const commentsData = snapshot.val() as Record<string, Comment>;
 
 
@@ -314,7 +314,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
               const addCommentAndRepliesToDelete = (commentId: string) => {
-                pathsToDelete[`postsPhuc/${item.id}/comments/${commentId}`] = null;
+                pathsToDelete[`posts/${item.id}/comments/${commentId}`] = null;
                 Object.keys(commentsData).forEach((key) => {
                   if (commentsData[key].parentId === commentId) {
                     addCommentAndRepliesToDelete(key);
@@ -330,7 +330,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
               setComments((prevComments) =>
-                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/comments/${c.id}`))
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`posts/${item.id}/comments/${c.id}`))
               );
 
               console.log('Comment deleted successfully.', comments);
@@ -359,7 +359,7 @@ const PostItem: React.FC<PostItemProps> = ({
           onPress: async () => {
             try {
               // Fetch all rating once
-              const snapshot = await get(ref(database, `postsPhuc/${item.id}/ratings`));
+              const snapshot = await get(ref(database, `posts/${item.id}/ratings`));
               const ratingCommentsData = snapshot.val() as Record<string, RatingComment>;
 
 
@@ -370,7 +370,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
               const addCommentAndRepliesToDelete = (ratingCommentId: string) => {
-                pathsToDelete[`postsPhuc/${item.id}/ratings/${ratingCommentId}`] = null;
+                pathsToDelete[`posts/${item.id}/ratings/${ratingCommentId}`] = null;
                 Object.keys(ratingCommentsData).forEach((key) => {
                   if (ratingCommentsData[key].parentId === ratingCommentId) {
                     addCommentAndRepliesToDelete(key);
@@ -386,7 +386,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
               setComments((prevComments) =>
-                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/ratings/${c.id}`))
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`posts/${item.id}/ratings/${c.id}`))
               );
 
               console.log('Comment deleted successfully.', comments);
@@ -406,7 +406,7 @@ const PostItem: React.FC<PostItemProps> = ({
     setIsLoading(true);
     try {
       // Step 1: Reference to the user's rating in Realtime Database
-      const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+      const userRatingRef = ref(database, `posts/${postId}/ratings/${userId}`);
 
       let imageUrl = "";
 
@@ -445,7 +445,7 @@ const PostItem: React.FC<PostItemProps> = ({
       };
 
       // Step 4: Reference to the rating summary in Realtime Database
-      const summaryRef = ref(database, `postsPhuc/${postId}/ratingSummary`);
+      const summaryRef = ref(database, `posts/${postId}/ratingSummary`);
 
       // Step 5: Update the rating summary with new values
       const summaryUpdate = {
@@ -486,7 +486,7 @@ const PostItem: React.FC<PostItemProps> = ({
     }
 
     // Reference to the user's rating in Realtime Database
-    const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+    const userRatingRef = ref(database, `posts/${postId}/ratings/${userId}`);
     const previousRatingSnapshot = await get(userRatingRef);
 
     // If the user has already rated this post, show the rating comments
@@ -559,8 +559,8 @@ const PostItem: React.FC<PostItemProps> = ({
             style={styles.miniAvatar}
           />
           <View style={styles.column}>
-            <Text style={styles.username}>{item.author.username}</Text>
-            <Text style={styles.time}>{item.created_at}</Text>
+            <Text style={styles.username}>{item.author.fullname}</Text>
+            <Text style={styles.time}>{formatDate(item.created_at)}</Text>
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>

@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   searchModal: {
     position: "absolute",
-    top: 100,
+    top: 85,
     left: 0,
     right: 0,
     bottom: 0,
