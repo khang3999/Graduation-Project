@@ -52,7 +52,7 @@ const ReviewPostUser = ({ locs, contents, imgs }: { locs: any; contents: any; im
     images.forEach(imageGroup => {
       const { city, images } = imageGroup;
       images.forEach(imageUrl => {
-        console.log("Image URL:", imageUrl); // Log the image URIs
+        // console.log("Image URL:", imageUrl); 
         flattenedArray.push({
           country: city.id_nuoc,
           locationCode: city.id,

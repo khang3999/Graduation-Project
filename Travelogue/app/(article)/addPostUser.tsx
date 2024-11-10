@@ -1121,9 +1121,9 @@ const AddPostUser = () => {
 
     setModalReviewPost(true);
 
-    console.log("Contents:", contents);
-    console.log("Images:", images);
-    console.log("Cities:", cities);
+    // console.log("Contents:", contents);
+    // console.log("Images:", images);
+    // console.log("Cities:", cities);
     // router.push({
     //   pathname: "/(article)/reviewPostUser",
     //   params: {
