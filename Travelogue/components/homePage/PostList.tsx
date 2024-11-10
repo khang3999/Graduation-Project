@@ -112,7 +112,7 @@ const PostList = () => {
             {/* </Provider> */}
           </View>
           <View style={styles.imagePost}>
-            <Image style={styles.imagePost} source={{ uri: post.item.images }}></Image>
+            <Image style={styles.imagePost} source={{ uri: post.item.thumbnail }}></Image>
           </View>
 
           {/* Button like, comment, save */}

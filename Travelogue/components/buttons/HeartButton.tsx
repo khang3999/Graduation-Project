@@ -12,9 +12,18 @@ import { AntDesign } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { auth, database, ref } from "@/firebase/firebaseConfig";
 import { get, remove, update } from "@firebase/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HeartButton = (props: any) => {
-  const userID = auth.currentUser?.uid;
+  const [userID, setUserId] = useState<String | null>()
+
+  useEffect(() => {
+    const getCurrentUserToken = async () => {
+      const userToken = await AsyncStorage.getItem("userToken");
+      setUserId(userToken)    
+    }
+    getCurrentUserToken();
+  },[])
 
   const [liked, setLiked] = useState(false);
   // Render 1 lần từ db để load các bài đã like

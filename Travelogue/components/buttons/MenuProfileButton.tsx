@@ -17,9 +17,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 interface MenuPopupButtonProps {
   menuIcon: string;
   isDisplay: boolean;
+  isSearched: boolean;
 }
 
-const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay }) => {
+const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay,isSearched }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   // Position of the menu
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -60,6 +61,10 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     router.push('/ChangePassword')
     return
   }
+  // Handle the report user
+  const handleReportAcccount = () => {
+
+  }
 
   return (
     <View style={styles.container}>
@@ -73,7 +78,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
       </TouchableOpacity>
 
       {/* Menu Modal */}
-      {isModalVisible && (
+      {isModalVisible && !isSearched ? (
         <Modal
           transparent={true}
           visible={isModalVisible}
@@ -93,23 +98,50 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
                   style={styles.menuItem}
                   onPress={handleEditProfile}
                 >
+                  {/* cspell: disable-next-line */}
                   <Text style={styles.menuText}>Thay đổi hồ sơ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                 onPress={handleChangePassword}
                 >
+                  {/* cspell: disable-next-line */}
                   <Text style={styles.menuText}>Thay đổi mật khẩu</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                  {/* cspell: disable-next-line */}
                   <Text style={styles.menuText}>Đăng xuất</Text>
                 </TouchableOpacity>
               </View>
             </View>
-
           </TouchableWithoutFeedback>
-
         </Modal>
+      ) : (
+        <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={toggleModal}
+      >
+        <TouchableWithoutFeedback onPress={toggleModal}>
+          <View style={styles.overlay}>
+            <View
+              style={[
+                styles.menu,
+                { top: menuPosition.top, left: menuPosition.left },
+              ]}
+            >             
+              <TouchableOpacity
+                style={styles.menuItem}      
+                onPress={handleReportAcccount}        
+              >
+                {/* cspell: disable-next-line */}
+                <Text style={styles.menuText}>Báo cáo</Text>
+              </TouchableOpacity>          
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
       )}
     </View>
   );

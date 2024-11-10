@@ -4,9 +4,20 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { AntDesign } from '@expo/vector-icons';
 import { auth, database, ref } from '@/firebase/firebaseConfig';
 import { get, remove, update } from '@firebase/database';
+import { useAccount } from '@/contexts/AccountProvider';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SaveButton = (props: any) => {
-  const userID = auth.currentUser?.uid
+  const [userID, setUserId] = useState<String | null>()
+
+  useEffect(() => {
+    const getCurrentUserToken = async () => {
+      const userToken = await AsyncStorage.getItem("userToken");
+      setUserId(userToken)    
+    }
+    getCurrentUserToken();
+  },[])
+  
 
   const [saved, setSaved] = useState(false);
   // Render 1 lần từ db để load các bài đã save

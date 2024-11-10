@@ -4,13 +4,15 @@ import { useAccount } from '@/contexts/AccountProvider'
 import AvatarProfile from '@/components/profile/AvatarProfile';
 import { Gallery } from 'iconsax-react-native';
 import GalleryTabView from '@/components/profile/GalleryTabView';
+import { Header } from '@react-navigation/stack';
+import HeaderProfile from '@/components/profile/HeaderProfile';
 export default function SearchResult() {
     const {searchedAccountData} = useAccount();
     
   return (
     <>
-        <AvatarProfile isSearched={true}/>
-        <GalleryTabView userId={searchedAccountData.id} isSearched={true}/>
+        <HeaderProfile isSearched={true} />
+        <GalleryTabView isSearched={true}/>
     </>
   )
 }
