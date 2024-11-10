@@ -48,6 +48,7 @@ import { child } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
 import LottieView from "lottie-react-native";
+import ReviewPostUser from "./reviewPostUser";
 
 const AddPostUser = () => {
   interface Country {
@@ -59,6 +60,7 @@ const AddPostUser = () => {
   const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [contentReviewPost, setcontentReviewPost] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [citiesData, setCitiesData] = useState<
@@ -70,12 +72,12 @@ const AddPostUser = () => {
     }[]
   >([]);
   const [citiesDataFilter, setCitiesDataFilter] = useState<
-    { id: string; name: string; id_nuoc: string,area_id : string}[]
+    { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
   // console.log("Cities:", citiesDataFilter);
 
   const [cities, setCities] = useState<
-    { id: string; name: string; id_nuoc: string,area_id : string }[]
+    { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
 
   // useEffect(() => {
@@ -92,6 +94,7 @@ const AddPostUser = () => {
     useState(false);
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
+  const [modalReviewPost, setModalReviewPost] = useState(false);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -107,7 +110,7 @@ const AddPostUser = () => {
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
- 
+
   //lưu trữ thông tin thành phố đã chọn
   const [selectedCityForImages, setSelectedCityForImages] = useState<{
     id: string;
@@ -117,11 +120,17 @@ const AddPostUser = () => {
   } | null>(null);
   useEffect(() => {
     // console.log("selectedCityForImages:", selectedCityForImages);
-    [selectedCityForImages]});
+    [selectedCityForImages];
+  });
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
     {
-      city: { id: string; name: string; id_nuoc: string , area_id: string } | null;
+      city: {
+        id: string;
+        name: string;
+        id_nuoc: string;
+        area_id: string;
+      } | null;
       images: string[];
     }[]
   >([]);
@@ -230,9 +239,15 @@ const AddPostUser = () => {
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress =
-    (city: { id: string; name: string; id_nuoc: string, area_id : string  }) => () => {
+    (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
+    () => {
       setCities([
-        { id: city.id, name: city.name, id_nuoc: city.id_nuoc, area_id: city.area_id },
+        {
+          id: city.id,
+          name: city.name,
+          id_nuoc: city.id_nuoc,
+          area_id: city.area_id,
+        },
         ...cities,
       ]);
       setModalVisibleCity(false);
@@ -614,7 +629,7 @@ const AddPostUser = () => {
         //     1000
         //   );
         // }
-        if(location) {
+        if (location) {
           setRegion({
             latitude: parseFloat(location.lat),
             longitude: parseFloat(location.lon),
@@ -652,7 +667,7 @@ const AddPostUser = () => {
       id: city.id,
       name: city.name,
       id_nuoc: city.id_nuoc,
-      area_id: city.area_id
+      area_id: city.area_id,
     };
     setSelectedCityForImages(selectedCity);
     setModalVisibleCityImages(false);
@@ -841,8 +856,7 @@ const AddPostUser = () => {
         [key: string]: { city_name: string; images_value: string[] };
       };
     } = {};
-   
-       
+
     try {
       //Tạo bảng
       const postsRef = ref(database, "posts");
@@ -850,14 +864,19 @@ const AddPostUser = () => {
       const newPostRef = push(postsRef);
       //Lấy id bài post
       const postId = newPostRef.key;
-       
+
       // console.log("postId:", images);
       //xử lý ảnh và lưu ảnh
       for (const image of images) {
         // console.log("Image:", image);
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
-        const { id_nuoc, id, name: cityName,area_id : id_khuvucimages} = city || {};
+        const {
+          id_nuoc,
+          id,
+          name: cityName,
+          area_id: id_khuvucimages,
+        } = city || {};
 
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
@@ -880,7 +899,7 @@ const AddPostUser = () => {
             //lấy url ảnh từ storage
             const downloadURL = await getDownloadURL(imageRef);
             // console.log("URL Down:", downloadURL);
-             
+
             //Anh post
             // URL ảnh theo tỉnh thành
             // tạo id nuoc
@@ -900,14 +919,19 @@ const AddPostUser = () => {
             // console.log("URL:", uploadedImageUrls);
             //lƯU ẢNH ĐẦU TIÊN
             //Anh cho city
-            // URL ảnh theo tỉnh thành  
+            // URL ảnh theo tỉnh thành
             // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
-            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`), {
-              images: uploadedImageUrls[id_nuoc][id].images_value,
-            });
+            await set(
+              ref(
+                database,
+                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+              ),
+              {
+                images: uploadedImageUrls[id_nuoc][id].images_value,
+              }
+            );
           }
         }
-       
 
         //Lay avatar fullname id user
         const userId = await AsyncStorage.getItem("userToken");
@@ -926,8 +950,11 @@ const AddPostUser = () => {
         const reports = 0;
         const match = 0;
         const status = "active";
-        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty                                              
-        const thumbnail = uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]]?.images_value?.[0] || '';
+        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
+        const thumbnail =
+          uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+            Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+          ]?.images_value?.[0] || "";
 
         // Cấu trúc dữ liệu bài viết với URL ảnh
         const postData = {
@@ -956,40 +983,38 @@ const AddPostUser = () => {
           thumbnail,
           created_at: timestamp,
         };
-        
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
           if (userId && isCheckIn) {
-          
-                const userRef = ref(database, `accounts/${userId}/checkInList`);
-            
-                // Lấy dữ liệu hiện tại từ Firebase
-                const snapshot = await get(userRef);
-                const currentData = snapshot.exists() ? snapshot.val() : {};
-            
-                // Tạo dữ liệu cập nhật mới từ cities
-                const updatedUserData = cities.reduce(
-                  (acc: { [key: string]: { [key: string]: string } }, city) => {
-                    const { id_nuoc, id, name } = city;
-            
-                    // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
-                    if (!acc[id_nuoc]) {
-                      acc[id_nuoc] = {};
-                    }
-            
-                    // Thêm city vào danh sách của id_nuoc
-                    acc[id_nuoc][id] = name;
-            
-                    return acc;
-                  },
-                  { ...currentData } 
-                );
-            
-                // Cập nhật dữ liệu
-                await update(userRef, updatedUserData);
-              }
- 
+            const userRef = ref(database, `accounts/${userId}/checkInList`);
+
+            // Lấy dữ liệu hiện tại từ Firebase
+            const snapshot = await get(userRef);
+            const currentData = snapshot.exists() ? snapshot.val() : {};
+
+            // Tạo dữ liệu cập nhật mới từ cities
+            const updatedUserData = cities.reduce(
+              (acc: { [key: string]: { [key: string]: string } }, city) => {
+                const { id_nuoc, id, name } = city;
+
+                // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
+                if (!acc[id_nuoc]) {
+                  acc[id_nuoc] = {};
+                }
+
+                // Thêm city vào danh sách của id_nuoc
+                acc[id_nuoc][id] = name;
+
+                return acc;
+              },
+              { ...currentData }
+            );
+
+            // Cập nhật dữ liệu
+            await update(userRef, updatedUserData);
+          }
+
           await set(newPostRef, postData);
         } else {
           setButtonPost(false);
@@ -1014,6 +1039,101 @@ const AddPostUser = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
+  // Xử lý review bài viết
+  const handleReviewPost = async () => {
+    if (cities.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng chọn tỉnh thành checkin.");
+      return;
+    }
+    if (title === "") {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (content === "") {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
+      return;
+    }
+    if (days.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+
+    const existingDay = days.find(
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
+    );
+    if (existingDay) {
+      const dayIndex = days.findIndex((day) => day === existingDay);
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+
+    const existingActivity = days.find((day) =>
+      day.activities.find(
+        (act) => act.time === "" || act.address === "" || act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = days.findIndex((day) =>
+        day.activities.includes(existingActivity.activities[0])
+      );
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
+      );
+      return;
+    }
+    // console.log(images);
+    if (images.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết.");
+      return;
+    }
+    //Tạo dữ liệu mardown
+    const contents = `# ${title}<br><br>${content}<br><br>${days
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
+            day.description
+          }<br><br>${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
+            )
+            .join("<br><br>")}`
+      )
+      .join("<br><br>")}`;
+    //Luư dữ liệu content
+    setcontentReviewPost(contents);
+
+    setModalReviewPost(true);
+
+    console.log("Contents:", contents);
+    console.log("Images:", images);
+    console.log("Cities:", cities);
+    // router.push({
+    //   pathname: "/(article)/reviewPostUser",
+    //   params: {
+
+    //     locations: JSON.stringify(cities),
+    //     contents: contents,
+    //     images: JSON.stringify(images),
+    //   },
+    // });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -1119,7 +1239,6 @@ const AddPostUser = () => {
                 >
                   Chưa có tỉnh CheckIn
                 </Text>
-                
               ) : (
                 cities.map((city) => (
                   <TouchableOpacity
@@ -1606,12 +1725,46 @@ const AddPostUser = () => {
               disabled={true}
             />
           ) : (
-            <ButtonComponent
-              text="Đăng bài"
-              textStyles={{ fontWeight: "bold", fontSize: 30 }}
-              color={appColors.primary}
-              onPress={handlePushPost}
-            />
+            <RowComponent styles={{ marginHorizontal: 10 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  handleReviewPost();
+                }}
+                style={{
+                  backgroundColor: appColors.btncity,
+                  width: "20%",
+                  height: "100%",
+                  borderRadius: 10,
+                  marginRight: 10,
+                  borderColor: "green",
+                  borderWidth: 1,
+                }}
+              >
+                <TextComponent
+                  text="Review bài viết"
+                  size={14}
+                  styles={{
+                    fontWeight: "bold",
+                    color: "green",
+                    textAlign: "center",
+                    justifyContent: "center",
+                    marginTop: 3,
+                    padding: 5,
+                  }}
+                />
+              </TouchableOpacity>
+              <ButtonComponent
+                text="Đăng bài"
+                textStyles={{
+                  width: "75%",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  textAlign: "center",
+                }}
+                color={appColors.primary}
+                onPress={handlePushPost}
+              />
+            </RowComponent>
           )}
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
@@ -1713,18 +1866,18 @@ const AddPostUser = () => {
         >
           <View style={[styles.containerMap]}>
             <RowComponent>
-            <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
-              Chọn địa điểm
-            </Text>
-            <LottieView
-            source={require("../../assets/images/map.json")}
-            autoPlay
-            loop
-            style={{
-              width: 60,
-              height: 35,
-            }}
-          />
+              <Text style={[styles.modalTitle, { marginLeft: 10 }]}>
+                Chọn địa điểm
+              </Text>
+              <LottieView
+                source={require("../../assets/images/map.json")}
+                autoPlay
+                loop
+                style={{
+                  width: 60,
+                  height: 35,
+                }}
+              />
             </RowComponent>
             {/* Search */}
             <View style={styles.searchContainer}>
@@ -1734,7 +1887,7 @@ const AddPostUser = () => {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-               <TouchableOpacity
+              <TouchableOpacity
                 style={styles.searchButton}
                 onPress={handleSearch}
               >
@@ -2020,24 +2173,14 @@ const AddPostUser = () => {
                     ]}
                   />
                 </TouchableOpacity>
-                {selectedCityForImages ? (
+                {selectedCityForImages && (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 130 }]}
+                    style={[styles.fixedRightButton, { width: 140 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
                       {selectedCityForImages.name}{" "}
                       <IconA name="retweet" size={15} color="#000" />
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.fixedRightButton]}
-                    onPress={() => setModalVisibleCityImages(true)}
-                  >
-                    <Text>
-                      Chọn tỉnh{" "}
-                      <IconA name="pluscircleo" size={15} color="#000" />
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -2046,7 +2189,7 @@ const AddPostUser = () => {
               <>
                 {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 130 }]}
+                    style={[styles.fixedRightButton, { width: 140 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
@@ -2145,25 +2288,50 @@ const AddPostUser = () => {
             </TouchableOpacity>
           </View>
         </Modal>
-        {buttonPost ? (
-          <Modal  visible={buttonPost}>
-          <View style={[styles.loadingOverlay, { width: '100%', height: '100%' }]}>
-          <LottieView
-            source={require("../../assets/images/travel.json")}
-            autoPlay
-            loop
-            style={{
-              position: "absolute",
-              top: -270,
-              left: -105,
-              zIndex: 10,
-              width: 600,
-              height: 350,
-            }}
+
+        {/* Modal review post */}
+        <Modal
+          visible={modalReviewPost}
+          style={styles.modalreview}
+          onDismiss={() => setModalReviewPost(false)}
+        >
+          <ReviewPostUser
+            locs={cities}
+            imgs={images}
+            contents={contentReviewPost}
           />
-          </View>
+          <SectionComponent styles={{marginBottom: -20}}>
+            <View style={styles.separator} />
+          <TouchableOpacity
+            style={[styles.closeButton, {justifyContent: "center", alignItems: "center", width: "100%"}] }	
+            onPress={() => setModalReviewPost(false)}
+          >
+            <Text style={[styles.closeButtonText]}>Đóng</Text>
+          </TouchableOpacity>
+          </SectionComponent>
         </Modal>
-          
+
+        {/* Modal loading */}
+        {buttonPost ? (
+          <Modal visible={buttonPost}>
+            <View
+              style={[styles.loadingOverlay, { width: "100%", height: "100%" }]}
+            >
+              <LottieView
+                source={require("../../assets/images/travel.json")}
+                autoPlay
+                loop
+                style={{
+                  position: "absolute",
+                  top: -270,
+                  left: -105,
+                  zIndex: 10,
+                  width: 600,
+                  height: 350,
+                }}
+              />
+            </View>
+          </Modal>
         ) : null}
       </View>
     </KeyboardAvoidingView>
@@ -2445,6 +2613,17 @@ const styles = StyleSheet.create({
     width: 22,
     height: 20,
     resizeMode: "contain",
+  },
+  modalreview: {
+    position: "absolute",
+    top: 20,
+    left: 9,
+    width: "95%",
+    height: "90%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 5,
   },
 });
 
