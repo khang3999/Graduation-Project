@@ -937,6 +937,7 @@ const AddPostUser = () => {
         const userId = await AsyncStorage.getItem("userToken");
         // console.log("userId:", userId);
         const userRef = ref(database, `accounts/${userId}`);
+
         let avatar = "";
         let fullname = "";
         onValue(userRef, (snapshot) => {
@@ -946,6 +947,7 @@ const AddPostUser = () => {
             fullname = data.fullname;
           }
         });
+
         const likes = 0;
         const reports = 0;
         const match = 0;
@@ -977,6 +979,7 @@ const AddPostUser = () => {
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           likes,
+          id : postId,
           reports,
           match,
           status,
@@ -988,7 +991,7 @@ const AddPostUser = () => {
         if (postId) {
           if (userId && isCheckIn) {
             const userRef = ref(database, `accounts/${userId}/checkInList`);
-
+            const userPost = ref(database, `accounts/${userId}/createdPosts`);
             // Lấy dữ liệu hiện tại từ Firebase
             const snapshot = await get(userRef);
             const currentData = snapshot.exists() ? snapshot.val() : {};
@@ -1010,15 +1013,20 @@ const AddPostUser = () => {
               },
               { ...currentData }
             );
-
             // Cập nhật dữ liệu
             await update(userRef, updatedUserData);
+
+            //Luu
+            //Luu
+            await update(userPost, {
+              [postId]: true,
+            });
           }
 
           await set(newPostRef, postData);
         } else {
           setButtonPost(false);
-          throw new Error("Failed to generate post ID.");
+          throw new Error("Failed");
         }
         setButtonPost(false);
         // Alert.alert("Thông báo", "Thêm bài viết thành công");
@@ -2300,14 +2308,21 @@ const AddPostUser = () => {
             imgs={images}
             contents={contentReviewPost}
           />
-          <SectionComponent styles={{marginBottom: -20}}>
+          <SectionComponent styles={{ marginBottom: -15 }}>
             <View style={styles.separator} />
-          <TouchableOpacity
-            style={[styles.closeButton, {justifyContent: "center", alignItems: "center", width: "100%"}] }	
-            onPress={() => setModalReviewPost(false)}
-          >
-            <Text style={[styles.closeButtonText]}>Đóng</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                {
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                },
+              ]}
+              onPress={() => setModalReviewPost(false)}
+            >
+              <Text style={[styles.closeButtonText]}>Đóng</Text>
+            </TouchableOpacity>
           </SectionComponent>
         </Modal>
 
@@ -2616,7 +2631,7 @@ const styles = StyleSheet.create({
   },
   modalreview: {
     position: "absolute",
-    top: 20,
+    top: 25,
     left: 9,
     width: "95%",
     height: "90%",

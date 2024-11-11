@@ -985,6 +985,7 @@ const AddPostTour = () => {
           created_at: timestamp,
           thumbnail,
           likes,
+          id : postId,
           reports,
           match,
           status,
