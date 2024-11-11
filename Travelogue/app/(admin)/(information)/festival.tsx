@@ -1,4 +1,4 @@
-import { View, Text, Platform, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Platform, Alert, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Checkbox, Divider } from 'react-native-paper';
 import { SelectList } from 'react-native-dropdown-select-list'
@@ -6,20 +6,22 @@ import { ref } from '@firebase/database';
 import { database, onValue } from '@/firebase/firebaseConfig';
 import { get, update } from '@firebase/database'
 import { TextInput } from 'react-native-gesture-handler';
+import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
 
 const Festival = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedPoint, setSelectedPoint] = useState("");
+  const [selectedPoint, setSelectedPoint] = useState(-1);
   const [cityArea, setCityArea] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
   const [cityInformation, setCityInformation] = useState("");
   const [dataCountries, setDataCountries] = useState([])
   const [dataCities, setDataCities] = useState([])
   const [editText, setEditText] = useState(false)
   const inputRef: any = useRef(null);
   const type = [
-    { key: 1, value: "Landmark" }, { key: 2, value: "Festival" },]
+    { key: 1, value: "landmark" }, { key: 2, value: "festival" },]
 
   //Countries
   useEffect(() => {
@@ -67,96 +69,138 @@ const Festival = () => {
       console.error("Error fetching data: ", error);
     }
   }
+  // Fetch data point theo city
+  useEffect(() => {
+    console.log("111111");
+    
+      if (selectedCity!=""&& selectedCountry!=""&&selectedPoint!=null) {
+        const type = getValueFromKey(selectedPoint)
+        const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
+        console.log(onValueChange);
+        
+        // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+        const data = onValue(onValueChange, (snapshot) => {
+        if (snapshot.exists()) {
+          const dataPoints = snapshot.val()
+          const pointArr: any = Object.values(dataPoints).map((key:any) => ({
+            key,
+            value: key.title,
+          }));          
+          setFilteredData(pointArr)
+        } else {
+          setFilteredData([])
+          console.log("No data point available");
+        }}, (error) => {
+          console.error("Error fetching data:", error);
+        });
+    
+        // Cleanup function để hủy listener khi component unmount
+        return () => data();
+      }
+  }, [selectedCity , selectedCountry , selectedPoint])
 
   //Handle when selected countries
   const handleSelectedCountry = (val: any) => {
     setSelectedCountry(val)
     fetchCityByCountry(val)
-
   }
   //Handle when selected countries
   const handleSelectedCity = (val: any) => {
     setSelectedCity(val)
-    const a: any = dataCities.find((e: any) => (e.key == val))
-    setCityArea(a.area)
-    setCityInformation(a.information)
-  }
 
-  //Handle Save
-  const handleSave = () => {
-    setEditText(false)
-    if (inputRef.current) {
-      inputRef.current.blur();
+    if (val != "" && val != undefined) {
+      const a: any = dataCities.find((e: any) => (e.key == val))
+      setCityArea(a.area)
+      setCityInformation(a.information)
     }
-
-    const cityUpdateRef = ref(database, `cities/${selectedCountry}/${cityArea}/${selectedCity}`);
-    Alert.alert(
-      "Change information",
-      "Are you sure you want to update information of " + selectedCity + " ?",
-      [
-        {
-          text: "Cancel", style: "cancel",
-
-        }, {
-          text: "OK", onPress: () => {
-            update(cityUpdateRef, { "information": cityInformation })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
-          }
-        }])
   }
+  // Find type
+  const getValueFromKey = (key: any) => {
+    const item = type.find((item) => item.key === key);
+    return item ? item.value : null;
+  };
 
-
-
+  const renderPointsItem = (item: any) => {
+    return (
+      <View style={styles.item}>
+        <View style={{borderRadius:30}}>
+          <Text style={styles.name}>{item.item.value}</Text>
+        </View>
+      </View>
+    )
+  };
+  console.log(selectedPoint);
+  
   return (
-    <View style={{ margin: 15 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 15 }}>
+    <View style={{ padding: 15, backgroundColor:'white' }}>
+      <View style={styles.selectContainer}>
         <SelectList
-          boxStyles={{ width: 100 }}
+          dropdownStyles={{zIndex:10, position:'absolute', width:170, backgroundColor:'white', top:0}}
+          boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
           save="key"
           placeholder='Countries'
         />
         <SelectList
-          boxStyles={{ width: 100 }}
+          dropdownStyles={{zIndex:10, position:'absolute', width:170, backgroundColor:'white'}}
+          boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
           placeholder='Cities'
         />
-        <SelectList
-          boxStyles={{ width: 100 }}
-          setSelected={(val: any)=>setSelectedPoint(val)}
-          data={type}
-          save="key"
-          placeholder='Types'
-
-        />
       </View>
-      <TextInput
-        ref={inputRef}
-        style={styles.textArea}
-        multiline={true}
-        numberOfLines={4} // sets the height based on line count
-        placeholder="Write your comment here..."
-        value={cityInformation}
-        onChangeText={setCityInformation}
-        onFocus={() => setEditText(true)}
-      />
-      {editText && (
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={handleSave}
-        >
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
-      )}
-
+      <View style={{ flexDirection: 'row', justifyContent: "space-between", marginHorizontal: 20 }}>
+        {type.map((item) => (
+          <TouchableOpacity
+            key={item.key}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 4,
+            }}
+            onPress={() => setSelectedPoint(item.key)}
+          >
+            <View
+              style={{
+                height: 20,
+                width: 20,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: '#333',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              {selectedPoint === item.key && (
+                <View
+                  style={{
+                    height: 12,
+                    width: 12,
+                    borderRadius: 6,
+                    backgroundColor: '#333',
+                  }}
+                />
+              )}
+            </View>
+            <Text>{item.value}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.containerFlat}>
+        {filteredData.length > 0 ? (
+          <FlatList
+            data={filteredData}
+            // keyExtractor={(item) => item.id}
+            renderItem={renderPointsItem}
+            contentContainerStyle={styles.containerFlatList}
+          />
+        ) : (
+          <Text style={styles.noAccountsText}>No data</Text>
+        )}
+      </View>         
 
     </View>
 
@@ -167,6 +211,20 @@ const Festival = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
+  },containerFlat: {
+    marginVertical:50,
+    height:"75%",
+    borderColor: "red",
+    borderWidth:1,
+    borderRadius:30,
+    backgroundColor: '#f5f5f5',
+
+  },
+  containerFlatList: {
+    paddingVertical: 10, // khoảng cách trên và dưới của FlatList
+    paddingHorizontal: 16, // khoảng cách hai bên của FlatList
+    borderRadius:30,
+
   },
   textArea: {
     height: 150,
@@ -185,6 +243,39 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
     fontSize: 16,
+  },
+  selectContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginBottom: 15,
+    position: 'relative',
+    zIndex: 10, // Giúp hiển thị SelectList phía trên các phần tử khác
+  },
+  selectList: {
+    width: 170,
+    zIndex: 10, // Giúp hiển thị SelectList không bị đẩy xuống dưới khi mở
+  },item: {
+    backgroundColor: '#fff',
+    padding: 16,
+    margin: 10,
+    borderRadius: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '600',
+  },noAccountsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 20,
+    color: '#777'
   },
 });
 

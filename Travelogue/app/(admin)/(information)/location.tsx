@@ -16,7 +16,7 @@ const Location = () => {
     const [dataCountries, setDataCountries] = useState([])
     const [dataCities, setDataCities] = useState([])
     const [editText, setEditText] = useState(false)
-    const inputRef:any = useRef(null);
+    const inputRef: any = useRef(null);
 
     //Countries
     useEffect(() => {
@@ -74,53 +74,59 @@ const Location = () => {
     //Handle when selected countries
     const handleSelectedCity = (val: any) => {
         setSelectedCity(val)
-        const a: any = dataCities.find((e: any) => (e.key == val))
-        setCityArea(a.area)
-        setCityInformation(a.information)
+        if (val != "" && val != undefined) {
+            const a: any = dataCities.find((e: any) => (e.key == val))
+            setCityArea(a.area)
+            setCityInformation(a.information)
+        }
     }
 
     //Handle Save
-    const handleSave = ()=>{
+    const handleSave = () => {
         setEditText(false)
         if (inputRef.current) {
             inputRef.current.blur();
         }
-    
-    const cityUpdateRef = ref(database, `cities/${selectedCountry}/${cityArea}/${selectedCity}`);
-    Alert.alert(
-      "Change information",
-      "Are you sure you want to update information of "+selectedCity+" ?",
-      [
-        {
-          text: "Cancel", style: "cancel",
-         
-        }, {
-          text: "OK", onPress: () => {
-            update(cityUpdateRef, {"information":cityInformation})
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
-          }
-        }])
+
+        const cityUpdateRef = ref(database, `cities/${selectedCountry}/${cityArea}/${selectedCity}`);
+        Alert.alert(
+            "Change information",
+            "Are you sure you want to update information of " + selectedCity + " ?",
+            [
+                {
+                    text: "Cancel", style: "cancel",
+
+                }, {
+                    text: "OK", onPress: () => {
+                        update(cityUpdateRef, { "information": cityInformation })
+                            .then(() => {
+                                console.log('Data updated successfully!');
+                            })
+                            .catch((error) => {
+                                console.error('Error updating data:', error);
+                            });
+                    }
+                }])
     }
 
-    
+
 
     return (
-        <View style={{ margin: 15 }}>
+        <View style={{ padding: 15, backgroundColor:'white', height:"100%" }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 15 }}>
                 <SelectList
-                boxStyles={{width:170}}
+                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 0 }}
+
+                    boxStyles={{ width: 170 }}
                     setSelected={(val: any) => handleSelectedCountry(val)}
                     data={dataCountries}
                     save="key"
                     placeholder='Countries'
                 />
                 <SelectList
-                boxStyles={{width:170}}
+                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 0 }}
+
+                    boxStyles={{ width: 170 }}
                     setSelected={(val: any) => handleSelectedCity(val)}
                     data={dataCities}
                     save="key"
@@ -141,7 +147,7 @@ const Location = () => {
             {editText && (
                 <TouchableOpacity
                     style={styles.saveBtn}
-                  onPress={handleSave}
+                    onPress={handleSave}
                 >
                     <Text style={styles.buttonText}>Save</Text>
                 </TouchableOpacity>
