@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import Carousel from "react-native-reanimated-carousel";
 import CommentButton from "@/components/buttons/CommentButton";
@@ -13,13 +20,25 @@ import { SectionComponent } from "@/components";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onValue, ref } from "firebase/database";
 import { database } from "@/firebase/firebaseConfig";
+import AntDesign from "react-native-vector-icons/AntDesign";
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const windowWidth = Dimensions.get("window").width;
 
-const ReviewPostUser = ({ locs, contents, imgs }: { locs: any; contents: any; imgs: any }) => {
-  const images = typeof imgs === 'string' ? JSON.parse(imgs) : imgs;
-  const locations = typeof locs === 'string' ? JSON.parse(locs) : locs;
-  const [avatar, setAvatar] = useState("https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/defaultAvatar%2Favatar.png?alt=media&token=1d512fe7-5ddd-4a3e-b675-ae0948023964");
+const ReviewPostUser = ({
+  locs,
+  contents,
+  imgs,
+}: {
+  locs: any;
+  contents: any;
+  imgs: any;
+}) => {
+  const images = typeof imgs === "string" ? JSON.parse(imgs) : imgs;
+  const locations = typeof locs === "string" ? JSON.parse(locs) : locs;
+  const [avatar, setAvatar] = useState(
+    "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/defaultAvatar%2Favatar.png?alt=media&token=1d512fe7-5ddd-4a3e-b675-ae0948023964"
+  );
   const [fullname, setFullname] = useState("");
 
   useEffect(() => {
@@ -38,21 +57,28 @@ const ReviewPostUser = ({ locs, contents, imgs }: { locs: any; contents: any; im
     };
     fetchUserData();
   }, []);
-  
-  const flattenLocations = (locations: { area_id: string; id: string; id_nuoc: string; name: string }[]) => {
-    return locations.map(location => ({
+
+  const flattenLocations = (
+    locations: { area_id: string; id: string; id_nuoc: string; name: string }[]
+  ) => {
+    return locations.map((location) => ({
       country: location.id_nuoc,
       locationCode: location.id,
       locationName: location.name,
     }));
   };
 
-  const flattenImages = (images: { city: { area_id: string; id: string; id_nuoc: string; name: string }; images: string[] }[]) => {
+  const flattenImages = (
+    images: {
+      city: { area_id: string; id: string; id_nuoc: string; name: string };
+      images: string[];
+    }[]
+  ) => {
     const flattenedArray: any[] = [];
-    images.forEach(imageGroup => {
+    images.forEach((imageGroup) => {
       const { city, images } = imageGroup;
-      images.forEach(imageUrl => {
-        // console.log("Image URL:", imageUrl); 
+      images.forEach((imageUrl) => {
+        // console.log("Image URL:", imageUrl);
         flattenedArray.push({
           country: city.id_nuoc,
           locationCode: city.id,
@@ -67,7 +93,9 @@ const ReviewPostUser = ({ locs, contents, imgs }: { locs: any; contents: any; im
   const flattenedLocationsArray = flattenLocations(locations);
   const flattenedImagesArray = flattenImages(images);
   const dates = new Date();
-  const formattedDate = `${dates.getDate()}/${dates.getMonth() + 1}/${dates.getFullYear()}`;
+  const formattedDate = `${dates.getDate()}/${
+    dates.getMonth() + 1
+  }/${dates.getFullYear()}`;
 
   const desc =
     typeof contents === "string"
@@ -75,59 +103,68 @@ const ReviewPostUser = ({ locs, contents, imgs }: { locs: any; contents: any; im
       : contents.join(" ").replace(/<br>/g, "\n");
 
   return (
-      <ScrollView style={{borderColor:'#ccc', borderWidth: 1}}>
-        {/* Post Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.row}>
-            <Image source={{ uri: avatar}} style={styles.miniAvatar} />
-            <View style={styles.column}>
-              <Text style={styles.username}>{fullname}</Text>
-              <Text style={styles.time}>{formattedDate}</Text>
-            </View>
+    <ScrollView style={{ borderColor: "#ccc", borderWidth: 1 }}>
+      {/* Post Header */}
+      <View style={styles.headerContainer}>
+        <View style={styles.row}>
+          <Image source={{ uri: avatar }} style={styles.miniAvatar} />
+          <View style={styles.column}>
+            <Text style={styles.username}>{fullname}</Text>
+            <Text style={styles.time}>{formattedDate}</Text>
           </View>
         </View>
+      </View>
 
-        {/* Post Images Carousel */}
-        <Carousel
-          pagingEnabled={true}
-          loop={false}
-          width={windowWidth}
-          height={windowWidth}
-          data={flattenedImagesArray}
-          scrollAnimationDuration={300}
-          renderItem={({ item, index }) => (
-            <View style={styles.carouselItem}>
-              <Image style={styles.posts} source={{ uri: item.imageUrl }} />
-              <View style={styles.viewTextStyles}>
-                <Text style={styles.carouselText}>
-                  {index + 1}/{flattenedImagesArray.length} - {item.cityName}
-                </Text>
-              </View>
+      {/* Post Images Carousel */}
+      <Carousel
+        pagingEnabled={true}
+        loop={false}
+        width={windowWidth}
+        height={windowWidth}
+        data={flattenedImagesArray}
+        scrollAnimationDuration={300}
+        renderItem={({ item, index }) => (
+          <View style={styles.carouselItem}>
+            <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+            <View style={styles.viewTextStyles}>
+              <Text style={styles.carouselText}>
+                {index + 1}/{flattenedImagesArray.length} - {item.cityName}
+              </Text>
             </View>
-          )}
-        />
-
-        {/* Buttons */}
-        <View>
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonRow}>
-              <HeartButton style={styles.buttonItem} />
-              <Text style={styles.totalLikes}>0</Text>
-              <CommentButton style={styles.buttonItem} />
-            </View>
-            <SaveButton style={styles.buttonItem} />
           </View>
-        </View>
+        )}
+      />
 
-        {/* Location Chips */}
-        <CheckedInChip items={flattenedLocationsArray} />
-
-        {/* Post Description */}
-        <View style={styles.descriptionContainer}>
-          <Markdown>{desc}</Markdown>
+      {/* Buttons */}
+      <View>
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity delayPressOut={50}>
+              <AntDesign name={"hearto"} size={24} color={"black"} />
+            </TouchableOpacity>
+            <Text style={styles.totalLikes}> 0</Text>
+            <CommentButton style={styles.buttonItem} />
+          </View>
+          <TouchableOpacity
+            delayPressOut={50}
+          >
+            <Icon
+              name={"bookmark-o"}
+              size={24}
+              color={"blac"}
+            />
+          </TouchableOpacity>
         </View>
-        
-      </ScrollView>
+      </View>
+
+      {/* Location Chips */}
+      <CheckedInChip items={flattenedLocationsArray} />
+
+      {/* Post Description */}
+      <View style={styles.descriptionContainer}>
+        <Markdown>{desc}</Markdown>
+      </View>
+    </ScrollView>
   );
 };
 

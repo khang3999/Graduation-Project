@@ -2632,8 +2632,7 @@ const styles = StyleSheet.create({
   modalreview: {
     position: "absolute",
     top: 25,
-    left: 9,
-    width: "95%",
+    width: "99%",
     height: "90%",
     justifyContent: "center",
     alignItems: "center",

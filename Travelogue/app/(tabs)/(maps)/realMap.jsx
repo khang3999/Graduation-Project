@@ -15,7 +15,7 @@ import BottomSheet from "react-native-gesture-bottom-sheet";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { ImageSlider } from "react-native-image-slider-banner";
 import { RowComponent, SectionComponent } from "@/components";
-import { database, ref, onValue } from "@/firebase/firebaseConfig";
+import { database, ref, onValue, get } from "@/firebase/firebaseConfig";
 import { ScrollView } from "react-native-gesture-handler";
 import { set } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -67,7 +67,7 @@ const Map = () => {
     // Lấy dữ liệu từ firebase (khu vực)
     onValue(areaRef, (snapshot) => {
       const data = snapshot.val() || {};
-      console.log(data);
+      // console.log(data);
       // Chuyển từ đối tượng thành mảng
 
       const formattedDataAreas = Object.keys(data).flatMap((countryId) =>
@@ -78,9 +78,9 @@ const Map = () => {
         }))
       );
       setAreaData(formattedDataAreas);
-      console.log("Area Data:");
+      // console.log("Area Data:");
     });
-    console.log("Area Data:", areaData);
+    // console.log("Area Data:", areaData);
 
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
@@ -129,7 +129,7 @@ const Map = () => {
           });
         });
       });
-      console.log("formattedPoints:", formattedPoints);
+      // console.log("formattedPoints:", formattedPoints);
       setPoints(formattedPoints);
     });
   }, []);
@@ -228,10 +228,10 @@ const Map = () => {
   // Cập nhật idCities khi filteredCityData thay đổi
   useEffect(() => {
     setIdCities(filteredCityData.map((city) => city.id));
-    console.log(
-      "idCities:",
-      filteredCityData.map((city) => city.id)
-    );
+    // console.log(
+    //   "idCities:",
+    //   filteredCityData.map((city) => city.id)
+    // );
   }, [filteredCityData]);
 
   // Thay đổi khu vực
@@ -348,17 +348,30 @@ const Map = () => {
   //Lưu các vi tri của điểm
   const handleSavePoint = async (content, type, location) => {
     const userId = await AsyncStorage.getItem("userToken");
-    // console.log("User:", userId);
-    // console.log("Content:", content);
-    // console.log("Type:", location);
     if (userId) {
       const userRef = ref(database, `accounts/${userId}/behavior`);
-       const updatedUserData = {
-        content: content,
-        location: location,
-      };
+  
+      const snapshot = await get(userRef);
+      let existingData = snapshot.val();
+  
+      // Kiểm tra xem location có tồn tại 
+      let locationArray = existingData?.location || [];
+      // console.log(locationArray)
+
+      // Thêm địa điểm mới 
+      if (!locationArray.includes(location)) {
+        locationArray.push(location);
+  
+        // Cập nhật lại dữ liệu 
+        const updatedUserData = {
+          content: content,
+          location: locationArray,
+        };
+        // Lưu lại dữ liệu đã cập nhật vào Firebase
         await update(userRef, updatedUserData);
+      }
     }
+    // Thông báo tùy thuộc vào type
     if (type === "post") {
       Alert.alert("Thông báo", "Đã lưu bài viết");
     }
@@ -366,6 +379,7 @@ const Map = () => {
       Alert.alert("Thông báo", "Đã lưu tour");
     }
   };
+  
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
   return (
