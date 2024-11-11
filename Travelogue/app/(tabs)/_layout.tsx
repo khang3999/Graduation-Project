@@ -29,7 +29,9 @@ const _layout = () => {
         ,
         headerRight: () => (
           <View style={styles.headerRight}>
-            <PlusButton onPress={() => { router.push('../(article)/addPostUser') }} style={styles.buttonRight}></PlusButton>
+            <PlusButton onPress={() => { 
+               role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour') 
+             }} style={styles.buttonRight}></PlusButton>
             <BellButton style={styles.buttonRight}></BellButton>
           </View>
         ),

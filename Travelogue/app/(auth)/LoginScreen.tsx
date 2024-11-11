@@ -153,7 +153,7 @@ const LoginScreen = ({ navigation }: any) => {
           else {
             router.replace({
               pathname: "/(tabs)",
-              params: { dataUser: role },
+              params: { userRole: role },
             });
           }
 

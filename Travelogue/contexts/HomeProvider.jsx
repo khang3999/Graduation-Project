@@ -45,7 +45,7 @@ const HomeProvider = ({ children }) => {
     useEffect(() => {
         const fetchUserId = async () => {
             const userId = await AsyncStorage.getItem("userToken");
-            setUserId(userId);
+            setUserId(userId)
         };
         fetchUserId()
     }, []);
@@ -91,9 +91,10 @@ const HomeProvider = ({ children }) => {
                 if (snapshot.exists()) {
                     const dataToursJson = snapshot.val()
                     const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
+                    console.log(dataToursArray);
                     // Sắp xếp lại list tour theo thứ tự
                     sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
-                    setDataTours(dataToursArray)
+                    setDataTours("fffff",dataToursArray)
                 } else {
                     console.log("No data available");
                 }

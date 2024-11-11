@@ -10,7 +10,8 @@ const { width } = Dimensions.get('window');
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
     const { dataTours, loadedTours }: any = useHomeProvider();
-
+    console.log(dataTours);
+    
     const tourItem = (tour: any) => {
         const locations = tour.item.locations
         const nameLocations = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
