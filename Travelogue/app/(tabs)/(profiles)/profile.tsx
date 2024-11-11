@@ -162,9 +162,7 @@ export default function ProfileScreen() {
                       <Image style={styles.searchedAvatar} source={{ uri: item.avatar }} />
                       <Text style={styles.searchItem}>{item.fullname}</Text>
                     </View>
-
                     <IconAntDesign name="arrowright" size={30} style={styles.threeDot} />
-
                   </View>
                 </TouchableOpacity>
               )}
