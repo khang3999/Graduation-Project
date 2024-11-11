@@ -164,7 +164,7 @@ const PostItem: React.FC<PostItemProps> = ({
     username: string;
   } | null>(null);
 
-  const { accountData } = useAccount();
+  const { accountData }: any = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const [ratingImage, setRatingImage] = useState<string | null>(null);
