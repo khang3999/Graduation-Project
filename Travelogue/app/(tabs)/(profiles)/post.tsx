@@ -153,8 +153,7 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
-  
-  console.log('item', item.author.id);
+  console.log('item', item.author.avatar);  
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
@@ -724,9 +723,9 @@ export default function PostsScreen() {
 
   const { selectedPost, setSelectedPost } = usePost();
   const { initialIndex } = useLocalSearchParams();
-  const initialPage = parseInt(initialIndex as string, 10);
+  const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0 ;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-
+  
 
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 

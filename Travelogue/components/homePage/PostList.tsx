@@ -7,13 +7,15 @@ import { database, ref } from '@/firebase/firebaseConfig'
 import { get, off, onValue } from '@firebase/database'
 import { Timestamp } from 'react-native-reanimated/lib/typescript/reanimated2/commonTypes'
 import { formatDate } from '@/constants/commonFunctions'
+import { router } from 'expo-router'
+import { usePost } from '@/contexts/PostProvider'
 interface Location {
   id: string,
   name: string
 }
 const PostList = () => {
   const [dataPosts, setDataPosts] = useState([])
-
+  const {setSelectedPost} = usePost()
   // Handle save
 
   // Realtime database
@@ -62,8 +64,13 @@ const PostList = () => {
     );
     return (
       <PaperProvider key={post.item.id}>
-        <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
-        }>
+        <Pressable style={styles.item} onPress={() => {
+                  router.push({
+                    pathname: "/(profiles)/Post",
+                    params: { initialIndex: 0 },
+                  });
+                  setSelectedPost([post.item]);
+                }}>
           {/*Author*/}
           <View style={styles.authorContent}>
             <TouchableOpacity style={styles.avatarWrap}>
