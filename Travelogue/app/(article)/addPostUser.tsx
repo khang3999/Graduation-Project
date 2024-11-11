@@ -974,7 +974,7 @@ const AddPostUser = () => {
             },
             {}
           ),
-          contents,
+          content: contents,
           view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,

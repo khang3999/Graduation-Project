@@ -976,7 +976,7 @@ const AddPostTour = () => {
             },
             {}
           ),
-          contents,
+          content: contents,
           hashtags: combinedHashtags,
           packages: selectedPackageData,
           view_mode: isPublic,
