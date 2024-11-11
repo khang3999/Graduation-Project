@@ -1,17 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Define the shape of the context data
-interface PostContextType {
-  selectedPost: any; 
-  setSelectedPost: (post: any) => void;
-}
+
 
 // Create the context
-const PostContext = createContext<PostContextType | undefined>(undefined);
+const PostContext = createContext(undefined);
 
 // Provider component
-export const PostProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+export const PostProvider = ({ children }) => {
+  const [selectedPost, setSelectedPost] = useState(null);
 
   return (
     <PostContext.Provider value={{ selectedPost, setSelectedPost }}>

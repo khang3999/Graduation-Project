@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     avatar: string;
   }
 
-  const { accountData, setAccountData, setSearchedAccountData } = useAccount();
+  const { accountData, setAccountData, setSearchedAccountData }: any = useAccount();
   const [userId, setUserId] = useState<String | null>()  
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push({ pathname: "/searchResult" });
+                  router.push("/SearchResult");
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>

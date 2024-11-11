@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const CheckInMap = () => {
+const Payment = () => {
   return (
     <View>
-      <Text>CheckInMap</Text>
+      <Text>Payment</Text>
     </View>
   )
 }
 
-export default CheckInMap
+export default Payment

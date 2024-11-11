@@ -19,7 +19,7 @@ const Layout = () => {
         const data = snapshot.val();
         setRole(data.role);
 
-        if (data && data.status_id === "2") {  
+        if (data && data.status_id === "2") {
           setIsAuth(true);
         } else {
           Alert.alert(
@@ -28,17 +28,17 @@ const Layout = () => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0384946973'), 
+                onPress: () => Linking.openURL('tel:0384946973'),
               },
               {
                 text: "Gửi email",
                 onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
               },
-              { text: "Đóng", style: "cancel" } 
+              { text: "Đóng", style: "cancel" }
             ],
-            { cancelable: true } 
+            { cancelable: true }
           );
-          await AsyncStorage.removeItem("userToken");  
+          await AsyncStorage.removeItem("userToken");
           setIsAuth(false);
         }
       } else {
@@ -51,21 +51,21 @@ const Layout = () => {
 
   useEffect(() => {
     if (isAuth) {
-      if (role=== "admin"){
+      if (role === "admin") {
         router.replace('/(admin)/(account)/account')
       }
-      else if (role === "user"){
-        router.replace("/(tabs)");
-      }
       else {
-        console.log("Day la trang doanh ngh");
+        router.replace({
+          pathname: "/(tabs)",
+          params: { userRole: role },
+        });
       }
     }
   }, [isAuth]);
 
   return (
     <>
-      {!isAuth ? <RouterAuth /> : null} 
+      {!isAuth ? <RouterAuth /> : null}
     </>
   );
 };
