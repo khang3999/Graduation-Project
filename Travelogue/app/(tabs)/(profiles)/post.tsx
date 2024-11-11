@@ -706,7 +706,7 @@ const PostItem: React.FC<PostItemProps> = ({
         )}
       </Modal>
       {/* Rating Comments */}
-      <CommentsActionSheet
+      {/* <CommentsActionSheet
         isPostAuthor={isPostAuthor}
         commentRefAS={ratingCommentAS}
         commentsData={ratingComments}
@@ -714,7 +714,7 @@ const PostItem: React.FC<PostItemProps> = ({
         accountId={accountData.id}
         onDelete={handleDeleteRatingComment}
         onReport={handleReportComment}
-      />
+      /> */}
     </View>
   );
 };

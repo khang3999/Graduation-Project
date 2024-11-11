@@ -8,7 +8,7 @@ import { Rating } from 'react-native-ratings';
 
 
 
-interface CommentsActionSheetProps<T extends CommentType> {
+interface RatingCommentsActionSheetProps<T extends CommentType> {
     commentRefAS: RefObject<ActionSheetRef>;
     isPostAuthor: boolean;
     commentsData: T[];
@@ -19,7 +19,7 @@ interface CommentsActionSheetProps<T extends CommentType> {
     accountId?: string;
 }
 
-export default function CommentsActionSheet<T extends CommentType>(props: CommentsActionSheetProps<T>) {
+export default function RatingCommentsActionSheet<T extends CommentType>(props: RatingCommentsActionSheetProps<T>) {
     const [replyText, setReplyText] = useState("");
     const [selectedComment, setSelectedComment] = useState<T | null>(null);
     const [longPressedComment, setLongPressedComment] = useState<T | null>(null);
@@ -103,7 +103,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                     <Text style={styles.ratingCommentsHeader}>Bình luận đánh giá</Text>
                     <Divider style={styles.marginBottom5} />
                     {/* Input and Reply Button for Post Owner */}
-                    {/* {props.isPostAuthor && ( */}
+                    {props.isPostAuthor && (
                         <View style={styles.replyInputContainer}>
                             {selectedComment && (
                                 <View style={styles.mentionContainer}>
@@ -132,7 +132,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                             )}
                         </View>
 
-                    {/* )} */}
+                    )}
                     {props.commentsData.length > 0 ? (
                         <FlatList
                             data={props.commentsData}
@@ -172,7 +172,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                         />
                                     )}
                                     {/* Conditionally show reply option for the post owner */}
-                                    {/* {props.isPostAuthor && ( */}
+                                    {props.isPostAuthor && (
                                         <Pressable
 
                                             style={styles.replyButtonContainer}
@@ -181,7 +181,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                             <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
                                             <Text style={styles.replyButtonText}>Reply</Text>
                                         </Pressable>
-                                    {/* )} */}
+                                    )}
                                 </Pressable>
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
