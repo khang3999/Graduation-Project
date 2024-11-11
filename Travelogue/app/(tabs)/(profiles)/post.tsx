@@ -11,6 +11,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
+  Alert,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -21,46 +24,60 @@ import SaveButton from "@/components/buttons/SaveButton";
 import { Divider } from "react-native-paper";
 import MenuItem from "@/components/buttons/MenuPostButton";
 import CheckedInChip from "@/components/chips/CheckedInChip";
-import RenderHtml from "react-native-render-html";
+import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
-import { Rating, AirbnbRating } from "react-native-ratings";
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
+import { Rating } from "react-native-ratings";
 import { useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { database } from "@/firebase/firebaseConfig";
-import { ref, push, set } from "firebase/database";
+import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
-
+import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
+import * as ImagePicker from 'expo-image-picker';
+import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
+import { CommentType, RatingComment } from '@/types/CommentTypes';
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
+
+type RatingSummary = {
+  totalRatingCounter: any;
+  totalRatingValue: any;
+};
+
 type Comment = {
   id: string;
-  accountID: {
-    avatar: any; // Change to ImageSourcePropType if needed
+  author: {
+    id: string
+    avatar: any;
     username: string;
   };
-  comment_status: string;
+  status_id: number;
   content: string;
   reports: number;
-  children?: Comment[];
+  parentId: string | null;
   created_at: string;
 };
 
 type Post = {
   id: string;
   author: {
-    avatar: any; // Change to ImageSourcePropType if needed
+    id: string;
+    avatar: any;
     username: string;
   };
   comments: Record<string, Comment>;
   content: string;
   created_at: string;
   hashtag: string;
-  images: string[];
+  images: Record<string, Record<string, { city_name: string; images_value: string[] }>>;
   likes: number;
   locations: Record<string, Record<string, string>>;
+  ratings: Record<string, RatingComment>;
+  ratingSummary: RatingSummary;
   post_status: string;
   price_id: number;
   reports: number;
@@ -72,49 +89,65 @@ type PostItemProps = {
   setIsScrollEnabled: (value: boolean) => void;
 };
 
-const flattenComments = (comments: Comment[], level = 0) => {  
-  
-  let flatComments: { comment: Comment; level: number }[] = [];
-  
-  comments.forEach((comment) => {
-    flatComments.push({ comment, level });
-    if (comment.children) {
-      const childComments = convertFirebaseObjectToArray(comment.children);
-      flatComments = flatComments.concat(flattenComments(childComments, level + 1));
-    }
-  });
-
-  return flatComments;
-};
-
-// Helper function to convert Firebase objects to an array
-const convertFirebaseObjectToArray = (obj: any) => {
-  if (!obj) return [];
-  return Object.keys(obj).map((key) => ({
-    id: key,
-    ...obj[key],
-  }));
-};
-
 type RatingButtonProps = {
-  ratingValue: number;
+  averageRating: number;
   onPress: () => void;
 };
 
 const RatingButton: React.FC<RatingButtonProps> = ({
-  ratingValue,
+  averageRating,
   onPress,
 }) => {
+
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       <Text style={styles.ratingLabel}>Rating: </Text>
       <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
         <Icon name="smile-o" size={40} color="black" />
-        <Text style={styles.ratingValue}>{ratingValue}/5</Text>
+        <Text style={styles.ratingValue}>{averageRating.toFixed(1)}/5.0</Text>
       </TouchableOpacity>
     </View>
   );
 };
+  
+const flattenLocations = (locations: Record<string, Record<string, string>>) => {
+  const flattenedArray = [];
+
+  
+  for (const country in locations) {
+    for (const locationCode in locations[country]) {
+      flattenedArray.push({
+        country,
+        locationCode,
+        locationName: locations[country][locationCode],
+      });
+    }
+  }
+
+  return flattenedArray;
+};
+
+
+const flattenImages = (images: Record<string, Record<string, { city_name: string; images_value: string[] }>>) => {
+  const flattenedArray: any[] = [];
+
+  for (const country in images) {
+    for (const locationCode in images[country]) {
+      const cityData = images[country][locationCode];
+      cityData.images_value.forEach((imageUrl) => {
+        flattenedArray.push({
+          country,
+          locationCode,
+          cityName: cityData.city_name,
+          imageUrl,
+        });
+      });
+    }
+  }
+
+  return flattenedArray;
+};
+
 
 const PostItem: React.FC<PostItemProps> = ({
   item,
@@ -122,34 +155,44 @@ const PostItem: React.FC<PostItemProps> = ({
 }) => {
   
 
-  
-  const commentModalRef = useRef<Modalize>(null);
-  const ratingModalRef = useRef<Modalize>(null);
-
+  const MAX_LENGTH = 5;
+  const commentAS = useRef<ActionSheetRef>(null);
+  const ratingCommentAS = useRef<ActionSheetRef>(null);
+  const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
     username: string;
   } | null>(null);
-  const { accountData } = useAccount();
-  
-  const [comments, setComments] = useState(Object.values(item.comments));
-  const MAX_LENGTH = 100;
-  const flattenedComments = flattenComments(comments);
-  const totalComments = flattenedComments.length;
 
-  const addComment = async () => {
-    if (commentText.trim().length > 0) {
+  const { accountData }: any = useAccount();
+  const [comments, setComments] = useState(Object.values(item.comments || {}));
+  const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
+  const [ratingImage, setRatingImage] = useState<string | null>(null);
+  const [ratingCommentText, setRatingCommentText] = useState("");
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [ratingValue, setRatingValue] = useState(5);
+  const totalComments = comments.length;
+  const isPostAuthor = accountData.id === item.author.id;
+  const flattenedLocationsArray = flattenLocations(item.locations);
+  const flattenedImagesArray = flattenImages(item.images);
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
+    if (replyText.trim().length > 0) {
+      const parentId = parentComment ? parentComment.id : null;
       const newComment = {
-        accountID: {
+        author: {
+          id: accountData.id,
           avatar:
-          accountData.avatar,
+            accountData.avatar,
           username: accountData.fullname,
         },
-        comment_status: "active",
+        status_id: 1,
         reports: 0,
-        content: commentText,
-        children: [],
+        content: replyText,
+        parentId: parentId ? parentId : null,
         created_at: new Date().toLocaleString("en-US", {
           day: "numeric",
           month: "long",
@@ -157,110 +200,355 @@ const PostItem: React.FC<PostItemProps> = ({
         }),
       };
       try {
-        if (replyingTo) {
-          // Add as a reply to an existing comment
-          const parentCommentRef = ref(
-            database,
-            `postsPhuc/${item.id}/comments/${replyingTo.id}/children`
-          );
-          const newReplyRef = push(parentCommentRef);
-          
-          // Check if a key is generated
-          if (newReplyRef.key) {
-            
-            const newReply = { ...newComment, id: newReplyRef.key };
-            await set(newReplyRef, newReply);
+        const commentRef = ref(database, `postsPhuc/${item.id}/comments`)
+        const newCommentRef = push(commentRef);
 
-            setComments((prevComments) =>
-              addReplyToComment(prevComments, replyingTo.id, newReply)
-            );
-            setReplyingTo(null); // Reset reply state
-          } else {
-            console.error(
-              "Error: Unable to generate a unique key for the reply."
-            );
-            // You might want to show a user-friendly error message here
-          }
-        } else {
-          // Add as a new top-level comment
-          const CommentsRef = ref(database, `postsPhuc/${item.id}/comments`);
+        if (newCommentRef.key) {
+          const newCommentWithId = { ...newComment, id: newCommentRef.key };
+          await set(newCommentRef, newCommentWithId);
 
-          const newCommentRef = push(CommentsRef);
-          if (newCommentRef.key) {
-            const newTopLevelComment = { ...newComment, id: newCommentRef.key };
-            await set(newCommentRef, newTopLevelComment);
+          setComments((prevComments) => {
+            if (replyingTo) {
+              // Add as a reply with the correct `parentId`
+              return addReplyToComment(prevComments, replyingTo.id, newCommentWithId);
+            } else {
+              // Add as a top-level comment
+              return [newCommentWithId, ...prevComments];
+            }
+          });
 
-            setComments((prevComments) => [newTopLevelComment, ...prevComments]);
+          setReplyingTo(null);
         }
-      }
-        setCommentText(""); // Clear the input field
       } catch (error) {
-        console.error("Error adding comment:", error);
+        console.error("Error adding rating comment:", error);
       }
     }
+  }
+  const handleRatingCommentSubmit = (parentComment: RatingComment, replyText: string) => {
+    if (replyText.trim().length > 0) {
+      const parentId = parentComment ? parentComment.id : null;
+      const newRatingComment = {
+        author: {
+          id: accountData.id,
+          avatar:
+            accountData.avatar,
+          username: accountData.fullname,
+        },
+        image: "",
+        rating: -1,
+        status_id: 1,
+        reports: 0,
+        content: replyText,
+        parentId: parentId ? parentId : null,
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      };
+      try {
+        const ratingsRef = ref(database, `postsPhuc/${item.id}/ratings`);
+        const newRatingCommentRef = push(ratingsRef);
+
+        if (newRatingCommentRef.key) {
+          const newRatingCommentWithId = { ...newRatingComment, id: newRatingCommentRef.key };
+          set(newRatingCommentRef, newRatingCommentWithId);
+
+          setRatingComments((prevComments) => {
+            return [...prevComments, { ...newRatingCommentWithId }];
+          });
+
+        }
+
+      } catch (error) {
+        console.error("Error adding rating comment:", error);
+      }
+    }
+
   };
   const addReplyToComment = (
     comments: Comment[],
-    commentId: string,
+    parentId: string,
     reply: Comment
   ): Comment[] => {
     return comments.map((comment) => {
-      if (comment.id === commentId) {
-        // If the comment is the one we're replying to
-        return {
-          // Return a new comment object with the reply added to its children
-          ...comment,
-          children: comment.children ? [...comment.children, reply] : [reply],
-        };
-      } else if (comment.children) {
-        // If the comment has children, recursively add the reply to the children
-        return {
-          ...comment,
-          children: addReplyToComment(comment.children, commentId, reply), // Recursively add the reply to the children
-        };
+      if (comment.id === parentId) {
+        // Set the `parentId` for the new reply
+        reply.parentId = parentId;
+        return [comment, reply];
       }
       return comment;
-    });
+    }).flat();
+  };
+  const openCommentModal = () => {
+    if (commentAS.current) {
+      commentAS.current.show();
+    } else {
+      console.error("Modalize reference is null");
+    }
   };
 
-  const openCommentModal = () => {
-    if (commentModalRef.current) {
-      commentModalRef.current.open(); // Safely access the ref
-      setIsScrollEnabled(false);
-    } else {
-      console.error("Modalize reference is null");
+  const handleDeleteComment = async (comment: Comment) => {
+    Alert.alert(
+      "Xóa comment",
+      "Tất cả các comment con của nó cũng sẽ bị xóa. Bạn có chắc chắn muốn xóa comment này ?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Fetch all comments once
+              const snapshot = await get(ref(database, `postsPhuc/${item.id}/comments`));
+              const commentsData = snapshot.val() as Record<string, Comment>;
+
+
+              if (!commentsData) return;
+
+
+              const pathsToDelete: Record<string, null> = {};
+
+
+              const addCommentAndRepliesToDelete = (commentId: string) => {
+                pathsToDelete[`postsPhuc/${item.id}/comments/${commentId}`] = null;
+                Object.keys(commentsData).forEach((key) => {
+                  if (commentsData[key].parentId === commentId) {
+                    addCommentAndRepliesToDelete(key);
+                  }
+                });
+              };
+
+
+              addCommentAndRepliesToDelete(comment.id);
+
+
+              await update(ref(database), pathsToDelete);
+
+
+              setComments((prevComments) =>
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/comments/${c.id}`))
+              );
+
+              console.log('Comment deleted successfully.', comments);
+              
+            } catch (error) {
+              console.error("Error deleting comment:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  const handleDeleteRatingComment = async (comment: RatingComment) => {
+    Alert.alert(
+      "Xóa comment",
+      "Bạn có chắc chắn muốn xóa comment này ?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Fetch all rating once
+              const snapshot = await get(ref(database, `postsPhuc/${item.id}/ratings`));
+              const ratingCommentsData = snapshot.val() as Record<string, RatingComment>;
+
+
+              if (!ratingCommentsData) return;
+
+
+              const pathsToDelete: Record<string, null> = {};
+
+
+              const addCommentAndRepliesToDelete = (ratingCommentId: string) => {
+                pathsToDelete[`postsPhuc/${item.id}/ratings/${ratingCommentId}`] = null;
+                Object.keys(ratingCommentsData).forEach((key) => {
+                  if (ratingCommentsData[key].parentId === ratingCommentId) {
+                    addCommentAndRepliesToDelete(key);
+                  }
+                });
+              };
+
+
+              addCommentAndRepliesToDelete(comment.id);
+
+
+              await update(ref(database), pathsToDelete);
+
+
+              setComments((prevComments) =>
+                prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`postsPhuc/${item.id}/ratings/${c.id}`))
+              );
+
+              console.log('Comment deleted successfully.', comments);
+              
+            } catch (error) {
+              console.error("Error deleting comment:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  const handleSubmitRating = async () => {
+    const postId = item.id;
+    const userId = accountData.id;
+    setIsLoading(true);
+    try {
+      // Step 1: Reference to the user's rating in Realtime Database
+      const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+
+      let imageUrl = "";
+
+      // Step 2: Upload image to Firebase Storage with a unique ID if imageUri is provided
+      if (ratingImage) {
+
+        const uniqueImageId = push(ref(database)).key;
+        if (uniqueImageId) {
+          const imageRef = storageRef(storage, `posts/${postId}/images/${uniqueImageId}.jpg`);
+          const img = await fetch(ratingImage);
+          const bytes = await img.blob();
+          await uploadBytes(imageRef, bytes);
+          imageUrl = await getDownloadURL(imageRef);
+        }
+      }
+
+      // Step 3: Prepare the rating data
+      const rating = {
+        author: {
+          id: userId,
+          avatar: accountData.avatar,
+          username: accountData.fullname,
+        },
+        id: userRatingRef.key!,
+        content: ratingCommentText,
+        image: imageUrl,
+        created_at: new Date().toLocaleString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+        rating: ratingValue,
+        reports: 0,
+        status_id: 0,
+        parentId: null,
+      };
+
+      // Step 4: Reference to the rating summary in Realtime Database
+      const summaryRef = ref(database, `postsPhuc/${postId}/ratingSummary`);
+
+      // Step 5: Update the rating summary with new values
+      const summaryUpdate = {
+        totalRatingCounter: increment(1),
+        totalRatingValue: increment(ratingValue),
+      };
+
+      // Step 6: Save the rating and update the summary in parallel
+      await Promise.all([
+        set(userRatingRef, rating),
+        update(summaryRef, summaryUpdate),
+      ]);
+      
+      setRatingComments((prevComments) => {
+        return [rating, ...prevComments];
+      });
+
+      console.log('Rating and image successfully added');
+
+    } catch (error) {
+
+      console.error('Error adding rating and image:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRatingModalOpen(false);
+      ratingCommentAS.current?.show();
     }
   };
-  const openRatingModal = () => {
-    if (ratingModalRef.current) {
-      ratingModalRef.current.open(); // Safely access the ref
-    } else {
-      console.error("Modalize reference is null");
+  const handleOpenRatingComments = async () => {
+
+    const postId = item.id;
+    const userId = accountData.id;
+
+    // If the account is the author of the post, show the rating comments
+    if (isPostAuthor) {
+      ratingCommentAS.current?.show();
+      return;
+    }
+
+    // Reference to the user's rating in Realtime Database
+    const userRatingRef = ref(database, `postsPhuc/${postId}/ratings/${userId}`);
+    const previousRatingSnapshot = await get(userRatingRef);
+
+    // If the user has already rated this post, show the rating comments
+    if (previousRatingSnapshot.exists()) {
+      ratingCommentAS.current?.show();
+      return;
+    }
+    //Otherwise, open the rating modal
+    setIsRatingModalOpen(true);
+  }
+  const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
+    if (!(totalRatingCounter && totalRatingValue)) {
+      return 0;
+    }
+    const average = totalRatingValue / totalRatingCounter;
+    const roundedAverage = Math.ceil(average * 2) / 2;
+    return roundedAverage;
+  };
+  const pickRatingImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+
+    if (!result.canceled) {
+      setRatingImage(result.assets[0].uri);
     }
   };
-  const closeRatingModal = () => {
-    if (ratingModalRef.current) {      
-      ratingModalRef.current.close();
-    } else {
-      console.error("Modalize reference is null");
-    }
-  };
+
+  
+  //handle report comment
+  const handleReportComment = (comment: Comment) => {
+
+  }
+
+  //handle report rating comment
+  const handleReportRatingComment = (comment: RatingComment) => {
+
+  }
+
+
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
-    const toggleDescription = (postId: string) => {
-      setExpandedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
-    };
-  
+  const toggleDescription = (postId: string) => {
+    setExpandedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
   const isExpanded = expandedPosts[item.id] || false;
 
   const desc = {
-    html: isExpanded
-      ? item.content
-      : `${item.content.slice(0, MAX_LENGTH)} ...`,
+    Markdown: isExpanded
+      ? item.content.replace(/<br>/g, '\n')
+      : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
+
   return (
     <View>
       {/* Post Header */}
@@ -276,34 +564,34 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem menuIcon="dots-horizontal" />
+          <MenuItem isAuthor={isPostAuthor} />
         </View>
       </View>
 
       {/* Post Images Carousel */}
       <Carousel
-        pagingEnabled={true}
-        loop={false}
-        width={windowWidth}
-        height={windowWidth}
-        data={item.images}
-        scrollAnimationDuration={300}
-        renderItem={({ item: imageUri, index }) => (
-          <View style={styles.carouselItem}>
-            <Image style={styles.posts} source={{ uri: imageUri }} />
-            <View style={styles.viewTextStyles}>
-              <Text style={styles.carouselText}>
-                {index + 1}/{item.images.length}
-              </Text>
-            </View>
+      pagingEnabled={true}
+      loop={false}
+      width={windowWidth}
+      height={windowWidth}
+      data={flattenedImagesArray}
+      scrollAnimationDuration={300}
+      renderItem={({ item, index }) => (
+        <View style={styles.carouselItem}>
+          <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+          <View style={styles.viewTextStyles}>
+            <Text style={styles.carouselText}>
+              {index + 1}/{flattenedImagesArray.length} - {item.cityName}
+            </Text>
           </View>
-        )}
-      />
+        </View>
+      )}
+    />
       <View>
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} postID={item.id}/>
+            <HeartButton style={styles.buttonItem} postID={item.id} />
             <Text style={styles.totalLikes}>{item.likes}</Text>
             <CommentButton
               style={styles.buttonItem}
@@ -311,152 +599,129 @@ const PostItem: React.FC<PostItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} postID={item.id}/>
+          <SaveButton style={styles.buttonItem} postID={item.id} />
         </View>
         {/* Rating Button */}
-        <View style={styles.ratingButtonContainer}>
-          <RatingButton ratingValue={4} onPress={openRatingModal} />
-        </View>
+        {/* <View style={styles.ratingButtonContainer}>
+          <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
+        </View> */}
       </View>
-      <CheckedInChip items={Object.values(item.locations.vietnam)} />
+      <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
       <View style={{ paddingHorizontal: 15 }}>
-        <RenderHtml contentWidth={windowWidth} source={desc} />
-        <TouchableOpacity onPress={()=>toggleDescription(item.id)}>
+        <Markdown>
+          {desc.Markdown}
+        </Markdown>
+        <TouchableOpacity onPress={() => toggleDescription(item.id)}>
           <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
-      <Modalize
-        ref={commentModalRef}
-        // adjustToContentHeight={false}
-        modalHeight={600}
-        alwaysOpen={0}
-        handlePosition="inside"
-        avoidKeyboardLikeIOS={true}
-        onClosed={() => setIsScrollEnabled(true)}
+      <CommentsActionSheet
+        isPostAuthor={isPostAuthor}
+        commentRefAS={commentAS}
+        commentsData={comments}
+        onSubmitComment={handleCommentSubmit}
+        accountId={accountData.id}
+        onDelete={handleDeleteComment}
+        onReport={handleReportComment}
+      />
+
+     
+      {/* Rating Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isRatingModalOpen}
+        onRequestClose={() => setIsRatingModalOpen(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeaderText}>
-              Comments for {item.author.username}'s post
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Đánh giá bài viết</Text>
+            <Text style={styles.modalSubtitle}>
+              Xin hãy nhận xét trung thực và đánh giá khách quan nhất.
             </Text>
-            {/* Sticky comment */}
-            {replyingTo && (
-              <View style={styles.replyingToContainer}>
-                <Text>Replying to {replyingTo.username}</Text>
-                <TouchableOpacity onPress={() => setReplyingTo(null)}>
-                  <Text style={styles.cancelReplyButton}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            <View style={styles.commentInputContainer}>
+
+            {/* Rating Component */}
+            <View style={styles.ratingWrapper}>
+              <Rating
+                onFinishRating={(value: number) => setRatingValue(value)}
+                startingValue={5}
+                imageSize={50}
+                minValue={1}
+                style={{ marginBottom: 10 }}
+              />
+            </View>
+
+            {/* Comment Input */}
+            <View style={styles.ratingCommentInputContainer}>
               <TextInput
-                style={styles.commentInput}
-                placeholder="Write a comment..."
-                value={commentText}
-                onChangeText={setCommentText}
+                placeholder="Nhận xét của bạn..."
+                value={ratingCommentText}
+                onChangeText={setRatingCommentText}
+                style={styles.ratingCommentInput}
                 multiline
               />
-              <TouchableOpacity
-                style={styles.commentButton}
-                onPress={addComment}
-              >
-                <Text style={styles.commentButtonText}>Post</Text>
-              </TouchableOpacity>
             </View>
-            {flattenedComments.length > 0 ? (
-              <FlatList
-                data={flattenedComments}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.commentContainer,
-                      { marginLeft: item.level * 20 },
-                    ]}
-                  >
-                    <View
-                      style={{ flexDirection: "row", alignItems: "flex-start" }}
-                    >
-                      <Image
-                        source={{ uri: item.comment.accountID.avatar }}
-                        style={styles.miniAvatar}
-                      />
-                      <View style={{ flexDirection: "column", marginLeft: 10 }}>
-                        <Text style={styles.commentUsername}>
-                          {item.comment.accountID.username}
-                        </Text>
-                        <Text style={styles.commentText}>
-                          {item.comment.content}
-                        </Text>
-                        <View style={{ flexDirection: "row" }}>
-                          <TouchableOpacity
-                            onPress={() =>
-                              setReplyingTo({
-                                id: item.comment.id,
-                                username: item.comment.accountID.username,
-                              })
-                            }
-                          >
-                            <Text style={styles.replyButton}>Reply</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity>
-                            <Text style={styles.replyButton}>Report</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <Text style={styles.commentTime}>
-                        {item.comment.created_at}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-                contentContainerStyle={{ paddingBottom: 60 }}
-              />
-            ) : (
-              <Text>No comments yet. Be the first to comment!</Text>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modalize>
-      {/* Rating Bottom Sheet */}
-      <Modalize
-        ref={ratingModalRef}
-        modalHeight={400}
-        handlePosition="inside"
-        avoidKeyboardLikeIOS={true}
-      >
-        <View style={styles.ratingContainer}>
-          <Rating
-            showRating
-            onFinishRating={(rating: number) => console.log(rating)}
-            startingValue={5}            
-            imageSize={60}
-            minValue={1}
-            style={{ marginBottom: 10 }}
-            
-          />
-          <View style={styles.ratingButtonWrapper}>
-            <TouchableOpacity style={[styles.ratingButton, { padding: 10 }]} onPress={closeRatingModal}>
-              <Icon name="check" size={30} color="white" />
-              <Text style={styles.ratingTitle}>Đánh Giá</Text>
-            </TouchableOpacity>
+
+            {/* Image picker */}
+            <View style={styles.imagePickerContainer}>
+              <Pressable style={styles.imagePickerButton} onPress={pickRatingImage}>
+                <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+              </Pressable>
+              {ratingImage &&
+                <View style={styles.selectedImageContainer}>
+                  <Image
+                    source={{ uri: ratingImage }}
+                    style={styles.selectedImage}
+                  />
+                </View>
+              }
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.buttonModalRow}>
+              <Pressable
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setIsRatingModalOpen(false)}
+              >
+                <Text style={styles.buttonText}>Đóng</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.buttonSubmit]}
+                onPress={handleSubmitRating}
+              >
+                <Text style={styles.buttonText}>Đăng</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </Modalize>
-    
+        {/* Loading Indicator Overlay */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
+      </Modal>
+      {/* Rating Comments */}
+      <CommentsActionSheet
+        isPostAuthor={isPostAuthor}
+        commentRefAS={ratingCommentAS}
+        commentsData={ratingComments}
+        onSubmitRatingComment={handleRatingCommentSubmit}
+        accountId={accountData.id}
+        onDelete={handleDeleteRatingComment}
+        onReport={handleReportComment}
+      />
     </View>
   );
 };
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-  
+
   const { selectedPost, setSelectedPost } = usePost();
   const { initialIndex } = useLocalSearchParams();
   const initialPage = parseInt(initialIndex as string, 10);
@@ -464,14 +729,15 @@ export default function PostsScreen() {
 
 
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
-  // Simulate loading data (replace this with your data fetching logic)
+
   return (
     <>
+
       <FlatList
         data={memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
-            item={item}            
+            item={item}
             setIsScrollEnabled={setIsScrollEnabled}
           />
         )}
@@ -485,18 +751,280 @@ export default function PostsScreen() {
           index,
         })}
       />
-        {/* Loader overlay */}
+      {/* Loader overlay */}
       {/* {loading && (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#B1B1B1" />
         </View>
       )} */}
-      
-      
+
+
     </>
   );
 }
 const styles = StyleSheet.create({
+  // rating comment styles
+  replyInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
+    marginTop: 15,
+
+  },
+  replyInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingHorizontal: 10,
+  },
+  replySubmitButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  replySubmitButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  replyButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  replyButtonText: {
+    color: '#5a5a5a',
+    fontSize: 14,
+    marginLeft: 5,
+  },
+  marginBottom5: {
+    marginBottom: 5,
+  },
+  topBorder: {
+    borderTopWidth: 3,
+    borderTopColor: '#B1B1B1',
+    width: 50,
+    alignSelf: 'center',
+    paddingVertical: 5
+  },
+  ratingCommentsASContainer: {
+    backgroundColor: '#f9f9f9',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    height: '80%',
+  },
+  ratingCommentsHeader: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  ratingCommentCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  ratingCommentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  ratingCommentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  ratingCommentUserInfo: {
+    flexDirection: 'column',
+  },
+  ratingCommentAuthor: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  ratingCommentTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  ratingCommentText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
+  },
+  ratingCommentImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+    marginTop: 10,
+    resizeMode: 'cover',
+  },
+  noCommentsText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  //
+  actionSheetContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  actionOption: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  actionOptionText: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  actionOptionTextDelete: {
+    color: '#FF3B30', // Red color for delete option
+  },
+  actionOptionTextCancel: {
+    color: '#555555', // Grey color for cancel option
+  },
+  commentButtons: {
+    flexDirection: "row",
+    marginTop: 5,
+  },
+  // rating modal styles
+  selectedImageContainer: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  ratingImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+  },
+  imagePickerTextButton: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  imagePickerIconButton: {
+    marginRight: 10,
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  ratingCommentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#fff',
+  },
+  ratingCommentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    maxHeight: 100,
+  },
+  // rating modal
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent overlay
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10, // Ensures it appears above other content
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Dimmed background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#666',
+  },
+  ratingContainer: {
+    marginBottom: 30,
+  },
+  buttonModalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    marginHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonClose: {
+    backgroundColor: '#cccccc',
+  },
+  buttonSubmit: {
+    backgroundColor: '#2196F3',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   loaderContainer: {
     position: 'absolute',
     top: 0,
@@ -505,8 +1033,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 24, 27, 0.62)', // Semi-transparent background
-    zIndex: 1, // Ensures loader appears above FlatList
+    backgroundColor: 'rgba(30, 24, 27, 0.62)',
+    zIndex: 1,
   },
   ratingTitle: {
     marginLeft: 10,
@@ -515,8 +1043,7 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 3,
   },
-  ratingContainer: {
-    marginTop: 50,
+  ratingWrapper: {
     paddingVertical: 10,
     flexDirection: "column",
   },
@@ -542,7 +1069,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  totalComments:{
+  totalComments: {
     marginRight: 10,
     marginTop: 1,
     fontSize: 16,
@@ -581,7 +1108,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     backgroundColor: "#392613",
     top: 10,
-    left: windowWidth - 50,
+    left: windowWidth - 120,
     borderRadius: 20,
     paddingHorizontal: 7,
   },
@@ -651,7 +1178,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     color: "#333",
-    marginRight:10,
+    marginRight: 10,
   },
   commentText: {
     fontSize: 14,
@@ -659,9 +1186,9 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   replyButton: {
-    color: "#1E90FF", // Blue color for the reply button
-    fontSize: 12,
-    marginTop: 5,
+    color: "grey", // Blue color for the reply button
+    fontSize: 13,
+    marginTop: 3,
     marginRight: 10,
   },
   commentInputContainer: {

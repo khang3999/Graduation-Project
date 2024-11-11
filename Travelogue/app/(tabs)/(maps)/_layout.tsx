@@ -16,15 +16,15 @@ const MapLayout = () => {
                 screenOptions={{
                     tabBarStyle: styles.tabBar,
                     headerStyle: {
-                        height: 100
+                        height: 105
                     },
-                    headerTitle: (props) =>
-                        // Bỏ image vào đây
-                        <Image
-                            source={require('@/assets/images/logo.png')}
-                            resizeMode="contain"
-                        />
-                    ,
+                    // headerTitle: (props) =>
+                    //     // Bỏ image vào đây
+                    //     <Image
+                    //         source={require('@/assets/images/logo.png')}
+                    //         resizeMode="contain"
+                    //     />
+                    // ,
                 }}
             >
                 <Tabs.Screen
@@ -48,11 +48,11 @@ const MapLayout = () => {
 }
 
 const styles = StyleSheet.create({
-    tabBar:{
+    tabBar: {
         top: 50,
         left: width - switchTabbar,
         position: 'absolute',
-        width: switchTabbar, 
+        width: switchTabbar,
         height: 40,
         borderTopLeftRadius: 99,
         borderBottomLeftRadius: 99,

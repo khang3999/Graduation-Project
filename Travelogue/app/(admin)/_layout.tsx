@@ -34,7 +34,7 @@ function CustomDrawerContent(props: any) {
       {/* Danh sách các Drawer.Screen */}
       <DrawerItemList {...props} />
       <TouchableOpacity onPress={handleLogout}>
-        <Text className='text-lg text-red-400 text-center'>Log out</Text>
+        <Text  style={{color:'red', fontSize:30, textAlign:'center'}}>Log out</Text>
       </TouchableOpacity>
     </DrawerContentScrollView>
   );
@@ -133,6 +133,16 @@ export default function Layout() {
           options={{
             drawerLabel: 'Payment',
             title: 'Payment',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
+        <Drawer.Screen
+          name="notify"
+          options={{
+            drawerLabel: 'Notify',
+            title: 'Notify',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )

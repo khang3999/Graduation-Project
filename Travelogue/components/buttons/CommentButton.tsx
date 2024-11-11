@@ -11,7 +11,7 @@ const CommentButton = (props: any) => {
     }
     return (
         <TouchableOpacity delayPressOut={50} onPress={handleTap} {...props}>
-            <Icon name="comment-o" size={24} color="black" style={styles.container}/>
+            <Icon name="comment-o" size={24} color="black" style={styles.icon}/>
         </TouchableOpacity>
     )
 }
@@ -20,7 +20,7 @@ const CommentButton = (props: any) => {
 const likedColor = 'red'
 const unlikedColor = 'black'
 const styles = StyleSheet.create({
-    container: {
+    icon: {
         bottom: 1 
     }
 })

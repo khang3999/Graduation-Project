@@ -23,8 +23,8 @@ interface AvatarProfileProps {
 export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
   const { accountData, searchedAccountData } = useAccount();
 
-  const data = isSearched ? searchedAccountData : accountData;
-  
+  const data = isSearched ? searchedAccountData : accountData
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
