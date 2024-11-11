@@ -778,6 +778,7 @@ const AddPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
       return;
     }
+    
 
     const existingDay = days.find(
       (day) =>
@@ -1726,12 +1727,47 @@ const AddPostUser = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           {buttonPost ? (
-            <ButtonComponent
-              text="Đang đăng bài ..."
-              textStyles={{ fontWeight: "bold", fontSize: 30 }}
-              color={appColors.primary}
-              disabled={true}
-            />
+           <RowComponent styles={{ marginHorizontal: 10 }}>
+           <TouchableOpacity
+             onPress={() => {
+               handleReviewPost();
+             }}
+             style={{
+               backgroundColor: appColors.btncity,
+               width: "20%",
+               height: "100%",
+               borderRadius: 10,
+               marginRight: 10,
+               borderColor: "green",
+               borderWidth: 1,
+             }}
+           >
+             <TextComponent
+               text="Review bài viết"
+               size={14}
+               styles={{
+                 fontWeight: "bold",
+                 color: "green",
+                 textAlign: "center",
+                 justifyContent: "center",
+                 marginTop: 3,
+                 padding: 5,
+               }}
+             />
+           </TouchableOpacity>
+           <ButtonComponent
+             text="Đang Đăng Bài...."
+             textStyles={{
+               width: "75%",
+               fontWeight: "bold",
+               fontSize: 30,
+               textAlign: "center",
+             }}
+             disabled={true}
+             color={appColors.primary}
+             onPress={handlePushPost}
+           />
+         </RowComponent>
           ) : (
             <RowComponent styles={{ marginHorizontal: 10 }}>
               <TouchableOpacity

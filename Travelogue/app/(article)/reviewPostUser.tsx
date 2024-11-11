@@ -21,26 +21,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onValue, ref } from "firebase/database";
 import { database } from "@/firebase/firebaseConfig";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from "react-native-vector-icons/FontAwesome";
 
 const windowWidth = Dimensions.get("window").width;
 
-const ReviewPostUser = ({
-  locs,
-  contents,
-  imgs,
-}: {
-  locs: any;
-  contents: any;
-  imgs: any;
-}) => {
-  const images = typeof imgs === "string" ? JSON.parse(imgs) : imgs;
-  const locations = typeof locs === "string" ? JSON.parse(locs) : locs;
+const ReviewPostUser = ({ locs, contents, imgs } : any) => {
+  const images = imgs;
+  const locations = locs;
   const [avatar, setAvatar] = useState(
     "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/defaultAvatar%2Favatar.png?alt=media&token=1d512fe7-5ddd-4a3e-b675-ae0948023964"
   );
   const [fullname, setFullname] = useState("");
-
+  // const hashtags = hashs;
   useEffect(() => {
     const fetchUserData = async () => {
       //Lay avatar fullname id user
@@ -102,6 +94,8 @@ const ReviewPostUser = ({
       ? contents.replace(/<br>/g, "\n")
       : contents.join(" ").replace(/<br>/g, "\n");
 
+    
+
   return (
     <ScrollView style={{ borderColor: "#ccc", borderWidth: 1 }}>
       {/* Post Header */}
@@ -145,14 +139,15 @@ const ReviewPostUser = ({
             <Text style={styles.totalLikes}> 0</Text>
             <CommentButton style={styles.buttonItem} />
           </View>
-          <TouchableOpacity
-            delayPressOut={50}
-          >
-            <Icon
-              name={"bookmark-o"}
-              size={24}
-              color={"blac"}
-            />
+          {/* {hashtags && hashtags.map((hash: any) => {
+            return (
+              <TouchableOpacity key={hash} delayPressOut={50}>
+                <Text>{hash}</Text>
+              </TouchableOpacity>
+            );
+          })} */}
+          <TouchableOpacity delayPressOut={50}>
+            <Icon name={"bookmark-o"} size={24} color={"blac"} />
           </TouchableOpacity>
         </View>
       </View>

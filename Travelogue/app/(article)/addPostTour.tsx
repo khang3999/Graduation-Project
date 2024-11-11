@@ -51,6 +51,7 @@ import PackageCard from "@/components/cart/PackageCard";
 import { UserRegister } from "@/model/UserRegister";
 import LottieView from "lottie-react-native";
 import { has } from "lodash";
+import ReviewPostUser from "./reviewPostUser";
 
 const AddPostTour = () => {
   interface Country {
@@ -62,6 +63,7 @@ const AddPostTour = () => {
   const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [contentReviewPost, setcontentReviewPost] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [citiesData, setCitiesData] = useState<
@@ -89,6 +91,7 @@ const AddPostTour = () => {
     useState(false);
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
+  const [modalReviewPost, setModalReviewPost] = useState(false);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -871,7 +874,7 @@ const AddPostTour = () => {
 
     try {
       //Tạo bảng
-      const postsRef = ref(database, "toursH");
+      const postsRef = ref(database, "tours");
       //Tạo id bài viết
       const newPostRef = push(postsRef);
       //Lấy id bài post
@@ -1083,6 +1086,11 @@ const AddPostTour = () => {
   //Thêm hashtag
   const handleAddHashtag = () => {
     if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
+
+      // kiểm tra và thay thế khoảng trắng 
+      //\s: Là ký tự đại diện cho bất kỳ khoảng trắng nào.
+      //+: một hoặc nhiều ký tự khoảng trắng liên tiếp.
+      //g:  tìm tất cả các khoảng trắng trong chuỗi
       const sanitizedHashtag = newHashtag.replace(/\s+/g, "");
       setHashtags([sanitizedHashtag, ...hashtags]);
       setNewHashtag("");
@@ -1133,8 +1141,110 @@ const AddPostTour = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [packageData, account?.balance]);
+  
 
   // *********************************************************************
+   // Xử lý review bài viết
+   const handleReviewPost = async () => {
+    if (cities.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng chọn tỉnh thành checkin.");
+      return;
+    }
+    if (title === "") {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (content === "") {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
+      return;
+    }
+    if (days.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+    if (hashtags.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm hashtag cho bài viết.");
+      return;
+    }
+
+    const existingDay = days.find(
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
+    );
+    if (existingDay) {
+      const dayIndex = days.findIndex((day) => day === existingDay);
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+
+    const existingActivity = days.find((day) =>
+      day.activities.find(
+        (act) => act.time === "" || act.address === "" || act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = days.findIndex((day) =>
+        day.activities.includes(existingActivity.activities[0])
+      );
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
+      );
+      return;
+    }
+    // console.log(images);
+    if (images.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết.");
+      return;
+    }
+    //Tạo dữ liệu mardown
+    const contents = `# ${title}<br><br>${content}<br><br>${days
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
+            day.description
+          }<br><br>${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
+            )
+            .join("<br><br>")}`
+      )
+      .join("<br><br>")}`;
+    //Luư dữ liệu content
+    setcontentReviewPost(contents);
+
+    setModalReviewPost(true);
+
+    // console.log("Contents:", contents);
+    // console.log("Images:", images);
+    // console.log("Cities:", cities);
+    // router.push({
+    //   pathname: "/(article)/reviewPostUser",
+    //   params: {
+
+    //     locations: JSON.stringify(cities),
+    //     contents: contents,
+    //     images: JSON.stringify(images),
+    //   },
+    // });
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -1980,19 +2090,88 @@ const AddPostTour = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           {buttonPost ? (
-            <ButtonComponent
-              text="Đang đăng bài ..."
-              textStyles={{ fontWeight: "bold", fontSize: 30 }}
-              color={appColors.primary}
-              disabled={true}
-            />
+           <RowComponent styles={{ marginHorizontal: 10 }}>
+           <TouchableOpacity
+             onPress={() => {
+               handleReviewPost();
+             }}
+             style={{
+               backgroundColor: appColors.btncity,
+               width: "20%",
+               height: "100%",
+               borderRadius: 10,
+               marginRight: 10,
+               borderColor: "green",
+               borderWidth: 1,
+             }}
+           >
+             <TextComponent
+               text="Review bài viết"
+               size={14}
+               styles={{
+                 fontWeight: "bold",
+                 color: "green",
+                 textAlign: "center",
+                 justifyContent: "center",
+                 marginTop: 3,
+                 padding: 5,
+               }}
+             />
+           </TouchableOpacity>
+           <ButtonComponent
+             text="Đang Đăng Bài...."
+             textStyles={{
+               width: "75%",
+               fontWeight: "bold",
+               fontSize: 30,
+               textAlign: "center",
+             }}
+             disabled={true}
+             color={appColors.primary}
+             onPress={handlePushPost}
+           />
+         </RowComponent>
           ) : (
-            <ButtonComponent
-              text="Đăng bài"
-              textStyles={{ fontWeight: "bold", fontSize: 30 }}
-              color={appColors.primary}
-              onPress={handlePushPost}
-            />
+            <RowComponent styles={{ marginHorizontal: 10 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  handleReviewPost();
+                }}
+                style={{
+                  backgroundColor: appColors.btncity,
+                  width: "20%",
+                  height: "100%",
+                  borderRadius: 10,
+                  marginRight: 10,
+                  borderColor: "green",
+                  borderWidth: 1,
+                }}
+              >
+                <TextComponent
+                  text="Review bài viết"
+                  size={14}
+                  styles={{
+                    fontWeight: "bold",
+                    color: "green",
+                    textAlign: "center",
+                    justifyContent: "center",
+                    marginTop: 3,
+                    padding: 5,
+                  }}
+                />
+              </TouchableOpacity>
+              <ButtonComponent
+                text="Đăng bài"
+                textStyles={{
+                  width: "75%",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  textAlign: "center",
+                }}
+                color={appColors.primary}
+                onPress={handlePushPost}
+              />
+            </RowComponent>
           )}
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
@@ -2556,7 +2735,7 @@ const AddPostTour = () => {
                     styles.closeButton,
                     { backgroundColor: "green", marginRight: 30 },
                   ]}
-                  onPress={() => console.log("Nạp tiền")}
+                  onPress={() => router.navigate("/(tabs)/payment")}
                 >
                   <Text style={[styles.closeButtonText]}>Nạp tiền</Text>
                 </TouchableOpacity>
@@ -2579,6 +2758,38 @@ const AddPostTour = () => {
             </View>
           </Modal>
         )}
+
+         {/* Modal review post */}
+         <Modal
+          visible={modalReviewPost}
+          style={styles.modalreview}
+          onDismiss={() => setModalReviewPost(false)}
+        >
+          <ReviewPostUser
+            locs={cities}
+            imgs={images}
+            contents={contentReviewPost}
+          />
+          <SectionComponent styles={{ marginBottom: -15 }}>
+            <View style={styles.separator} />
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                {
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                },
+              ]}
+              onPress={() => setModalReviewPost(false)}
+            >
+              <Text style={[styles.closeButtonText]}>Đóng</Text>
+            </TouchableOpacity>
+          </SectionComponent>
+        </Modal>
+
+
+        {/* Modal load */}
         {buttonPost ? (
           <Modal visible={buttonPost}>
             <View
@@ -2898,6 +3109,16 @@ const styles = StyleSheet.create({
     width: 22,
     height: 20,
     resizeMode: "contain",
+  },
+  modalreview: {
+    position: "absolute",
+    top: 25,
+    width: "99%",
+    height: "90%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 5,
   },
 });
 
