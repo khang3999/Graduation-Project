@@ -112,17 +112,17 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0384946973'), 
+                onPress: () => Linking.openURL('tel:0384946973'),
               },
               {
                 text: "Gửi email",
                 onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
               },
-              { text: "Đóng", style: "cancel" } 
+              { text: "Đóng", style: "cancel" }
             ],
-            { cancelable: true } 
+            { cancelable: true }
           );
-        
+
         } else if (statusId === "1") {
           Alert.alert(
             "Tài khoản chưa được duyệt",
@@ -130,15 +130,15 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0384946973'), 
+                onPress: () => Linking.openURL('tel:0384946973'),
               },
               {
                 text: "Gửi email",
                 onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
               },
-              { text: "Đóng", style: "cancel" } 
+              { text: "Đóng", style: "cancel" }
             ],
-            { cancelable: true } 
+            { cancelable: true }
           );
         } else if (statusId === "2") {
           Toast.show({
@@ -147,21 +147,21 @@ const LoginScreen = ({ navigation }: any) => {
             text2: `Chào mừng ${data.fullname}`,
             // visibilityTime: 3000,
           });
-          if (role=== "admin"){
+          if (role === "admin") {
             router.replace('/(admin)/(account)/account')
           }
-          else if (role === "user"){
-            router.replace("/(tabs)");
-          }
           else {
-            console.log("Day la trang doanh ngh");
+            router.replace({
+              pathname: "/(tabs)",
+              params: { dataUser: role },
+            });
           }
-          
+
         }
       }
       const userId = userCredential.user.uid;
       await AsyncStorage.setItem("userToken", userId);
-      
+
       // const storedUserId = await AsyncStorage.getItem("userToken");  
       // console.log(storedUserId);
 

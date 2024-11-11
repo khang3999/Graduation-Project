@@ -173,6 +173,8 @@ const HomeProvider = ({ children }) => {
                     console.log(jsonDataAccount.behavior);
                     setAccountBehavior(jsonDataAccount.behavior)
                     // Set du lieu
+                    console.log('aa',jsonDataAccount);
+                    console.log('id',userId);
                     setDataAccount(jsonDataAccount)
                     setLoadedDataAccount(true)
                 } else {
@@ -230,6 +232,7 @@ const HomeProvider = ({ children }) => {
                 dataModalSelected,
                 dataAllCities,
                 isFocus, setIsFocus,
+                userId, setUserId,
                 setDataAllCities,
                 setDataModalSelected,
                 setIsSearchingMode,
