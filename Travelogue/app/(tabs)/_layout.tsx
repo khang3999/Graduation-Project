@@ -6,13 +6,28 @@ import PlusButton from '@/components/buttons/PlusButton'
 import BellButton from '@/components/buttons/BellButton'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { ref } from 'firebase/database'
-import { database, onValue } from '@/firebase/firebaseConfig'
+import { database, get, onValue } from '@/firebase/firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 
 const _layout = () => {
-  const { userRole }: any = useLocalSearchParams();
-  const role = userRole ? userRole : null;
+  const [role, setRole] = useState("user"); 
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      const userID = await AsyncStorage.getItem("userToken");
+      if (userID) {
+        const userRef = ref(database, "accounts/" + userID);
+        const snapshot = await get(userRef);
+        const data = snapshot.val();
+        if (data && data.role) {
+          setRole(data.role);
+        }
+      }
+    };
+    fetchRole();
+  }, []);
+ 
   return (
     <Tabs
       tabBar={(props: any) => <TabBar role={role} {...props} />}
