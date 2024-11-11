@@ -5,6 +5,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { auth, database, ref } from '@/firebase/firebaseConfig';
 import { get, remove, update } from '@firebase/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAccount } from '@/contexts/AccountProvider';
 
 const SaveButton = (props: any) => {
   // const userID = auth.currentUser?.uid

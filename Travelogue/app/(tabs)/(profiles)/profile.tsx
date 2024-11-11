@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     avatar: string;
   }
 
-  const { accountData, setAccountData, setSearchedAccountData } = useAccount();
+  const { accountData, setAccountData, setSearchedAccountData }: any = useAccount();
   const [userId, setUserId] = useState<String | null>()  
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -60,10 +60,11 @@ export default function ProfileScreen() {
     onValue(userRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setAccountData(data); // Update state
+        setAccountData(data); // Update state                         
       }
     });
   };
+
 
   useEffect(() => {
     const initialize = async () => {
@@ -112,8 +113,6 @@ export default function ProfileScreen() {
     }
   };
 
-
-
   const openSearchModal = () => {
     setIsSearchModalVisible(true);
     Animated.timing(modalAnim, {
@@ -132,14 +131,10 @@ export default function ProfileScreen() {
   };
 
 
-  if (!accountData) {
-    return <Text>No user data available</Text>;
-  }
-
   return (
     <>
-      <HeaderProfile onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} />
-      <GalleryTabView userId={accountData.id} isSearched={false} />
+      <HeaderProfile onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} isSearched={false}/>
+      <GalleryTabView isSearched={false} />
 
       {/* Recent Search Modal */}
       {isSearchModalVisible && (
@@ -158,7 +153,7 @@ export default function ProfileScreen() {
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push({ pathname: "/SearchResult" });
+                  router.push("/SearchResult");
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>

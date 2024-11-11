@@ -21,7 +21,7 @@ const TourSection = () => {
             }))
         );
         return (
-            <Pressable style={styles.tourItem}>
+            <Pressable style={styles.tourItem} key={tour.item.id}>
                 <View style={styles.imageWrap}>
                     <View style={styles.locationWrap}>
                         <Carousel

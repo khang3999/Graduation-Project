@@ -13,7 +13,7 @@ import {
 import { TabView, SceneMap, TabBar, TabBarProps } from "react-native-tab-view";
 import MaterialIcons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useCallback } from "react";
 import { database, auth, get } from "@/firebase/firebaseConfig";
 import { ref, onValue, off, Unsubscribe } from "firebase/database";
 import { usePost } from "@/contexts/PostProvider";
@@ -21,6 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
 import { initial } from "lodash";
 import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -59,13 +60,14 @@ type Post = {
 };
 
 
-export default function GalleryTabView({ userId, isSearched }: { userId: string, isSearched: boolean }) {
+export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const layout = useWindowDimensions();
   const { selectedPost, setSelectedPost } = usePost();
-
+  const { accountData, searchedAccountData } = useAccount();
+  const userId = isSearched ? searchedAccountData.id : accountData?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
-  const [createdPosts, setCreatedPosts] = React.useState<Post[]>([]);
+  const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
   const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = React.useState<Post[]>([]);
   
@@ -78,6 +80,7 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
           { key: "third" },
         ]
   );
+
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -166,34 +169,46 @@ export default function GalleryTabView({ userId, isSearched }: { userId: string,
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+  
+      const fetchData = async () => {
+        setIsLoading(true);
+  
+        await fetchCreatedPosts();
+        await fetchSavedPosts();
+        await fetchLikedPosts();
+  
+        if (isActive) {
+          setIsLoading(false);
+        }
+      };
+  
+      fetchData();      
 
-    fetchCreatedPosts();
-    fetchSavedPosts();
-    fetchLikedPosts();
-
-    setIsLoading(false);
-
-    return () => {
-      if (userId) {
-        const createdPostsRef = ref(
-          database,
-          `accounts/${userId}/createdPosts`
-        );
-        const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
-        const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
-        off(createdPostsRef);
-        off(savedPostsRef);
-        off(likedPostRef);
-      }
-    };
-  }, [userId]);
+      return () => {
+        isActive = false; // Avoid state updates if the effect is cleaned up
+  
+        if (userId) {
+          const createdPostsRef = ref(
+            database,
+            `accounts/${userId}/createdPosts`
+          );
+          const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
+          const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
+          off(createdPostsRef);
+          off(savedPostsRef);
+          off(likedPostRef);
+        }
+      };
+    }, [userId])
+  );
 
   const FirstRoute = () => {
     return (
       <View style={{ flex: 1, paddingBottom: 70 }}>
-        {createdPosts.length === 0 ? (
+        {createdPosts && createdPosts.length === 0 ? (
           <>
             <Image
               source={require("@/assets/images/camera-circle.png")}
