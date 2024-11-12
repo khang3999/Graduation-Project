@@ -1950,7 +1950,7 @@ const AddPostTour = () => {
           </SectionComponent>
 
           {/* Hình ảnh */}
-          <SectionComponent styles={{ marginTop: 10 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
             {images.length > 0 ? (
               <View>
                 <TouchableOpacity
