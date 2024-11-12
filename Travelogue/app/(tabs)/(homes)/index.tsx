@@ -21,8 +21,8 @@ const Home = () => {
     setDataModalSelected,
     dataAllCities,
     setDataAllCities,
-    isFocus, setIsFocus }: any = useHomeProvider();
-
+    isFocus, setIsFocus,dataAccount }: any = useHomeProvider();
+    console.log(dataAccount, 'dataAccount');
   // const currentUser = auth.currentUser;
   // useEffect(() => {
   //   const storeUser = async () => {

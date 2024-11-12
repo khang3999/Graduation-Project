@@ -84,8 +84,6 @@ type PostItemProps = {
   setIsScrollEnabled: (value: boolean) => void;
 };
 
-
-
 const flattenLocations = (locations: Record<string, Record<string, string>>) => {
   const flattenedArray = [];
 
@@ -131,37 +129,33 @@ const PostItem: React.FC<PostItemProps> = ({
 }) => {
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
-
-
   const [commentText, setCommentText] = useState("");
-  const [replyingTo, setReplyingTo] = useState<{
-    id: string;
-    username: string;
-  } | null>(null);
-
-  const { loadedDataAccount }: any = useHomeProvider();
+  const { dataAccount }: any = useHomeProvider();
+  console.log(dataAccount, 'dataAccount');
+  
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
-
-
-  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-
   const totalComments = comments.length;
-  const isPostAuthor = loadedDataAccount.id === item.author.id;
+  const isPostAuthor = true;
   const flattenedLocationsArray = flattenLocations(item.locations);
-  const flattenedImagesArray = flattenImages(item.images);
-  const [isLoading, setIsLoading] = useState(false);
+  const flattenedImagesArray = flattenImages(item.images);  
 
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
+    if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
+      console.error('Missing required author information');
+      return;
+    } 
+    console.log(dataAccount, 'dataAccount');
+    // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
       const newComment = {
         author: {
-          id: loadedDataAccount.id,
+          id: dataAccount.id,
           avatar:
-            loadedDataAccount.avatar,
-          username: loadedDataAccount.fullname,
+            dataAccount.avatar,
+          username: dataAccount.fullname,
         },
         status_id: 1,
         reports: 0,
@@ -182,19 +176,18 @@ const PostItem: React.FC<PostItemProps> = ({
           await set(newCommentRef, newCommentWithId);
 
           setComments((prevComments) => {
-            if (replyingTo) {
+            if (parentId) {
               // Add as a reply with the correct `parentId`
-              return addReplyToComment(prevComments, replyingTo.id, newCommentWithId);
+              return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level comment
               return [newCommentWithId, ...prevComments];
             }
           });
-
-          setReplyingTo(null);
+          
         }
       } catch (error) {
-        console.error("Error adding rating comment:", error);
+        console.error("Error adding comment:", error);
       }
     }
   }
@@ -369,12 +362,11 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
       <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
-      <CommentsActionSheet
-        isPostAuthor={isPostAuthor}
+      <CommentsActionSheet        
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
-        accountId={loadedDataAccount.id}
+        accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
       />

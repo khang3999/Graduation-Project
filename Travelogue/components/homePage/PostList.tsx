@@ -374,7 +374,7 @@ const PostList = () => {
         < PaperProvider >
           <Pressable style={styles.item}  onPress={() => {
                   router.push({
-                    pathname: "/(profiles)/Post",
+                    pathname: "/post",
                     params: { initialIndex: 0 },
                   });
                   setSelectedPost([post.item])

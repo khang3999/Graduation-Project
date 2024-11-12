@@ -10,7 +10,7 @@ import { Rating } from 'react-native-ratings';
 
 interface CommentsActionSheetProps<T extends CommentType> {
     commentRefAS: RefObject<ActionSheetRef>;
-    isPostAuthor: boolean;
+    isPostAuthor?: boolean;
     commentsData: T[];
     onSubmitRatingComment?: (parentComment: RatingComment, replyText: string) => void;
     onSubmitComment?: (parentComment: Comment, replyText: string) => void;
@@ -41,16 +41,10 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
     const handleReplySubmit = () => {
 
         if (replyText) {
-            if (selectedComment && "rating" in selectedComment && props.onSubmitRatingComment) {
-                props.onSubmitRatingComment(selectedComment as RatingComment, replyText);
-
-            } else if (props.onSubmitComment) {
+            if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
 
-            } else if (!selectedComment) {
-                Alert.alert("Thông báo", "Xin hãy chọn 1 bình luận để trả lời");
             }
-
             setReplyText("");
             setSelectedComment(null);
 
@@ -100,37 +94,37 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
             >
                 <View  >
                     <View style={styles.topBorder}></View>
-                    <Text style={styles.ratingCommentsHeader}>Bình luận đánh giá</Text>
+                    <Text style={styles.ratingCommentsHeader}>Bình luận</Text>
                     <Divider style={styles.marginBottom5} />
                     {/* Input and Reply Button for Post Owner */}
                     {/* {props.isPostAuthor && ( */}
-                        <View style={styles.replyInputContainer}>
-                            {selectedComment && (
-                                <View style={styles.mentionContainer}>
-                                    <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
-                                    <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
-                                        <IconMaterial name="close-circle" size={16} color="#FF3B30" />
-                                    </Pressable>
-                                </View>
-                            )}
-                            <TextInput
-                                placeholder="Aa"
-                                value={replyText}
-                                onChangeText={setReplyText}
-                                style={styles.replyInput}
-                                multiline
-                            />
+                    <View style={styles.replyInputContainer}>
+                        {selectedComment && (
+                            <View style={styles.mentionContainer}>
+                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
+                                <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
+                                    <IconMaterial name="close-circle" size={16} color="#FF3B30" />
+                                </Pressable>
+                            </View>
+                        )}
+                        <TextInput
+                            placeholder="Aa"
+                            value={replyText}
+                            onChangeText={setReplyText}
+                            style={styles.replyInput}
+                            multiline
+                        />
 
-                            {/* Animated Send Button */}
+                        {/* Animated Send Button */}
 
-                            {replyText.length > 0 && (
-                                <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
-                                    <Pressable onPress={handleReplySubmit}>
-                                        <IconMaterial name='send' style={styles.replySubmitButtonText} />
-                                    </Pressable>
-                                </Animated.View>
-                            )}
-                        </View>
+                        {replyText.length > 0 && (
+                            <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
+                                <Pressable onPress={handleReplySubmit}>
+                                    <IconMaterial name='send' style={styles.replySubmitButtonText} />
+                                </Pressable>
+                            </Animated.View>
+                        )}
+                    </View>
 
                     {/* )} */}
                     {props.commentsData.length > 0 ? (
@@ -155,39 +149,23 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                                             </Text>
                                         </View>
                                     </View>
-                                    {'rating' in item && item.rating != -1 && (
-                                        <Rating
-                                            readonly
-                                            startingValue={item.rating}
-                                            ratingBackgroundColor="#CDCDCD"
-                                            imageSize={25}
-                                            style={{ marginBottom: 10, alignItems: 'flex-start' }}
-                                        />
-                                    )}
-                                    <Text style={styles.ratingCommentText}>{item.content}</Text>
-                                    {'rating' in item && item.image && (
-                                        <Image
-                                            source={{ uri: item.image }}
-                                            style={styles.ratingCommentImage}
-                                        />
-                                    )}
-                                    {/* Conditionally show reply option for the post owner */}
-                                    {/* {props.isPostAuthor && ( */}
-                                        <Pressable
 
-                                            style={styles.replyButtonContainer}
-                                            onPress={() => handleReplyButtonPress(item)}
-                                        >
-                                            <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
-                                            <Text style={styles.replyButtonText}>Reply</Text>
-                                        </Pressable>
-                                    {/* )} */}
+                                    <Text style={styles.ratingCommentText}>{item.content}</Text>
+                                    <Pressable
+
+                                        style={styles.replyButtonContainer}
+                                        onPress={() => handleReplyButtonPress(item)}
+                                    >
+                                        <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
+                                        <Text style={styles.replyButtonText}>Reply</Text>
+                                    </Pressable>
+
                                 </Pressable>
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />
                     ) : (
-                        <Text style={styles.noCommentsText}>No rating comments yet.</Text>
+                        <Text style={styles.noCommentsText}>No comments yet.</Text>
                     )}
 
                 </View>

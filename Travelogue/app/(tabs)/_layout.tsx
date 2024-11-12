@@ -1,4 +1,4 @@
-import { View, Text, Button, Image, StyleSheet } from 'react-native'
+import { View, Text, Button, Image, StyleSheet, Pressable } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { router, Tabs, useLocalSearchParams } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
@@ -23,10 +23,12 @@ const _layout = () => {
         },
         headerTitle: (props) =>
           // Bỏ image vào đây
+        <Pressable onPress={() => { router.replace('../(homes)') }}>
           <Image
             source={require('@/assets/images/logo.png')}
             resizeMode="contain"
           />
+        </Pressable>
         ,
         headerRight: () => (
           <View style={styles.headerRight}>
@@ -38,7 +40,7 @@ const _layout = () => {
     >
       <Tabs.Screen
         key={1}
-        name="index"
+        name="(homes)"
         options={{
           title: 'Home',
         }} />
