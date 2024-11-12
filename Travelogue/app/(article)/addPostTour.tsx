@@ -1027,8 +1027,9 @@ const AddPostTour = () => {
         // Lưu bài viết vào Realtime Database
         if (postId) {
           await set(newPostRef, postData);
-          //Tru tien trong tai khoan
           if (account) {
+            const userPost = ref(database, `accounts/${userId}/createdPosts`);
+          //Tru tien trong tai khoan
             const newAccumulate =
               (account?.balance ?? 0) -
               (selectedPackageData.price -
@@ -1037,6 +1038,10 @@ const AddPostTour = () => {
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newAccumulate,
+            });
+            //Them id bai viet vao tai khoan
+            await update(userPost, {
+              [postId]: true,
             });
           }
         } else {
