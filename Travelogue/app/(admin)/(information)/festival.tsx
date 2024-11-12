@@ -4,7 +4,7 @@ import { Button, Checkbox, Divider } from 'react-native-paper';
 import { SelectList } from 'react-native-dropdown-select-list'
 import { ref } from '@firebase/database';
 import { database, onValue } from '@/firebase/firebaseConfig';
-import { get, update } from '@firebase/database'
+import { get, update, set, push } from '@firebase/database'
 import { TextInput } from 'react-native-gesture-handler';
 import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
@@ -12,7 +12,7 @@ import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/col
 const Festival = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedPoint, setSelectedPoint] = useState(-1);
+  const [selectedPoint, setSelectedPoint] = useState(1);
   const [cityArea, setCityArea] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [cityInformation, setCityInformation] = useState("");
@@ -20,6 +20,7 @@ const Festival = () => {
   const [dataCities, setDataCities] = useState([])
   const [editText, setEditText] = useState(false)
   const inputRef: any = useRef(null);
+  const [isReady, setIsReady] = useState(false)
   const type = [
     { key: 1, value: "landmark" }, { key: 2, value: "festival" },]
 
@@ -48,6 +49,7 @@ const Festival = () => {
   }, [])
   // Fetch data cities theo quốc gia
   const fetchCityByCountry = async (countryId: any) => {
+    // setDataCities([])
     try {
       const refCity = ref(database, `cities/${countryId}`)
       const snapshot = await get(refCity);
@@ -63,6 +65,7 @@ const Festival = () => {
         );
         setDataCities(dataCitiesArray)
       } else {
+        setDataCities([])
         console.log("No data city available");
       }
     } catch (error) {
@@ -71,33 +74,41 @@ const Festival = () => {
   }
   // Fetch data point theo city
   useEffect(() => {
-    console.log("111111");
-    
-      if (selectedCity!=""&& selectedCountry!=""&&selectedPoint!=null) {
-        const type = getValueFromKey(selectedPoint)
-        const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
-        console.log(onValueChange);
-        
-        // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-        const data = onValue(onValueChange, (snapshot) => {
-        if (snapshot.exists()) {
-          const dataPoints = snapshot.val()
-          const pointArr: any = Object.values(dataPoints).map((key:any) => ({
-            key,
-            value: key.title,
-          }));          
-          setFilteredData(pointArr)
-        } else {
-          setFilteredData([])
-          console.log("No data point available");
-        }}, (error) => {
-          console.error("Error fetching data:", error);
-        });
-    
-        // Cleanup function để hủy listener khi component unmount
-        return () => data();
+
+    const type = getValueFromKey(selectedPoint)
+    const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
+    console.log(onValueChange);
+
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const data = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const dataPoints = snapshot.val()
+        const pointArr: any = Object.values(dataPoints).map((key: any) => ({
+          key,
+          value: key.title,
+        }));
+        setFilteredData(pointArr)
+      } else {
+        setFilteredData([])
+        console.log("No data point available");
       }
-  }, [selectedCity , selectedCountry , selectedPoint])
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    // Cleanup function để hủy listener khi component unmount
+    return () => data();
+
+  }, [isReady])
+
+  //When selectedCity & selectCountry & selectedPoint is ready
+  useEffect(() => {
+    if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
+      setIsReady(true)
+    }
+
+  }, [selectedCity, selectedCountry, selectedPoint])
+
 
   //Handle when selected countries
   const handleSelectedCountry = (val: any) => {
@@ -108,7 +119,7 @@ const Festival = () => {
   const handleSelectedCity = (val: any) => {
     setSelectedCity(val)
 
-    if (val != "" && val != undefined) {
+    if (val != null && val != undefined) {
       const a: any = dataCities.find((e: any) => (e.key == val))
       setCityArea(a.area)
       setCityInformation(a.information)
@@ -119,23 +130,26 @@ const Festival = () => {
     const item = type.find((item) => item.key === key);
     return item ? item.value : null;
   };
+  const handleAdd = async () => {
+    console.log('add');
+
+  };
 
   const renderPointsItem = (item: any) => {
     return (
       <View style={styles.item}>
-        <View style={{borderRadius:30}}>
+        <View style={{ borderRadius: 30 }}>
           <Text style={styles.name}>{item.item.value}</Text>
         </View>
       </View>
     )
   };
-  console.log(selectedPoint);
-  
+
   return (
-    <View style={{ padding: 15, backgroundColor:'white' }}>
+    <View style={{ padding: 15, backgroundColor: 'white' }}>
       <View style={styles.selectContainer}>
         <SelectList
-          dropdownStyles={{zIndex:10, position:'absolute', width:170, backgroundColor:'white', top:0}}
+          dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
           boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
@@ -143,12 +157,12 @@ const Festival = () => {
           placeholder='Countries'
         />
         <SelectList
-          dropdownStyles={{zIndex:10, position:'absolute', width:170, backgroundColor:'white'}}
+          dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
           boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
-          placeholder='Cities'
+          placeholder="Cities"
         />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: "space-between", marginHorizontal: 20 }}>
@@ -180,7 +194,7 @@ const Festival = () => {
                     height: 12,
                     width: 12,
                     borderRadius: 6,
-                    backgroundColor: '#333',
+                    backgroundColor: 'blue',
                   }}
                 />
               )}
@@ -189,6 +203,16 @@ const Festival = () => {
           </TouchableOpacity>
         ))}
       </View>
+      {
+        isReady && (
+          <View style={styles.addBar}>
+            <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
+              <Text style={{ color: '#ffffff' }} >+</Text>
+            </TouchableOpacity>
+
+          </View>
+        )
+      }
       <View style={styles.containerFlat}>
         {filteredData.length > 0 ? (
           <FlatList
@@ -200,7 +224,7 @@ const Festival = () => {
         ) : (
           <Text style={styles.noAccountsText}>No data</Text>
         )}
-      </View>         
+      </View>
 
     </View>
 
@@ -211,19 +235,19 @@ const Festival = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-  },containerFlat: {
-    marginVertical:50,
-    height:"75%",
+  }, containerFlat: {
+    marginVertical: 20,
+    height: "75%",
     borderColor: "red",
-    borderWidth:1,
-    borderRadius:30,
+    borderWidth: 1,
+    borderRadius: 30,
     backgroundColor: '#f5f5f5',
 
   },
   containerFlatList: {
     paddingVertical: 10, // khoảng cách trên và dưới của FlatList
     paddingHorizontal: 16, // khoảng cách hai bên của FlatList
-    borderRadius:30,
+    borderRadius: 30,
 
   },
   textArea: {
@@ -254,7 +278,7 @@ const styles = StyleSheet.create({
   selectList: {
     width: 170,
     zIndex: 10, // Giúp hiển thị SelectList không bị đẩy xuống dưới khi mở
-  },item: {
+  }, item: {
     backgroundColor: '#fff',
     padding: 16,
     margin: 10,
@@ -271,11 +295,23 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '600',
-  },noAccountsText: {
+  }, noAccountsText: {
     textAlign: 'center',
     fontSize: 16,
     marginTop: 20,
     color: '#777'
+  }, addBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+    marginRight: 20,
+  },
+  addBtn: {
+    backgroundColor: '#5E8C31',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginLeft: 20,
+    borderRadius: 8,
   },
 });
 

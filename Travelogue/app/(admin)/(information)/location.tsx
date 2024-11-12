@@ -112,10 +112,10 @@ const Location = () => {
 
 
     return (
-        <View style={{ padding: 15, backgroundColor:'white', height:"100%" }}>
+        <View style={{ padding: 15, backgroundColor: 'white' }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 15 }}>
                 <SelectList
-                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 0 }}
+                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
 
                     boxStyles={{ width: 170 }}
                     setSelected={(val: any) => handleSelectedCountry(val)}
@@ -124,7 +124,7 @@ const Location = () => {
                     placeholder='Countries'
                 />
                 <SelectList
-                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 0 }}
+                    dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
 
                     boxStyles={{ width: 170 }}
                     setSelected={(val: any) => handleSelectedCity(val)}
@@ -134,6 +134,11 @@ const Location = () => {
 
                 />
             </View>
+            <TouchableOpacity
+                style={styles.imageBtn}
+            >
+                <Text style={styles.buttonText}>Imangeeeeee</Text>
+            </TouchableOpacity>
             <TextInput
                 ref={inputRef}
                 style={styles.textArea}
@@ -167,11 +172,13 @@ const styles = StyleSheet.create({
     textArea: {
         height: 150,
         padding: 10,
+        top: 100,
         textAlignVertical: 'top', // aligns text to the top in Android
         borderColor: '#ccc',
         borderWidth: 1,
         borderRadius: 5,
     }, saveBtn: {
+        top: 140,
         backgroundColor: '#2986cc',
         paddingVertical: 8,
         paddingHorizontal: 16,
@@ -181,6 +188,16 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         textAlign: 'center',
         fontSize: 16,
+    }, imageBtn: {
+        top: 20,
+        backgroundColor: '#2986cc',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 50,
+        marginRight: 10,
+        width: 100,
+        height: 40,
+        alignSelf: 'center'
     },
 });
 

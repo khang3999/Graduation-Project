@@ -148,6 +148,16 @@ export default function Layout() {
             )
           }}
         />
+        <Drawer.Screen
+          name="newPoint"
+          options={{
+            drawerLabel: 'newPoint',
+            title: 'newPoint',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
       </Drawer>
 
     </GestureHandlerRootView>
