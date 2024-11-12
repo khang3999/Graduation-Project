@@ -20,7 +20,7 @@ import { auth } from "@/firebase/firebaseConfig";
 import { useAccount } from "@/contexts/AccountProvider";
 
 export default function EditingProfileScreen() {  
-  const {accountData} = useAccount();
+  const { accountData }: { accountData: { avatar: string; id: string; fullname: string; phone: string } } = useAccount();
   
   const initialAvatarUrl =  accountData.avatar;
   const [selectedImage, setSelectedImage] = React.useState<string | null>(

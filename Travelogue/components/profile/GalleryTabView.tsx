@@ -62,7 +62,7 @@ type Post = {
 
 export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const layout = useWindowDimensions();
-  const { selectedPost, setSelectedPost } = usePost();
+  const { selectedPost, setSelectedPost }:any= usePost();
   const { accountData, searchedAccountData } = useAccount();
   const userId = isSearched ? searchedAccountData.id : accountData?.id;
   const [isLoading, setIsLoading] = React.useState(true);

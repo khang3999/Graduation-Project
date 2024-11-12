@@ -77,6 +77,23 @@ export default function ProfileLayout() {
         }}
 
       />
+       <Stack.Screen
+        name="Tour"
+        options={{
+          headerShown: true,
+          title: "Tours",
+          headerStyle: {
+            backgroundColor:
+              Colors[colorScheme ? colorScheme : "light"].background,
+          },
+          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }}
+
+      />
       <Stack.Screen name="SearchResult"
         options={{
           headerShown: true,

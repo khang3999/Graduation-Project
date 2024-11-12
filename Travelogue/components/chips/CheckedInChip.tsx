@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
   },
   chipItem: {
     margin: 5,
+    fontSize: 10,
     backgroundColor: '#C1E1C1',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
