@@ -1,7 +1,7 @@
 import { initializeApp } from '@firebase/app';
 import { getAuth, FacebookAuthProvider, signInWithCredential, signInWithPopup } from '@firebase/auth';
 import { getDatabase } from '@firebase/database'; 
-import { ref, set, onValue, get, update} from "@firebase/database";
+import { ref, set, onValue, get, update, push} from "@firebase/database";
 
 import {
   getStorage,
@@ -34,6 +34,7 @@ export {
   auth, 
   database, 
   get,
+  push,
   ref, 
   set,
   storage, 
