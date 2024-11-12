@@ -23,7 +23,7 @@ const CheckInMap = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
-
+  
 
   // Lấy vùng theo quốc gia
   const fetchAreasByCountry = async (countryId) => {
