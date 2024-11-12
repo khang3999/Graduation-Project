@@ -15,6 +15,7 @@ const HeartButton = (props: any) => {
     const [userID, setUserID] = useState('')
     const [liked, setLiked] = useState(false);
     const [likeNum, setLikeNum] = useState(data.likes)
+    const [disabled, setDisabled] = useState(false)
 
     useEffect(() => {
         const getUserId = async () => {
@@ -55,6 +56,7 @@ const HeartButton = (props: any) => {
 
     // Hàm set like
     const handleLike = async (dataID: any, userID: any) => {
+        setDisabled(true)
         // Cập nhật list like của account
         // Phan loại
         const refColumn = type == 0 ? 'likedPostsList':'likedToursList'
@@ -101,13 +103,14 @@ const HeartButton = (props: any) => {
             console.error('Lỗi khi cập nhật likedList:', error);
         }
         finally { // Đổi state
+            setDisabled(false)
             setLiked(!liked);
         }
 
     }
     return (
         <>
-            <TouchableOpacity delayPressOut={50} onPress={() => handleLike(data.id, userID)} {...props}>
+            <TouchableOpacity disabled={disabled} delayPressOut={50} onPress={() => handleLike(data.id, userID)} {...props}>
                 <AntDesign
                     name={liked ? 'heart' : 'hearto'}
                     size={24}

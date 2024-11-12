@@ -92,6 +92,7 @@ const HomeProvider = ({ children }) => {
                     const dataToursJson = snapshot.val()
                     const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
                     // Sắp xếp lại list tour theo thứ tự
+                    
                     sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
                     setDataTours(dataToursArray)
                 } else {
