@@ -65,6 +65,7 @@ const AddPostTour = () => {
   const [content, setContent] = useState("");
   const [contentReviewPost, setcontentReviewPost] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQueryCity, setSearchQueryCity] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [citiesData, setCitiesData] = useState<
     {
@@ -256,6 +257,28 @@ const AddPostTour = () => {
     }
   }, [selectedCountry]);
 
+   //Xoa các dấu tiếng việt
+  const removeDiacritics = (text: any) => {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+//Search theo ten thanh pho
+  useEffect(() => {
+    if (searchQueryCity) {
+      const filteredCities = citiesData.filter((city) =>
+        removeDiacritics(city.name.toLowerCase()).includes(
+          removeDiacritics(searchQueryCity.toLowerCase())
+        )
+      );
+      setCitiesDataFilter(filteredCities);
+    } else {
+      //Lấy all thành phố
+      const filteredCities = citiesData.filter(
+        (city) => city.id_nuoc === selectedCountry
+      );
+      setCitiesDataFilter(filteredCities);
+    }
+  }, [searchQueryCity]);
+
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress =
@@ -264,6 +287,7 @@ const AddPostTour = () => {
       { id: city.id, name: city.name, id_nuoc: city.id_nuoc, area_id: city.area_id },
       ...cities,
     ]);
+    setSearchQueryCity("");
     setModalVisibleCity(false);
   };
 
@@ -959,7 +983,13 @@ const AddPostTour = () => {
         const likes = 0;
         const reports = 0;
         const match = 0;
-        const status = "active";
+        let status;
+        if (isPublic) {
+           status = 1;
+        }
+        else {
+           status = 2;
+        }
         //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty                                              
         const thumbnail = uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]]?.images_value?.[0] || '';
 
@@ -991,7 +1021,7 @@ const AddPostTour = () => {
           id : postId,
           reports,
           match,
-          status,
+          status: status,
         };
 
         // Lưu bài viết vào Realtime Database
@@ -2210,15 +2240,28 @@ const AddPostTour = () => {
         {/* Chọn tỉnh thành cho bài viết */}
         <Modal
           visible={modalVisibleCity}
-          onDismiss={() => setModalVisibleCity(false)}
-        >
+          onDismiss={() => {
+            setModalVisibleCity(false)
+            setSearchQueryCity("")
+          }
+          }
+            >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
-            {citiesDataFilter.length > 0 ? (
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Tìm kiếm địa điểm"
+                value={searchQueryCity}
+                onChangeText={setSearchQueryCity}
+              />
+             
+            </View>
+            {selectedCountry ? (
               <FlatList
                 data={citiesDataFilter}
                 keyExtractor={(item) => item.id}
-                style={styles.countryList}
+                style={[styles.countryList , {minHeight: 200} ]}
                 renderItem={({ item }) => {
                   //Loc ra nhung thanh pho da chon
                   const isCitySelected = cities.some(
@@ -2243,12 +2286,16 @@ const AddPostTour = () => {
                 }}
               />
             ) : (
-              <Text>Chưa chọn quốc gia trước khi chọn thành phố</Text>
+              <Text style={{fontSize: 16, color: 'red'}} >Chưa chọn quốc gia trước khi chọn thành phố</Text>
             )}
             <View style={styles.separator} />
             <TouchableOpacity
               style={styles.closeButton}
-              onPress={() => setModalVisibleCity(false)}
+              onPress={() => {
+                setModalVisibleCity(false)
+                setSearchQueryCity("")
+              }
+            }
             >
               <Text style={styles.closeButtonText}>Đóng</Text>
             </TouchableOpacity>
