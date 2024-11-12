@@ -359,7 +359,7 @@ const TourList = () => {
             {/* </Provider> */}
           </View>
           <View style={styles.imageTour}>
-            <Image style={styles.imageTour} source={{ uri: tour.item.images }}></Image>
+            <Image style={styles.imageTour} source={{ uri: tour.item.thumbnail }}></Image>
           </View>
 
           {/* Button like, comment, save */}

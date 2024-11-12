@@ -45,7 +45,7 @@ const TourSection = () => {
                     </View>
                     <Image
                         style={styles.image}
-                        source={{ uri: tour.item.images }}
+                        source={{ uri: tour.item.thumbnail }}
                     />
                 </View>
                 <View style={styles.overPlay}></View>

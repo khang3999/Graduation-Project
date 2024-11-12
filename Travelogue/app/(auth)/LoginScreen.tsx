@@ -104,7 +104,8 @@ const LoginScreen = ({ navigation }: any) => {
       if (data) {
         const statusId = data.status_id;
         const role = data.role;
-        console.log(statusId);
+        console.log('dasdsadsad',role);
+
         if (statusId === "4") {
           Alert.alert(
             "Tài khoản đã bị cấm",
