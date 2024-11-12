@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const _layout = () => {
   const { userRole }: any = useLocalSearchParams();
   const role = userRole ? userRole : null;
+  console.log(role)
   return (
     <Tabs
       tabBar={(props: any) => <TabBar role={role} {...props} />}

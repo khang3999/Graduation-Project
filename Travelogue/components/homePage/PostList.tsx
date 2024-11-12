@@ -381,12 +381,12 @@ const PostList = () => {
             {/*Author*/}
             <View style={styles.authorContent}>
               <TouchableOpacity style={styles.avatarWrap}>
-                <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
+                <Image style={styles.avatar} source={{ uri: post.item.author.avatar }}></Image>
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
                 <TouchableOpacity>
                   <Text style={{ fontWeight: '600' }} numberOfLines={1}>
-                    {post.item.author.username}
+                    {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
                 <Text style={{ fontStyle: 'italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
@@ -413,10 +413,10 @@ const PostList = () => {
                 }>
                 {allLocations.map((location: any) => {
                   return (
-                      <TouchableOpacity key={location.id}>
-                        <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
-                        <Divider />
-                      </TouchableOpacity>
+                    <TouchableOpacity key={location.id}>
+                      <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+                      <Divider />
+                    </TouchableOpacity>
                   )
                 })
                 }
