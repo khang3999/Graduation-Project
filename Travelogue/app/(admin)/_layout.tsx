@@ -158,6 +158,16 @@ export default function Layout() {
             )
           }}
         />
+        <Drawer.Screen
+          name="testReport"
+          options={{
+            drawerLabel: 'testReport',
+            title: 'testReport',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
       </Drawer>
 
     </GestureHandlerRootView>

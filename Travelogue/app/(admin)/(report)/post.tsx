@@ -128,7 +128,7 @@ export default function PostReport() {
     return (
       <View key={post.item.id} style={styles.accountItem}>
         <View>
-          <Text style={styles.name}>{post.item.id}</Text>
+          <Text style={styles.name}>{post.item.post_id}</Text>
           {Object.values(post.item.reason).map((reason: any) => {
             return (
               <Text style={styles.reason}>- {reason}</Text>

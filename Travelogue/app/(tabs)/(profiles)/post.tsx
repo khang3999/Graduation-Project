@@ -528,7 +528,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
   //handle report rating comment
   const handleReportRatingComment = (comment: RatingComment) => {
-
+    
   }
 
 

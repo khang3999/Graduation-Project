@@ -39,7 +39,6 @@ const PackageComponent = () => {
   }, [])
 
   const handleAddPackage = async () => {
-    console.log('aaa');
 
     // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
     const packagesRef = ref(database, 'packages/');
