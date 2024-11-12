@@ -39,7 +39,7 @@ import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
 import { CommentType, RatingComment } from '@/types/CommentTypes';
-import { formatDate } from "@/constants/commonFunctions";
+import { formatDate } from "@/utils/commons"
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -153,7 +153,7 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
-  console.log('item', item.author.avatar);  
+  
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
@@ -163,7 +163,7 @@ const PostItem: React.FC<PostItemProps> = ({
     id: string;
     username: string;
   } | null>(null);
-
+  
   const { accountData }: any = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
@@ -176,7 +176,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [isLoading, setIsLoading] = useState(false);
-
+  
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (replyText.trim().length > 0) {
@@ -590,8 +590,8 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} postID={item.id} />
-            <Text style={styles.totalLikes}>{item.likes}</Text>
+            {/* <HeartButton style={styles.buttonItem} data={item} type={0} />
+            <Text style={styles.totalLikes}>{item.likes}</Text> */}
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}
@@ -723,6 +723,7 @@ export default function PostsScreen() {
 
   const { selectedPost, setSelectedPost } = usePost();
   const { initialIndex } = useLocalSearchParams();
+  
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0 ;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   
