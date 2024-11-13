@@ -127,6 +127,7 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
+  const TYPE = 0;
   const MAX_LENGTH = 5;
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
@@ -338,15 +339,14 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} data={item} type={0} />
-            <Text style={styles.totalLikes}>{item.likes}</Text>
+            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />            
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} postID={item.id} />
+          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
         </View>
 
       </View>
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   totalComments: {
     marginRight: 10,
     marginTop: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
   },
   commentsContainer: {

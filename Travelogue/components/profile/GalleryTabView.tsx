@@ -19,9 +19,10 @@ import { ref, onValue, off, Unsubscribe } from "firebase/database";
 import { usePost } from "@/contexts/PostProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
-import { initial } from "lodash";
+import { initial, set } from "lodash";
 import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
 import { useFocusEffect } from '@react-navigation/native';
+import { useTourProvider } from "@/contexts/TourProvider";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -63,13 +64,14 @@ type Post = {
 export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const layout = useWindowDimensions();
   const { selectedPost, setSelectedPost }:any= usePost();
-  const { accountData, searchedAccountData } = useAccount();
+  const {setSelectedTour}:any = useTourProvider();
+  const { accountData, searchedAccountData }:any= useAccount();
   const userId = isSearched ? searchedAccountData.id : accountData?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
   const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
-  const [likedPosts, setLikedPosts] = React.useState<Post[]>([]);
+  const [savedTours, setSavedToursList] = React.useState<Post[]>([]);
   
   const [routes] = React.useState(
     isSearched
@@ -115,7 +117,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const fetchSavedPosts = async () => {
     try {
       if (userId) {
-        const userRef = ref(database, `accounts/${userId}/savedPosts`);
+        const userRef = ref(database, `accounts/${userId}/savedPostsList`);
         onValue(userRef, async (snapshot) => {
           const data = snapshot.val();
           if (data) {
@@ -141,26 +143,27 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   };
 
   //fetching hide posts from firebase
-  const fetchLikedPosts = async () => {
+  const fetchSavedTours = async () => {
     try {
       if (userId) {
-        const userRef = ref(database, `accounts/${userId}/likedPosts`);
+        const userRef = ref(database, `accounts/${userId}/savedToursList`);
         onValue(userRef, async (snapshot) => {
           const data = snapshot.val();
           if (data) {
             // Get the post IDs as an array
-            const postIds = Object.keys(data);
+            const tourIds = Object.keys(data);
 
-            const postFetches = postIds.map(async (postId) => {
-              const postRef = ref(database, `posts/${postId}`);
-              const postSnapshot = await get(postRef);
-              return postSnapshot.val();
+            const tourFetches = tourIds.map(async (tourIds) => {
+              const tourRef = ref(database, `tours/${tourIds}`);
+              const tourSnapshot = await get(tourRef);
+              return tourSnapshot.val();
             });
 
-            const posts = await Promise.all(postFetches);
-            setLikedPosts(posts.filter(Boolean));
+            const tours = await Promise.all(tourFetches);
+            setSavedToursList(tours.filter(Boolean));
+            console.log(tours);
           } else {
-            setLikedPosts([]);
+            setSavedToursList([]);
           }
         });
       }
@@ -178,13 +181,14 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   
         await fetchCreatedPosts();
         await fetchSavedPosts();
-        await fetchLikedPosts();
+        await fetchSavedTours();
   
         if (isActive) {
           setIsLoading(false);
         }
       };
-  
+      setSelectedPost(null)
+      setSelectedTour(null)
       fetchData();      
 
       return () => {
@@ -195,11 +199,11 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             database,
             `accounts/${userId}/createdPosts`
           );
-          const savedPostsRef = ref(database, `accounts/${userId}/savedPosts`);
-          const likedPostRef = ref(database, `accounts/${userId}/likedPosts`);
+          const savedPostsRef = ref(database, `accounts/${userId}/savedPostsList`);
+          const savedToursRef = ref(database, `accounts/${userId}/savedToursList`);
           off(createdPostsRef);
           off(savedPostsRef);
-          off(likedPostRef);
+          off(savedToursRef);
         }
       };
     }, [userId])
@@ -283,7 +287,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
 
   const ThirdRoute = () => (
     <View style={{ flex: 1, paddingBottom: 70 }}>
-      {likedPosts.length === 0 ? (
+      {savedTours.length === 0 ? (
         <>
           <Image
             source={require("@/assets/images/camera-circle.png")}
@@ -294,15 +298,15 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
       ) : (
         <FlatList
           style={{ flex: 1 }}
-          data={likedPosts}
+          data={savedTours}
           renderItem={({ item, index }) => (
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/post",
+                  pathname: "/tour",
                   params: { initialIndex: index.toString() },
                 });
-                setSelectedPost(likedPosts);
+                setSelectedTour(savedTours);
               }}
             >
               <Image
@@ -333,8 +337,8 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             route.key === "first"
               ? "logo-tableau"
               : route.key === "second"
-                ? "pricetags-outline"
-                : "heart-outline"
+                ? "bookmark-outline"
+                : "flag-outline"
           }
           size={24}
           color={focused ? "black" : "grey"}

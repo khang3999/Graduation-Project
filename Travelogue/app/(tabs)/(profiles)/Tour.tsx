@@ -600,7 +600,7 @@ import {
               />
               <Text style={styles.totalComments}>{totalComments}</Text>
             </View>
-            <SaveButton style={styles.buttonItem} postID={item.id} />
+            <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
           </View>
           {/* Rating Button */}
           <View style={styles.ratingButtonContainer}>
@@ -746,7 +746,7 @@ import {
           keyExtractor={(item, index) => index.toString()}
           style={styles.container}
           scrollEnabled={isScrollEnabled}
-        //   initialScrollIndex={initialPage}
+          initialScrollIndex={initialPage}
           getItemLayout={(data, index) => ({
             length: windowHeight,
             offset: index * windowHeight,

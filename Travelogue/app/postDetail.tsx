@@ -127,6 +127,7 @@ import {
     item,
     setIsScrollEnabled,
   }) => {
+    const TYPE = 0;
     const MAX_LENGTH = 5;
     const commentAS = useRef<ActionSheetRef>(null);
     const [commentText, setCommentText] = useState("");
@@ -338,7 +339,7 @@ import {
           
           <View style={styles.buttonContainer}>
             <View style={styles.buttonRow}>
-              <HeartButton style={styles.buttonItem} data={item} type={0} />
+              <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
               {/* <Text style={styles.totalLikes}>{item.likes}</Text> */}
               <CommentButton
                 style={styles.buttonItem}
@@ -346,7 +347,7 @@ import {
               />
               <Text style={styles.totalComments}>{totalComments}</Text>
             </View>
-            <SaveButton style={styles.buttonItem} postID={item.id} />
+            <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
           </View>
   
         </View>
