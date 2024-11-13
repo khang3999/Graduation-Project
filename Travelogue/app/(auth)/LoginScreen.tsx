@@ -27,6 +27,7 @@ import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
 import Toast from "react-native-toast-message-custom";
+import LottieView from "lottie-react-native";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -86,7 +87,6 @@ const LoginScreen = ({ navigation }: any) => {
         password
       );
       const user = userCredential.user;
-
       if (!user.emailVerified) {
         Alert.alert(
           "Email chưa xác nhận",
@@ -113,17 +113,17 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0384946973'),
+                onPress: () => Linking.openURL("tel:0384946973"),
               },
               {
                 text: "Gửi email",
-                onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
+                onPress: () =>
+                  Linking.openURL("mailto:dongochieu333@gmail.com"),
               },
-              { text: "Đóng", style: "cancel" }
+              { text: "Đóng", style: "cancel" },
             ],
             { cancelable: true }
           );
-
         } else if (statusId === "1") {
           Alert.alert(
             "Tài khoản chưa được duyệt",
@@ -131,13 +131,14 @@ const LoginScreen = ({ navigation }: any) => {
             [
               {
                 text: "Gọi Tổng Đài",
-                onPress: () => Linking.openURL('tel:0384946973'),
+                onPress: () => Linking.openURL("tel:0384946973"),
               },
               {
                 text: "Gửi email",
-                onPress: () => Linking.openURL('mailto:dongochieu333@gmail.com'),
+                onPress: () =>
+                  Linking.openURL("mailto:dongochieu333@gmail.com"),
               },
-              { text: "Đóng", style: "cancel" }
+              { text: "Đóng", style: "cancel" },
             ],
             { cancelable: true }
           );
@@ -149,21 +150,19 @@ const LoginScreen = ({ navigation }: any) => {
             // visibilityTime: 3000,
           });
           if (role === "admin") {
-            router.replace('/(admin)/(account)/account')
+            const userId = userCredential.user.uid;
+            await AsyncStorage.setItem("userToken", userId);
+            router.replace("/(admin)/(account)/account");
+          } else {
+            const userId = userCredential.user.uid;
+            await AsyncStorage.setItem("userToken", userId);
+            router.replace("/(tabs)");
           }
-          else {
-            router.replace({
-              pathname: "/(tabs)",
-              params: { userRole: role },
-            });
-          }
-
         }
       }
-      const userId = userCredential.user.uid;
-      await AsyncStorage.setItem("userToken", userId);
+     
 
-      // const storedUserId = await AsyncStorage.getItem("userToken");  
+      // const storedUserId = await AsyncStorage.getItem("userToken");
       // console.log(storedUserId);
 
       setLoading(false);
@@ -278,7 +277,20 @@ const LoginScreen = ({ navigation }: any) => {
       {loading && (
         <Modal transparent={true} animationType="none" visible={loading}>
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={appColors.danger} />
+            <LottieView
+              source={require("../../assets/images/login.json")}
+              autoPlay
+              loop
+              style={{
+                position: "absolute",
+                top: 190,
+                // top: -190,
+                // left: -120,
+                // zIndex: -10,
+                width: 650,
+                height: 320,
+              }}
+            />
           </View>
         </Modal>
       )}

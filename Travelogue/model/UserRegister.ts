@@ -17,6 +17,7 @@ export class UserRegister {
   imageUrlBusinessLicense?: string | null;
   status_id: string;
   role : string;
+  checkInList?: string | null;
 
 
   constructor({
@@ -37,6 +38,7 @@ export class UserRegister {
     business_license_id = null,
     imageUrlBusinessLicense = null,
     status_id,
+    checkInList,
     role
 
   }: {
@@ -56,6 +58,7 @@ export class UserRegister {
     imageBackUrlCCCD: string | null; 
     business_license_id: string | null;
     imageUrlBusinessLicense: string | null;
+    checkInList: string | null;
     status_id: string;
     role: string;
 
@@ -78,6 +81,6 @@ export class UserRegister {
     this.imageUrlBusinessLicense = imageUrlBusinessLicense;
     this.status_id = status_id;
     this.role = role;
-   
+    this.checkInList = checkInList;
   }
 }

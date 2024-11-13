@@ -32,6 +32,4 @@ const TextComponent = (props: Props) => {
     );
 };
 
-const styles = StyleSheet.create({});
-
 export default TextComponent;
