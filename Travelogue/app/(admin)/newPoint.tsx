@@ -194,6 +194,19 @@ const NewPoint = () => {
       set(newPointRef, data)
         .then(() => {
           setLoading(false);
+          //phong
+          setName("");
+          setLongitude("");
+          setLatitude("");
+          setContent("");
+          setTimeStartDate(null);
+          setTimeEndDate(null);
+          setTimeStartTime(null);
+          setTimeEndTime(null);
+          setDefaultImages([]);
+          setSelectedOption("festival");
+          setIsReady(false);
+
           router.push("/(admin)/(information)/festival");
           Toast.show({
             type: "success",
@@ -219,20 +232,20 @@ const NewPoint = () => {
           style={styles.input}
         />
 
-        <Text style={styles.label}>Kinh độ</Text>
-        <TextInput
-          placeholder="Nhập kinh độ"
-          value={longitude}
-          onChangeText={setLongitude}
-          keyboardType="numeric"
-          style={styles.input}
-        />
-
         <Text style={styles.label}>Vĩ độ</Text>
         <TextInput
           placeholder="Nhập vĩ độ"
           value={latitude}
           onChangeText={setLatitude}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+
+        <Text style={styles.label}>Kinh độ</Text>
+        <TextInput
+          placeholder="Nhập kinh độ"
+          value={longitude}
+          onChangeText={setLongitude}
           keyboardType="numeric"
           style={styles.input}
         />
@@ -290,10 +303,10 @@ const NewPoint = () => {
           <Text style={styles.timeText}>
             {selectedOption === "festival"
               ? timeStartDate
-                ? timeStartDate.toLocaleDateString().slice(0, 5) 
-                : "Chọn ngày" 
+                ? timeStartDate.toLocaleDateString().slice(0, 5)
+                : "Chọn ngày"
               : timeStartTime
-              ? timeStartTime.toLocaleTimeString().slice(0, 5) 
+              ? timeStartTime.toLocaleTimeString().slice(0, 5)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
@@ -303,10 +316,10 @@ const NewPoint = () => {
           <Text style={styles.timeText}>
             {selectedOption === "festival"
               ? timeEndDate
-                ? timeEndDate.toLocaleDateString().slice(0, 5) 
-                : "Chọn ngày" 
+                ? timeEndDate.toLocaleDateString().slice(0, 5)
+                : "Chọn ngày"
               : timeEndTime
-              ? timeEndTime.toLocaleTimeString().slice(0, 5) 
+              ? timeEndTime.toLocaleTimeString().slice(0, 5)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
