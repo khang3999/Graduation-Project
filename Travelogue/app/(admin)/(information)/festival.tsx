@@ -7,6 +7,7 @@ import { database, onValue } from '@/firebase/firebaseConfig';
 import { get, update, set, push } from '@firebase/database'
 import { TextInput } from 'react-native-gesture-handler';
 import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
+import { router } from 'expo-router';
 
 
 const Festival = () => {
@@ -131,8 +132,16 @@ const Festival = () => {
     return item ? item.value : null;
   };
   const handleAdd = async () => {
-    console.log('add');
-
+    // Dữ liệu mà bạn muốn truyền
+    const data = {
+      idCity: 'vn_2',
+      idCountry: 'avietnam',
+    };
+  
+    router.push({
+      pathname: "/(admin)/newPoint", 
+      params: data,          
+    });
   };
 
   const renderPointsItem = (item: any) => {

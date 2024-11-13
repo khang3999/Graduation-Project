@@ -148,7 +148,7 @@ export default function Layout() {
             )
           }}
         />
-        <Drawer.Screen
+        {/* <Drawer.Screen
           name="newPoint"
           options={{
             drawerLabel: 'newPoint',
@@ -157,7 +157,7 @@ export default function Layout() {
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
-        />
+        /> */}
         <Drawer.Screen
           name="testReport"
           options={{

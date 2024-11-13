@@ -293,7 +293,7 @@ const Location = () => {
                     style={styles.removeImageButton}
                     onPress={() => handleRemoveImage(index)}
                   >
-                    <IconA name="close" size={20} color="white" />
+                    <IconA name="closecircle" size={20} color="white" />
                   </TouchableOpacity>
                 </View>
               ))}
