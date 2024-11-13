@@ -176,8 +176,6 @@ import {
     const [ratingValue, setRatingValue] = useState(5);
     const totalComments = comments.length;
     const isPostAuthor = dataAccount.id === item.author.id;
-    console.log(dataAccount.id,'dataAccount.id');
-    console.log(item.author.id,'item.author.id');
     
     const flattenedLocationsArray = flattenLocations(item.locations);
     const flattenedImagesArray = flattenImages(item.images);
@@ -308,7 +306,7 @@ import {
             onPress: async () => {
               try {
                 // Fetch all comments once
-                const snapshot = await get(ref(database, `posts/${item.id}/comments`));
+                const snapshot = await get(ref(database, `tours/${item.id}/comments`));
                 const commentsData = snapshot.val() as Record<string, Comment>;
   
   
@@ -319,7 +317,7 @@ import {
   
   
                 const addCommentAndRepliesToDelete = (commentId: string) => {
-                  pathsToDelete[`posts/${item.id}/comments/${commentId}`] = null;
+                  pathsToDelete[`tours/${item.id}/comments/${commentId}`] = null;
                   Object.keys(commentsData).forEach((key) => {
                     if (commentsData[key].parentId === commentId) {
                       addCommentAndRepliesToDelete(key);
@@ -335,7 +333,7 @@ import {
   
   
                 setComments((prevComments) =>
-                  prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`posts/${item.id}/comments/${c.id}`))
+                  prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/comments/${c.id}`))
                 );
   
                 console.log('Comment deleted successfully.', comments);
@@ -364,7 +362,7 @@ import {
             onPress: async () => {
               try {
                 // Fetch all rating once
-                const snapshot = await get(ref(database, `posts/${item.id}/ratings`));
+                const snapshot = await get(ref(database, `tours/${item.id}/ratings`));
                 const ratingCommentsData = snapshot.val() as Record<string, RatingComment>;
   
   
@@ -375,7 +373,7 @@ import {
   
   
                 const addCommentAndRepliesToDelete = (ratingCommentId: string) => {
-                  pathsToDelete[`posts/${item.id}/ratings/${ratingCommentId}`] = null;
+                  pathsToDelete[`tours/${item.id}/ratings/${ratingCommentId}`] = null;
                   Object.keys(ratingCommentsData).forEach((key) => {
                     if (ratingCommentsData[key].parentId === ratingCommentId) {
                       addCommentAndRepliesToDelete(key);
@@ -391,7 +389,7 @@ import {
   
   
                 setComments((prevComments) =>
-                  prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`posts/${item.id}/ratings/${c.id}`))
+                  prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/ratings/${c.id}`))
                 );
   
                 console.log('Comment deleted successfully.', comments);

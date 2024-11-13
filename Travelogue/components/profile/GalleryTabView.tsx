@@ -161,7 +161,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
 
             const tours = await Promise.all(tourFetches);
             setSavedToursList(tours.filter(Boolean));
-            console.log(tours);
+            
           } else {
             setSavedToursList([]);
           }

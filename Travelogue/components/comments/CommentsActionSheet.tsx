@@ -7,22 +7,71 @@ import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 
 
-
-interface CommentsActionSheetProps<T extends CommentType> {
-    commentRefAS: RefObject<ActionSheetRef>;
-    isPostAuthor?: boolean;
-    commentsData: T[];
-    onSubmitRatingComment?: (parentComment: RatingComment, replyText: string) => void;
-    onSubmitComment?: (parentComment: Comment, replyText: string) => void;
-    onDelete?: (item: T) => void;
-    onReport?: (item: T) => void;
-    accountId?: string;
+// Extending Comment to create SortedComment with extra fields
+interface SortedComment extends Comment {
+    replies?: SortedComment[];
+    indentationLevel?: number;
+}
+interface SortedCommentsProps {
+    comments: Record<string, SortedComment>;
 }
 
-export default function CommentsActionSheet<T extends CommentType>(props: CommentsActionSheetProps<T>) {
+interface CommentsActionSheetProps {
+    commentRefAS: RefObject<ActionSheetRef>;
+    isPostAuthor?: boolean;
+    commentsData: SortedComment[];
+    onSubmitComment?: (parentComment: Comment, replyText: string) => void;
+    onDelete?: (item: SortedComment) => void;
+    onReport?: (item: SortedComment) => void;
+    accountId?: string;
+}
+// Function to sort and nest comments
+function sortAndNestComments(comments: Record<string, SortedComment>): SortedComment[] {
+    // Initialize a map to store comments by ID, with empty replies initialized
+    const commentsById: Record<string, SortedComment> = Object.keys(comments).reduce((acc, key) => {
+        acc[key] = { ...comments[key], replies: [] };
+        return acc;
+    }, {} as Record<string, SortedComment>);
+
+    const sortedComments: SortedComment[] = [];
+
+    // Loop through the comments directly
+    Object.values(comments).forEach((comment) => {
+        if (comment.parentId) {
+            // If the comment has a parent, push it into the parent's replies array
+            if (commentsById[comment.parentId]) {
+                commentsById[comment.parentId].replies!.push(comment);
+            }
+        } else {
+            // If it’s a top-level comment, add it to sortedComments
+            sortedComments.push(commentsById[comment.id]);
+        }
+    });
+
+    return sortedComments;
+}
+
+// Function to flatten nested comments with indentation levels
+function flattenComments(comments: SortedComment[], level = 0): SortedComment[] {
+    const flatList: SortedComment[] = [];
+
+    comments.forEach((comment) => {
+        flatList.push({ ...comment, indentationLevel: level });
+
+        if (comment.replies && comment.replies.length > 0) {
+            flatList.push(...flattenComments(comment.replies, level + 1));
+        }
+    });
+    
+    return flatList;
+}
+
+
+export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [replyText, setReplyText] = useState("");
-    const [selectedComment, setSelectedComment] = useState<T | null>(null);
-    const [longPressedComment, setLongPressedComment] = useState<T | null>(null);
+    const [selectedComment, setSelectedComment] = useState<SortedComment | null>(null);
+    const [longPressedComment, setLongPressedComment] = useState<SortedComment | null>(null);
+    const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     // Animated value for fade-in effect
@@ -30,7 +79,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
 
 
 
-    const handleReplyButtonPress = (item: T) => {
+    const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
     };
     const handleCancelReply = () => {
@@ -51,7 +100,7 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
         }
 
     };
-    const handleLongPress = (comment: T) => {
+    const handleLongPress = (comment: SortedComment) => {
         if (props.accountId === comment.author.id) {
             setLongPressedComment(comment);
             authorizedCommentAS.current?.show();
@@ -59,13 +108,13 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
             unauthorizedCommentAS.current?.show();
         }
     }
-    const handleDeleteComment = (comment: T) => {
+    const handleDeleteComment = (comment: SortedComment) => {
         if (props.onDelete && comment) {
             props.onDelete(comment);
             authorizedCommentAS.current?.hide();
         }
     }
-    const handleReportComment = (comment: T) => {
+    const handleReportComment = (comment: SortedComment) => {
         if (props.onReport && comment) {
             props.onReport(comment);
             unauthorizedCommentAS.current?.hide();
@@ -82,6 +131,17 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
         }).start();
     }, [replyText]);
 
+    // Prepare sorted and flattened comments
+    useEffect(() => {
+        const nestedComments = sortAndNestComments(props.commentsData.reduce((acc, comment) => {
+            acc[comment.id] = comment;
+            return acc;
+        }, {} as Record<string, SortedComment>));
+
+        const flattened = flattenComments(nestedComments);
+        
+        setFlatComments(flattened);
+    }, [props.commentsData]);
 
     return (
         <KeyboardAvoidingView
@@ -129,10 +189,10 @@ export default function CommentsActionSheet<T extends CommentType>(props: Commen
                     {/* )} */}
                     {props.commentsData.length > 0 ? (
                         <FlatList
-                            data={props.commentsData}
+                            data={flatComments}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.parentId ? 20 : 0 },]}
+                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
                                     onLongPress={() => handleLongPress(item)}
                                 >
                                     <View style={styles.ratingCommentHeader}>
@@ -335,6 +395,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 10,
         padding: 15,
+        paddingLeft: 20,
         marginVertical: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },

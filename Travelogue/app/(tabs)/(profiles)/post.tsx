@@ -38,7 +38,7 @@ import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
-import { CommentType, RatingComment } from '@/types/CommentTypes';
+import { Comment, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useHomeProvider } from "@/contexts/HomeProvider";
 const windowWidth = Dimensions.get("window").width;
@@ -46,19 +46,6 @@ const windowHeight = Dimensions.get("window").height;
 
 
 
-type Comment = {
-  id: string;
-  author: {
-    id: string
-    avatar: any;
-    username: string;
-  };
-  status_id: number;
-  content: string;
-  reports: number;
-  parentId: string | null;
-  created_at: string;
-};
 
 type Post = {
   id: string;
@@ -132,7 +119,6 @@ const PostItem: React.FC<PostItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
-  console.log(dataAccount, 'dataAccount');
   
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
@@ -146,8 +132,7 @@ const PostItem: React.FC<PostItemProps> = ({
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
       console.error('Missing required author information');
       return;
-    } 
-    console.log(dataAccount, 'dataAccount');
+    }     
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
@@ -181,30 +166,32 @@ const PostItem: React.FC<PostItemProps> = ({
               // Add as a reply with the correct `parentId`
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
-              // Add as a top-level comment
+              // Add as a top-level Comment
               return [newCommentWithId, ...prevComments];
             }
           });
           
         }
       } catch (error) {
-        console.error("Error adding comment:", error);
+        console.error("Error adding Comment:", error);
       }
     }
   }
+
+  
 
   const addReplyToComment = (
     comments: Comment[],
     parentId: string,
     reply: Comment
   ): Comment[] => {
-    return comments.map((comment) => {
-      if (comment.id === parentId) {
+    return comments.map((Comment) => {
+      if (Comment.id === parentId) {
         // Set the `parentId` for the new reply
         reply.parentId = parentId;
-        return [comment, reply];
+        return [Comment, reply];
       }
-      return comment;
+      return Comment;
     }).flat();
   };
   const openCommentModal = () => {
@@ -215,10 +202,10 @@ const PostItem: React.FC<PostItemProps> = ({
     }
   };
 
-  const handleDeleteComment = async (comment: Comment) => {
+  const handleDeleteComment = async (Comment: Comment) => {
     Alert.alert(
-      "Xóa comment",
-      "Tất cả các comment con của nó cũng sẽ bị xóa. Bạn có chắc chắn muốn xóa comment này ?",
+      "Xóa Comment",
+      "Tất cả các Comment con của nó cũng sẽ bị xóa. Bạn có chắc chắn muốn xóa Comment này ?",
       [
         {
           text: "Hủy",
@@ -250,7 +237,7 @@ const PostItem: React.FC<PostItemProps> = ({
               };
 
 
-              addCommentAndRepliesToDelete(comment.id);
+              addCommentAndRepliesToDelete(Comment.id);
 
 
               await update(ref(database), pathsToDelete);
@@ -263,7 +250,7 @@ const PostItem: React.FC<PostItemProps> = ({
               console.log('Comment deleted successfully.', comments);
 
             } catch (error) {
-              console.error("Error deleting comment:", error);
+              console.error("Error deleting Comment:", error);
             }
           },
         },
@@ -274,8 +261,8 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
 
-  //handle report comment
-  const handleReportComment = (comment: Comment) => {
+  //handle report Comment
+  const handleReportComment = (Comment: Comment) => {
 
   }
 
@@ -362,7 +349,7 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
       <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
-      <CommentsActionSheet        
+      <CommentsActionSheet   
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
@@ -421,7 +408,7 @@ export default function PostsScreen() {
   );
 }
 const styles = StyleSheet.create({
-  // rating comment styles
+  // rating Comment styles
   replyInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -827,7 +814,7 @@ const styles = StyleSheet.create({
   },
   commentContainer: {
     padding: 10,
-    backgroundColor: "#f9f9f9", // Light background for the comment
+    backgroundColor: "#f9f9f9", // Light background for the Comment
     borderRadius: 10,
     marginBottom: 10,
     borderColor: "#e0e0e0",

@@ -7,30 +7,88 @@ import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 
 
+// Extending Comment to create SortedComment with extra fields
+interface SortedComment extends RatingComment {
+    replies?: SortedComment[];
+    indentationLevel?: number;
+}
+interface SortedCommentsProps {
+    comments: Record<string, SortedComment>;
+}
+// Function to sort and nest comments
+function sortAndNestComments(comments: Record<string, SortedComment>): SortedComment[] {
+    // Initialize a map to store comments by ID, with empty replies initialized
+    const commentsById: Record<string, SortedComment> = Object.keys(comments).reduce((acc, key) => {
+        acc[key] = { ...comments[key], replies: [] };
+        return acc;
+    }, {} as Record<string, SortedComment>);
 
-interface RatingCommentsActionSheetProps<T extends CommentType> {
+    const sortedComments: SortedComment[] = [];
+
+    // Loop through the comments directly
+    Object.values(comments).forEach((comment) => {
+        if (comment.parentId) {
+            // If the comment has a parent, push it into the parent's replies array
+            if (commentsById[comment.parentId]) {
+                commentsById[comment.parentId].replies!.push(comment);
+            }
+        } else {
+            // If it’s a top-level comment, add it to sortedComments
+            sortedComments.push(commentsById[comment.id]);
+        }
+    });
+
+    return sortedComments;
+}
+
+// Function to flatten nested comments with indentation levels
+function flattenComments(comments: SortedComment[], level = 0): SortedComment[] {
+    const flatList: SortedComment[] = [];
+
+    comments.forEach((comment) => {
+        flatList.push({ ...comment, indentationLevel: level });
+
+        if (comment.replies && comment.replies.length > 0) {
+            flatList.push(...flattenComments(comment.replies, level + 1));
+        }
+    });
+
+    return flatList;
+}
+interface RatingCommentsActionSheetProps {
     commentRefAS: RefObject<ActionSheetRef>;
     isPostAuthor: boolean;
-    commentsData: T[];
+    commentsData: RatingComment[];
     onSubmitRatingComment?: (parentComment: RatingComment, replyText: string) => void;
-    onSubmitComment?: (parentComment: Comment, replyText: string) => void;
-    onDelete?: (item: T) => void;
-    onReport?: (item: T) => void;
+    onSubmitComment?: (parentComment: RatingComment, replyText: string) => void;
+    onDelete?: (item: RatingComment) => void;
+    onReport?: (item: RatingComment) => void;
     accountId?: string;
 }
 
-export default function RatingCommentsActionSheet<T extends CommentType>(props: RatingCommentsActionSheetProps<T>) {
+export default function RatingCommentsActionSheet(props: RatingCommentsActionSheetProps) {
     const [replyText, setReplyText] = useState("");
-    const [selectedComment, setSelectedComment] = useState<T | null>(null);
-    const [longPressedComment, setLongPressedComment] = useState<T | null>(null);
+    const [selectedComment, setSelectedComment] = useState<RatingComment | null>(null);
+    const [longPressedComment, setLongPressedComment] = useState<RatingComment | null>(null);
+    const [flatRatingComments, setFlatRatingComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
+    // Prepare sorted and flattened comments
+    useEffect(() => {
+        const nestedComments = sortAndNestComments(props.commentsData.reduce((acc, comment) => {
+            acc[comment.id] = comment;
+            return acc;
+        }, {} as Record<string, SortedComment>));
+
+        const flattened = flattenComments(nestedComments);
+        setFlatRatingComments(flattened);
+    }, [props.commentsData]);
 
 
-    const handleReplyButtonPress = (item: T) => {
+    const handleReplyButtonPress = (item: RatingComment) => {
         setSelectedComment(item);
     };
     const handleCancelReply = () => {
@@ -44,11 +102,6 @@ export default function RatingCommentsActionSheet<T extends CommentType>(props: 
             if (selectedComment && "rating" in selectedComment && props.onSubmitRatingComment) {
                 props.onSubmitRatingComment(selectedComment as RatingComment, replyText);
 
-            } else if (props.onSubmitComment) {
-                props.onSubmitComment(selectedComment as Comment, replyText);
-
-            } else if (!selectedComment) {
-                Alert.alert("Thông báo", "Xin hãy chọn 1 bình luận để trả lời");
             }
 
             setReplyText("");
@@ -57,7 +110,7 @@ export default function RatingCommentsActionSheet<T extends CommentType>(props: 
         }
 
     };
-    const handleLongPress = (comment: T) => {
+    const handleLongPress = (comment: RatingComment) => {
         if (props.accountId === comment.author.id) {
             setLongPressedComment(comment);
             authorizedCommentAS.current?.show();
@@ -65,13 +118,13 @@ export default function RatingCommentsActionSheet<T extends CommentType>(props: 
             unauthorizedCommentAS.current?.show();
         }
     }
-    const handleDeleteComment = (comment: T) => {
+    const handleDeleteComment = (comment: RatingComment) => {
         if (props.onDelete && comment) {
             props.onDelete(comment);
             authorizedCommentAS.current?.hide();
         }
     }
-    const handleReportComment = (comment: T) => {
+    const handleReportComment = (comment: RatingComment) => {
         if (props.onReport && comment) {
             props.onReport(comment);
             unauthorizedCommentAS.current?.hide();
@@ -135,10 +188,10 @@ export default function RatingCommentsActionSheet<T extends CommentType>(props: 
                     )}
                     {props.commentsData.length > 0 ? (
                         <FlatList
-                            data={props.commentsData}
+                            data={flatRatingComments}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.parentId ? 20 : 0 },]}
+                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 },]}
                                     onLongPress={() => handleLongPress(item)}
                                 >
                                     <View style={styles.ratingCommentHeader}>
