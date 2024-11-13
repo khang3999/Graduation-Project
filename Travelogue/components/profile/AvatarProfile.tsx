@@ -23,7 +23,13 @@ interface AvatarProfileProps {
 export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
   const { accountData, searchedAccountData } = useAccount();
 
-  const data = isSearched ? searchedAccountData : accountData
+  interface AccountData {
+    avatar: string;
+    fullname: string;
+    totalPosts?: number;
+  }
+
+  const data: AccountData = isSearched ? searchedAccountData : accountData;
 
   return (
     <View style={styles.container}>

@@ -11,17 +11,6 @@ import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton"
 import SearchButton from "@/components/buttons/SearchButton";
 import { useAccount } from "@/contexts/AccountProvider";
 
-const Bell = () => (
-  <IconButton
-    icon="bell-outline"
-    iconColor={MD3Colors.error10}
-    size={24}
-    onPress={() => router.push("/Notification")}
-    style={styles.button}
-    accessible={true}
-    accessibilityLabel="Notifications button"
-  />
-);
 
 interface HeaderProfileProps {
   onModalOpen?: () => void;

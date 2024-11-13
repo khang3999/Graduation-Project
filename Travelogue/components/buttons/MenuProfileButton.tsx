@@ -58,13 +58,13 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     }
   };
   const handleEditProfile = () => {
-    router.push("/Editing");
+    router.push("/editing");
   }
   if (!isDisplay) {
     return;
   }
   const handleChangePassword =() =>{
-    router.push('/ChangePassword')
+    router.push('/changePassword')
     return
   }
   // Handle the report user

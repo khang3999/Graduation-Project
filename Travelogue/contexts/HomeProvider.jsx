@@ -40,7 +40,7 @@ const HomeProvider = ({ children }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [dataModalSelected, setDataModalSelected] = useState(null)
-
+    
     // Login state
     useEffect(() => {
         const fetchUserId = async () => {
