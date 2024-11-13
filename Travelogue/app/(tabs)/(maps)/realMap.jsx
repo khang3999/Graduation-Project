@@ -362,12 +362,18 @@ const Map = () => {
       if (!locationArray.includes(location)) {
         locationArray.push(location);
   
-        // Cập nhật lại dữ liệu 
-        const updatedUserData = {
-          content: content,
+      
+        const updatedLocation = {
           location: locationArray,
         };
         // Lưu lại dữ liệu đã cập nhật vào Firebase
+        await update(userRef, updatedLocation);
+      }
+        // Cập nhật lại dữ liệu 
+        if (content) {
+        const updatedUserData = {
+          content: content,
+        };
         await update(userRef, updatedUserData);
       }
     }
