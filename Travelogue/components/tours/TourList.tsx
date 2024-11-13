@@ -314,7 +314,7 @@ const TourList = () => {
         <Pressable style={styles.item} 
          onPress={() => {
           router.push({
-            pathname: "/(profiles)/Tour",
+            pathname: "/tourDetail",
             params: { initialIndex: 0 },
           });
           setSelectedTour([tour.item])

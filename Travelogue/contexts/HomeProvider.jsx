@@ -248,7 +248,8 @@ const HomeProvider = ({ children }) => {
                 setAllLocationIdFromPost,
                 setAllLocationNameFromPost,
                 setPostIdCurrent,
-                setRefreshingPost
+                setRefreshingPost,
+                dataAccount
             }}
 
         >

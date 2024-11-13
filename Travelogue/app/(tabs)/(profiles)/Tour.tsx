@@ -42,6 +42,7 @@ import { CommentType, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
+import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -166,7 +167,7 @@ const TourItem: React.FC<TourItemProps> = ({
     username: string;
   } | null>(null);
   
-  const { loadedDataAccount }: any = useHomeProvider();
+  const { dataAccount }: any = useHomeProvider();  
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const [ratingImage, setRatingImage] = useState<string | null>(null);
@@ -174,7 +175,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const totalComments = comments.length;
-  const isPostAuthor = loadedDataAccount.id === item.author.id;
+  const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [isLoading, setIsLoading] = useState(false);
@@ -185,10 +186,10 @@ const TourItem: React.FC<TourItemProps> = ({
       const parentId = parentComment ? parentComment.id : null;
       const newComment = {
         author: {
-          id: loadedDataAccount.id,
+          id: dataAccount.id,
           avatar:
-            loadedDataAccount.avatar,
-          username: loadedDataAccount.fullname,
+            dataAccount.avatar,
+          username: dataAccount.fullname,
         },
         status_id: 1,
         reports: 0,
@@ -201,7 +202,7 @@ const TourItem: React.FC<TourItemProps> = ({
         }),
       };
       try {
-        const commentRef = ref(database, `posts/${item.id}/comments`)
+        const commentRef = ref(database, `tours/${item.id}/comments`)
         const newCommentRef = push(commentRef);
 
         if (newCommentRef.key) {
@@ -209,9 +210,9 @@ const TourItem: React.FC<TourItemProps> = ({
           await set(newCommentRef, newCommentWithId);
 
           setComments((prevComments) => {
-            if (replyingTo) {
+            if (parentId) {
               // Add as a reply with the correct `parentId`
-              return addReplyToComment(prevComments, replyingTo.id, newCommentWithId);
+              return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level comment
               return [newCommentWithId, ...prevComments];
@@ -230,10 +231,10 @@ const TourItem: React.FC<TourItemProps> = ({
       const parentId = parentComment ? parentComment.id : null;
       const newRatingComment = {
         author: {
-          id: loadedDataAccount.id,
+          id: dataAccount.id,
           avatar:
-            loadedDataAccount.avatar,
-          username: loadedDataAccount.fullname,
+            dataAccount.avatar,
+          username: dataAccount.fullname,
         },
         image: "",
         rating: -1,
@@ -248,7 +249,7 @@ const TourItem: React.FC<TourItemProps> = ({
         }),
       };
       try {
-        const ratingsRef = ref(database, `posts/${item.id}/ratings`);
+        const ratingsRef = ref(database, `tours/${item.id}/ratings`);
         const newRatingCommentRef = push(ratingsRef);
 
         if (newRatingCommentRef.key) {
@@ -403,11 +404,11 @@ const TourItem: React.FC<TourItemProps> = ({
   };
   const handleSubmitRating = async () => {
     const postId = item.id;
-    const userId = loadedDataAccount.id;
+    const userId = dataAccount.id;
     setIsLoading(true);
     try {
       // Step 1: Reference to the user's rating in Realtime Database
-      const userRatingRef = ref(database, `posts/${postId}/ratings/${userId}`);
+      const userRatingRef = ref(database, `tours/${postId}/ratings/${userId}`);
 
       let imageUrl = "";
 
@@ -416,7 +417,7 @@ const TourItem: React.FC<TourItemProps> = ({
 
         const uniqueImageId = push(ref(database)).key;
         if (uniqueImageId) {
-          const imageRef = storageRef(storage, `posts/${postId}/images/${uniqueImageId}.jpg`);
+          const imageRef = storageRef(storage, `tours/${postId}/images/${uniqueImageId}.jpg`);
           const img = await fetch(ratingImage);
           const bytes = await img.blob();
           await uploadBytes(imageRef, bytes);
@@ -428,8 +429,8 @@ const TourItem: React.FC<TourItemProps> = ({
       const rating = {
         author: {
           id: userId,
-          avatar: loadedDataAccount.avatar,
-          username: loadedDataAccount.fullname,
+          avatar: dataAccount.avatar,
+          username: dataAccount.fullname,
         },
         id: userRatingRef.key!,
         content: ratingCommentText,
@@ -446,7 +447,7 @@ const TourItem: React.FC<TourItemProps> = ({
       };
 
       // Step 4: Reference to the rating summary in Realtime Database
-      const summaryRef = ref(database, `posts/${postId}/ratingSummary`);
+      const summaryRef = ref(database, `tours/${postId}/ratingSummary`);
 
       // Step 5: Update the rating summary with new values
       const summaryUpdate = {
@@ -478,7 +479,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const handleOpenRatingComments = async () => {
 
     const postId = item.id;
-    const userId = loadedDataAccount.id;
+    const userId = dataAccount.id;
 
     // If the account is the author of the post, show the rating comments
     if (isPostAuthor) {
@@ -487,7 +488,7 @@ const TourItem: React.FC<TourItemProps> = ({
     }
 
     // Reference to the user's rating in Realtime Database
-    const userRatingRef = ref(database, `posts/${postId}/ratings/${userId}`);
+    const userRatingRef = ref(database, `tours/${postId}/ratings/${userId}`);
     const previousRatingSnapshot = await get(userRatingRef);
 
     // If the user has already rated this post, show the rating comments
@@ -623,7 +624,7 @@ const TourItem: React.FC<TourItemProps> = ({
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
-        accountId={loadedDataAccount.id}
+        accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
       />
@@ -706,12 +707,12 @@ const TourItem: React.FC<TourItemProps> = ({
         )}
       </Modal>
       {/* Rating Comments */}
-      <CommentsActionSheet
+      <RatingCommentsActionSheet
         isPostAuthor={isPostAuthor}
         commentRefAS={ratingCommentAS}
         commentsData={ratingComments}
         onSubmitRatingComment={handleRatingCommentSubmit}
-        accountId={loadedDataAccount.id}
+        accountId={dataAccount.id}
         onDelete={handleDeleteRatingComment}
         onReport={handleReportComment}
       />
