@@ -156,16 +156,16 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                     <Text style={styles.ratingCommentsHeader}>Bình luận đánh giá</Text>
                     <Divider style={styles.marginBottom5} />
                     {/* Input and Reply Button for Post Owner */}
-                    {props.isPostAuthor && (
+                    {props.isPostAuthor && selectedComment && (
                         <View style={styles.replyInputContainer}>
-                            {selectedComment && (
-                                <View style={styles.mentionContainer}>
-                                    <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
-                                    <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
-                                        <IconMaterial name="close-circle" size={16} color="#FF3B30" />
-                                    </Pressable>
-                                </View>
-                            )}
+
+                            <View style={styles.mentionContainer}>
+                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
+                                <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
+                                    <IconMaterial name="close-circle" size={16} color="#FF3B30" />
+                                </Pressable>
+                            </View>
+
                             <TextInput
                                 placeholder="Aa"
                                 value={replyText}

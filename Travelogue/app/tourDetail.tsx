@@ -177,6 +177,7 @@ import {
     const totalComments = comments.length;
     const isPostAuthor = dataAccount.id === item.author.id;
     
+    
     const flattenedLocationsArray = flattenLocations(item.locations);
     const flattenedImagesArray = flattenImages(item.images);
     const [isLoading, setIsLoading] = useState(false);
@@ -388,7 +389,7 @@ import {
                 await update(ref(database), pathsToDelete);
   
   
-                setComments((prevComments) =>
+                setRatingComments((prevComments) =>
                   prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/ratings/${c.id}`))
                 );
   
