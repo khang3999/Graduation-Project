@@ -23,6 +23,7 @@ import { initial, set } from "lodash";
 import GalleryTabViewSkeleton from "@/components/skeletons/GalleryTabViewSkeleton";
 import { useFocusEffect } from '@react-navigation/native';
 import { useTourProvider } from "@/contexts/TourProvider";
+import { useHomeProvider } from "@/contexts/HomeProvider";
 
 const { width } = Dimensions.get("window");
 const itemWidth = width / 3;
@@ -65,8 +66,9 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   const layout = useWindowDimensions();
   const { selectedPost, setSelectedPost }:any= usePost();
   const {setSelectedTour}:any = useTourProvider();
-  const { accountData, searchedAccountData }:any= useAccount();
-  const userId = isSearched ? searchedAccountData.id : accountData?.id;
+  const {searchedAccountData }:any= useAccount();
+  const {dataAccount}:any = useHomeProvider();
+  const userId = isSearched ? searchedAccountData.id : dataAccount?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
