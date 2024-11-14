@@ -19,7 +19,7 @@ const ActionBar = (props: any) => {
                 </View>
                 <View style={[styles.buttonItem, {marginRight: 10}]}>
                     <CommentButton ></CommentButton>
-                    <Text style={{ fontWeight: '500' }}>{formatNumberLike(0)}</Text>
+                    <Text style={{ fontWeight: '500' }}>{formatNumberLike(Object.values(data.comments || {}).length)}</Text>
                 </View>
                 <View style={[styles.buttonItem]}>
                     <SaveButton dataID={data.id} type={type}></SaveButton>

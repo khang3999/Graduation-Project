@@ -5,12 +5,14 @@ const MapCheckinContext = createContext(null);
 const MapCheckinProvider = ({ children }) => {
   const [selectedCityId, setSelectedCityId] = useState(null);
   const [dataCheckedCities, setDataCheckedCities] = useState([])
+  const checkedCityColor = 'green'
 
   return (
     <MapCheckinContext.Provider
       value={{
+        checkedCityColor,
         selectedCityId, setSelectedCityId,
-        dataCheckedCities, setDataCheckedCities
+        dataCheckedCities, setDataCheckedCities,
       }}
     >
       {children}

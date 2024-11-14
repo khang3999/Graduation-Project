@@ -6,6 +6,7 @@ import Toast from 'react-native-toast-message'
 
 const VietNamMap = () => {
     // Khai báo biến
+
     const defaultColor = '#c7c7c7'
     const selectedColor = '#ED1C24'
     const pathRefs = useRef<any>({});
@@ -13,7 +14,9 @@ const VietNamMap = () => {
 
     const {
         selectedCityId, setSelectedCityId,
-        dataCheckedCities, setDataCheckedCities }: any = useMapCheckinProvider()
+        dataCheckedCities, setDataCheckedCities,
+        checkedCityColor
+    }: any = useMapCheckinProvider()
 
     // Hàm để tạo ref cho mỗi Path và lưu vào pathRefs
     const setPathRef = (id: any, ref: any) => {
@@ -23,18 +26,19 @@ const VietNamMap = () => {
     };
     useEffect(() => {
         console.log(selectedCityId);
-        
-        // Khôi phục màu của Path trước đó
+        // Khôi phục màu của Path trước đó: khi đã chọn 1 tỉnh (không phải là lần đầu và có ref của tỉnh đó)
         if (previousCityId.current && pathRefs.current[previousCityId.current]) {
-            pathRefs.current[previousCityId.current].setNativeProps({ fill: defaultColor });
+            if (dataCheckedCities.includes(previousCityId.current)) {
+                pathRefs.current[previousCityId.current].setNativeProps({ fill: checkedCityColor });
+            } else {
+                pathRefs.current[previousCityId.current].setNativeProps({ fill: defaultColor });
+            }
         }
 
-        // Thay đổi màu của Path hiện tại
+        // Thay đổi màu của Path hiện tại  (là city đang tap)
         if (selectedCityId && pathRefs.current[selectedCityId]) {
             pathRefs.current[selectedCityId].setNativeProps({ fill: selectedColor });
         }
-
-        
         // Cập nhật `previousCityId` để lần sau có thể khôi phục màu
         previousCityId.current = selectedCityId;
     }, [selectedCityId]);
@@ -45,7 +49,7 @@ const VietNamMap = () => {
             dataCheckedCities.forEach((cityId: any) => {
                 const path = pathRefs.current[cityId];
                 if (path) {
-                    path.setNativeProps({ fill: 'green' }); // Tô màu "green" cho các tỉnh đã được check
+                    path.setNativeProps({ fill: checkedCityColor }); // Tô màu "green" cho các tỉnh đã được check
                 }
             });
         }
@@ -66,14 +70,14 @@ const VietNamMap = () => {
     // }
     const handlePress = (id: any) => {
         // Kiểm tra nếu `id` đã có trong `dataCheckedCities`, thì không cho phép đổi màu
-        if (dataCheckedCities.includes(id)) {
-            Toast.show({
-                type: 'info',
-                text1: 'Tỉnh này đã được chọn!',
-                text2: 'Bạn không thể chọn lại tỉnh đã được check.',
-            });
-            return; // Thoát khỏi hàm nếu tỉnh đã được check
-        }
+        // if (dataCheckedCities.includes(id)) {
+        //     Toast.show({
+        //         type: 'info',
+        //         text1: 'Tỉnh này đã được chọn!',
+        //         text2: 'Bạn không thể chọn lại tỉnh đã được check.',
+        //     });
+        //     return; // Thoát khỏi hàm nếu tỉnh đã được check
+        // }
         setSelectedCityId(id)
     }
 
