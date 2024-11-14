@@ -2191,7 +2191,7 @@ const AddPostTour = () => {
                   fontSize: 30,
                   textAlign: "center",
                 }}
-                disabled={true}
+                // disabled={true}
                 color={appColors.primary}
                 onPress={handlePushPost}
               />
