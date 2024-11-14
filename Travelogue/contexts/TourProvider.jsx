@@ -19,7 +19,7 @@ const TourProvider = ({ children }) => {
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng tours
         const refTours = ref(database, 'tours/')
-        const toursQuery = query(refTours, orderByChild('view_mode'), equalTo(true));
+        const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
         const unsubscribe = onValue (toursQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewTour = snapshot.size;

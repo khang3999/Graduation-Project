@@ -98,7 +98,7 @@ const HomeProvider = ({ children }) => {
         const fetchData = async () => {
             try {
                 const refTours = ref(database, 'tours/')
-                const toursQuery = query(refTours, orderByChild('view_mode'), equalTo(true));
+                const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
                 const snapshot = await get(toursQuery);
                 if (snapshot.exists()) {
                     const dataToursJson = snapshot.val()
@@ -201,7 +201,7 @@ const HomeProvider = ({ children }) => {
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
         const refPosts = ref(database, 'posts/')
-        const postsQuery = query(refPosts, orderByChild('view_mode'), equalTo(true));
+        const postsQuery = query(refPosts, orderByChild('status_id'), equalTo(1));
         const unsubscribe = onValue(postsQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewPost = snapshot.size;
