@@ -1,13 +1,21 @@
 import { database, storage } from '@/firebase/firebaseConfig';
-import { onValue, ref, update } from '@firebase/database';
+import { onValue, ref, update, get } from '@firebase/database';
 import React, { useState, useEffect } from 'react';
+import { usePost } from '@/contexts/PostProvider';
+import { router } from 'expo-router';
 
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    const accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    let accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    const { selectedPost, setSelectedPost }: any = usePost()
+    const { dataAccount }: any = useHomeProvider()
 
+    // useEffect(() => {
+    //     accountId = dataAccount.id
+    // }, [dataAccount])
 
     // Fetch data notifications by account id
     useEffect(() => {
@@ -28,7 +36,24 @@ const NotificationsScreen = () => {
 
         return () => notifications();
     }, []);
+    // Fetch post by postID
+    const fetchPostByPostId = async (postId: any) => {
+        try {
+            const refCity = ref(database, `posts/${postId}`);
+            const snapshot = await get(refCity);
+            if (snapshot.exists()) {
+                const dataJson = snapshot.val();
 
+                setSelectedPost([dataJson])
+
+            } else {
+                console.log("No data city available");
+            }
+        } catch (error) {
+            console.error("Error fetching data: ", error);
+        }
+
+    };
     //handle read notify
     const handleRead = (notify: any) => {
         const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
@@ -40,6 +65,10 @@ const NotificationsScreen = () => {
             .catch((error) => {
                 console.error('Error updating data:', error);
             });
+        fetchPostByPostId(notify.post_id)
+        router.push({
+            pathname: '/postDetail'
+        })
     }
 
     const renderItem = (notify: any) => {
@@ -58,27 +87,27 @@ const NotificationsScreen = () => {
         }
         return (
             <TouchableOpacity
-    style={[
-        styles.notificationItem,
-        {
-            backgroundColor: notify.item.read === false ? '#ebf5ff' : '#f9f9f9',
-        },
-    ]}
-    onPress={() => handleRead(notify.item)}
->
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <View style={{ flex: 2, paddingRight: 10 }}>
-            <Text style={styles.message}>
-                {notify.item.commentator_name} đã bình luận vào bài viết của bạn
-            </Text>
-            <Text style={styles.time}>{displayTime}</Text>
-        </View>
-        <Image
-            source={{ uri: notify.item.image }}
-            style={{ width: 70, height: 70, borderRadius: 25 }}
-        />
-    </View>
-</TouchableOpacity>
+                style={[
+                    styles.notificationItem,
+                    {
+                        backgroundColor: notify.item.read === false ? '#ebf5ff' : '#f9f9f9',
+                    },
+                ]}
+                onPress={() => handleRead(notify.item)}
+            >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ flex: 2, paddingRight: 10 }}>
+                        <Text style={styles.message}>
+                            {notify.item.commentator_name} đã bình luận vào bài viết của bạn
+                        </Text>
+                        <Text style={styles.time}>{displayTime}</Text>
+                    </View>
+                    <Image
+                        source={{ uri: notify.item.image }}
+                        style={{ width: 70, height: 70, borderRadius: 25 }}
+                    />
+                </View>
+            </TouchableOpacity>
 
         )
     };

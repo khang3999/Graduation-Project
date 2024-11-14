@@ -4,13 +4,18 @@ import { AntDesign } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { push, remove, update } from '@firebase/database';
+import { push, remove, update,get } from '@firebase/database';
+import { usePost } from '@/contexts/PostProvider';
+import { router } from 'expo-router';
+
 
 
 export default function CommentReport() {
   const [dataCommentReport, setDataCommentReport] = useState([]);
   const keyResolve = 2;
   const [factorReport, setFactorReport] = useState(0);
+  const { selectedPost, setSelectedPost }: any = usePost()
+
 
   //Du lieu Comment
   useEffect(() => {
@@ -121,11 +126,40 @@ export default function CommentReport() {
     );
   };
 
+   // Fetch post by postID
+   const fetchPostByPostId = async (postId: any) => {
+    try {
+      const refCity = ref(database, `posts/${postId}`);
+      const snapshot = await get(refCity);
+      if (snapshot.exists()) {
+        const dataJson = snapshot.val();
+       
+        setSelectedPost([dataJson])
+        
+      } else {
+        console.log("No data city available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+
+  };
+
+  //Chuyen sang post detail
+  const handleNavigatePostDetail = (post: any) => {
+    fetchPostByPostId(post)
+    router.push({
+      pathname: '/postDetail'
+    })
+
+  }
 
   // Render từng item trong danh sách
   const renderCommentItem = (comment: any) => {
     return (
-      <View style={styles.accountItem}>
+      <TouchableOpacity style={styles.accountItem} onPress={
+        () => handleNavigatePostDetail(comment.item.post_id)
+      }>
         <View>
 
           <Text style={styles.name}>{comment.item.id}</Text>
@@ -141,7 +175,7 @@ export default function CommentReport() {
           <AntDesign name="delete" size={24} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id)} />
         </View>
 
-      </View>
+      </TouchableOpacity>
     )
   };
 

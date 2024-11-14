@@ -4,13 +4,17 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { push, remove, update } from '@firebase/database';
-
+import { push, remove, update, get } from '@firebase/database';
+import { router } from 'expo-router';
+import { useAdminProvider } from '@/contexts/AdminProvider';
+import { usePost } from '@/contexts/PostProvider';
 
 export default function PostReport() {
   const [dataPostReport, setDataPostReport] = useState([]);
   const keyResolve = 2
-  const [factorReport,setFactorReport] = useState(0);
+  const [factorReport, setFactorReport] = useState(0);
+  const { selectedPost, setSelectedPost }: any = usePost()
+
   //Du lieu post
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
@@ -20,12 +24,11 @@ export default function PostReport() {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         const jsonDataArr: any = Object.values(jsonData)
-        console.log(jsonDataArr);
-        
-       // Lọc các bài có status != 2, da xu ly
-       const filteredData = jsonDataArr.filter((post: any) => (post.status != keyResolve)&&(Object.keys(post.reason).length >= factorReport));
-       
-       setDataPostReport(filteredData);
+
+        // Lọc các bài có status != 2, da xu ly
+        const filteredData = jsonDataArr.filter((post: any) => (post.status != keyResolve) && (Object.keys(post.reason).length >= factorReport));
+
+        setDataPostReport(filteredData);
       } else {
         console.log("No data available");
       }
@@ -36,8 +39,8 @@ export default function PostReport() {
     // Cleanup function để hủy listener khi component unmount
     return () => post();
   }, [factorReport]);
-   //Du lieu factor 
-   useEffect(() => {
+  //Du lieu factor 
+  useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
     const onValueChange = ref(database, 'factors/report/post');
     // Lắng nghe thay đổi trong dữ liệu
@@ -45,7 +48,7 @@ export default function PostReport() {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         console.log(jsonData);
-        
+
         setFactorReport(jsonData)
       } else {
         console.log("No data available");
@@ -110,23 +113,53 @@ export default function PostReport() {
               });
             //Cap nhat status cho report da xu ly
             update(refReport, { status: keyResolve })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
           }
         }
       ]
     );
   };
 
+  // Fetch post by postID
+  const fetchPostByPostId = async (postId: any) => {
+    try {
+      const refCity = ref(database, `posts/${postId}`);
+      const snapshot = await get(refCity);
+      if (snapshot.exists()) {
+        const dataJson = snapshot.val();
+       
+        setSelectedPost([dataJson])
+        
+      } else {
+        console.log("No data city available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+
+  };
+
+  //Chuyen sang post detail
+  const handleNavigatePostDetail = (post: any) => {
+    fetchPostByPostId(post)
+    router.push({
+      pathname: '/postDetail'
+    })
+
+  }
+
   // Render từng item trong danh sách
   const renderPostItem = (post: any) => {
-    
+
     return (
-      <View key={post.item.id} style={styles.accountItem}>
+      <TouchableOpacity key={post.item.id} style={styles.accountItem} onPress={
+        () => handleNavigatePostDetail(post.item.post_id)
+      }>
         <View>
           <Text style={styles.name}>{post.item.post_id}</Text>
           {Object.values(post.item.reason).map((reason: any) => {
@@ -134,30 +167,30 @@ export default function PostReport() {
               <Text style={styles.reason}>- {reason}</Text>
             )
           })}
-        
+
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.id)} />
-          <Feather name="x-square" size={30} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.id)} />
+          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.post_id)} />
+          <Feather name="x-square" size={30} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.post_id)} />
         </View>
 
-      </View>
+      </TouchableOpacity>
     )
   };
-  
+
   return (
-    
-    <View style={styles.container}>      
+
+    <View style={styles.container}>
       {
-      (dataPostReport.length>0)? (
-        <FlatList
-          data={dataPostReport}
-          renderItem={renderPostItem}
-        />
-        
-      ) : (
-        <Text style={styles.noAccountsText}>No post</Text>
-      )}
+        (dataPostReport.length > 0) ? (
+          <FlatList
+            data={dataPostReport}
+            renderItem={renderPostItem}
+          />
+
+        ) : (
+          <Text style={styles.noAccountsText}>No post</Text>
+        )}
 
     </View>
   );

@@ -128,18 +128,6 @@ export default function Layout() {
             )
           }}
         />
-
-        <Drawer.Screen
-          name="notify"
-          options={{
-            drawerLabel: 'Notify',
-            title: 'Notify',
-            drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        />
-        
         <Drawer.Screen
           name="testReport"
           options={{

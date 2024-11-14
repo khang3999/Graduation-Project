@@ -284,6 +284,9 @@ const PostItem: React.FC<PostItemProps> = ({
       : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
 
+  console.log("cin  ",item);
+  
+ 
   return (
     <View>
       {/* Post Header */}
@@ -357,9 +360,6 @@ const PostItem: React.FC<PostItemProps> = ({
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
       />
-
-
-
     </View>
   );
 };
@@ -368,6 +368,7 @@ export default function PostsScreen() {
   // State to track whether full description is shown
 
   const { selectedPost, setSelectedPost }: any = usePost();
+
   const { initialIndex } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
