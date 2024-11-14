@@ -1077,6 +1077,7 @@ const AddPostTour = () => {
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newAccumulate,
+              totalPosts: totalPosts,
             });
             //Them id bai viet vao tai khoan
             await update(userPost, {

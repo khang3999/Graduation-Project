@@ -1053,7 +1053,10 @@ const AddPostUser = () => {
             // Cập nhật dữ liệu
             await update(userRef, updatedUserData);
 
-            //Luu
+            const userTotalPost = ref(database, `accounts/${userId}`);
+            await update(userTotalPost, {
+              totalPosts: totalPosts,
+            });
             //Luu
             await update(userPost, {
               [postId]: true,
