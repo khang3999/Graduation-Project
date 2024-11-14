@@ -1106,7 +1106,7 @@ const AddPostTour = () => {
   // *********************************************************************
   //Đọc dữ liệu từ firebase
   useEffect(() => {
-    const packagesRef = ref(database, "packages");
+    const packagesRef = ref(database, "package");
 
     onValue(packagesRef, (snapshot) => {
       const data = snapshot.val() || {};
