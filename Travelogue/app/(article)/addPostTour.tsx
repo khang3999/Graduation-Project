@@ -1060,7 +1060,7 @@ const AddPostTour = () => {
         if (postId) {
           await set(newPostRef, postData);
           if (account) {
-            const userPost = ref(database, `accounts/${userId}/createdPosts`);
+            const userPost = ref(database, `accounts/${userId}/createdTours`);
             //Tru tien trong tai khoan
             const newAccumulate =
               (account?.balance ?? 0) -
