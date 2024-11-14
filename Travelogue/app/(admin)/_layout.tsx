@@ -128,16 +128,7 @@ export default function Layout() {
             )
           }}
         />
-        <Drawer.Screen
-          name="payment"
-          options={{
-            drawerLabel: 'Payment',
-            title: 'Payment',
-            drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        />
+
         <Drawer.Screen
           name="notify"
           options={{
@@ -148,16 +139,7 @@ export default function Layout() {
             )
           }}
         />
-        {/* <Drawer.Screen
-          name="newPoint"
-          options={{
-            drawerLabel: 'newPoint',
-            title: 'newPoint',
-            drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        /> */}
+        
         <Drawer.Screen
           name="testReport"
           options={{
@@ -168,6 +150,7 @@ export default function Layout() {
             )
           }}
         />
+       
       </Drawer>
 
     </GestureHandlerRootView>

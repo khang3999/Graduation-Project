@@ -183,11 +183,11 @@ const NewPoint = () => {
         start:
           selectedOption === "festival"
             ? timeStartDate.toLocaleDateString().slice(0, 5)
-            : timeStartTime.toLocaleTimeString().slice(0, 5),
+            : timeStartTime.toLocaleTimeString().slice(0, 4),
         end:
           selectedOption === "festival"
             ? timeEndDate.toLocaleDateString().slice(0, 5)
-            : timeEndTime.toLocaleTimeString().slice(0, 5),
+            : timeEndTime.toLocaleTimeString().slice(0, 4),
         images: imageUrls,
       };
 
@@ -306,7 +306,7 @@ const NewPoint = () => {
                 ? timeStartDate.toLocaleDateString().slice(0, 5)
                 : "Chọn ngày"
               : timeStartTime
-              ? timeStartTime.toLocaleTimeString().slice(0, 5)
+              ? timeStartTime.toLocaleTimeString().slice(0, 4)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
@@ -319,7 +319,7 @@ const NewPoint = () => {
                 ? timeEndDate.toLocaleDateString().slice(0, 5)
                 : "Chọn ngày"
               : timeEndTime
-              ? timeEndTime.toLocaleTimeString().slice(0, 5)
+              ? timeEndTime.toLocaleTimeString().slice(0, 4)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>

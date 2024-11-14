@@ -28,12 +28,12 @@ import Toast from "react-native-toast-message-custom";
 import { set } from "lodash";
 
 const Location = () => {
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState();
+  const [selectedCity, setSelectedCity] = useState();
   const [cityArea, setCityArea] = useState("");
   const [cityInformation, setCityInformation] = useState("");
   const [dataCountries, setDataCountries] = useState([]);
-  const [dataCities, setDataCities] = useState([]);
+  const [dataCities, setDataCities] = useState<any>([]);
   const [editText, setEditText] = useState(false);
   const inputRef: any = useRef(null);
   const [defaultImages, setdefaultImages] = useState<string[]>([]);
@@ -69,7 +69,7 @@ const Location = () => {
     };
   }, []);
   // Fetch data cities theo quốc gia
-  const fetchCityByCountry = async (countryId: any) => {
+  const fetchCityByCountry = async (countryId:any) => {
     try {
       const refCity = ref(database, `cities/${countryId}`);
       const snapshot = await get(refCity);
@@ -84,8 +84,9 @@ const Location = () => {
               information: cityInfo.information,
               defaultImages: cityInfo.defaultImages,
             }))
-        );
+        );          
         setDataCities(dataCitiesArray);
+        // setSelectedCity(dataCitiesArray[0].key)
       } else {
         console.log("No data city available");
       }
@@ -93,18 +94,21 @@ const Location = () => {
       console.error("Error fetching data: ", error);
     }
   };
-
+  console.log(selectedCity);
+  
   //Handle when selected countries
   const handleSelectedCountry = (val: any) => {
-    setSelectedCountry(val);
-    fetchCityByCountry(val);
+    // setDataCities([])
     setCityInformation("");
     setCityArea("");
     setdefaultImages([]);
+    fetchCityByCountry(val)
+    setSelectedCountry(val);
   };
   //Handle when selected countries
   const handleSelectedCity = (val: any) => {
-    setSelectedCity(val);
+    console.log(val);
+    
     if (val != "" && val != undefined) {
       const a: any = dataCities.find((e: any) => e.key == val);
       setCityArea(a.area);
@@ -115,7 +119,9 @@ const Location = () => {
         setdefaultImages([]);
       }
       setDisabled(false);
+      setSelectedCity(val);
     }
+
   };
 //   console.log("defaultImages", defaultImages);
   const uploadImagesToStorage = async () => {
@@ -261,7 +267,10 @@ const Location = () => {
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
-          placeholder="Cities"
+          defaultOption={{key:'',value:''}}
+          // placeholder={
+          //   dataCities.length > 0 ? dataCities[0].value  : "Cities"
+          // }
         />
       </View>
       <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>

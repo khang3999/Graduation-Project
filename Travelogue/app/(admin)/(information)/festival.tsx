@@ -4,10 +4,11 @@ import { Button, Checkbox, Divider } from 'react-native-paper';
 import { SelectList } from 'react-native-dropdown-select-list'
 import { ref } from '@firebase/database';
 import { database, onValue } from '@/firebase/firebaseConfig';
-import { get, update, set, push } from '@firebase/database'
+import { get, update, set, push, remove } from '@firebase/database'
 import { TextInput } from 'react-native-gesture-handler';
 import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 import { router } from 'expo-router';
+import { AntDesign } from '@expo/vector-icons';
 
 
 const Festival = () => {
@@ -77,6 +78,8 @@ const Festival = () => {
   useEffect(() => {
 
     const type = getValueFromKey(selectedPoint)
+    console.log(type);
+
     const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
     console.log(onValueChange);
 
@@ -84,11 +87,12 @@ const Festival = () => {
     const data = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
         const dataPoints = snapshot.val()
-        const pointArr: any = Object.values(dataPoints).map((key: any) => ({
-          key,
-          value: key.title,
+        const pointArr: any = Object.entries(dataPoints).map((key: any) => ({
+          key: key[0],
+          value: key[1],
         }));
         setFilteredData(pointArr)
+
       } else {
         setFilteredData([])
         console.log("No data point available");
@@ -107,7 +111,6 @@ const Festival = () => {
     if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
       setIsReady(true)
     }
-
   }, [selectedCity, selectedCountry, selectedPoint])
 
 
@@ -134,22 +137,44 @@ const Festival = () => {
   const handleAdd = async () => {
     // Dữ liệu mà bạn muốn truyền
     const data = {
-      idCity: 'vn_2',
-      idCountry: 'avietnam',
+      idCity: selectedCity,
+      idCountry: selectedCountry,
     };
-  
+
     router.push({
-      pathname: "/(admin)/newPoint", 
-      params: data,          
+      pathname: "/(admin)/newPoint",
+      params: data,
     });
+  };
+  // Remove
+  const handleRemove = (id: string) => {
+    const type = getValueFromKey(selectedPoint)
+    const refP = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
+    Alert.alert(
+      "Remove point",
+      "Are you sure you want to remove this point?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            remove(refP).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+          }
+        }
+      ]
+    );
+
   };
 
   const renderPointsItem = (item: any) => {
     return (
       <View style={styles.item}>
-        <View style={{ borderRadius: 30 }}>
-          <Text style={styles.name}>{item.item.value}</Text>
-        </View>
+        <Text style={styles.name}>{item.item.value.title}</Text>
+        <AntDesign name="delete" size={24} style={{ width: '10%', color: 'red' }} onPress={() => handleRemove(item.item.key)} />
       </View>
     )
   };
@@ -183,7 +208,10 @@ const Festival = () => {
               alignItems: 'center',
               marginVertical: 4,
             }}
-            onPress={() => setSelectedPoint(item.key)}
+            onPress={() => {
+              setIsReady(false)
+              setSelectedPoint(item.key)
+            }}
           >
             <View
               style={{
@@ -212,16 +240,16 @@ const Festival = () => {
           </TouchableOpacity>
         ))}
       </View>
-      {
-        isReady && (
-          <View style={styles.addBar}>
-            <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-              <Text style={{ color: '#ffffff' }} >+</Text>
-            </TouchableOpacity>
 
-          </View>
-        )
-      }
+      <View style={styles.addBar}>
+        {
+          isReady && (
+            <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
+              <Text style={{ color: '#ffffff',fontSize:20 }} >+</Text>
+            </TouchableOpacity>
+          )}
+      </View>
+
       <View style={styles.containerFlat}>
         {filteredData.length > 0 ? (
           <FlatList
@@ -304,6 +332,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '600',
+    width: "50%"
   }, noAccountsText: {
     textAlign: 'center',
     fontSize: 16,
@@ -314,10 +343,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: 10,
     marginRight: 20,
+    height:30
   },
   addBtn: {
     backgroundColor: '#5E8C31',
-    paddingVertical: 8,
     paddingHorizontal: 16,
     marginLeft: 20,
     borderRadius: 8,
