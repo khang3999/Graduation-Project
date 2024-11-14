@@ -13,7 +13,7 @@ import {
 import { TabView, SceneMap, TabBar, TabBarProps } from "react-native-tab-view";
 import MaterialIcons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { useEffect, useState,useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { database, auth, get } from "@/firebase/firebaseConfig";
 import { ref, onValue, off, Unsubscribe } from "firebase/database";
 import { usePost } from "@/contexts/PostProvider";
@@ -62,27 +62,27 @@ type Post = {
 };
 
 
-export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
+export default function GalleryTabView({ isSearched }: { isSearched: boolean }) {
   const layout = useWindowDimensions();
-  const { selectedPost, setSelectedPost }:any= usePost();
-  const {setSelectedTour}:any = useTourProvider();
-  const {searchedAccountData }:any= useAccount();
-  const {dataAccount}:any = useHomeProvider();
+  const { selectedPost, setSelectedPost }: any = usePost();
+  const { setSelectedTour }: any = useTourProvider();
+  const { searchedAccountData }: any = useAccount();
+  const { dataAccount }: any = useHomeProvider();
   const userId = isSearched ? searchedAccountData.id : dataAccount?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
   const [savedPosts, setSavedPosts] = React.useState<Post[]>([]);
   const [savedTours, setSavedToursList] = React.useState<Post[]>([]);
-  
+
   const [routes] = React.useState(
     isSearched
       ? [{ key: "first" }]
       : [
-          { key: "first" },
-          { key: "second" },
-          { key: "third" },
-        ]
+        { key: "first" },
+        { key: "second" },
+        { key: "third" },
+      ]
   );
 
 
@@ -114,7 +114,34 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
       console.log(error);
     }
   };
+  //fetching created posts from firebase
+  const fetchCreatedTours = async () => {
+    try {
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}/createdTours`);
+        onValue(userRef, async (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Get the post IDs as an array
+            const tourIds = Object.keys(data);
 
+            const tourFetches = tourIds.map(async (tourId) => {
+              const tourRef = ref(database, `tours/${tourId}`);
+              const tourSnapshot = await get(tourRef);
+              return tourSnapshot.val();
+            });
+
+            const posts = await Promise.all(tourFetches);
+            setCreatedPosts(posts.filter(Boolean));
+          } else {
+            setCreatedPosts([]);
+          }
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  } 
   //fetching created posts from firebase
   const fetchSavedPosts = async () => {
     try {
@@ -144,6 +171,9 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
     }
   };
 
+
+
+
   //fetching hide posts from firebase
   const fetchSavedTours = async () => {
     try {
@@ -163,7 +193,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
 
             const tours = await Promise.all(tourFetches);
             setSavedToursList(tours.filter(Boolean));
-            
+
           } else {
             setSavedToursList([]);
           }
@@ -177,33 +207,48 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-  
+
       const fetchData = async () => {
         setIsLoading(true);
-  
-        await fetchCreatedPosts();
+        if (dataAccount.role === 'user') {
+          await fetchCreatedPosts();
+        } else {
+          await fetchCreatedTours();
+        }
+
         await fetchSavedPosts();
         await fetchSavedTours();
-  
+
         if (isActive) {
           setIsLoading(false);
         }
       };
       setSelectedPost(null)
       setSelectedTour(null)
-      fetchData();      
+      fetchData();
 
       return () => {
         isActive = false; // Avoid state updates if the effect is cleaned up
-  
+
         if (userId) {
-          const createdPostsRef = ref(
-            database,
-            `accounts/${userId}/createdPosts`
-          );
+          if (dataAccount.role === 'user') {
+            const createdPostsRef = ref(
+              database,
+              `accounts/${userId}/createdPosts`
+            );
+            off(createdPostsRef);
+          }else {
+            const createdToursRef = ref(
+              database,
+              `accounts/${userId}/createdTours`
+            );
+            off(createdToursRef);
+          }
+          
+          
           const savedPostsRef = ref(database, `accounts/${userId}/savedPostsList`);
           const savedToursRef = ref(database, `accounts/${userId}/savedToursList`);
-          off(createdPostsRef);
+          
           off(savedPostsRef);
           off(savedToursRef);
         }
@@ -229,11 +274,19 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             renderItem={({ item, index }) => (
               <Pressable
                 onPress={() => {
+                  if( dataAccount.role === 'user'){
                   router.push({
-                    pathname: "/post",
+                    pathname: "postDetail",
                     params: { initialIndex: index.toString() },
                   });
                   setSelectedPost(createdPosts);
+                }else {
+                  router.push({
+                    pathname: "tourDetail",
+                    params: { initialIndex: index.toString() },
+                  });
+                  setSelectedTour(createdPosts);
+                }
                 }}
               >
                 <Image
@@ -268,7 +321,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/post",
+                  pathname: "postDetail",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedPost(savedPosts);
@@ -305,7 +358,7 @@ export default function GalleryTabView( {isSearched }: {isSearched: boolean}) {
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "/tour",
+                  pathname: "tourDetail",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedTour(savedTours);
