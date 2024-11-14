@@ -9,18 +9,20 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  BackHandler,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { getImageUrl, updateUserData, updateUserPosts } from "@/services/userService";
+import { getImageUrl, updateUserData, updateUserPosts , updateUserTours} from "@/services/userService";
 import debounce from "lodash/debounce";
 import { set, update } from "lodash";
 import { auth } from "@/firebase/firebaseConfig";
 import { useAccount } from "@/contexts/AccountProvider";
 import LottieView from "lottie-react-native";
 import { useHomeProvider } from "@/contexts/HomeProvider";
+
 
 export default function EditingProfileScreen() {  
   const { dataAccount }: any = useHomeProvider();
@@ -87,12 +89,33 @@ export default function EditingProfileScreen() {
       await updateUserData(dataAccount.id, localUserData, selectedImage);
 
       // Immediately set loading to false and notify the user
-      setIsLoading(false);
-      alert("User data updated successfully!");
-      router.back();
+      
+      
+      
 
       // Step 2: Asynchronously start updating posts in the background
       await updateUserPosts(dataAccount.id, localUserData);
+      
+      // Step 3: Asynchronously start updating tours in the background
+      await updateUserTours(dataAccount.id, localUserData);
+      
+      Alert.alert(
+        "Đã cập nhật thành công !",
+        "Xin hãy khởi động lại ứng dụng để cập nhật thông tin.",
+        [
+          {
+            text: "Khởi động",
+            onPress: () => {
+              BackHandler.exitApp();
+            },
+          },
+          
+        ]
+      );
+    
+      setIsLoading(false)
+      router.back();
+      
       
     } catch (error) {
       alert("Failed to update user data: " + error);

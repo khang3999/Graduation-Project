@@ -143,7 +143,7 @@ const PostItem: React.FC<PostItemProps> = ({
           id: dataAccount.id,
           avatar:
             dataAccount.avatar,
-          username: dataAccount.fullname,
+          fullname: dataAccount.fullname,
         },
         status_id: 1,
         reports: 0,

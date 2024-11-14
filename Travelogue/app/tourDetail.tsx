@@ -57,7 +57,7 @@ import {
     author: {
       id: string
       avatar: any;
-      username: string;
+      fullname: string;
     };
     status_id: number;
     content: string;
@@ -164,7 +164,7 @@ import {
     const [commentText, setCommentText] = useState("");
     const [replyingTo, setReplyingTo] = useState<{
       id: string;
-      username: string;
+      fullname: string;
     } | null>(null);
     
     const { dataAccount }: any = useHomeProvider();  
@@ -191,7 +191,7 @@ import {
             id: dataAccount.id,
             avatar:
               dataAccount.avatar,
-            username: dataAccount.fullname,
+            fullname: dataAccount.fullname,
           },
           status_id: 1,
           reports: 0,
@@ -236,7 +236,7 @@ import {
             id: dataAccount.id,
             avatar:
               dataAccount.avatar,
-            username: dataAccount.fullname,
+            fullname: dataAccount.fullname,
           },
           image: "",
           rating: -1,
@@ -432,7 +432,7 @@ import {
           author: {
             id: userId,
             avatar: dataAccount.avatar,
-            username: dataAccount.fullname,
+            fullname: dataAccount.fullname,
           },
           id: userRatingRef.key!,
           content: ratingCommentText,
