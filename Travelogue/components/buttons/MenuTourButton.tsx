@@ -1,4 +1,3 @@
-import { auth } from "@/firebase/firebaseConfig";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
@@ -22,20 +21,19 @@ import { child, onValue, push, remove } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
-
-
 interface MenuPopupButtonProps {
   isAuthor: boolean;
-  postId: string;
+  tourId: string;
   userId: string;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, userId }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
+  const [isLoading, setIsLoading] = useState(false);
   const buttonRef = useRef<TouchableOpacity>(null); // To measure the button's position
   // Function to toggle modal visibility
+
 
   //Report
   const [modalVisible, setModalVisible] = useState(false);
@@ -61,11 +59,12 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     setIsModalVisible(!isModalVisible);
   };
 
-  const handleDeletePost = async () => {
+  const handleDeleteTour = async () => {
+
     if (isAuthor) {
       Alert.alert(
         "Xác nhận",
-        "Bạn có chắc chắn muốn xóa bài viết này?",
+        "Bạn có chắc chắn muốn xóa bài này?",
         [
           {
             text: "Hủy",
@@ -80,16 +79,16 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
               try {
                 setIsLoading(true);
 
-                // Delete the post
-                const postRef = ref(database, `posts/${postId}`);
-                await remove(postRef);
-                console.log('Post deleted successfully');
+                // Delete the tour\
+                const tourRef = ref(database, `tours/${tourId}`);
+                await remove(tourRef);
+                console.log('tour deleted successfully');
 
-                // Delete from author's created posts
-                const userPostRef = ref(database, `accounts/${userId}/createdPosts/${postId}`);
-                await remove(userPostRef);
+                // Delete from author's created tours
+                const userTourRef = ref(database, `accounts/${userId}/createdTours/${tourId}`);
+                await remove(userTourRef);
 
-                // Retrieve all users to check their likedPostsList and savedToursList
+                // Retrieve all users to check their likedtoursList and savedToursList
                 const accountsRef = ref(database, 'accounts');
                 const snapshot = await get(accountsRef);
 
@@ -97,25 +96,25 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                   snapshot.forEach((userSnapshot) => {
                     const userKey = userSnapshot.key;
 
-                    // Check if the postId exists in likedPostsList and remove it if found
-                    const likedPosts = userSnapshot.child(`likedPostsList/${postId}`);
-                    if (likedPosts.exists()) {
-                      const likedPostRef = child(accountsRef, `${userKey}/likedPostsList/${postId}`);
-                      remove(likedPostRef);
+                    // Check if the tourId exists in likedtoursList and remove it if found
+                    const likedTours = userSnapshot.child(`likedToursList/${tourId}`);
+                    if (likedTours.exists()) {
+                      const likedTourRef = child(accountsRef, `${userKey}/likedToursList/${tourId}`);
+                      remove(likedTourRef);
                     }
 
-                    // Check if the postId exists in savedToursList and remove it if found
-                    const savedPosts = userSnapshot.child(`savedPostsList/${postId}`);
-                    if (savedPosts.exists()) {
-                      const savedPostRef = child(accountsRef, `${userKey}/savedToursList/${postId}`);
-                      remove(savedPostRef);
+                    // Check if the tourId exists in savedToursList and remove it if found
+                    const savedTours = userSnapshot.child(`savedToursList/${tourId}`);
+                    if (savedTours.exists()) {
+                      const savedTourRef = child(accountsRef, `${userKey}/savedToursList/${tourId}`);
+                      remove(savedTourRef);
                     }
                   });
                 }
 
                 // Optionally, update the UI or state here if necessary
               } catch (error) {
-                console.error('An error occurred while deleting the post:', error);
+                console.error('An error occurred while deleting the tour:', error);
               } finally {
                 setIsLoading(false);
                 setIsModalVisible(false);
@@ -126,7 +125,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
         ]
       );
     }
-  };
+  }
 
   //Report 
   // Reason post
@@ -182,22 +181,22 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
   const handleReport = (reason: any) => {
     setSelectedReason(reason);
     setModalVisible(false);
-    setShowConfirmation(true);
+    setShowConfirmation(true);    
     setTimeout(() => {
       setShowConfirmation(false);
     }, 3000);
-    if (typeReport==="post") {
+    if (typeReport === "post") {
       reportPost(reason)
     }
-    else{
+    else {
       reportComment(reason)
     }
   };
 
   //Update report
-  const reportComment = async (reason:any) => {
+  const reportComment = async (reason: any) => {
     let item: any = {
-      reason:{
+      reason: {
 
       }
     }
@@ -215,7 +214,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       post_id: idPost,
       reason: {
         ...item.reason,
-        [reasonKey] : reason
+        [reasonKey]: reason
       },
       status: 1
     }
@@ -229,9 +228,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 
   };
   //Update report
-  const reportPost = async (reason:any) => {
+  const reportPost = async (reason: any) => {
     let item: any = {
-      reason:{
+      reason: {
 
       }
     }
@@ -248,7 +247,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       post_id: idPost,
       reason: {
         ...item.reason,
-        [reasonKey] : reason
+        [reasonKey]: reason
       },
       status: 1
     }
@@ -268,16 +267,15 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     setIsModalVisible(false)
     if (type === "post") {
       setDataReason(reasonsPost)
-      setIdPost(postId)        
+      setIdPost(tourId)           
       setTypeReport("post")
     }
     else if (type === "comment") {
       setDataReason(reasonsComment)
-      setIdComment('')
+      setIdComment('') 
       setTypeReport("comment")
     }
   }
-
 
   if (isLoading) {
     return (
@@ -301,7 +299,6 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       </Modal>
     );
   }
-
 
   return (
     <View style={styles.container}>
@@ -331,7 +328,8 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                 ]}
               >
                 <TouchableOpacity style={styles.menuItem}
-                  onPress={handleDeletePost}>
+                  onPress={handleDeleteTour}>
+
                   <Icon name="trash-can-outline" size={20} style={styles.menuIcon} />
                   <Text style={styles.menuText}>Xóa</Text>
                 </TouchableOpacity>
@@ -356,7 +354,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                   { top: menuPosition.top, left: menuPosition.left },
                 ]}
               >
-                <TouchableOpacity style={styles.menuItem} onPress={() => handlePressReport("post")}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => handlePressReport('post')}>
                   <Icon name="send" size={20} style={styles.menuIcon} />
                   <Text style={styles.menuText}>Báo cáo</Text>
                 </TouchableOpacity>
@@ -379,17 +377,20 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
             <Text style={styles.modalTitle}>Select a reason for report</Text>
             <FlatList
               data={dataReason}
-              keyExtractor={(_,index) => index.toString()}
+              keyExtractor={(_, index) => index.toString()}
               renderItem={(item: any) => (
                 <TouchableOpacity
                   style={styles.reasonItem}
-                  onPress={() => handleReport(item.item.name)}
+                  onPress={() =>
+                    handleReport(item.item.name)
+                  }
                 >
                   <Text style={styles.reasonText}>{item.item.name}</Text>
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => {              
+              setModalVisible(false)}}>
               <MaterialIcons name="cancel" size={24} color="red" />
             </TouchableOpacity>
           </View>
