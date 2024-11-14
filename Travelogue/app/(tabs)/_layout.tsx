@@ -1,4 +1,4 @@
-import { View, Text, Button, Image, StyleSheet } from 'react-native'
+import { View, Text, Button, Image, StyleSheet, Pressable } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { router, Tabs, useLocalSearchParams } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
@@ -6,14 +6,28 @@ import PlusButton from '@/components/buttons/PlusButton'
 import BellButton from '@/components/buttons/BellButton'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { ref } from 'firebase/database'
-import { database, onValue } from '@/firebase/firebaseConfig'
+import { database, get, onValue } from '@/firebase/firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 
 const _layout = () => {
-  const { userRole }: any = useLocalSearchParams();
-  const role = userRole ? userRole : null;
-  console.log(role)
+  const [role, setRole] = useState("user"); 
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      const userID = await AsyncStorage.getItem("userToken");
+      if (userID) {
+        const userRef = ref(database, "accounts/" + userID);
+        const snapshot = await get(userRef);
+        const data = snapshot.val();
+        if (data && data.role) {
+          setRole(data.role);
+        }
+      }
+    };
+    fetchRole();
+  }, []);
+ 
   return (
     <Tabs
       tabBar={(props: any) => <TabBar role={role} {...props} />}
@@ -23,14 +37,18 @@ const _layout = () => {
         },
         headerTitle: (props) =>
           // Bỏ image vào đây
+        
           <Image
             source={require('@/assets/images/logo.png')}
             resizeMode="contain"
           />
+        
         ,
         headerRight: () => (
           <View style={styles.headerRight}>
-            <PlusButton onPress={() => { router.push('../(article)/addPostUser') }} style={styles.buttonRight}></PlusButton>
+            <PlusButton onPress={() => { 
+               role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour') 
+             }} style={styles.buttonRight}></PlusButton>
             <BellButton style={styles.buttonRight}></BellButton>
           </View>
         ),

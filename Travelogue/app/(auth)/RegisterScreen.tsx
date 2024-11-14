@@ -41,8 +41,12 @@ import {
   uploadBytes,
 } from "@/firebase/firebaseConfig";
 import { UserRegister } from "@/model/UserRegister";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import { auth, storage } from "@/firebase/firebaseConfig";
+import LottieView from "lottie-react-native";
 
 const RegisterScreen = ({ navigation }: any) => {
   //Thêm trạng thái
@@ -60,6 +64,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const [numberCCCD, setNumberCCCD] = useState("");
   const [totalLikes, setTotalLikes] = useState(0);
   const [totalPosts, setTotalPosts] = useState(0);
+  const [checkInList, setCheckInList] = useState("");
   // Lưu ảnh
   const [frontCCCDImage, setFrontCCCDImage] = useState<string | null>(null);
   const [backCCCDImage, setBackCCCDImage] = useState<string | null>(null);
@@ -159,7 +164,7 @@ const RegisterScreen = ({ navigation }: any) => {
             behavior,
             avatar,
             balance: null,
-            accumulate : null,
+            accumulate: null,
             currentDate,
             status_id: status,
             role: role,
@@ -168,8 +173,9 @@ const RegisterScreen = ({ navigation }: any) => {
             imageBackUrlCCCD: null,
             business_license_id: null,
             imageUrlBusinessLicense: null,
+            checkInList: checkInList,
           });
-          // console.log(newUser);
+          console.log(newUser);
 
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
@@ -184,6 +190,7 @@ const RegisterScreen = ({ navigation }: any) => {
             createdAt: newUser.currentDate,
             status_id: newUser.status_id,
             role: newUser.role,
+            checkInList: newUser.checkInList,
           });
           Alert.alert("Thành công", "Đăng ký thành công!");
           navigation.navigate("LoginScreen");
@@ -241,7 +248,7 @@ const RegisterScreen = ({ navigation }: any) => {
         // console.log(userCredential);
         const user = userCredential.user;
         await sendEmailVerification(user);
-      
+
         if (user) {
           // Tạo đối tượng User mới
           const behavior = "";
@@ -273,6 +280,7 @@ const RegisterScreen = ({ navigation }: any) => {
             imageUrlBusinessLicense: businessLicenseImage,
             status_id: status,
             role: role,
+            checkInList: null,
           });
 
           let frontImageUrl, backImageUrl, businessLicenseImageUrl;
@@ -352,11 +360,35 @@ const RegisterScreen = ({ navigation }: any) => {
         />
       </SectionComponent>
       <SectionComponent>
-        <TextComponent
-          text="Đăng Ký"
-          size={24}
-          styles={{ fontWeight: "800", margin: 5 }}
-        />
+        <RowComponent>
+          <Text
+            style={{
+              fontWeight: "800",
+              margin: 5,
+              fontSize: 28,
+              color: appColors.danger,
+              textShadowColor: "#000", 
+              textShadowOffset: { width: -2, height: 1 },
+              textShadowRadius: 1, 
+            }}
+          >
+            Đăng Ký
+          </Text>
+          <LottieView
+            source={require("../../assets/images/nonetravel.json")}
+            autoPlay
+            loop
+            style={{
+              position: "absolute",
+              top: -138,
+              // top: -190,
+              left: -134,
+              zIndex: -10,
+              width: 650,
+              height: 320,
+            }}
+          />
+        </RowComponent>
       </SectionComponent>
 
       <View style={{ marginTop: -20 }}>
@@ -393,10 +425,14 @@ const RegisterScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
 
-        <View style={{padding: 15}}>
-          <TextComponent text="Chú ý" styles={{fontWeight: 'bold'}} />
-          <TextComponent text="Thông tin cá nhân nhập phải thực sự chính xác" color={appColors.danger} styles={{fontWeight: 'bold'}}/>
-          </View> 
+        <View style={{ padding: 15 }}>
+          <TextComponent text="Chú ý" styles={{ fontWeight: "bold" }} />
+          <TextComponent
+            text="Thông tin cá nhân nhập phải thực sự chính xác"
+            color={appColors.danger}
+            styles={{ fontWeight: "bold" }}
+          />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -588,7 +624,20 @@ const RegisterScreen = ({ navigation }: any) => {
         {isLoading && (
           <Modal transparent={true} animationType="none" visible={isLoading}>
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={appColors.danger} />
+            <LottieView
+            source={require("../../assets/images/register.json")}
+            autoPlay
+            loop
+            style={{
+              position: "absolute",
+              top: 200,
+              // top: -190,
+              // left: 32,
+              zIndex: -10,
+              width: 300,
+              height: 320,
+            }}
+          />
             </View>
           </Modal>
         )}
@@ -617,10 +666,14 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: "center",
     backgroundColor: "#f1f1f1",
+    borderColor: "#ccc",
+    borderWidth: 1,
     borderRadius: 5,
   },
   activeTab: {
-    backgroundColor: "#f44336",
+    backgroundColor: "#FF3333",
+    borderColor: appColors.danger,
+    borderWidth: 1,
   },
   tabText: {
     fontSize: 17,

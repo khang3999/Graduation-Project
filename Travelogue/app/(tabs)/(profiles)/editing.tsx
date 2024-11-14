@@ -8,25 +8,28 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { getImageUrl, updateUserData } from "@/services/userService";
+import { getImageUrl, updateUserData, updateUserPosts } from "@/services/userService";
 import debounce from "lodash/debounce";
 import { set, update } from "lodash";
 import { auth } from "@/firebase/firebaseConfig";
 import { useAccount } from "@/contexts/AccountProvider";
+import LottieView from "lottie-react-native";
+import { useHomeProvider } from "@/contexts/HomeProvider";
 
 export default function EditingProfileScreen() {  
-  const {accountData} = useAccount();
+  const { dataAccount }: any = useHomeProvider();
   
-  const initialAvatarUrl =  accountData.avatar;
+  const initialAvatarUrl =  dataAccount.avatar;
   const [selectedImage, setSelectedImage] = React.useState<string | null>(
     initialAvatarUrl || null
   );
-  const [localUserData, setLocalUserData] = React.useState(accountData);
+  const [localUserData, setLocalUserData] =  React.useState(dataAccount);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const pickImageAsync = async () => {
@@ -42,8 +45,6 @@ export default function EditingProfileScreen() {
       alert("Image picker was cancelled");
     }
   };
-
-  
 
   const validateInputs = () => {
     let valid = true;
@@ -73,24 +74,30 @@ export default function EditingProfileScreen() {
     return valid;
   };
 
-  const handleSaveChangesButton = () => {
+  const handleSaveChangesButton = async () => {
     if(!validateInputs()) {
       return;
     }
     
-    if (accountData) {
+    if (dataAccount) {
+      
+    try {
       setIsLoading(true);
-      updateUserData(accountData.id, localUserData, selectedImage)
-        .then(() => {
-          alert("User data updated successfully!");
-          router.back();
-        })
-        .catch((error) => {
-          alert("Failed to update user data: " + error.message);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      // Step 1: Update user data
+      await updateUserData(dataAccount.id, localUserData, selectedImage);
+
+      // Immediately set loading to false and notify the user
+      setIsLoading(false);
+      alert("User data updated successfully!");
+      router.back();
+
+      // Step 2: Asynchronously start updating posts in the background
+      await updateUserPosts(dataAccount.id, localUserData);
+      
+    } catch (error) {
+      alert("Failed to update user data: " + error);
+      setIsLoading(false);
+    }
     } else {
       alert("No user is currently logged in.");
     }
@@ -105,7 +112,24 @@ export default function EditingProfileScreen() {
 
   if (isLoading) {
     return (
-      <ActivityIndicator style={styles.loading} size="large" color="red" />
+      <Modal transparent={true} animationType="none" visible={isLoading}>
+      <View style={styles.loadingOverlay}>
+        <LottieView
+          source={require("@/assets/images/editing.json")}
+          autoPlay
+          loop
+          style={{
+            position: "absolute",
+            top: 190,
+            // top: -190,
+            // left: -120,
+            // zIndex: -10,
+            width: 650,
+            height: 320,
+          }}
+        />
+      </View>
+    </Modal>
     );
   }
 
@@ -152,6 +176,12 @@ export default function EditingProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#f8f8f8",
@@ -175,7 +205,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   editButton: {
-    backgroundColor: "#e74c3c",
+    backgroundColor: "#C1E1C1",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -184,7 +214,7 @@ const styles = StyleSheet.create({
   editText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
+    color: "grey",
   },
   infoContainer: {
     width: "100%",
@@ -219,7 +249,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   saveButton: {
-    backgroundColor: "#e74c3c",
+    backgroundColor: "#C1E1C1",
     paddingVertical: 15,
     borderRadius: 5,
     alignItems: "center",
@@ -228,6 +258,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
+    color: "grey",
   },
 });

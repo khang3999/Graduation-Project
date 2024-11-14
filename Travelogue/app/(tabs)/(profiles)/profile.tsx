@@ -153,7 +153,7 @@ export default function ProfileScreen() {
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push("/SearchResult");
+                  router.push("/searchResult");
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   searchModal: {
     position: "absolute",
-    top: 100,
+    top: 85,
     left: 0,
     right: 0,
     bottom: 0,

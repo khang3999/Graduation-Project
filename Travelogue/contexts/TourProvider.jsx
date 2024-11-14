@@ -13,6 +13,7 @@ const TourProvider = ({ children }) => {
     const [newTourCount, setNewTourCount] = useState(0);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
+    const [selectedTour, setSelectedTour] = useState(undefined)
 
     // Hàm lắng nghe thay khi có tour mới từ firebase để hiển thị button reload
     useEffect(() => {
@@ -43,7 +44,7 @@ const TourProvider = ({ children }) => {
                 currentTourCount, setCurrentTourCount,
                 newTourCount, setNewTourCount,
                 loadedTours, setLoadedTours,
-                isSearchingMode, setIsSearchingMode
+                isSearchingMode, setIsSearchingMode,setSelectedTour,selectedTour
             }}
         >
             {children}

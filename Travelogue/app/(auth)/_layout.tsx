@@ -55,10 +55,7 @@ const Layout = () => {
         router.replace('/(admin)/(account)/account')
       }
       else {
-        router.replace({
-          pathname: "/(tabs)",
-          params: { userRole: role },
-        });
+        router.replace("/(tabs)");
       }
     }
   }, [isAuth]);
