@@ -1006,14 +1006,13 @@ const AddPostUser = () => {
             {}
           ),
           content: contents,
-          view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           likes,
           id : postId,
           reports,
           match,
-          status: status,
+          status_1: status,
           thumbnail,
           created_at: timestamp,
         };

@@ -1044,7 +1044,6 @@ const AddPostTour = () => {
           content: contents,
           hashtags: combinedHashtags,
           package: selectedPackageData,
-          view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           created_at: timestamp,
@@ -1054,7 +1053,7 @@ const AddPostTour = () => {
           reports,
           match,
           ratingSummary: ratingSummary,
-          status: status,
+          status_id: status,
         };
 
         // Lưu bài viết vào Realtime Database
