@@ -18,7 +18,7 @@ import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
-import { child, onValue, push, remove } from "@firebase/database";
+import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
@@ -88,6 +88,12 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                 // Delete from author's created posts
                 const userPostRef = ref(database, `accounts/${userId}/createdPosts/${postId}`);
                 await remove(userPostRef);
+
+                // Decrease the totalPosts count
+                const totalPostsRef = ref(database, `accounts/${userId}/totalPosts`);
+                await runTransaction(totalPostsRef, (currentValue:any) => {
+                  return (currentValue || 0) - 1;
+                });
 
                 // Retrieve all users to check their likedPostsList and savedToursList
                 const accountsRef = ref(database, 'accounts');

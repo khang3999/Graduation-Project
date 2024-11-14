@@ -257,7 +257,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                         <View style={styles.replyInputContainer}>
 
                             <View style={styles.mentionContainer}>
-                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
+                                <Text style={styles.mentionText}>@{selectedComment.author.fullname}</Text>
                                 <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
                                     <IconMaterial name="close-circle" size={16} color="#FF3B30" />
                                 </Pressable>
@@ -298,7 +298,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                                         />
                                         <View style={styles.ratingCommentUserInfo}>
                                             <Text style={styles.ratingCommentAuthor}>
-                                                {item.author.username}
+                                                {item.author.fullname}
                                             </Text>
                                             <Text style={styles.ratingCommentTime}>
                                                 {item.created_at}

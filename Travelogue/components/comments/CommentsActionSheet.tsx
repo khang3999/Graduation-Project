@@ -249,7 +249,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     <View style={styles.replyInputContainer}>
                         {selectedComment && (
                             <View style={styles.mentionContainer}>
-                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
+                                <Text style={styles.mentionText}>@{selectedComment.author.fullname}</Text>
                                 <TouchableOpacity onPress={handleCancelReply} style={styles.cancelMentionButton}>
                                     <IconMaterial name="close-circle" size={16} color="#FF3B30" />
                                 </TouchableOpacity>
@@ -290,7 +290,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                         />
                                         <View style={styles.ratingCommentUserInfo}>
                                             <Text style={styles.ratingCommentAuthor}>
-                                                {item.author.username}
+                                                {item.author.fullname}
                                             </Text>
                                             <Text style={styles.ratingCommentTime}>
                                                 {item.created_at}

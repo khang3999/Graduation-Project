@@ -72,25 +72,43 @@ const updateUserPosts = async (userId: string, localUserData: any) => {
       // Find posts authored by the user and prepare updates
       userPostsSnapshot.forEach((postSnapshot) => {
         const post = postSnapshot.val();
-        if (post.author.id === userId) {
-          const postKey = postSnapshot.key;
+        const postKey = postSnapshot.key;
 
+        // Update the post's main author information if it matches the userId
+        if (post.author.id === userId) {
           updates[`posts/${postKey}/author`] = {
             avatar: localUserData.avatar || post.author.avatar,
             fullname: localUserData.fullname || post.author.fullname,
             id: userId,
           };
         }
+
+        // Iterate through each comment in the post to update comment author information
+        if (post.comments) {
+          Object.keys(post.comments).forEach((commentKey) => {
+            const comment = post.comments[commentKey];
+
+            // Update the author information in the comment if it matches the userId
+            if (comment.author.id === userId) {
+              updates[`posts/${postKey}/comments/${commentKey}/author`] = {
+                avatar: localUserData.avatar || comment.author.avatar,
+                fullname: localUserData.fullname || comment.author.fullname,
+                id: userId,
+              };
+            }
+          });
+        }
       });
 
       // Apply the batch update in the background
       await update(ref(database), updates);
-      console.log("All related posts updated successfully in the background.");
+      console.log("All related posts and comments updated successfully in the background.");
     }
   } catch (error) {
-    console.error("Failed to update posts:", error);
+    console.error("Failed to update posts and comments:", error);
   }
 };
+
 
 const updateUserTours = async (userId: string, localUserData: any) => {
   try {
@@ -102,15 +120,42 @@ const updateUserTours = async (userId: string, localUserData: any) => {
       // Find tours authored by the user and prepare updates
       userToursSnapshot.forEach((tourSnapshot) => {
         const tour = tourSnapshot.val();
+        const tourKey = tourSnapshot.key;
         if (tour.author.id === userId) {
-          const tourKey = tourSnapshot.key;
-
           updates[`tours/${tourKey}/author`] = {
             avatar: localUserData.avatar || tour.author.avatar,
             fullname: localUserData.fullname || tour.author.fullname,
             id: userId,
           };
         }
+        if (tour.comments) {
+          Object.keys(tour.comments).forEach((commentKey) => {
+            const comment = tour.comments[commentKey];
+
+            // Update the author information in the comment if it matches the userId
+            if (comment.author.id === userId) {
+              updates[`tours/${tourKey}/comments/${commentKey}/author`] = {
+                avatar: localUserData.avatar || comment.author.avatar,
+                fullname: localUserData.fullname || comment.author.fullname,
+                id: userId,
+              };
+            }
+          });
+        }
+        
+        if(tour.ratings){
+          Object.keys(tour.ratings).forEach((ratingKey) => {
+            const rating = tour.ratings[ratingKey];
+            if (rating.author.id === userId) {
+              updates[`tours/${tourKey}/ratings/${ratingKey}/author`] = {
+                avatar: localUserData.avatar || rating.author.avatar,
+                fullname: localUserData.fullname || rating.author.fullname,
+                id: userId,
+              };
+            }
+          });
+        }
+
       });
 
       // Apply the batch update in the background
@@ -122,4 +167,4 @@ const updateUserTours = async (userId: string, localUserData: any) => {
   }
 }
 
-export { getCurrentUserData, getDownloadURL, updateUserData,getImageUrl, updateUserPosts };
+export { getCurrentUserData, getDownloadURL, updateUserData,getImageUrl, updateUserPosts , updateUserTours};
