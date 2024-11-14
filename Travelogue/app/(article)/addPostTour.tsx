@@ -1043,7 +1043,7 @@ const AddPostTour = () => {
           ),
           content: contents,
           hashtags: combinedHashtags,
-          packages: selectedPackageData,
+          package: selectedPackageData,
           view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
@@ -1106,7 +1106,7 @@ const AddPostTour = () => {
   // *********************************************************************
   //Đọc dữ liệu từ firebase
   useEffect(() => {
-    const packagesRef = ref(database, "package");
+    const packagesRef = ref(database, "packages");
 
     onValue(packagesRef, (snapshot) => {
       const data = snapshot.val() || {};
@@ -1239,7 +1239,7 @@ const AddPostTour = () => {
     }
 
     const existingDay = days.find(
-      (day) =>
+      (day) => 
         day.title === "" ||
         day.description === "" ||
         day.activities.length === 0
