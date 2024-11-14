@@ -988,7 +988,7 @@ const AddPostTour = () => {
         const userRef = ref(database, `accounts/${userId}`);
         let avatar = "";
         let fullname = "";
-        let totalPosts = 0;
+        let totalPosts;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
@@ -998,7 +998,7 @@ const AddPostTour = () => {
               totalPosts = data.totalPosts + 1 ;
             }
             else {
-              totalPosts = 0;
+              totalPosts = 1;
             }
           }
         });

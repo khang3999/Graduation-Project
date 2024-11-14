@@ -965,7 +965,7 @@ const AddPostUser = () => {
 
         let avatar = "";
         let fullname = "";
-        let totalPosts = 0;
+        let totalPosts;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
@@ -975,7 +975,7 @@ const AddPostUser = () => {
               totalPosts = data.totalPosts + 1 ;
             }
             else {
-              totalPosts = 0;
+              totalPosts = 1;
             }
           }
         });
