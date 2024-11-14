@@ -23,7 +23,7 @@ import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import FacebookLoginButton from "@/components/socials/facebook";
+// import FacebookLoginButton from "@/components/socials/facebook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
 import Toast from "react-native-toast-message-custom";
@@ -63,7 +63,7 @@ const LoginScreen = ({ navigation }: any) => {
     }
 
     if (!email || !password) {
-      Alert.alert("Lỗi", "Hãy nhập đầy đủ thông tin đăng nhập.");
+      Alert.alert("Error", "Please enter both email and password.");
       return;
     }
     setLoading(true);
@@ -186,6 +186,7 @@ const LoginScreen = ({ navigation }: any) => {
         styles={{
           justifyContent: "center",
           alignItems: "center",
+          paddingTop: 50,
         }}
       >
         <Image
@@ -203,6 +204,7 @@ const LoginScreen = ({ navigation }: any) => {
           value={email}
           placeholder="abc@gmail.com"
           onChange={(val) => setEmail(val)}
+          // isPassword
           allowClear
           affix={<Sms size={22} color={appColors.gray2} />}
         />
@@ -251,7 +253,18 @@ const LoginScreen = ({ navigation }: any) => {
           size={16}
           color={appColors.gray}
         />
-        <FacebookLoginButton/>
+        <ButtonComponent
+          icon={<Icon name="facebook" size={20} color="blue" />}
+          iconFlex="left"
+          color="white"
+          textColor="blue"
+          text="Đăng nhập bằng Facebook"
+          styles={{
+            margin: 10,
+            borderColor: appColors.gray2,
+            borderWidth: 0.3,
+          }}
+        />
         <ButtonComponent
           icon={<Icon name="google" size={20} color="red" />}
           iconFlex="left"

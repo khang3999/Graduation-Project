@@ -1,24 +1,41 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Image, View, StyleSheet } from 'react-native';
+import { Image, View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { MaterialIcons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Octicons, Entypo, AntDesign } from '@expo/vector-icons';
 import React from 'react';
+import { signOut } from 'firebase/auth';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth } from '@/firebase/firebaseConfig';
+import { router } from 'expo-router';
 
-function CustomDrawerContent(props:any) {
+function CustomDrawerContent(props: any) {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      await AsyncStorage.removeItem('userToken');
+      Alert.alert("Đăng xuất thành công", "Bạn đã đăng xuất khỏi tài khoản.");
+      router.replace("/LoginScreen");
+    } catch (error) {
+      Alert.alert("Lỗi", "Đăng xuất không thành công. Vui lòng thử lại.");
+    }
+  };
   return (
     <DrawerContentScrollView {...props}>
       {/* Hình ảnh phía trên */}
       <View style={styles.imageContainer}>
-        <Image 
-          source={require('../../assets/images/logo.png')} 
-          resizeMode="contain" 
-          style={styles.image} 
+        <Image
+          source={require('@/assets/images/logo.png')}
+          resizeMode="contain"
+          style={styles.image}
         />
       </View>
 
       {/* Danh sách các Drawer.Screen */}
       <DrawerItemList {...props} />
+      <TouchableOpacity onPress={handleLogout}>
+        <Text  style={{color:'red', fontSize:30, textAlign:'center'}}>Log out</Text>
+      </TouchableOpacity>
     </DrawerContentScrollView>
   );
 }
@@ -30,87 +47,102 @@ export default function Layout() {
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <Drawer.Screen
-          name="(account)" 
+          name="(account)"
           options={{
             drawerLabel: 'Accounts',
             title: 'Accounts',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialIcons name="manage-accounts" color={color} size={size} />
             )
           }}
         />
         <Drawer.Screen
-          name="(report)" 
+          name="(report)"
           options={{
             drawerLabel: 'Reports',
             title: 'Reports',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialIcons name="report" color={color} size={size} />
             )
           }}
         />
         <Drawer.Screen
-          name="ban" 
+          name="ban"
           options={{
             drawerLabel: 'Ban words',
             title: 'Ban words',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialIcons name="block" color={color} size={size} />
             )
           }}
         />
         <Drawer.Screen
-          name="factor" 
+          name="factorA"
           options={{
             drawerLabel: 'Factor',
             title: 'Factor',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <Octicons name="number" size={32} color={color} />
             )
           }}
         />
         <Drawer.Screen
-          name="exchange" 
+          name="(reason)"
+          options={{
+            drawerLabel: 'Reasons',
+            title: 'Reasons',
+            drawerIcon: ({ color, size }) => (
+              <Entypo name="list" size={size} color={color} />
+            )
+          }}
+        />
+        <Drawer.Screen
+          name="exchange"
           options={{
             drawerLabel: 'Exchanges',
             title: 'Exchanges',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialIcons name="currency-exchange" size={size} color={color} />
             )
           }}
         />
         <Drawer.Screen
-          name="package" 
+          name="package"
           options={{
             drawerLabel: 'Packages',
             title: 'Packages',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="package" size={size} color={color} />
             )
           }}
+
         />
+
         <Drawer.Screen
-          name="rating" 
-          options={{
-            drawerLabel: 'Ratings',
-            title: 'Rating',
-            drawerIcon: ({color, size}) => (
-              <MaterialCommunityIcons name="progress-star" size={size} color={color} />
-            )
-          }}
-        />
-        <Drawer.Screen
-          name="(information)" 
+          name="(information)"
           options={{
             drawerLabel: 'Information Locations',
             title: 'Information Locations',
-            drawerIcon: ({color, size}) => (
+            drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
         />
+        <Drawer.Screen
+          name="testReport"
+          options={{
+            drawerLabel: 'testReport',
+            title: 'testReport',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
+       
       </Drawer>
+
     </GestureHandlerRootView>
+
   );
 }
 

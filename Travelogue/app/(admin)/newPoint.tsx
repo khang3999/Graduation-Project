@@ -223,6 +223,11 @@ const NewPoint = () => {
 
   return (
     <View style={styles.container}>
+      <View style={{flexDirection:'row', justifyContent:'space-around'}}>
+
+      <Text>#{idCountry}</Text>
+      <Text>#{idCity}</Text>
+      </View>
       <ScrollView>
         <Text style={styles.label}>Tên</Text>
         <TextInput

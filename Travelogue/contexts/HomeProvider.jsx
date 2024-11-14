@@ -181,7 +181,6 @@ const HomeProvider = ({ children }) => {
                 if (snapshot.exists()) {
                     const jsonDataAccount = snapshot.val();
                     // Set behavior
-                    console.log(jsonDataAccount.behavior);
                     setAccountBehavior(jsonDataAccount.behavior)
                     setDataAccount(jsonDataAccount)
                     setLoadedDataAccount(true)

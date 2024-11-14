@@ -5,13 +5,15 @@ import { combineProviders } from './CombineProvider';
 import HomeProvider from './HomeProvider';
 import TourProvider from './TourProvider';
 import MapCheckinProvider from './MapCheckinProvider';
+import AdminProvider from './AdminProvider';
 // List all providers you want to combine
 const providers = [  
   [PostProvider, {}], 
   [AccountProvider, {}],
   [HomeProvider,{}],
   [TourProvider,{}],
-  [MapCheckinProvider, {}]
+  [MapCheckinProvider, {}],
+  [AdminProvider, {}]
   //add more providers here
 ];
 

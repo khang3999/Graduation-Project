@@ -366,6 +366,7 @@ export default function PostsScreen() {
   // State to track whether full description is shown
 
   const { selectedPost, setSelectedPost }: any = usePost();
+
   const { initialIndex } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
