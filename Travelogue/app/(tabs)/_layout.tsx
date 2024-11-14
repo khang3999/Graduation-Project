@@ -27,6 +27,7 @@ const _layout = () => {
     };
     fetchRole();
   }, []);
+
  
   return (
     <Tabs
@@ -78,6 +79,7 @@ const _layout = () => {
         name="payment"
         options={{
           title: 'Payment',
+          // headerShown: false,
         }} />
       <Tabs.Screen
         key={5}

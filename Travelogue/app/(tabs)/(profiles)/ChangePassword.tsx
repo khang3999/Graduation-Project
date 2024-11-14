@@ -42,7 +42,7 @@ const ChangePassword = () => {
           Alert.alert('Thông báo', 'Đổi mật khẩu thành công');
           router.replace('/(auth)/LoginScreen');
         } catch (error) {
-          console.error(error);
+          // console.error(error);
           Alert.alert('Thông báo', 'Mật khẩu cũ không đúng');
         }
       } else {

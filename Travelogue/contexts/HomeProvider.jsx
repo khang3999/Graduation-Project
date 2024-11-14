@@ -104,7 +104,6 @@ const HomeProvider = ({ children }) => {
                     const dataToursJson = snapshot.val()
                     const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
                     // Sắp xếp lại list tour theo thứ tự
-
                     sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
                     setDataTours(dataToursArray)
                 } else {
@@ -180,14 +179,10 @@ const HomeProvider = ({ children }) => {
             const refAccount = ref(database, `accounts/${userId}`)
             const unsubscribe = onValue(refAccount, (snapshot) => {
                 if (snapshot.exists()) {
-                    // Lấy tất cả factor của post dùng cho tính điểm
                     const jsonDataAccount = snapshot.val();
                     // Set behavior
                     console.log(jsonDataAccount.behavior);
                     setAccountBehavior(jsonDataAccount.behavior)
-                    // Set du lieu
-                    console.log('aa', jsonDataAccount);
-                    console.log('id', userId);
                     setDataAccount(jsonDataAccount)
                     setLoadedDataAccount(true)
                 } else {
@@ -244,6 +239,7 @@ const HomeProvider = ({ children }) => {
                 isSearchingMode,
                 dataModalSelected,
                 dataAllCities,
+                dataAccount, setDataAccount,
                 isFocus, setIsFocus,
                 userId, setUserId,
                 setDataAllCities,

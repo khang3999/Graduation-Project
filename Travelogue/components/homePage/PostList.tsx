@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
-import React, { useEffect, useImperativeHandle, useState } from 'react'
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper'
 import { database, ref } from '@/firebase/firebaseConfig'
 import { equalTo, get, orderByChild, query, update } from '@firebase/database'
@@ -12,7 +12,7 @@ import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-lis
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
 import Toast from 'react-native-toast-message-custom'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { usePost } from '@/contexts/PostProvider'
 import { set } from 'lodash'
 
@@ -41,6 +41,7 @@ const PostList = () => {
 
 
   // Lưu giá trị các thành phố dựa trên quốc gia đang chọn
+  const [hasFetched, setHasFetched] = useState(false);
   const [dataCities, setDataCities] = useState([])
   const [selectedCountry, setSelectedCountry] = useState(null); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [selectedCities, setSelectedCities] = useState([]); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
@@ -318,14 +319,33 @@ const PostList = () => {
   };
 
   /// Các Hook
+  // // Lấy post lần đầu sau khi đã có dữ liệu của account
+  // useEffect(() => {
+  //   if (loadedDataAccount && !isSearchingMode) {
+  //     // console.log(loadedDataAccount);
+  //     firstRender.current = false
+  //     fetchPosts();
+  //   }
+  // }, [loadedDataAccount, dataAccount]);
   // Lấy post lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
-    if (loadedDataAccount && !isSearchingMode) {
-      // console.log(loadedDataAccount);
-      fetchPosts();
-    }
+    setHasFetched(false)
   }, [loadedDataAccount, dataAccount]);
 
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (dataAccount && loadedDataAccount && !hasFetched) {
+        console.log("home focus");
+        fetchPosts(); // Gọi fetchPosts
+        setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+      }
+
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
 
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
