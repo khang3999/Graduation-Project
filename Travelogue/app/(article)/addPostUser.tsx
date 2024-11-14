@@ -1012,7 +1012,7 @@ const AddPostUser = () => {
           id : postId,
           reports,
           match,
-          status_1: status,
+          status_id: status,
           thumbnail,
           created_at: timestamp,
         };
