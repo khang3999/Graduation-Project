@@ -1,5 +1,5 @@
 import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable, Alert, TextInput, Modal } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 import { database, get, onValue, ref, update } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
@@ -13,7 +13,7 @@ import { useTourProvider } from '@/contexts/TourProvider';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { equalTo, orderByChild, query } from 'firebase/database';
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 const { width } = Dimensions.get('window');
 const ITEM_HEIGHT = 270;
@@ -21,6 +21,7 @@ const TYPE = 1;
 const TourList = () => {
   const {
     accountBehavior, setAccountBehavior,
+    dataAccount,
     loadedDataAccount,
     dataCountries, setDataCountries
 
@@ -36,6 +37,7 @@ const TourList = () => {
     selectedTour, setSelectedTour
   }: any = useTourProvider();
 
+  const [hasFetched, setHasFetched] = useState(false);
   const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
   const [dataCities, setDataCities] = useState([])
   const [dataInput, setDataInput] = useState('') // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
@@ -185,9 +187,11 @@ const TourList = () => {
     setDataInput('')
     setSelectedCountry(null)
     setDataCities([])
-    setIsSearchingMode(false)
     setDataModalSelected(null)
     fetchTours() // Tải lại tất cả tour
+    console.log(isSearchingMode);
+    
+    setIsSearchingMode(false)
   }
 
   const handleSelecteCountry = (val: any) => {
@@ -200,10 +204,28 @@ const TourList = () => {
 
   // Lấy tour lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
-    if (loadedDataAccount && !isSearchingMode) {
-      fetchTours();
-    }
-  }, [loadedDataAccount]);
+    setHasFetched(false)
+  }, [loadedDataAccount, dataAccount]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (dataAccount && loadedDataAccount && !hasFetched) {
+        console.log("tour focus");
+        fetchTours(); // Gọi fetchTours
+        setIsSearchingMode(true)
+        setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+      }
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
+  // useEffect(() => {
+  //   if (loadedDataAccount && !isSearchingMode) {
+  //     fetchTours();
+  //   }
+  // }, [loadedDataAccount]);
 
   // Hàm phụ Fetch data cities theo quốc gia
   const fetchCityByCountry = async (countryId: any) => {
@@ -212,7 +234,7 @@ const TourList = () => {
       const snapshot = await get(refCity);
       if (snapshot.exists()) {
         const dataCityJson = snapshot.val()
-        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]:any) => 
+        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]: any) =>
           Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
             key: cityCode,
             value: cityInfo.name
@@ -233,7 +255,10 @@ const TourList = () => {
     setLoadedTours(false)
     try {
       const refTours = ref(database, 'tours/')
-      const toursQuery = query(refTours, orderByChild('view_mode'), equalTo(true));
+      const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
+      console.log(refTours);
+      console.log(toursQuery);
+      
       const snapshot = await get(toursQuery);
       if (snapshot.exists()) {
         const dataToursJson = snapshot.val()
@@ -247,7 +272,7 @@ const TourList = () => {
         jsonArrayTours.forEach((tour: any) => {
           tour.match = 0
           const contentSlug = slug(tour.content)
-          const behaviorContentSlug = slug(accountBehavior.content)
+          const behaviorContentSlug = slug(accountBehavior.content||'')
           const listLocationIdOfTour = Object.keys(tour.locations).flatMap((country) =>
             Object.keys(tour.locations[country])
           ); //["vn_1", 'jp_2']
@@ -271,7 +296,7 @@ const TourList = () => {
         // Bước 2: Sort
         // 2.1. Sort mảng theo behavior: match > fator > rating > like >created_at
         const behaviorToursSorted = sortTourMatchingAtTourScreen(behaviorTours)
-        
+
         // 2.2. Sort mảng không match hành vi theo created_at
         nonBehaviorTours.sort((tourA: any, tourB: any) => {
           return tourB.created_at - tourA.created_at;
@@ -292,12 +317,12 @@ const TourList = () => {
     } catch (error) {
       console.error("Error fetching data tours: ", error);
     }
-
+    setDataModalSelected(null)
   }
 
-  useEffect(() => {
-    fetchTours()
-  }, [])
+  // useEffect(() => {
+  //   fetchTours()
+  // }, [])
 
   // ITEM RENDER
   const tourItem = (tour: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the tour = destructuring {item, index}    
@@ -311,27 +336,27 @@ const TourList = () => {
     );
     return (
       <PaperProvider key={tour.item.id}>
-        <Pressable style={styles.item} 
-         onPress={() => {
-          router.push({
-            pathname: "/tourDetail",
-            params: { initialIndex: 0 },
-          });
-          setSelectedTour([tour.item])
-        }}
+        <Pressable style={styles.item}
+          onPress={() => {
+            router.push({
+              pathname: "/tourDetail",
+              params: { initialIndex: 0 },
+            });
+            setSelectedTour([tour.item])
+          }}
         >
           {/*Author*/}
           <View style={styles.authorContent}>
             <TouchableOpacity style={styles.avatarWrap}>
               <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
             </TouchableOpacity>
-            <View style={{justifyContent:'center', marginHorizontal: 4}}>
+            <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
               <TouchableOpacity>
-                <Text style={{fontWeight:'600'}} numberOfLines={1}>
+                <Text style={{ fontWeight: '600' }} numberOfLines={1}>
                   {tour.item.author.fullname}
                 </Text>
               </TouchableOpacity>
-              <Text style={{fontStyle:'italic', fontSize:12}}>{formatDate(tour.item.created_at)}</Text>
+              <Text style={{ fontStyle: 'italic', fontSize: 12 }}>{formatDate(tour.item.created_at)}</Text>
             </View>
           </View>
           {/* Location */}
@@ -382,7 +407,7 @@ const TourList = () => {
       <View style={{ flexDirection: 'row', position: 'relative' }}>
         <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
         {((currentTourCount != newTourCount) && (isSearchingMode == false)) && (
-          <TouchableOpacity style={styles.loadNewTour} onPress={handleReloadNewTours}>  
+          <TouchableOpacity style={styles.loadNewTour} onPress={handleReloadNewTours}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
             <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có tour mới</Text>
           </TouchableOpacity>
@@ -406,9 +431,9 @@ const TourList = () => {
           data={dataTours}
           renderItem={tourItem}
           keyExtractor={(tour: any) => tour.id}
-          // ItemSeparatorComponent={() => <View style={{ height: 20, }} />}
-          // pagingEnabled
-          >
+        // ItemSeparatorComponent={() => <View style={{ height: 20, }} />}
+        // pagingEnabled
+        >
         </FlatList>
         : <></>}
 

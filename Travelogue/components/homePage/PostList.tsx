@@ -83,6 +83,7 @@ const PostList = () => {
                 return Object.keys(post.locations[country])
               }); //["vn_1", 'jp_2']
               // Kiểm tra nội dung
+              console.log(post, 'testposst');
               if (slug(post.content).includes(slug(dataInput))) { // Đúng cả 2 case: không nhâp nội dung và nhập nội dung
                 post.match += 1
               }
@@ -230,10 +231,14 @@ const PostList = () => {
 
   // Hàm lấy các bài viết khi có tương tác
   const fetchPosts = async () => {
+    console.log("test");
     setLoadedPosts(false)
     try {
       const refPosts = ref(database, 'posts/')
-      const postsQuery = query(refPosts, orderByChild('view_mode'), equalTo(true));
+      const postsQuery = query(refPosts, orderByChild('status_id'), equalTo(1));
+
+      console.log(postsQuery);
+
       const snapshot = await get(postsQuery);
       if (snapshot.exists()) {
         const dataPostsJson = snapshot.val()
@@ -245,9 +250,12 @@ const PostList = () => {
         const behaviorPosts: any = [];
         const nonBehaviorPosts: any = [];
         jsonArrayPosts.forEach((post: any) => {
+        console.log('post1', post);
           post.match = 0 // Tạo lại giá trị ban đầu
           const contentSlug = slug(post.content)
+          
           const behaviorContentSlug = slug(accountBehavior.content)
+          console.log(behaviorContentSlug,'content');
           const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) =>
             Object.keys(post.locations[country])
           ); //["vn_1", 'jp_2']
@@ -299,6 +307,7 @@ const PostList = () => {
     } catch (error) {
       console.error("Error fetching post data: ", error);
     }
+    // setIsSearchingMode(false)
     setDataModalSelected(null)
   }
   // Hàm reload bài viết
@@ -319,11 +328,11 @@ const PostList = () => {
   };
 
   /// Các Hook
-  // // Lấy post lần đầu sau khi đã có dữ liệu của account
+  // Lấy post lần đầu sau khi đã có dữ liệu của account
   // useEffect(() => {
   //   if (loadedDataAccount && !isSearchingMode) {
   //     // console.log(loadedDataAccount);
-  //     firstRender.current = false
+  //     // firstRender.current = false
   //     fetchPosts();
   //   }
   // }, [loadedDataAccount, dataAccount]);
@@ -340,7 +349,6 @@ const PostList = () => {
         fetchPosts(); // Gọi fetchPosts
         setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
       }
-
       return () => {
         console.log('Screen is unfocused');
       };
@@ -377,7 +385,7 @@ const PostList = () => {
   const closeMenu = () => {
     setIndexVisibleMenu(-1)
   };
-  const { selectedPost, setSelectedPost }:any = usePost();
+  const { selectedPost, setSelectedPost }: any = usePost();
   // ITEM RENDER
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}    
     const locations: any = post.item.locations // Lấy được ĐỐI TƯỢNG locations
@@ -388,17 +396,17 @@ const PostList = () => {
         name
       }))
     );
-    
+
     return (
       <View key={post.item.id}>
         < PaperProvider >
-          <Pressable style={styles.item}  onPress={() => {
-                  router.push({
-                    pathname: "/postDetail",
-                    params: { initialIndex: 0 },
-                  });
-                  setSelectedPost([post.item])
-                }}>
+          <Pressable style={styles.item} onPress={() => {
+            router.push({
+              pathname: "/postDetail",
+              params: { initialIndex: 0 },
+            });
+            setSelectedPost([post.item])
+          }}>
             {/*Author*/}
             <View style={styles.authorContent}>
               <TouchableOpacity style={styles.avatarWrap}>
@@ -462,7 +470,7 @@ const PostList = () => {
       <View style={styles.titlePostContainer}>
         <Text style={styles.textCategory}>Những bài viết mới</Text>
 
-        {((currentPostCount != newPostCount) && (isSearchingMode == false)) && (
+        {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && (
           <TouchableOpacity style={styles.loadNewPost} onPress={handleReloadNewPost}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
             <Text style={styles.iconPost}>Có bài viết mới</Text>

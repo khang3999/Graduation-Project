@@ -51,7 +51,11 @@ const _layout = () => {
                role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour') 
              }} style={styles.buttonRight}></PlusButton>
             
-            <BellButton style={styles.buttonRight}></BellButton>
+            <BellButton style={styles.buttonRight} onPress={()=>{
+               router.push({
+                pathname: '/notify'
+              })
+            }}></BellButton>
           </View>
         ),
       }}
