@@ -103,10 +103,7 @@ const Payment = () => {
 
   // Exchange data by account id
   useEffect(() => {
-    console.log("accountId", accountId);
-
     if (accountId != "") {
-      console.log("accountId");
       const onValueChange = ref(database, "exchanges");
       const exchangesListener = onValue(
         onValueChange,
@@ -122,8 +119,6 @@ const Payment = () => {
                 }
                 return a.status_id - b.status_id;
               });
-            const aaa = data;
-            console.log("data111jy67", jsonData);
             setDataExchanges(data);
           } else {
             console.log("No data available");
@@ -147,8 +142,6 @@ const Payment = () => {
     } else {
       handleFilter();
     }
-    // setDataExchangesFilter(data)
-    // console.log('dataExchangesFilter', dataExchangesFilter);
   }, [dataExchanges]);
 
   const closeDialog = () => {
