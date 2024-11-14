@@ -340,9 +340,8 @@ const TourList = () => {
           onPress={() => {
             router.push({
               pathname: "/tourDetail",
-              params: { initialIndex: 0 },
+              params: { tourId: tour.item.id },
             });
-            setSelectedTour([tour.item])
           }}
         >
           {/*Author*/}

@@ -5,6 +5,7 @@ import { database, onValue, ref } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const TourSection = () => {
@@ -21,7 +22,13 @@ const TourSection = () => {
             }))
         );
         return (
-            <Pressable style={styles.tourItem} key={tour.item.id}>
+            <Pressable style={styles.tourItem} key={tour.item.id}
+            onPress={() => {
+                router.push({
+                  pathname: "/tourDetail",
+                  params: { tourId: tour.item.id },
+                });
+              }}>
                 <View style={styles.imageWrap}>
                     <View style={styles.locationWrap}>
                         <Carousel

@@ -28,7 +28,7 @@ import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating } from "react-native-ratings";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
@@ -119,20 +119,20 @@ const PostItem: React.FC<PostItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
-  
+
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
   const isPostAuthor = true;
   const flattenedLocationsArray = flattenLocations(item.locations);
-  const flattenedImagesArray = flattenImages(item.images);  
+  const flattenedImagesArray = flattenImages(item.images);
 
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
       console.error('Missing required author information');
       return;
-    }     
+    }
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
@@ -170,7 +170,7 @@ const PostItem: React.FC<PostItemProps> = ({
               return [newCommentWithId, ...prevComments];
             }
           });
-          
+
         }
       } catch (error) {
         console.error("Error adding Comment:", error);
@@ -178,7 +178,7 @@ const PostItem: React.FC<PostItemProps> = ({
     }
   }
 
-  
+
 
   const addReplyToComment = (
     comments: Comment[],
@@ -326,16 +326,15 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />            
+            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
+          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
         </View>
-
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
@@ -349,7 +348,7 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
       <Divider style={styles.divider} />
       {/* Comment Bottom Sheet */}
-      <CommentsActionSheet   
+      <CommentsActionSheet
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
@@ -368,18 +367,43 @@ export default function PostsScreen() {
   // State to track whether full description is shown
 
   const { selectedPost, setSelectedPost }: any = usePost();
-  const { initialIndex } = useLocalSearchParams();
+  const { initialIndex, postId } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-
+  const [dataPost, setDataPost] = useState<any>([])
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
+  const fetchPostById = async (postId: any) => {
+    try {
+      const refPost = ref(database, `posts/${postId}`)
+      const snapshot = await get(refPost);
+      if (snapshot.exists()) {
+        const dataPostJson: any = snapshot.val()
+        setDataPost([dataPostJson])
+      } else {
+        console.log("No data city available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (postId ) {
+        fetchPostById(postId)
+      }
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
   return (
     <>
-
       <FlatList
-        data={memoriedPostItem}
+        data={postId ? dataPost : memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
             item={item}

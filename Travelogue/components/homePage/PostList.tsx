@@ -403,7 +403,7 @@ const PostList = () => {
           <Pressable style={styles.item} onPress={() => {
             router.push({
               pathname: "/postDetail",
-              params: { initialIndex: 0 },
+              params: { postId: post.item.id },
             });
             setSelectedPost([post.item])
           }}>
