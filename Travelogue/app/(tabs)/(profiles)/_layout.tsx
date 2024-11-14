@@ -45,40 +45,8 @@ export default function ProfileLayout() {
           headerTitleAlign: "center",
         }}
       />
-      <Stack.Screen
-        name="post"
-        options={{
-          headerShown: true,
-          title: "Posts",
-          headerStyle: {
-            backgroundColor:
-              Colors[colorScheme ? colorScheme : "light"].background,
-          },
-          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
-          headerTitleAlign: "center",
-        }}
-
-      />      
-       <Stack.Screen
-        name="tour"
-        options={{
-          headerShown: true,
-          title: "Tours",
-          headerStyle: {
-            backgroundColor:
-              Colors[colorScheme ? colorScheme : "light"].background,
-          },
-          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
-          headerTitleAlign: "center",
-        }}
-
-      />      
+       
+            
       <Stack.Screen name="searchResult"
         options={{
           headerShown: true,

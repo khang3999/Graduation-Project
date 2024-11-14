@@ -123,7 +123,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
-  const isPostAuthor = true;
+  const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);  
 
