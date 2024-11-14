@@ -1,10 +1,6 @@
 export interface BaseComment {
     id: string;
-    author: {
-      id: string;
-      avatar: any;
-      username: string;
-    };
+    author: Author;
     content: string;
     created_at: string;
     status_id: number;
@@ -16,6 +12,12 @@ export interface BaseComment {
   export interface RatingObjectSpecifics {
     rating: number;
     image: string;
+  }
+   
+  export interface Author {
+    id: string;
+    avatar: any;
+    username: string;
   }
   
   // Extend BaseComment for RatingObject by adding RatingObjectSpecifics fields

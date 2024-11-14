@@ -11,7 +11,9 @@ import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-lis
 import { AntDesign } from "@expo/vector-icons";
 import { Badge } from "react-native-paper";
 import { useFocusEffect } from "@react-navigation/native";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAccount } from "@/contexts/AccountProvider";
+import {  off } from "firebase/database";
 
 
 const Home = () => {
@@ -21,15 +23,10 @@ const Home = () => {
     setDataModalSelected,
     dataAllCities,
     setDataAllCities,
-    isFocus, setIsFocus }: any = useHomeProvider();
-
-  // const currentUser = auth.currentUser;
-  // useEffect(() => {
-  //   const storeUser = async () => {
-  //     await AsyncStorage.setItem("user", JSON.stringify(currentUser));
-  //   };
-  //   storeUser();
-  // }, []);
+    isFocus, setIsFocus,dataAccount }: any = useHomeProvider();
+    
+  
+  
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', marginHorizontal: 10, gap: 6 }}>

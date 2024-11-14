@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get } from "@firebase/database";
 import Toast from "react-native-toast-message-custom";
 import LottieView from "lottie-react-native";
+import { asyncStorageEmitter } from "@/utils/emitter";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -152,10 +153,12 @@ const LoginScreen = ({ navigation }: any) => {
           if (role === "admin") {
             const userId = userCredential.user.uid;
             await AsyncStorage.setItem("userToken", userId);
+              asyncStorageEmitter.emit("userTokenChanged");
             router.replace("/(admin)/(account)/account");
           } else {
             const userId = userCredential.user.uid;
             await AsyncStorage.setItem("userToken", userId);
+            asyncStorageEmitter.emit("userTokenChanged");
             router.replace("/(tabs)");
           }
         }

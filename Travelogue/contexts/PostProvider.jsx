@@ -8,7 +8,7 @@ const PostContext = createContext(undefined);
 
 // Provider component
 export const PostProvider = ({ children }) => {
-  const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(undefined);
 
   return (
     <PostContext.Provider value={{ selectedPost, setSelectedPost }}>
@@ -18,10 +18,4 @@ export const PostProvider = ({ children }) => {
 };
 
 // Custom hook to use the post context
-export const usePost = () => {
-  const context = useContext(PostContext);
-  if (!context) {
-    throw new Error('usePost must be used within a PostProvider');
-  }
-  return context;
-};
+export const usePost = () => useContext(PostContext);

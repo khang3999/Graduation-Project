@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
+import { asyncStorageEmitter } from "@/utils/emitter";
 interface MenuPopupButtonProps {
   menuIcon: string;
   isDisplay: boolean;
@@ -45,6 +46,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     try {
       await signOut(auth);
       await AsyncStorage.removeItem('userToken');
+      asyncStorageEmitter.emit("userTokenChanged");
       await AsyncStorage.removeItem('user');
       Toast.show({
         type: "success",
@@ -58,13 +60,13 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     }
   };
   const handleEditProfile = () => {
-    router.push("/Editing");
+    router.push("/editing");
   }
   if (!isDisplay) {
     return;
   }
   const handleChangePassword =() =>{
-    router.push('/ChangePassword')
+    router.push('/changePassword')
     return
   }
   // Handle the report user

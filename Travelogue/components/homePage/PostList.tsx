@@ -12,6 +12,9 @@ import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-lis
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
 import Toast from 'react-native-toast-message-custom'
+import { router } from 'expo-router'
+import { usePost } from '@/contexts/PostProvider'
+import { set } from 'lodash'
 
 const { width } = Dimensions.get('window')
 
@@ -354,6 +357,7 @@ const PostList = () => {
   const closeMenu = () => {
     setIndexVisibleMenu(-1)
   };
+  const { selectedPost, setSelectedPost }:any = usePost();
   // ITEM RENDER
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}    
     const locations: any = post.item.locations // Lấy được ĐỐI TƯỢNG locations
@@ -364,11 +368,17 @@ const PostList = () => {
         name
       }))
     );
+    
     return (
       <View key={post.item.id}>
         < PaperProvider >
-          <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
-          }>
+          <Pressable style={styles.item}  onPress={() => {
+                  router.push({
+                    pathname: "/postDetail",
+                    params: { initialIndex: 0 },
+                  });
+                  setSelectedPost([post.item])
+                }}>
             {/*Author*/}
             <View style={styles.authorContent}>
               <TouchableOpacity style={styles.avatarWrap}>

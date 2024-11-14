@@ -11,50 +11,42 @@ import HeaderProfileSkeleton from "@/components/skeletons/HeaderProfileSkeleton"
 import SearchButton from "@/components/buttons/SearchButton";
 import { useAccount } from "@/contexts/AccountProvider";
 
-const Bell = () => (
-  <IconButton
-    icon="bell-outline"
-    iconColor={MD3Colors.error10}
-    size={24}
-    onPress={() => router.push("/Notification")}
-    style={styles.button}
-    accessible={true}
-    accessibilityLabel="Notifications button"
-  />
-);
 
-interface HeaderProfileProps {  
+interface HeaderProfileProps {
   onModalOpen?: () => void;
   onModalClose?: () => void;
   handleSearch?: (searchTerm: string) => void;
   isSearched: boolean;
 }
 
-export default function HeaderProfile({ onModalOpen = () => {}, onModalClose = () => {}, handleSearch = () => {}, isSearched}: HeaderProfileProps) {
+export default function HeaderProfile({ onModalOpen = () => { }, onModalClose = () => { }, handleSearch = () => { }, isSearched }: HeaderProfileProps) {
   const [isDisplay, setIsDisplay] = useState(true);
   const { accountData } = useAccount();
- 
-  if(!accountData) {
+
+  if (!accountData) {
     return <HeaderProfileSkeleton />;
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>           
-        <View style={styles.headerButton}>                       
+      <View style={styles.row}>
+        <View style={styles.headerButton}>
           {!isSearched && (
-            <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch}/>
+            <>
+              <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch} />
+            
+            </>
           )}
-          <MenuItem menuIcon="menu" isDisplay={isDisplay} isSearched={isSearched}/>
+           <MenuItem menuIcon="menu" isDisplay={isDisplay} isSearched={isSearched} />
         </View>
       </View>
-      <AvatarProfile isSearched={isSearched}/>
+      <AvatarProfile isSearched={isSearched} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {    
+  container: {
     flex: 1,
     marginTop: 20,
   },
@@ -68,13 +60,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerButton: {
-    paddingHorizontal:24,
-    paddingTop:5,
+    paddingHorizontal: 25,
+    paddingTop: 5,
     flexDirection: "row",
-    justifyContent: "space-evenly",    
+    justifyContent: "space-evenly",
   },
   button: {
-    margin: 0,        
+    margin: 0,
   },
   menuContent: {
     backgroundColor: "#f2f2f2",
