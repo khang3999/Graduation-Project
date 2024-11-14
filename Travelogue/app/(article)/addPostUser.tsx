@@ -1792,7 +1792,6 @@ const AddPostUser = () => {
                fontSize: 30,
                textAlign: "center",
              }}
-             disabled={true}
              color={appColors.primary}
              onPress={handlePushPost}
            />
