@@ -26,9 +26,10 @@ const CheckInMap = () => {
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
 
-  const [ userId, setUserId ] = useState(null)
-  const {dataAccount, setDataAccount} = useHomeProvider()
+  const [userId, setUserId] = useState(null)
+  const { dataAccount, setDataAccount } = useHomeProvider()
   const {
+    checkedCityColor,
     selectedCityId, setSelectedCityId,
     dataCheckedCities, setDataCheckedCities
   } = useMapCheckinProvider()
@@ -43,7 +44,7 @@ const CheckInMap = () => {
   }, []);
 
   // Fetch checkin list by country
-  const fetchCheckinList = async (accountId,countryId) => {
+  const fetchCheckinList = async (accountId, countryId) => {
     const refCheckin = ref(database, `accounts/${accountId}/checkin/${countryId}`);
     try {
       const snapshot = await get(refCheckin);
@@ -63,7 +64,7 @@ const CheckInMap = () => {
   // Lấy các tỉnh đã checkin lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
     if (dataAccount && selectedCountry) {
-      fetchCheckinList(dataAccount.id,selectedCountry.value)
+      fetchCheckinList(dataAccount.id, selectedCountry.value)
     }
   }, [dataAccount, selectedCountry]);
 
@@ -149,9 +150,28 @@ const CheckInMap = () => {
   }
 
   // Hàm Check in
-  const checkIn = () => {
-
+  const handleCheckIn = (selectedCityId) => {
+    // Show dialog
+    Alert.alert(
+      "Remove point",
+      "Are you sure you want to remove this point?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            remove(refP).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+          }
+        }
+      ]
+    );
   }
+
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.hearder}>
@@ -238,7 +258,7 @@ const CheckInMap = () => {
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader} onPress={() => checkIn()}>
+          <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCityId)}>
             <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
             <Text style={styles.actionBtnText}>Check in</Text>
           </TouchableOpacity>
@@ -248,7 +268,7 @@ const CheckInMap = () => {
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}
-          <Text>{selectedCountry  && selectedCity ? `${selectedCity.label}, ${selectedCountry.label}` : `Chưa chọn`}</Text>
+          <Text>{selectedCountry && selectedCity ? `${selectedCity.label}, ${selectedCountry.label}` : `Chưa chọn`}</Text>
         </View>
 
       </View>
