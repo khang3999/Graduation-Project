@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
-import React, { useEffect, useImperativeHandle, useState } from 'react'
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper'
 import { database, ref } from '@/firebase/firebaseConfig'
 import { equalTo, get, orderByChild, query, update } from '@firebase/database'
@@ -12,6 +12,9 @@ import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-lis
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
 import Toast from 'react-native-toast-message-custom'
+import { router, useFocusEffect } from 'expo-router'
+import { usePost } from '@/contexts/PostProvider'
+import { set } from 'lodash'
 
 const { width } = Dimensions.get('window')
 
@@ -38,6 +41,7 @@ const PostList = () => {
 
 
   // Lưu giá trị các thành phố dựa trên quốc gia đang chọn
+  const [hasFetched, setHasFetched] = useState(false);
   const [dataCities, setDataCities] = useState([])
   const [selectedCountry, setSelectedCountry] = useState(null); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [selectedCities, setSelectedCities] = useState([]); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
@@ -56,7 +60,7 @@ const PostList = () => {
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
-        'content': dataInput,
+        'content': dataInput ? dataInput : null,
         'location': selectedCities.length > 0 ? selectedCities : null
       }
       await update(refBehaviors, dataUpdate);
@@ -315,14 +319,33 @@ const PostList = () => {
   };
 
   /// Các Hook
+  // // Lấy post lần đầu sau khi đã có dữ liệu của account
+  // useEffect(() => {
+  //   if (loadedDataAccount && !isSearchingMode) {
+  //     // console.log(loadedDataAccount);
+  //     firstRender.current = false
+  //     fetchPosts();
+  //   }
+  // }, [loadedDataAccount, dataAccount]);
   // Lấy post lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
-    if (loadedDataAccount && !isSearchingMode) {
-      // console.log(loadedDataAccount);
-      fetchPosts();
-    }
+    setHasFetched(false)
   }, [loadedDataAccount, dataAccount]);
 
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (dataAccount && loadedDataAccount && !hasFetched) {
+        console.log("home focus");
+        fetchPosts(); // Gọi fetchPosts
+        setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+      }
+
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
 
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
@@ -354,6 +377,7 @@ const PostList = () => {
   const closeMenu = () => {
     setIndexVisibleMenu(-1)
   };
+  const { selectedPost, setSelectedPost }:any = usePost();
   // ITEM RENDER
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}    
     const locations: any = post.item.locations // Lấy được ĐỐI TƯỢNG locations
@@ -364,20 +388,26 @@ const PostList = () => {
         name
       }))
     );
+    
     return (
       <View key={post.item.id}>
         < PaperProvider >
-          <Pressable style={styles.item} onPress={() => console.log(post.index + "tap")
-          }>
+          <Pressable style={styles.item}  onPress={() => {
+                  router.push({
+                    pathname: "/postDetail",
+                    params: { initialIndex: 0 },
+                  });
+                  setSelectedPost([post.item])
+                }}>
             {/*Author*/}
             <View style={styles.authorContent}>
               <TouchableOpacity style={styles.avatarWrap}>
-                <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
+                <Image style={styles.avatar} source={{ uri: post.item.author.avatar }}></Image>
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
                 <TouchableOpacity>
                   <Text style={{ fontWeight: '600' }} numberOfLines={1}>
-                    {post.item.author.username}
+                    {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
                 <Text style={{ fontStyle: 'italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
@@ -404,10 +434,10 @@ const PostList = () => {
                 }>
                 {allLocations.map((location: any) => {
                   return (
-                      <TouchableOpacity key={location.id}>
-                        <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
-                        <Divider />
-                      </TouchableOpacity>
+                    <TouchableOpacity key={location.id}>
+                      <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+                      <Divider />
+                    </TouchableOpacity>
                   )
                 })
                 }

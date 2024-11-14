@@ -1,78 +1,65 @@
-import { ButtonComponent, InputComponent, SectionComponent, TextComponent } from "@/components";
+import { ButtonComponent, InputComponent, SectionComponent } from "@/components";
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
-import { ArrowLeft, Lock } from "iconsax-react-native";
+import { Alert, StyleSheet, View } from "react-native";
+import { Lock } from "iconsax-react-native";
 import { appColors } from "@/constants/appColors";
 import { router } from "expo-router";
 import { auth } from "@/firebase/firebaseConfig";
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, User } from "@firebase/auth";
-import { useAccount } from "@/contexts/AccountProvider";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "@firebase/auth";
 
 const ChangePassword = () => {
-  const {accountData} = useAccount();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   const handleResetPassword = async () => {
-    // console.log('Đổi mật khẩu')
     if (password === '' || newPassword === '' || confirmPassword === '') {
       Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ thông tin');
-      return
+      return;
     }
     if (newPassword !== confirmPassword) {
       Alert.alert('Thông báo', 'Mật khẩu xác nhận không trùng khớp');
-      return
+      return;
     }
     if (newPassword.length < 6) {
       Alert.alert('Thông báo', 'Mật khẩu mới phải có ít nhất 6 ký tự');
-      return
-    }
-    if(password === newPassword) {
-      Alert.alert('Thông báo', 'Mật khẩu mới không được trùng với mật khẩu cũ');
-      return
-    }
-    
-    
-  try {
-    const userString = await AsyncStorage.getItem("user");
-    let user;
-    if (userString) {
-      user = JSON.parse(userString);
-      console.log(user.email);
-      
-    } else {
-      throw new Error('User not found');
-    }
-  
-  if (user && user.email) {
-    const credential = EmailAuthProvider.credential(user.email, password);
-    
-    
-    try {
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
-      console.log('Đổi mật khẩu Success');
-      router.replace('/(auth)/LoginScreen');
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Thông báo', 'Mật khẩu cũ không đúng');
       return;
     }
-  } else {
-    console.log('User not found');
-  }
-} catch (error) {
-  // console.log('Error updating password:', error.message);
-}
+    if (password === newPassword) {
+      Alert.alert('Thông báo', 'Mật khẩu mới không được trùng với mật khẩu cũ');
+      return;
+    }
 
-   
-  }
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser && currentUser.email) {
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+
+        try {
+          // Xác thực lại với tài khoản hiện tại
+          await reauthenticateWithCredential(currentUser, credential);
+          await updatePassword(currentUser, newPassword);
+          Alert.alert('Thông báo', 'Đổi mật khẩu thành công');
+          router.replace('/(auth)/LoginScreen');
+        } catch (error) {
+          // console.error(error);
+          Alert.alert('Thông báo', 'Mật khẩu cũ không đúng');
+        }
+      } else {
+        console.log('No authenticated user found');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error updating password:', error.message);
+      } else {
+        console.error('Error updating password:', error);
+      }
+    }
+  };
 
   return (
-    <View style={{backgroundColor: 'white',flex: 1}}>
-      <SectionComponent styles={styles.container}>        
+    <View style={{ backgroundColor: 'white', flex: 1 }}>
+      <SectionComponent styles={styles.container}>
         <InputComponent
           value={password}
           placeholder="Nhập mật khẩu cũ"
@@ -112,10 +99,10 @@ const ChangePassword = () => {
 };
 
 const styles = StyleSheet.create({
-  container:{
-    paddingHorizontal:24,
-    paddingTop:50
-  }
+  container: {
+    paddingHorizontal: 24,
+    paddingTop: 50,
+  },
 });
 
 export default ChangePassword;

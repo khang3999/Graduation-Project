@@ -62,5 +62,34 @@ const updateUserData = async (userId:string , userData:any, selectedImage:string
   }
 }
 
+const updateUserPosts = async (userId: string, localUserData: any) => {
+  try {
+    const userPostsSnapshot = await get(ref(database, 'posts'));
 
-export { getCurrentUserData, getDownloadURL, updateUserData,getImageUrl };
+    if (userPostsSnapshot.exists()) {
+      const updates: Record<string, any> = {};
+
+      // Find posts authored by the user and prepare updates
+      userPostsSnapshot.forEach((postSnapshot) => {
+        const post = postSnapshot.val();
+        if (post.author.id === userId) {
+          const postKey = postSnapshot.key;
+
+          updates[`posts/${postKey}/author`] = {
+            avatar: localUserData.avatar || post.author.avatar,
+            fullname: localUserData.fullname || post.author.fullname,
+            id: userId,
+          };
+        }
+      });
+
+      // Apply the batch update in the background
+      await update(ref(database), updates);
+      console.log("All related posts updated successfully in the background.");
+    }
+  } catch (error) {
+    console.error("Failed to update posts:", error);
+  }
+};
+
+export { getCurrentUserData, getDownloadURL, updateUserData,getImageUrl, updateUserPosts };

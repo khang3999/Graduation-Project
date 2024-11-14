@@ -1,3 +1,4 @@
+
 import {
   Image,
   StyleSheet,
@@ -162,9 +163,7 @@ export default function ProfileScreen() {
                       <Image style={styles.searchedAvatar} source={{ uri: item.avatar }} />
                       <Text style={styles.searchItem}>{item.fullname}</Text>
                     </View>
-
                     <IconAntDesign name="arrowright" size={30} style={styles.threeDot} />
-
                   </View>
                 </TouchableOpacity>
               )}
@@ -196,7 +195,7 @@ const styles = StyleSheet.create({
   },
   searchModal: {
     position: "absolute",
-    top: 100,
+    top: 85,
     left: 0,
     right: 0,
     bottom: 0,

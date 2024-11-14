@@ -70,8 +70,8 @@ export const sortTourAtHomeScreen = (listTour, listLocationIdOfPost) => {
         );
         const matchesA = countMatchingLocations(locationIdOfTourA, listLocationIdOfPost);
         const matchesB = countMatchingLocations(locationIdOfTourB, listLocationIdOfPost);
-        const factorTourA = tourA.package.factor
-        const factorTourB = tourB.package.factor
+        const factorTourA = tourA.package.hashtag
+        const factorTourB = tourB.package.hashtag
         const ratingTourA = tourA.rating
         const ratingTourB = tourB.rating
         const likeTourA = tourA.likes
@@ -100,13 +100,13 @@ export const sortTourMatchingAtTourScreen = (listTour) => {
     listTour.sort((tourA, tourB) => {
         const matchesA = tourA.match
         const matchesB = tourB.match
-        const factorTourA = tourA.package.factor
-        const factorTourB = tourB.package.factor
+        const factorTourA = tourA.package.hashtag
+        const factorTourB = tourB.package.hashtag
         const ratingTourA = tourA.rating
         const ratingTourB = tourB.rating
         const likeTourA = tourA.likes
         const likeTourB = tourB.likes
-        const dateTourA = tourA.created_at
+        const dateTourA = tourA.created_at  
         const dateTourB = tourB.created_at
         // Nếu 2 tour có hệ số địa điểm trùng bằng nhau 
         if (matchesA == matchesB) {

@@ -15,8 +15,9 @@ import {
   Platform,
 } from "react-native";
 import IconA from "react-native-vector-icons/AntDesign";
+import IconSend from "react-native-vector-icons/FontAwesome";
 import Icon from "react-native-vector-icons/Fontisto";
-import { ArrowLeft } from "iconsax-react-native";
+import { ArrowLeft, Information } from "iconsax-react-native";
 import { router } from "expo-router";
 import { appColors } from "@/constants/appColors";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -27,7 +28,7 @@ import {
   InputComponent,
   TextComponent,
 } from "@/components";
-import { Checkbox, Modal } from "react-native-paper";
+import { Checkbox, Modal, RadioButton } from "react-native-paper";
 import {
   database,
   onValue,
@@ -39,7 +40,6 @@ import {
   getDownloadURL,
   set,
   update,
-  get,
 } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
@@ -47,10 +47,13 @@ import { getStorage } from "firebase/storage";
 import { child } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
+import PackageCard from "@/components/cart/PackageCard";
+import { UserRegister } from "@/model/UserRegister";
 import LottieView from "lottie-react-native";
+import { has } from "lodash";
 import ReviewPostUser from "./reviewPostUser";
 
-const AddPostUser = () => {
+const AddPostTour = () => {
   interface Country {
     id: string;
     [key: string]: any;
@@ -75,16 +78,10 @@ const AddPostUser = () => {
   const [citiesDataFilter, setCitiesDataFilter] = useState<
     { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
-  // console.log("Cities:", citiesDataFilter);
 
   const [cities, setCities] = useState<
     { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
-
-  // useEffect(() => {
-  //   console.log("Cities:", cities);
-  //   [cities];
-  // });
 
   //Modal
   const [modalVisibleCity, setModalVisibleCity] = useState(false);
@@ -96,6 +93,8 @@ const AddPostUser = () => {
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalReviewPost, setModalReviewPost] = useState(false);
+
+  const [modalInformation, setModalInformation] = useState(false);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -111,7 +110,6 @@ const AddPostUser = () => {
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-
   //lưu trữ thông tin thành phố đã chọn
   const [selectedCityForImages, setSelectedCityForImages] = useState<{
     id: string;
@@ -119,10 +117,6 @@ const AddPostUser = () => {
     id_nuoc: string;
     area_id: string;
   } | null>(null);
-  useEffect(() => {
-    // console.log("selectedCityForImages:", selectedCityForImages);
-    [selectedCityForImages];
-  });
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
     {
@@ -135,9 +129,6 @@ const AddPostUser = () => {
       images: string[];
     }[]
   >([]);
-  // useEffect(() => {
-  //   console.log("Images:", images);
-  //   [images]});
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
 
@@ -169,6 +160,42 @@ const AddPostUser = () => {
     number | null
   >(null);
 
+  //Packages
+  const [selectedPackage, setSelectedPackage] = useState("");
+  const [packages, setPackages] = useState<any[]>([]);
+  const [packageData, setPackageData] = useState<any[]>([]);
+
+  //Lưu trữ thông tin người dùng
+  const [account, setAccount] = useState<UserRegister | null>(null);
+
+  //Hashtag
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [inputVisible, setInputVisible] = useState(false);
+  const [newHashtag, setNewHashtag] = useState("");
+
+  // kiểm tra giá tiền
+  const [checkBalance, setCheckBalance] = useState(false);
+
+  //*********************************************************************
+  // Xử lý ngươi dùng
+  //*********************************************************************
+  //Lấy thông tin người dùng
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await AsyncStorage.getItem("userToken");
+      // console.log("User:", userId);
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}`);
+        onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          // console.log("Data:", data);
+          setAccount(data);
+        });
+      }
+    };
+    fetchUserId();
+  }, []);
+  // console.log("Account:", account);
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -236,12 +263,12 @@ const AddPostUser = () => {
       setCitiesDataFilter(filteredCities);
     }
   }, [selectedCountry]);
- 
+
   //Xoa các dấu tiếng việt
   const removeDiacritics = (text: any) => {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
-//Search theo ten thanh pho
+  //Search theo ten thanh pho
   useEffect(() => {
     if (searchQueryCity) {
       const filteredCities = citiesData.filter((city) =>
@@ -775,10 +802,6 @@ const AddPostUser = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
-  // useEffect(() => {
-  //   console.log("CheckIn:", isCheckIn);
-
-  // }, [isCheckIn]);
 
   const handlePushPost = async () => {
     setButtonPost(true);
@@ -802,7 +825,11 @@ const AddPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
       return;
     }
-    
+    if (hashtags.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm hashtag cho bài viết.");
+      return;
+    }
 
     const existingDay = days.find(
       (day) =>
@@ -884,13 +911,12 @@ const AddPostUser = () => {
 
     try {
       //Tạo bảng
-      const postsRef = ref(database, "posts");
+      const postsRef = ref(database, "tours");
       //Tạo id bài viết
       const newPostRef = push(postsRef);
       //Lấy id bài post
       const postId = newPostRef.key;
 
-      // console.log("postId:", images);
       //xử lý ảnh và lưu ảnh
       for (const image of images) {
         // console.log("Image:", image);
@@ -912,7 +938,7 @@ const AddPostUser = () => {
           if (id_nuoc && id) {
             const imageRef = storageRef(
               storage,
-              `posts/${postId}/images/${name}`
+              `tours/${postId}/images/${name}`
             );
             //gửi yêu cầu HTTP để tải ảnh từ uri
             const response = await fetch(uri);
@@ -925,7 +951,6 @@ const AddPostUser = () => {
             const downloadURL = await getDownloadURL(imageRef);
             // console.log("URL Down:", downloadURL);
 
-            //Anh post
             // URL ảnh theo tỉnh thành
             // tạo id nuoc
             // console.log("id_nuoc1:", uploadedImageUrls[id_nuoc]);
@@ -942,14 +967,13 @@ const AddPostUser = () => {
             // console.log("id:", uploadedImageUrls[id_nuoc][id]);
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
             // console.log("URL:", uploadedImageUrls);
-            //lƯU ẢNH ĐẦU TIÊN
             //Anh cho city
             // URL ảnh theo tỉnh thành
             // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
             await set(
               ref(
                 database,
-                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
@@ -962,7 +986,6 @@ const AddPostUser = () => {
         const userId = await AsyncStorage.getItem("userToken");
         // console.log("userId:", userId);
         const userRef = ref(database, `accounts/${userId}`);
-
         let avatar = "";
         let fullname = "";
         onValue(userRef, (snapshot) => {
@@ -972,24 +995,37 @@ const AddPostUser = () => {
             fullname = data.fullname;
           }
         });
+        // lấy thông tin package được chọn
+        const selectedPackageData = packageData.find(
+          // (item) => item.packageId === selectedPackage
+          (item) => item.id === selectedPackage
+        );
+
+        // lưu hashtag thành dòng chữ
+        const combinedHashtags = hashtags
+          .map((hashtag) => (hashtag[0] !== "#" ? "#" + hashtag : hashtag))
+          .join(" ");
 
         const likes = 0;
         const reports = 0;
         const match = 0;
+        const ratingSummary = {
+          totalRatingCounter: 0,
+          totalRatingValue: 0,
+        };
         let status;
         if (isPublic) {
           status = 1;
-       }
-       else {
+        } else {
           status = 2;
-       }
+        }
         //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
         const thumbnail =
           uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
             Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
           ]?.images_value?.[0] || "";
 
-        // Cấu trúc dữ liệu bài viết với URL ảnh
+        // tap hop du lieu
         const postData = {
           locations: cities.reduce(
             (acc: { [key: string]: { [key: string]: string } }, city) => {
@@ -1006,58 +1042,44 @@ const AddPostUser = () => {
             {}
           ),
           content: contents,
+          hashtags: combinedHashtags,
+          packages: selectedPackageData,
           view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
+          created_at: timestamp,
+          thumbnail,
           likes,
-          id : postId,
+          id: postId,
           reports,
           match,
+          ratingSummary: ratingSummary,
           status: status,
-          thumbnail,
-          created_at: timestamp,
         };
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
-          if (userId && isCheckIn) {
-            const userRef = ref(database, `accounts/${userId}/checkInList`);
+          await set(newPostRef, postData);
+          if (account) {
             const userPost = ref(database, `accounts/${userId}/createdPosts`);
-            // Lấy dữ liệu hiện tại từ Firebase
-            const snapshot = await get(userRef);
-            const currentData = snapshot.exists() ? snapshot.val() : {};
-
-            // Tạo dữ liệu cập nhật mới từ cities
-            const updatedUserData = cities.reduce(
-              (acc: { [key: string]: { [key: string]: string } }, city) => {
-                const { id_nuoc, id, name } = city;
-
-                // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
-                if (!acc[id_nuoc]) {
-                  acc[id_nuoc] = {};
-                }
-
-                // Thêm city vào danh sách của id_nuoc
-                acc[id_nuoc][id] = name;
-
-                return acc;
-              },
-              { ...currentData }
-            );
-            // Cập nhật dữ liệu
-            await update(userRef, updatedUserData);
-
-            //Luu
-            //Luu
+            //Tru tien trong tai khoan
+            const newAccumulate =
+              (account?.balance ?? 0) -
+              (selectedPackageData.price -
+                (selectedPackageData.price * selectedPackageData.discount) /
+                  100);
+            const userRef = ref(database, `accounts/${userId}`);
+            await update(userRef, {
+              balance: newAccumulate,
+            });
+            //Them id bai viet vao tai khoan
             await update(userPost, {
               [postId]: true,
             });
           }
-
-          await set(newPostRef, postData);
         } else {
           setButtonPost(false);
-          throw new Error("Failed");
+          throw new Error("Failed to generate post ID.");
         }
         setButtonPost(false);
         // Alert.alert("Thông báo", "Thêm bài viết thành công");
@@ -1077,6 +1099,116 @@ const AddPostUser = () => {
   };
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
+  // *********************************************************************
+
+  // *********************************************************************
+  // Xử lý Packages
+  // *********************************************************************
+  //Đọc dữ liệu từ firebase
+  useEffect(() => {
+    const packagesRef = ref(database, "package");
+
+    onValue(packagesRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const formattedPackages = Object.keys(data).map((key) => ({
+        // packageId: key,
+        ...data[key],
+      }));
+      setPackages(formattedPackages);
+    });
+  }, []);
+  // console.log("Packages:", packages);
+
+  useEffect(() => {
+    //Sắp xếp tăng dần theo giá đã tính cả giảm giá
+    const sortedPackages = [...packages].sort((a, b) => {
+      const finalPriceA = a.price - (a.price * a.discount) / 100;
+      const finalPriceB = b.price - (b.price * b.discount) / 100;
+      // nếu dương thì b đẩy lên trước, âm thì a đẩy lên trước
+      return finalPriceA - finalPriceB;
+    });
+    // console.log("Sorted:", account?.accumulate);
+    // xem thử tài khoản nay có được ưu đãi gói nào
+    const sortLastes = sortedPackages
+      .map((item) => item)
+      .filter((item) => item.minAccumulated <= (account?.accumulate ?? 0));
+
+    // console.log("Sorted:", sortLastes);
+    setPackageData(sortLastes);
+
+    // console.log("Packages:", packageData);
+    //Chọn gói đầu tiên
+    if (sortLastes.length > 0) {
+      // setSelectedPackage(sortLastes[0].packageId);
+      setSelectedPackage(sortLastes[0].id);
+    }
+  }, [packages, account?.accumulate]);
+
+  // *********************************************************************
+  // Xử lý Packages
+  // *********************************************************************
+
+  // *********************************************************************
+  // Xử lý hashtag
+  // *********************************************************************
+  //Thêm hashtag
+  const handleAddHashtag = () => {
+    if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
+      // kiểm tra và thay thế khoảng trắng
+      //\s: Là ký tự đại diện cho bất kỳ khoảng trắng nào.
+      //+: một hoặc nhiều ký tự khoảng trắng liên tiếp.
+      //g:  tìm tất cả các khoảng trắng trong chuỗi
+      const sanitizedHashtag = newHashtag.replace(/\s+/g, "");
+      setHashtags([sanitizedHashtag, ...hashtags]);
+      setNewHashtag("");
+      setInputVisible(false);
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được để trống",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  };
+  // console.log("Hashtags:", hashtags);
+  useEffect(() => {
+    if (newHashtag.length >= 25) {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được quá 25 ký tự",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  }, [newHashtag]);
+
+  const removeHashtag = (indexChosse: any) => {
+    setHashtags(hashtags.filter((_, index) => index !== indexChosse));
+  };
+
+  //Kiểm tra tài khoản có đủ tiền không
+  useEffect(() => {
+    if (packageData.length > 0) {
+      const timeoutId = setTimeout(() => {
+        const discountedPrice =
+          packageData[0].price -
+          (packageData[0].discount * packageData[0].price) / 100;
+        if ((account?.balance ?? 0) > discountedPrice) {
+          setCheckBalance(false);
+        } else {
+          setCheckBalance(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [packageData, account?.balance]);
+
   // *********************************************************************
   // Xử lý review bài viết
   const handleReviewPost = async () => {
@@ -1098,6 +1230,11 @@ const AddPostUser = () => {
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+    if (hashtags.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm hashtag cho bài viết.");
       return;
     }
 
@@ -1191,12 +1328,12 @@ const AddPostUser = () => {
             color="#000"
           />
           <TextComponent
-            text="Hành trình mới"
+            text="Tạo bài viết"
             size={24}
             styles={{
               fontWeight: "800",
               margin: 5,
-              marginLeft: "18%",
+              marginLeft: "25%",
               marginBottom: 20,
             }}
           />
@@ -1205,23 +1342,6 @@ const AddPostUser = () => {
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
-            <TouchableOpacity style={styles.checkin} disabled={true}>
-              <RowComponent justify="space-between">
-                <Text style={{ fontSize: 12 }}>Check in lên bản đồ</Text>
-                {/* <Icon
-                name="checkbox-active"
-                size={14}
-                style={{ marginLeft: 10 }}
-                color={appColors.success}
-              /> */}
-                <Checkbox
-                  color="green"
-                  status={isCheckIn ? "checked" : "unchecked"}
-                  onPress={() => setIsCheckIn(!isCheckIn)}
-                />
-              </RowComponent>
-            </TouchableOpacity>
-
             {/* Quốc gia */}
             <SectionComponent>
               <View style={styles.countrySelector}>
@@ -1327,8 +1447,132 @@ const AddPostUser = () => {
             )}
           </SectionComponent>
 
+          {/* packages */}
+          <SectionComponent
+            styles={{
+              height: 230,
+              borderRadius: 10,
+              marginHorizontal: 15,
+              padding: 10,
+              backgroundColor: appColors.gray3,
+            }}
+          >
+            <View style={{ marginBottom: 10 }}>
+              <RowComponent>
+                <TextComponent
+                  text="Tài khoản: "
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                />
+                {(account?.balance ?? 0) > 0 && (
+                  <TextComponent
+                    text={new Intl.NumberFormat("vi-VN", {
+                      style: "decimal",
+                    }).format(account?.balance || 0)}
+                    size={14}
+                    styles={{
+                      fontWeight: "400",
+                      color: appColors.danger,
+                      marginBottom: 5,
+                      fontStyle: "italic",
+                    }}
+                  />
+                )}
+                <TextComponent
+                  text=" VNĐ"
+                  size={14}
+                  styles={{
+                    fontWeight: "regular",
+                    color: "#000",
+                    marginBottom: 5,
+                  }}
+                />
+              </RowComponent>
+              <RowComponent>
+                <TextComponent
+                  text="Chọn gói "
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                />
+                <TextComponent
+                  text="*"
+                  size={14}
+                  styles={{
+                    fontWeight: "400",
+                    color: appColors.danger,
+                    marginBottom: 5,
+                  }}
+                />
+                <TextComponent
+                  text=" :"
+                  size={14}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5, marginRight: 5 }}
+                />
+                <Information size="18" color={appColors.danger} style={{marginTop:-5}} onPress={() => setModalInformation(true)} />
+              </RowComponent>
+              <SectionComponent>
+                {/* Chọn package */}
+
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  style={{ width: "100%" }}
+                >
+                  {packageData.map((item, index) =>
+                    // không đủ tiền thì disable
+                    (account?.balance ?? 0) <
+                    item.price - item.price * (item.discount / 100) ? (
+                      <PackageCard
+                        key={index}
+                        name={item.name}
+                        price={item.price}
+                        discount={item.discount}
+                        hashtag={item.hashtag}
+                        packageId={item.id}
+                        selectedPackage={selectedPackage}
+                        disabled={true}
+                        // onSelect={(id: any) => setSelectedPackage(id)}
+                      />
+                    ) : (
+                      <PackageCard
+                        key={index}
+                        name={item.name}
+                        price={item.price}
+                        discount={item.discount}
+                        hashtag={item.hashtag}
+                        packageId={item.id}
+                        selectedPackage={selectedPackage}
+                        onSelect={(id: any) => {
+                          const currentHashtagsCount = hashtags.length;
+                          const allowedHashtagsCount = packageData.find(
+                            (pkg) => pkg.id === item.id
+                          )?.hashtag;
+                          // console.log("allowedHashtagsCount:", allowedHashtagsCount);
+                          if (currentHashtagsCount <= allowedHashtagsCount) {
+                            setSelectedPackage(id);
+                          } else {
+                            Toast.show({
+                              type: "error",
+                              text1: "Thông báo",
+                              text2: `Hãy xóa ${
+                                currentHashtagsCount - allowedHashtagsCount
+                              } hagtag để chỉnh về gói thấp hơn.`,
+                              text1Style: { fontSize: 14 },
+                              text2Style: { fontSize: 11 },
+                              visibilityTime: 2000,
+                            });
+                          }
+                        }}
+                      />
+                    )
+                  )}
+                </ScrollView>
+              </SectionComponent>
+            </View>
+          </SectionComponent>
+
           {/* Title */}
-          <SectionComponent styles={{ marginTop: -135, marginBottom: -15 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: -15 }}>
             <TextComponent
               text="Tiêu đề"
               size={16}
@@ -1581,6 +1825,161 @@ const AddPostUser = () => {
             </TouchableOpacity>
           </SectionComponent>
 
+          {/* Hashtag */}
+          <SectionComponent styles={styles.cities}>
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.leftButtons}
+            >
+              {hashtags.length === 0 ? (
+                <Text
+                  style={{
+                    color: appColors.primary,
+                    padding: 10,
+                    fontWeight: "600",
+                  }}
+                >
+                  Chưa có hashtag
+                </Text>
+              ) : (
+                hashtags.map((hashtag, index) => (
+                  <TouchableOpacity
+                    disabled={true}
+                    key={index}
+                    style={styles.buttonHashtags}
+                  >
+                    <Text style={styles.textbtnHashtags}>#{hashtag}</Text>
+                    <TouchableOpacity
+                      style={styles.iconMUL}
+                      onPress={() => removeHashtag(index)}
+                    >
+                      <IconA name="minuscircleo" color="red" />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            {hashtags.length === 0 && !inputVisible ? (
+              <RowComponent>
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 160, padding: 10 }]}
+                  onPress={() => setInputVisible(true)}
+                >
+                  <Text>
+                    Thêm hashtag{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+                {/* <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text> */}
+                <Text style={{ marginTop: 35 }}>
+                  {hashtags.length}/
+                  {
+                    packageData.find((item) => item.id === selectedPackage)
+                      ?.hashtag
+                  }
+                </Text>
+              </RowComponent>
+            ) : null}
+
+            {inputVisible && (
+              <RowComponent>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    padding: 10,
+                    width: 200,
+                    borderRadius: 5,
+                    position: "absolute",
+                    right: 0,
+                    top: -50,
+                    backgroundColor: "#fff",
+                  }}
+                  maxLength={25}
+                  placeholder="Nhập hashtag"
+                  value={newHashtag}
+                  onChangeText={setNewHashtag}
+                />
+                <IconA
+                  name="close"
+                  size={20}
+                  color="red"
+                  style={{ position: "absolute", top: -50, right: 0 }}
+                  onPress={() => {
+                    setInputVisible(false);
+                    setNewHashtag("");
+                  }}
+                />
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#007bff",
+                    padding: 12,
+                    marginLeft: 10,
+                    borderRadius: 5,
+                  }}
+                  onPress={handleAddHashtag}
+                >
+                  <IconSend name="send" size={20} color="#fff" />
+                </TouchableOpacity>
+              </RowComponent>
+            )}
+
+            {hashtags.length > 0 && (
+              <RowComponent>
+                <TouchableOpacity
+                  style={[
+                    styles.fixedRightButton,
+                    {
+                      width: 40,
+                      paddingLeft: 10,
+                      paddingBottom: 6,
+                      paddingRight: 1,
+                      marginLeft: 10,
+                    },
+                  ]}
+                  onPress={() => {
+                    // if (hashtags.length >= packageData.find(item => item.packageId === selectedPackage)?.hashtag) {
+                    if (
+                      hashtags.length >=
+                      packageData.find((item) => item.id === selectedPackage)
+                        ?.hashtag
+                    ) {
+                      Toast.show({
+                        type: "error",
+                        text1: "Thông báo",
+                        // text2: `Số lượng hashtag vượt quá giới hạn cho phép (${packageData.find(item => item.packageId === selectedPackage)?.hashtag}).`,
+                        text2: `Số lượng hashtag vượt quá giới hạn cho phép (${
+                          packageData.find(
+                            (item) => item.id === selectedPackage
+                          )?.hashtag
+                        }).`,
+                        text2Style: { fontSize: 11 },
+                        text1Style: { fontSize: 14 },
+                        visibilityTime: 2000,
+                      });
+                    } else {
+                      setInputVisible(true);
+                    }
+                  }}
+                >
+                  <Text>
+                    <IconA name="pluscircleo" size={20} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+                {/* <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text> */}
+                <Text style={{ marginTop: 35 }}>
+                  {hashtags.length}/
+                  {
+                    packageData.find((item) => item.id === selectedPackage)
+                      ?.hashtag
+                  }
+                </Text>
+              </RowComponent>
+            )}
+          </SectionComponent>
+
           {/* Hình ảnh */}
           <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
             {images.length > 0 ? (
@@ -1757,47 +2156,47 @@ const AddPostUser = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           {buttonPost ? (
-           <RowComponent styles={{ marginHorizontal: 10 }}>
-           <TouchableOpacity
-             onPress={() => {
-               handleReviewPost();
-             }}
-             style={{
-               backgroundColor: appColors.btncity,
-               width: "20%",
-               height: "100%",
-               borderRadius: 10,
-               marginRight: 10,
-               borderColor: "green",
-               borderWidth: 1,
-             }}
-           >
-             <TextComponent
-               text="Review bài viết"
-               size={14}
-               styles={{
-                 fontWeight: "bold",
-                 color: "green",
-                 textAlign: "center",
-                 justifyContent: "center",
-                 marginTop: 3,
-                 padding: 5,
-               }}
-             />
-           </TouchableOpacity>
-           <ButtonComponent
-             text="Đang Đăng Bài...."
-             textStyles={{
-               width: "75%",
-               fontWeight: "bold",
-               fontSize: 30,
-               textAlign: "center",
-             }}
-             disabled={true}
-             color={appColors.primary}
-             onPress={handlePushPost}
-           />
-         </RowComponent>
+            <RowComponent styles={{ marginHorizontal: 10 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  handleReviewPost();
+                }}
+                style={{
+                  backgroundColor: appColors.btncity,
+                  width: "20%",
+                  height: "100%",
+                  borderRadius: 10,
+                  marginRight: 10,
+                  borderColor: "green",
+                  borderWidth: 1,
+                }}
+              >
+                <TextComponent
+                  text="Review bài viết"
+                  size={14}
+                  styles={{
+                    fontWeight: "bold",
+                    color: "green",
+                    textAlign: "center",
+                    justifyContent: "center",
+                    marginTop: 3,
+                    padding: 5,
+                  }}
+                />
+              </TouchableOpacity>
+              <ButtonComponent
+                text="Đang Đăng Bài...."
+                textStyles={{
+                  width: "75%",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  textAlign: "center",
+                }}
+                disabled={true}
+                color={appColors.primary}
+                onPress={handlePushPost}
+              />
+            </RowComponent>
           ) : (
             <RowComponent styles={{ marginHorizontal: 10 }}>
               <TouchableOpacity
@@ -1878,14 +2277,12 @@ const AddPostUser = () => {
         <Modal
           visible={modalVisibleCity}
           onDismiss={() => {
-            setModalVisibleCity(false)
-            setSearchQueryCity("")
-          }
-          }
-            >
+            setModalVisibleCity(false);
+            setSearchQueryCity("");
+          }}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
-              {/* Tìm kiếm thành phố */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -1893,13 +2290,12 @@ const AddPostUser = () => {
                 value={searchQueryCity}
                 onChangeText={setSearchQueryCity}
               />
-             
             </View>
             {selectedCountry ? (
               <FlatList
                 data={citiesDataFilter}
                 keyExtractor={(item) => item.id}
-                style={[styles.countryList , {minHeight: 200} ]}
+                style={[styles.countryList, { minHeight: 200 }]}
                 renderItem={({ item }) => {
                   //Loc ra nhung thanh pho da chon
                   const isCitySelected = cities.some(
@@ -1924,16 +2320,17 @@ const AddPostUser = () => {
                 }}
               />
             ) : (
-              <Text style={{fontSize: 16, color: 'red'}} >Chưa chọn quốc gia trước khi chọn thành phố</Text>
+              <Text style={{ fontSize: 16, color: "red" }}>
+                Chưa chọn quốc gia trước khi chọn thành phố
+              </Text>
             )}
             <View style={styles.separator} />
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
-                setModalVisibleCity(false)
-                setSearchQueryCity("")
-              }
-            }
+                setModalVisibleCity(false);
+                setSearchQueryCity("");
+              }}
             >
               <Text style={styles.closeButtonText}>Đóng</Text>
             </TouchableOpacity>
@@ -1971,6 +2368,7 @@ const AddPostUser = () => {
                 }}
               />
             </RowComponent>
+
             {/* Search */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -2265,14 +2663,24 @@ const AddPostUser = () => {
                     ]}
                   />
                 </TouchableOpacity>
-                {selectedCityForImages && (
+                {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 140 }]}
+                    style={[styles.fixedRightButton, { width: 130 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
                       {selectedCityForImages.name}{" "}
                       <IconA name="retweet" size={15} color="#000" />
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.fixedRightButton]}
+                    onPress={() => setModalVisibleCityImages(true)}
+                  >
+                    <Text>
+                      Chọn tỉnh{" "}
+                      <IconA name="pluscircleo" size={15} color="#000" />
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -2281,7 +2689,7 @@ const AddPostUser = () => {
               <>
                 {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 140 }]}
+                    style={[styles.fixedRightButton, { width: 130 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
@@ -2381,6 +2789,58 @@ const AddPostUser = () => {
           </View>
         </Modal>
 
+        {/* Modal cho kiểm tra tiền */}
+        {checkBalance && (
+          <Modal visible={checkBalance} onDismiss={() => setCheckBalance(true)}>
+            <View
+              style={[styles.modalContent, { height: 260, marginTop: -40 }]}
+            >
+              <Text style={styles.modalTitle}>Thông báo</Text>
+              <Text
+                style={{
+                  color: appColors.danger,
+                  fontSize: 14,
+                  marginBottom: 76,
+                }}
+              >
+                Bạn không đủ số dư trong tài khoản để mua gói dịch vụ thấp nhất
+                để đăng bài.
+              </Text>
+
+              <Text>
+                Vui lòng <Text style={styles.text}>Nạp Tiền</Text> hoặc{" "}
+                <Text style={styles.text}>Thoát Đăng Bài</Text> .
+              </Text>
+              <RowComponent justify="space-between" styles={{ marginTop: 4 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.closeButton,
+                    { backgroundColor: "green", marginRight: 30 },
+                  ]}
+                  onPress={() => router.navigate("/(tabs)/payment")}
+                >
+                  <Text style={[styles.closeButtonText]}>Nạp tiền</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setCheckBalance(false);
+                    router.navigate("/(tabs)/");
+                  }}
+                >
+                  <Text style={styles.closeButtonText}>Quay Về</Text>
+                </TouchableOpacity>
+              </RowComponent>
+              <LottieView
+                source={require("../../assets/images/money.json")}
+                autoPlay
+                loop
+                style={{ width: 300, height: 300 }}
+              />
+            </View>
+          </Modal>
+        )}
+
         {/* Modal review post */}
         <Modal
           visible={modalReviewPost}
@@ -2410,7 +2870,7 @@ const AddPostUser = () => {
           </SectionComponent>
         </Modal>
 
-        {/* Modal loading */}
+        {/* Modal load */}
         {buttonPost ? (
           <Modal visible={buttonPost}>
             <View
@@ -2432,6 +2892,56 @@ const AddPostUser = () => {
             </View>
           </Modal>
         ) : null}
+
+
+        {/* Modal information */}
+        <Modal
+          visible={modalInformation}
+          onDismiss={() => setModalInformation(false)}
+        >
+           <View style={{backgroundColor: 'white', width: 320,height: 230, position: 'absolute', top: -120, left: "5%"}}>
+            <SectionComponent styles={{ marginTop: 10,marginBottom: -10}}>
+            <View>
+              <Text style={[styles.modalTitle, { marginLeft: 10, fontSize: 22}]}>
+                Thông tin ưu đãi gói dịch vụ
+              </Text>
+              <Text style={{ marginLeft: 10 }}>
+                Gói càng cao thì sẽ có nhiều <Text style={{fontWeight: 'bold', color: appColors.danger}}>hashtag</Text> và điểm bài viết <Text style={{fontWeight: 'bold', color: appColors.danger}}>sẽ cao và tiếp cận</Text> được nhiều người hơn.
+              </Text>
+            </View>
+              </SectionComponent>
+              <RowComponent justify="space-between" >
+              <LottieView
+                source={require("../../assets/images/information.json")}
+                autoPlay
+                loop
+                style={{
+                  width: 150,
+                  height: 150,
+                }}
+              />
+               <SectionComponent >
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                {
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  marginRight: 70,
+                },
+              ]}
+              onPress={() => setModalInformation(false)}
+            >
+              <IconA name="close" size={20}  color="#fff" />
+            </TouchableOpacity>
+          </SectionComponent>
+              </RowComponent>
+          
+           </View>
+          </Modal>
+
+
       </View>
     </KeyboardAvoidingView>
   );
@@ -2443,6 +2953,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingTop: 50,
+  },
+  text: {
+    color: appColors.primary,
+    fontWeight: "bold",
   },
   //Modal map
   containerMap: {
@@ -2480,7 +2994,7 @@ const styles = StyleSheet.create({
   //cities
   cities: {
     flexDirection: "row",
-    height: 200,
+    height: 70,
     justifyContent: "flex-start",
   },
   leftButtons: {
@@ -2516,6 +3030,20 @@ const styles = StyleSheet.create({
   },
   textbtncities: {
     textAlign: "center",
+  },
+  buttonHashtags: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e0e0e0",
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  textbtnHashtags: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "600",
   },
   iconMUL: {
     position: "absolute",
@@ -2725,4 +3253,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPostUser;
+export default AddPostTour;

@@ -4,6 +4,7 @@ import { equalTo, onValue, orderByChild, query, ref } from 'firebase/database';
 import { auth, database, get } from '@/firebase/firebaseConfig';
 import { slug, sortTourAtHomeScreen } from '@/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { asyncStorageEmitter } from '@/utils/emitter';
 // Định nghĩa kiểu cho context
 // interface HomeContextType {=
 //     dataPosts: any[]; // Bạn có thể thay thế `any[]` bằng kiểu chính xác nếu biết
@@ -42,13 +43,24 @@ const HomeProvider = ({ children }) => {
     const [dataModalSelected, setDataModalSelected] = useState(null)
 
     // Login state
+    const fetchUserId = async () => {
+        const userToken = await AsyncStorage.getItem("userToken");
+        setUserId(userToken);
+    };
+
     useEffect(() => {
-        const fetchUserId = async () => {
-            const userId = await AsyncStorage.getItem("userToken");
-            setUserId(userId);
+        // Fetch initial value
+        fetchUserId();
+
+        // Listen for changes
+        asyncStorageEmitter.on("userTokenChanged", fetchUserId);
+
+        // Cleanup the event listener on unmount
+        return () => {
+            asyncStorageEmitter.off("userTokenChanged", fetchUserId);
         };
-        fetchUserId()
     }, []);
+    
     /// App state ý tưởng khi vòa lại app thì reset behavior
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async nextAppState => {
@@ -122,7 +134,7 @@ const HomeProvider = ({ children }) => {
                         )
                     )
                 );
-                
+
                 setDataAllCities(result);
             } else {
                 console.log("No data available1");
@@ -167,14 +179,9 @@ const HomeProvider = ({ children }) => {
             const refAccount = ref(database, `accounts/${userId}`)
             const unsubscribe = onValue(refAccount, (snapshot) => {
                 if (snapshot.exists()) {
-                    // Lấy tất cả factor của post dùng cho tính điểm
                     const jsonDataAccount = snapshot.val();
                     // Set behavior
-                    console.log(jsonDataAccount.behavior);
                     setAccountBehavior(jsonDataAccount.behavior)
-                    // Set du lieu
-                    console.log('aa',jsonDataAccount);
-                    console.log('id',userId);
                     setDataAccount(jsonDataAccount)
                     setLoadedDataAccount(true)
                 } else {
@@ -231,6 +238,7 @@ const HomeProvider = ({ children }) => {
                 isSearchingMode,
                 dataModalSelected,
                 dataAllCities,
+                dataAccount, setDataAccount,
                 isFocus, setIsFocus,
                 userId, setUserId,
                 setDataAllCities,
@@ -247,7 +255,8 @@ const HomeProvider = ({ children }) => {
                 setAllLocationIdFromPost,
                 setAllLocationNameFromPost,
                 setPostIdCurrent,
-                setRefreshingPost
+                setRefreshingPost,
+                dataAccount
             }}
 
         >

@@ -1,6 +1,6 @@
 import { View, Text, Alert, StyleSheet, FlatList, TextInput } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { database, onValue, ref } from '@/firebase/firebaseConfig';
+import { database, onValue, ref ,get} from '@/firebase/firebaseConfig';
 import { update } from '@firebase/database';
 import { Feather } from '@expo/vector-icons';
 
@@ -33,6 +33,8 @@ const Exchange = () => {
           return a.status_id - b.status_id
         });
         setDataExchanges(dataPending);
+        console.log(dataPending);
+        
       } else {
         setDataExchanges([]);
         setFilteredData([]);
@@ -64,49 +66,53 @@ const Exchange = () => {
 
   const approvePayment = (payment: any) => {
     const refExchanges = ref(database, `exchanges/${payment.id}`);
-    const refAccount = ref(database, `accounts/${payment.account_id}`)
+    const refAccount = ref(database, `accounts/${payment.account_id}`);
+    
     Alert.alert(
-      "Approve payment ",
+      "Approve payment",
       "Are you sure you want to approve payment for this account?",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "OK", onPress: () => {
-            //Update status exchange
+            // Update status exchange
             update(refExchanges, { status_id: "2" })
               .then(() => {
-                console.log('Data updated successfully!');
+                console.log('Exchange status updated successfully!');
+                
+                // Get balance of account (one-time read)
+                get(refAccount)
+                  .then((snapshot) => {
+                    if (snapshot.exists()) {
+                      const jsonData = snapshot.val();
+                      const newBalance = jsonData.balance + payment.payment;
+  
+                      // Update balance of account
+                      update(refAccount, { balance: newBalance })
+                        .then(() => {
+                          console.log('Account balance updated successfully!');
+                        })
+                        .catch((error) => {
+                          console.error('Error updating balance:', error);
+                        });
+                    } else {
+                      console.log("No account data available");
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching account data:", error);
+                  });
               })
               .catch((error) => {
-                console.error('Error updating data:', error);
+                console.error('Error updating exchange status:', error);
               });
-            //Get balance of account
-            const exchanges = onValue(refAccount, (snapshot) => {
-              if (snapshot.exists()) {
-                const jsonData = snapshot.val();
-                balance = jsonData.balance + payment.payment
-                console.log(jsonData.balance + payment.payment);
-
-              } else {
-                console.log("No data available");
-              }
-            }, (error) => {
-              console.error("Error fetching data:", error);
-            });
-            //Update balance of account
-            update(refAccount, { balance: balance })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
-            balance = 0
           }
         }
       ]
     );
   };
+  
+  
 
   const rejectPayment = (paymentId: any) => {
     const refExchanges = ref(database, `exchanges/${paymentId}`);

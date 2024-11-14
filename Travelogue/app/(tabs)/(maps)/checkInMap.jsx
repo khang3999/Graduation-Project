@@ -11,6 +11,8 @@ import { Divider } from "react-native-paper";
 import { Entypo, FontAwesome, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler } from "react-native-gesture-handler";
+import { useMapCheckinProvider } from "@/contexts/MapCheckinProvider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get('window')
 
@@ -23,36 +25,49 @@ const CheckInMap = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
-  
 
-  // Lấy vùng theo quốc gia
-  const fetchAreasByCountry = async (countryId) => {
+  const [ userId, setUserId ] = useState(null)
+  const {dataAccount, setDataAccount} = useHomeProvider()
+  const {
+    selectedCityId, setSelectedCityId,
+    dataCheckedCities, setDataCheckedCities
+  } = useMapCheckinProvider()
+
+  // Login state
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await AsyncStorage.getItem("userToken");
+      setUserId(userId);
+    };
+    fetchUserId()
+  }, []);
+
+  // Fetch checkin list by country
+  const fetchCheckinList = async (accountId,countryId) => {
+    const refCheckin = ref(database, `accounts/${accountId}/checkin/${countryId}`);
     try {
-      const refAreas = ref(database, `areas/${countryId}`)
-      const snapshot = await get(refAreas);
+      const snapshot = await get(refCheckin);
       if (snapshot.exists()) {
-        const dataAreasJson = snapshot.val()
-        const dataAreasArray = Object.entries(dataAreasJson).map(([key, value]) => ({
-          label: value.label,
-          value: key
-        }));
-        console.log(dataAreasArray);
-        setDataAreas(dataAreasArray)
-      } else {
-        console.log("No data post available");
+        const data = snapshot.val()
+        const allCitiesCheckedByCountry = Object.values(data)
+        console.log('check', allCitiesCheckedByCountry);
+        setDataCheckedCities(allCitiesCheckedByCountry)
+      }
+      else {
+        console.log('check');
       }
     } catch (error) {
-      console.error("Error fetching area data search: ", error);
-
+      console.error('Cannot find <checkin> on firebase', error);
     }
-
   }
-  // Lấy khu vực theo việt nam lần đầu
+  // Lấy các tỉnh đã checkin lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
-    if (selectedCountry) {
-      fetchAreasByCountry(selectedCountry.value)
+    if (dataAccount && selectedCountry) {
+      fetchCheckinList(dataAccount.id,selectedCountry.value)
     }
-  }, [selectedCountry])
+  }, [dataAccount, selectedCountry]);
+
+  // Checkin tỉnh đã chọn 
 
   // Lấy các quốc gia 
   useEffect(() => {
@@ -67,7 +82,7 @@ const CheckInMap = () => {
             uri: jsonDataCountries[key].image
           }
         }));
-        console.log(countriesArray);
+        // console.log(countriesArray);
 
         setSelectedCountry(countriesArray[0])
         setDataCountries(countriesArray)
@@ -83,9 +98,38 @@ const CheckInMap = () => {
     };
   }, [])
 
+  // Lấy vùng theo quốc gia
+  const fetchAreasByCountry = async (countryId) => {
+    try {
+      const refAreas = ref(database, `areas/${countryId}`)
+      const snapshot = await get(refAreas);
+      if (snapshot.exists()) {
+        const dataAreasJson = snapshot.val()
+        const dataAreasArray = Object.entries(dataAreasJson).map(([key, value]) => ({
+          label: value.label,
+          value: key
+        }));
+        // console.log(dataAreasArray);
+        setDataAreas(dataAreasArray)
+      } else {
+        console.log("No data post available");
+      }
+    } catch (error) {
+      console.error("Error fetching area data search: ", error);
+
+    }
+
+  }
+
+  // Lấy vùng của việt nam (chạy lần đầu) vì default là việt nam
+  useEffect(() => {
+    if (selectedCountry) {
+      fetchAreasByCountry(selectedCountry.value)
+    }
+  }, [selectedCountry])
+
   // Fetch data cities theo vùng miền
   const fetchCitiesByArea = async (countryId, areaId) => {
-
     try {
       const refCities = ref(database, `cities/${countryId}/${areaId}`)
       const snapshot = await get(refCities);
@@ -103,21 +147,11 @@ const CheckInMap = () => {
       console.error("Error fetching data: ", error);
     }
   }
-  const handleSelecteArea = () => {
-    // Fetch city tương ứng tương ứng (chính)
-    fetchCitiesByArea(selectedCountry.value, selectedArea.value)
+
+  // Hàm Check in
+  const checkIn = () => {
+
   }
-
-  // const renderCountryItem = (country) => {
-  //   console.log("a", country);
-  //   return (
-  //     <View key={country.value} style={{ flexDirection: 'row', margin: 10 }}>
-  //       <Image style={{ width: 30, height: 20, marginRight: 6 }} source={{ uri: country.image }}></Image>
-  //       <Text style={{ fontSize: 16 }}>{country.label}</Text>
-  //     </View>
-  //   )
-  // }
-
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.hearder}>
@@ -142,6 +176,7 @@ const CheckInMap = () => {
               searchPlaceholder="Tìm kiếm..."
               onChange={item => {
                 fetchAreasByCountry(item.value)
+                setSelectedCityId(null)
                 setSelectedCity(null)
                 setSelectedArea(null)
                 setSelectedCountry(item);
@@ -164,6 +199,7 @@ const CheckInMap = () => {
               value={selectedArea ? selectedArea.value : ''}
               onChange={item => {
                 fetchCitiesByArea(selectedCountry.value, item.value)
+                setSelectedCityId(null)
                 setSelectedCity(null)
                 setSelectedArea(item)
               }}
@@ -187,6 +223,7 @@ const CheckInMap = () => {
               searchPlaceholder="Tìm kiếm..."
               value={selectedCity ? selectedCity.value : ''}
               onChange={item => {
+                setSelectedCityId(item.value)
                 setSelectedCity(item)
               }}
             />
@@ -201,7 +238,7 @@ const CheckInMap = () => {
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader}>
+          <TouchableOpacity style={styles.btnHeader} onPress={() => checkIn()}>
             <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
             <Text style={styles.actionBtnText}>Check in</Text>
           </TouchableOpacity>
@@ -211,7 +248,7 @@ const CheckInMap = () => {
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}
-          <Text>{selectedCountry&&selectedArea&&selectedCity ? `${selectedCity.label}, ${selectedCountry.label}`:`Chưa chọn` }</Text>
+          <Text>{selectedCountry  && selectedCity ? `${selectedCity.label}, ${selectedCountry.label}` : `Chưa chọn`}</Text>
         </View>
 
       </View>
@@ -300,7 +337,7 @@ const styles = StyleSheet.create({
     elevation: 10
   },
   information: {
-    flexDirection:'row',
+    flexDirection: 'row',
     margin: 10
   },
   sortContainer: {

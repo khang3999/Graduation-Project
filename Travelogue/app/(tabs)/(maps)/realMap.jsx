@@ -15,9 +15,11 @@ import BottomSheet from "react-native-gesture-bottom-sheet";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { ImageSlider } from "react-native-image-slider-banner";
 import { RowComponent, SectionComponent } from "@/components";
-import { database, ref, onValue } from "@/firebase/firebaseConfig";
+import { database, ref, onValue, get } from "@/firebase/firebaseConfig";
 import { ScrollView } from "react-native-gesture-handler";
 import { set } from "lodash";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { update } from "firebase/database";
 
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
@@ -65,27 +67,34 @@ const Map = () => {
     // Lấy dữ liệu từ firebase (khu vực)
     onValue(areaRef, (snapshot) => {
       const data = snapshot.val() || {};
+      // console.log(data);
       // Chuyển từ đối tượng thành mảng
-      const formattedDataAreas = Object.keys(data).map((key) => ({
-        id: key,
-        ...data[key],
-      }));
+
+      const formattedDataAreas = Object.keys(data).flatMap((countryId) =>
+        Object.keys(data[countryId]).map((key) => ({
+          id: key,
+          countryId,
+          ...data[countryId][key],
+        }))
+      );
       setAreaData(formattedDataAreas);
-      // console.log("Area Data:", areaData);
+      // console.log("Area Data:");
     });
+    // console.log("Area Data:", areaData);
+
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
 
       // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        const countryData = data[countryKey];
-        // console.log("countryData:", countryData);
-
-        return Object.keys(countryData).map((cityKey) => ({
-          id: cityKey,
-          id_nuoc: countryData[cityKey].id_nuoc,
-          ...countryData[cityKey],
-        }));
+        return Object.keys(data[countryKey]).flatMap((area_id) => {
+          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
+            id: cityKey,
+            area_id: area_id,
+            id_nuoc: countryKey,
+            ...data[countryKey][area_id][cityKey],
+          }));
+        });
       });
 
       setCityData(formattedData);
@@ -97,35 +106,30 @@ const Map = () => {
       const data = snapshot.val() || {};
       // console.log("____________________")
       // console.log(data);
-      const formattedPoints = [];
-      Object.keys(data).forEach((countryId) => {
+
+      const formattedPoints = Object.keys(data).flatMap((countryId) => {
         const countryPoints = data[countryId];
         // console.log("countryPoints:", countryPoints);
-        Object.keys(countryPoints).forEach((type) => {
+
+        return Object.keys(countryPoints).flatMap((type) => {
           const typePoints = countryPoints[type];
           // console.log("typePoints:", typePoints);
-          Object.keys(typePoints).forEach((pointId) => {
+
+          return Object.keys(typePoints).flatMap((pointId) => {
             const point = typePoints[pointId];
             // console.log("point:", point);
 
-            // Chọn tên biến mới
-            const relevantKeys = Object.keys(point);
-            // console.log("relevantKeys:", relevantKeys)
-
-            relevantKeys.forEach((pointKey) => {
-              formattedPoints.push({
-                id: pointKey,
-                countryId: countryId,
-                cityId: pointId,
-                type: type,
-                ...point[pointKey],
-              });
-            });
+            return Object.keys(point).map((pointKey) => ({
+              id: pointKey,
+              countryId: countryId,
+              cityId: pointId,
+              type: type,
+              ...point[pointKey],
+            }));
           });
         });
       });
-
-      console.log("formattedPoints:", formattedPoints);
+      // console.log("formattedPoints:", formattedPoints);
       setPoints(formattedPoints);
     });
   }, []);
@@ -224,10 +228,10 @@ const Map = () => {
   // Cập nhật idCities khi filteredCityData thay đổi
   useEffect(() => {
     setIdCities(filteredCityData.map((city) => city.id));
-    console.log(
-      "idCities:",
-      filteredCityData.map((city) => city.id)
-    );
+    // console.log(
+    //   "idCities:",
+    //   filteredCityData.map((city) => city.id)
+    // );
   }, [filteredCityData]);
 
   // Thay đổi khu vực
@@ -286,6 +290,7 @@ const Map = () => {
     if (!selectedCountry) {
       return points;
     }
+    // hiển thị các point theo điều kiện
     return points.filter((point) => {
       if (selectedFestivalType) {
         if (selectedFestivalType === "all") {
@@ -295,7 +300,7 @@ const Map = () => {
           if (selectedCity && point.cityId !== selectedCity) {
             return false;
           }
-    
+
           if (idCities) {
             if (idCities.includes(point.cityId)) {
               return true;
@@ -307,8 +312,6 @@ const Map = () => {
           return false;
         }
       }
-    
-     
 
       return true;
     });
@@ -341,6 +344,48 @@ const Map = () => {
       bottomSheetRef.current.show();
     }
   };
+
+  //Lưu các vi tri của điểm
+  const handleSavePoint = async (content, type, location) => {
+    const userId = await AsyncStorage.getItem("userToken");
+    if (userId) {
+      const userRef = ref(database, `accounts/${userId}/behavior`);
+  
+      const snapshot = await get(userRef);
+      let existingData = snapshot.val();
+  
+      // Kiểm tra xem location có tồn tại 
+      let locationArray = existingData?.location || [];
+      // console.log(locationArray)
+
+      // Thêm địa điểm mới 
+      if (!locationArray.includes(location)) {
+        locationArray.push(location);
+  
+      
+        const updatedLocation = {
+          location: locationArray,
+        };
+        // Lưu lại dữ liệu đã cập nhật vào Firebase
+        await update(userRef, updatedLocation);
+      }
+        // Cập nhật lại dữ liệu 
+        if (content) {
+        const updatedUserData = {
+          content: content,
+        };
+        await update(userRef, updatedUserData);
+      }
+    }
+    // Thông báo tùy thuộc vào type
+    if (type === "post") {
+      Alert.alert("Thông báo", "Đã lưu bài viết");
+    }
+    if (type === "tour") {
+      Alert.alert("Thông báo", "Đã lưu tour");
+    }
+  };
+  
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
   return (
@@ -671,7 +716,7 @@ const Map = () => {
                   caroselImageStyle={{
                     marginTop: -30,
                     width: 400,
-                    height: 250,
+                    height: 280,
                     resizeMode: "stretch",
                     overflow: "hidden",
                   }}
@@ -692,15 +737,26 @@ const Map = () => {
 
               {/*  */}
               <Text style={styles.dateText}>
-                <Text style={{ fontWeight: "bold" }}>Ngày</Text>:{" "}
-                {selectedFestival.start} -{selectedFestival.end}
+                {
+                  selectedFestival.type === "landmark" ? (
+                    <Text style={{ fontWeight: "bold" }}>Khung Giờ:</Text>
+                  ) : 
+                  (
+                    <Text style={{ fontWeight: "bold" }}>Ngày:</Text>
+                  )
+                }
+                {" "}{selectedFestival.start} -{selectedFestival.end}
               </Text>
 
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => {
-                    console.log("Bai Viet: " + selectedFestival.cityId);
+                    handleSavePoint(
+                      selectedFestival.title,
+                      "tour",
+                      selectedFestival.cityId
+                    );
                   }}
                 >
                   <Icon name="file-text-o" size={20} color="#000" />
@@ -710,7 +766,11 @@ const Map = () => {
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => {
-                    console.log("Tour: " + selectedFestival.cityId);
+                    handleSavePoint(
+                      selectedFestival.title,
+                      "post",
+                      selectedFestival.cityId
+                    );
                   }}
                 >
                   <Icon name="picture-o" size={20} color="#000" />
@@ -875,12 +935,12 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   sheetContent: {
-    padding: 30,
+    padding: 16,
     borderRadius: 20,
   },
   festivalImage: {
-    width: 350,
-    height: 200,
+    width: "100%",
+    height: 250,
   },
   closeButton: {
     width: 100,

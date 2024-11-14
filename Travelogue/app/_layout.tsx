@@ -17,6 +17,9 @@ export default function Layout() {
             <Stack.Screen name="(user)" options={{headerShown: false}}/>
             <Stack.Screen name="(article)" options={{headerShown: false}}/>
             <Stack.Screen name="(admin)"/>
+            <Stack.Screen name="postDetail"/>
+            <Stack.Screen name="tourDetail"/>
+            
         </Stack>
         <Toast/>
        

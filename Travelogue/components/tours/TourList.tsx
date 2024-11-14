@@ -13,6 +13,7 @@ import { useTourProvider } from '@/contexts/TourProvider';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { equalTo, orderByChild, query } from 'firebase/database';
+import { router } from "expo-router";
 
 const { width } = Dimensions.get('window');
 const ITEM_HEIGHT = 270;
@@ -31,7 +32,8 @@ const TourList = () => {
     isSearchingMode, setIsSearchingMode,
     modalVisible, setModalVisible,
     loadedTours, setLoadedTours,
-    dataModalSelected, setDataModalSelected
+    dataModalSelected, setDataModalSelected,
+    selectedTour, setSelectedTour
   }: any = useTourProvider();
 
   const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
@@ -309,8 +311,15 @@ const TourList = () => {
     );
     return (
       <PaperProvider key={tour.item.id}>
-        <Pressable style={styles.item} onPress={() => console.log(tour.index + "tap")
-        }>
+        <Pressable style={styles.item} 
+         onPress={() => {
+          router.push({
+            pathname: "/tourDetail",
+            params: { initialIndex: 0 },
+          });
+          setSelectedTour([tour.item])
+        }}
+        >
           {/*Author*/}
           <View style={styles.authorContent}>
             <TouchableOpacity style={styles.avatarWrap}>
@@ -359,7 +368,7 @@ const TourList = () => {
             {/* </Provider> */}
           </View>
           <View style={styles.imageTour}>
-            <Image style={styles.imageTour} source={{ uri: tour.item.images }}></Image>
+            <Image style={styles.imageTour} source={{ uri: tour.item.thumbnail }}></Image>
           </View>
 
           {/* Button like, comment, save */}

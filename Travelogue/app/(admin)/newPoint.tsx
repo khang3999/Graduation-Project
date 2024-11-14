@@ -183,11 +183,11 @@ const NewPoint = () => {
         start:
           selectedOption === "festival"
             ? timeStartDate.toLocaleDateString().slice(0, 5)
-            : timeStartTime.toLocaleTimeString().slice(0, 4),
+            : timeStartTime.toLocaleTimeString().slice(0, 5),
         end:
           selectedOption === "festival"
             ? timeEndDate.toLocaleDateString().slice(0, 5)
-            : timeEndTime.toLocaleTimeString().slice(0, 4),
+            : timeEndTime.toLocaleTimeString().slice(0, 5),
         images: imageUrls,
       };
 
@@ -229,8 +229,7 @@ const NewPoint = () => {
           placeholder="Nhập tên"
           value={name}
           onChangeText={setName}
-          style={styles.input}
-        />
+          style={styles.input}        />
 
         <Text style={styles.label}>Vĩ độ</Text>
         <TextInput
@@ -306,7 +305,7 @@ const NewPoint = () => {
                 ? timeStartDate.toLocaleDateString().slice(0, 5)
                 : "Chọn ngày"
               : timeStartTime
-              ? timeStartTime.toLocaleTimeString().slice(0, 4)
+              ? timeStartTime.toLocaleTimeString().slice(0, 5)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
@@ -319,7 +318,7 @@ const NewPoint = () => {
                 ? timeEndDate.toLocaleDateString().slice(0, 5)
                 : "Chọn ngày"
               : timeEndTime
-              ? timeEndTime.toLocaleTimeString().slice(0, 4)
+              ? timeEndTime.toLocaleTimeString().slice(0, 5)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
