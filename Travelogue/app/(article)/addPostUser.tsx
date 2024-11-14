@@ -965,11 +965,18 @@ const AddPostUser = () => {
 
         let avatar = "";
         let fullname = "";
+        let totalPosts = 0;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
+            if(data.totalPosts){
+              totalPosts = data.totalPosts + 1 ;
+            }
+            else {
+              totalPosts = 0;
+            }
           }
         });
 
