@@ -1,3 +1,4 @@
+
 import {
   Image,
   StyleSheet,
@@ -153,7 +154,7 @@ export default function ProfileScreen() {
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push("/searchResult");
+                  router.push("/SearchResult");
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>

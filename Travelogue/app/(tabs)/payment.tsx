@@ -1,7 +1,8 @@
 import { auth, database, onValue, ref, set } from "@/firebase/firebaseConfig";
 import { AntDesign, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import { push } from "@firebase/database";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { TouchableWithoutFeedback, Keyboard } from 'react-native';
 import {
   View,
   Image,
@@ -18,21 +19,12 @@ import {
 import { Button, Checkbox, Divider } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useHomeProvider } from "@/contexts/HomeProvider";
 
 const Payment = () => {
-  console.log("Payment1");
   const [accountId, setAccountId] = useState("");
-  useEffect(() => {
-    const fetchAccount = async () => {
-      const account = await AsyncStorage.getItem("userToken");
-      if (account) {
-        setAccountId(account);
-      }
-    };
-    fetchAccount();
-  }, []);
+  const { dataAccount }: any = useHomeProvider()
 
-  console.log(accountId);
   //Payment
   const [qrDataURL, setQrDataURL] = useState(null);
   const [inputText, setInputText] = useState("");
@@ -65,6 +57,9 @@ const Payment = () => {
   const typeOptions = ["Deduction", "Recharge"];
   const today = new Date();
 
+  useEffect(() => {
+    setAccountId(dataAccount.id)
+  }, [dataAccount])
   // Status content
   useEffect(() => {
     const onValueChange = ref(database, "status/payment");
@@ -108,15 +103,11 @@ const Payment = () => {
 
   // Exchange data by account id
   useEffect(() => {
-    console.log("accountId", accountId);
-
     if (accountId != "") {
-        console.log("accountId");
       const onValueChange = ref(database, "exchanges");
       const exchangesListener = onValue(
         onValueChange,
         (snapshot) => {
-            console.log("data111jy67", snapshot.val());
           if (snapshot.exists()) {
             const jsonData = snapshot.val();
             const dataArray = Object.values(jsonData);
@@ -128,8 +119,6 @@ const Payment = () => {
                 }
                 return a.status_id - b.status_id;
               });
-            const aaa = data;
-            console.log("data111jy67", jsonData);
             setDataExchanges(data);
           } else {
             console.log("No data available");
@@ -148,14 +137,11 @@ const Payment = () => {
 
   //Exchange data filter realtime
   useEffect(() => {
-    console.log("dataExchanges", dataExchanges);
     if (timeEnd == null) {
       setDataExchangesFilter(dataExchanges);
     } else {
       handleFilter();
     }
-    // setDataExchangesFilter(data)
-    // console.log('dataExchangesFilter', dataExchangesFilter);
   }, [dataExchanges]);
 
   const closeDialog = () => {
@@ -212,6 +198,7 @@ const Payment = () => {
       (snapshot) => {
         if (snapshot.exists()) {
           const jsonData = snapshot.val();
+
           setBalance(jsonData.balance);
         } else {
           console.log("No data available");
@@ -223,7 +210,8 @@ const Payment = () => {
     );
 
     return () => reportListener();
-  }, [accountId, dataExchangesFilter]);
+  }, [accountId, dataExchanges]);
+
 
   const handleTextChange = (text: any) => {
     // Remove non-numeric characters to ensure clean parsing
@@ -293,8 +281,8 @@ const Payment = () => {
                   exchange.item.status_id === "1"
                     ? "#FFD700"
                     : exchange.item.status_id === "2"
-                    ? "green"
-                    : "red",
+                      ? "green"
+                      : "red",
               },
             ]}
           >
@@ -412,219 +400,222 @@ const Payment = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.balanceContainer}>
-        <Text style={styles.balanceLabel}>Balance:</Text>
-        <Text style={styles.balanceAmount}>
-          {balance.toLocaleString("vi-VN")}
-        </Text>
-      </View>
-      <View style={styles.addBar}>
-        <TextInput
-          style={styles.textInput}
-          value={inputText}
-          onChangeText={handleTextChange}
-          keyboardType="numeric"
-          maxLength={15}
-          placeholder="Enter an amount"
-        />
-        <TouchableOpacity
-          style={[styles.addBtn, isDisabled && styles.disabledBtn]}
-          onPress={handleRequest}
-          disabled={isDisabled}
-        >
-          {loadingQR ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.addBtnText}>Request</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-      <Modal
-        visible={isVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={closeDialog}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.dialogContainer}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
-              <MaterialIcons name="cancel" size={24} color="red" />
-            </TouchableOpacity>
-            <Text style={styles.dialogTitle}>Scan QR code</Text>
-            {qrDataURL ? (
-              <Image source={{ uri: qrDataURL }} style={styles.image} />
-            ) : (
-              <Text>No QR code available</Text>
-            )}
-            <Text style={styles.dialogText}>
-              QR code has a one-time value only
-            </Text>
-          </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceLabel}>Balance:</Text>
+          <Text style={styles.balanceAmount}>
+            {balance.toLocaleString("vi-VN")}
+          </Text>
         </View>
-      </Modal>
-      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-        {/* Refresh */}
-        <TouchableOpacity onPress={handleRefreshData}>
-          {loadingRefresh ? (
-            <ActivityIndicator
-              color="red"
-              size={24}
-              style={{ paddingRight: 10 }}
-            />
-          ) : (
-            <SimpleLineIcons
-              name="refresh"
-              size={24}
-              color="black"
-              style={{ paddingRight: 10 }}
-            />
-          )}
-        </TouchableOpacity>
-        {/* Filter */}
-        <TouchableOpacity onPress={openDialogFilter}>
-          <AntDesign
-            name="filter"
-            size={24}
-            color={timeEnd != null ? "red" : "black"}
+        <View style={styles.addBar}>
+          <TextInput
+            style={styles.textInput}
+            value={inputText}
+            onChangeText={handleTextChange}
+            keyboardType="numeric"
+            maxLength={15}
+            placeholder="Enter an amount"
           />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.addBtn, isDisabled && styles.disabledBtn]}
+            onPress={handleRequest}
+            disabled={isDisabled}
+          >
+            {loadingQR ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.addBtnText}>Request</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         <Modal
-          visible={isVisibleFilter}
+          visible={isVisible}
           transparent={true}
           animationType="slide"
           onRequestClose={closeDialog}
         >
           <View style={styles.modalOverlay}>
-            {loadingFilter ? (
-              <ActivityIndicator color="white" size={100} />
-            ) : (
-              <View style={styles.dialogContainer}>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={closeDialog}
-                >
-                  <MaterialIcons name="cancel" size={24} color="red" />
-                </TouchableOpacity>
-                <View style={{ padding: 5, width: "100%" }}>
-                  <Text style={{ fontSize: 20, marginBottom: 10 }}>
-                    Transaction Filter
-                  </Text>
-
-                  {/* Date pickers for time */}
-                  <Text style={{ fontWeight: "bold" }}>Start Date</Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => setShowStartPicker(true)}
-                  >
-                    {timeStart
-                      ? timeStart.toLocaleDateString()
-                      : "Select Start Date"}
-                  </Button>
-                  {showStartPicker && (
-                    <DateTimePicker
-                      value={timeStart || new Date()}
-                      mode="date"
-                      display={Platform.OS === "ios" ? "spinner" : "default"}
-                      onChange={onChangeStartDate}
-                    />
-                  )}
-
-                  <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-                    End Date
-                  </Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => setShowEndPicker(true)}
-                  >
-                    {timeEnd ? timeEnd.toLocaleDateString() : "Select End Date"}
-                  </Button>
-                  {showEndPicker && (
-                    <DateTimePicker
-                      value={timeEnd || new Date()}
-                      mode="date"
-                      display={Platform.OS === "ios" ? "spinner" : "default"}
-                      onChange={onChangeEndDate}
-                    />
-                  )}
-
-                  <Divider style={{ marginVertical: 10 }} />
-
-                  {/* Transaction Status */}
-                  <Text style={{ fontWeight: "bold" }}>Transaction Status</Text>
-                  {statusOptions.map((option: any) => (
-                    <View
-                      key={option}
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Checkbox
-                        status={
-                          selectedStatus.includes(option.id)
-                            ? "checked"
-                            : "unchecked"
-                        }
-                        onPress={() =>
-                          handleSelect(
-                            option.id,
-                            selectedStatus,
-                            setSelectedStatus
-                          )
-                        }
-                      />
-                      <Text>{option.value}</Text>
-                    </View>
-                  ))}
-
-                  <Divider style={{ marginVertical: 10 }} />
-
-                  {/* Transaction Type */}
-                  <Text style={{ fontWeight: "bold" }}>Transaction Type</Text>
-                  {typeOptions.map((option, index) => (
-                    <View
-                      key={index}
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Checkbox
-                        status={
-                          selectedType.includes(option)
-                            ? "checked"
-                            : "unchecked"
-                        }
-                        onPress={() =>
-                          handleSelect(option, selectedType, setSelectedType)
-                        }
-                      />
-                      <Text>{option}</Text>
-                    </View>
-                  ))}
-
-                  <Button
-                    mode="contained"
-                    style={{ marginTop: 20 }}
-                    onPress={handleFilter}
-                  >
-                    <Text>Apply Filters</Text>
-                  </Button>
-                </View>
-              </View>
-            )}
+            <View style={styles.dialogContainer}>
+              <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
+                <MaterialIcons name="cancel" size={24} color="red" />
+              </TouchableOpacity>
+              <Text style={styles.dialogTitle}>Scan QR code</Text>
+              {qrDataURL ? (
+                <Image source={{ uri: qrDataURL }} style={styles.image} />
+              ) : (
+                <Text>No QR code available</Text>
+              )}
+              <Text style={styles.dialogText}>
+                QR code has a one-time value only
+              </Text>
+            </View>
           </View>
         </Modal>
-      </View>
-      <View style={styles.divider} />
+        <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+          {/* Refresh */}
+          <TouchableOpacity onPress={handleRefreshData}>
+            {loadingRefresh ? (
+              <ActivityIndicator
+                color="red"
+                size={24}
+                style={{ paddingRight: 10 }}
+              />
+            ) : (
+              <SimpleLineIcons
+                name="refresh"
+                size={24}
+                color="black"
+                style={{ paddingRight: 10 }}
+              />
+            )}
+          </TouchableOpacity>
+          {/* Filter */}
+          <TouchableOpacity onPress={openDialogFilter}>
+            <AntDesign
+              name="filter"
+              size={24}
+              color={timeEnd != null ? "red" : "black"}
+            />
+          </TouchableOpacity>
+          <Modal
+            visible={isVisibleFilter}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={closeDialog}
+          >
+            <View style={styles.modalOverlay}>
+              {loadingFilter ? (
+                <ActivityIndicator color="white" size={100} />
+              ) : (
+                <View style={styles.dialogContainer}>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={closeDialog}
+                  >
+                    <MaterialIcons name="cancel" size={24} color="red" />
+                  </TouchableOpacity>
+                  <View style={{ padding: 5, width: "100%" }}>
+                    <Text style={{ fontSize: 20, marginBottom: 10 }}>
+                      Transaction Filter
+                    </Text>
 
-      <View style={styles.exchangeList}>
-        {dataExchangesFilter.length > 0 ? (
-          <FlatList
-            data={dataExchangesFilter}
-            renderItem={renderExchange}
+                    {/* Date pickers for time */}
+                    <Text style={{ fontWeight: "bold" }}>Start Date</Text>
+                    <Button
+                      mode="outlined"
+                      onPress={() => setShowStartPicker(true)}
+                    >
+                      {timeStart
+                        ? timeStart.toLocaleDateString()
+                        : "Select Start Date"}
+                    </Button>
+                    {showStartPicker && (
+                      <DateTimePicker
+                        value={timeStart || new Date()}
+                        mode="date"
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        onChange={onChangeStartDate}
+                      />
+                    )}
+
+                    <Text style={{ fontWeight: "bold", marginTop: 10 }}>
+                      End Date
+                    </Text>
+                    <Button
+                      mode="outlined"
+                      onPress={() => setShowEndPicker(true)}
+                    >
+                      {timeEnd ? timeEnd.toLocaleDateString() : "Select End Date"}
+                    </Button>
+                    {showEndPicker && (
+                      <DateTimePicker
+                        value={timeEnd || new Date()}
+                        mode="date"
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        onChange={onChangeEndDate}
+                      />
+                    )}
+
+                    <Divider style={{ marginVertical: 10 }} />
+
+                    {/* Transaction Status */}
+                    <Text style={{ fontWeight: "bold" }}>Transaction Status</Text>
+                    {statusOptions.map((option: any) => (
+                      <View
+                        key={option}
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Checkbox
+                          status={
+                            selectedStatus.includes(option.id)
+                              ? "checked"
+                              : "unchecked"
+                          }
+                          onPress={() =>
+                            handleSelect(
+                              option.id,
+                              selectedStatus,
+                              setSelectedStatus
+                            )
+                          }
+                        />
+                        <Text>{option.value}</Text>
+                      </View>
+                    ))}
+
+                    <Divider style={{ marginVertical: 10 }} />
+
+                    {/* Transaction Type */}
+                    <Text style={{ fontWeight: "bold" }}>Transaction Type</Text>
+                    {typeOptions.map((option, index) => (
+                      <View
+                        key={index}
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Checkbox
+                          status={
+                            selectedType.includes(option)
+                              ? "checked"
+                              : "unchecked"
+                          }
+                          onPress={() =>
+                            handleSelect(option, selectedType, setSelectedType)
+                          }
+                        />
+                        <Text>{option}</Text>
+                      </View>
+                    ))}
+
+                    <Button
+                      mode="contained"
+                      style={{ marginTop: 20 }}
+                      onPress={handleFilter}
+                    >
+                      <Text>Apply Filters</Text>
+                    </Button>
+                  </View>
+                </View>
+              )}
+            </View>
+          </Modal>
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.exchangeList}>
+          {dataExchangesFilter.length > 0 ? (
+            <FlatList
+              data={dataExchangesFilter}
+              renderItem={renderExchange}
             // keyExtractor={(item) => item.id}
-          />
-        ) : (
-          <Text style={styles.noAccountsText}>No data</Text>
-        )}
+            />
+          ) : (
+            <Text style={styles.noAccountsText}>No data</Text>
+          )}
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
+
   );
 };
 

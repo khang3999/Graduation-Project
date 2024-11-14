@@ -107,6 +107,7 @@ const ForgotPasswordScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 50,
     backgroundColor: appColors.white,
   },
   loadingOverlay: {

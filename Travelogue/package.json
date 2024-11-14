@@ -3,10 +3,10 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start --dev-client",
+    "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint"
@@ -19,8 +19,6 @@
     "@emotion/styled": "^11.13.0",
     "@expo/metro-runtime": "~3.2.3",
     "@expo/vector-icons": "^14.0.3",
-    "@firebase/app": "^0.10.12",
-    "@firebase/auth": "^1.7.9",
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "@openspacelabs/react-native-zoomable-view": "^2.1.6",
@@ -29,7 +27,6 @@
     "@react-native-firebase/app": "^21.0.0",
     "@react-native-firebase/auth": "^21.0.0",
     "@react-native-firebase/database": "^21.0.0",
-    "@react-native-menu/menu": "^1.1.3",
     "@react-native-picker/picker": "2.7.5",
     "@react-native-vector-icons/ionicons": "^7.4.0-alpha.27",
     "@react-navigation/bottom-tabs": "^6.6.1",
@@ -43,7 +40,7 @@
     "expo-auth-session": "~5.5.2",
     "expo-build-properties": "^0.12.5",
     "expo-constants": "~16.0.2",
-    "expo-facebook": "^12.2.0",
+    "expo-file-system": "~17.0.1",
     "expo-font": "~12.0.9",
     "expo-image-picker": "~15.0.7",
     "expo-linking": "~6.3.1",
@@ -79,6 +76,8 @@
     "react-native-markdown-display": "^7.0.2",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-modalize": "^2.1.1",
+    "react-native-momosdk": "^1.4.3",
+    "react-native-multi-selectbox": "^1.5.0",
     "react-native-pager-view": "6.3.0",
     "react-native-paper": "^5.12.5",
     "react-native-popover-menu": "^2.0.2",
@@ -96,7 +95,8 @@
     "react-native-toast-message-custom": "^2.2.1",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
-    "reanimated-bottom-sheet": "^1.0.0-alpha.22"
+    "reanimated-bottom-sheet": "^1.0.0-alpha.22",
+    "tailwindcss": "^3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -109,8 +109,8 @@
     "@types/react-test-renderer": "^18.0.7",
     "jest": "^29.2.1",
     "jest-expo": "~51.0.3",
+    "react-native-svg-transformer": "^1.5.0",
     "react-test-renderer": "18.2.0",
-    "tailwindcss": "^3.3.2",
     "typescript": "~5.3.3"
   },
   "private": true

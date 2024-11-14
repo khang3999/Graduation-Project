@@ -22,7 +22,7 @@ import {
   import CommentButton from "@/components/buttons/CommentButton";
   import SaveButton from "@/components/buttons/SaveButton";
   import { Divider } from "react-native-paper";
-  import MenuItem from "@/components/buttons/MenuPostButton";
+  import MenuItem from "@/components/buttons/MenuTourButton";
   import CheckedInChip from "@/components/chips/CheckedInChip";
   import Markdown from 'react-native-markdown-display';
   import Icon from "react-native-vector-icons/FontAwesome";
@@ -568,7 +568,7 @@ import {
             </View>
           </View>
           <View style={{ zIndex: 1000 }}>
-            <MenuItem isAuthor={isPostAuthor} />
+            <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} />
           </View>
         </View>
   

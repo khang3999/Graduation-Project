@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginVertical:10,
   },
   chipItem: {
     margin: 5,

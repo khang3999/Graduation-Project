@@ -1,6 +1,6 @@
 {
   "expo": {
-    "entryPoint": "./app/(auth)/",
+    "entryPoint": "./app/(tabs)/index.tsx",
     "name": "Travelogue",
     "slug": "Travelogue",
     "version": "1.0.0",
@@ -13,15 +13,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "facebookAppId": "1042817677331180",
-    "facebookDisplayName": "Travelogue",
-    "facebookScheme": "fb1042817677331180",
-    "facebookAutoLogAppEventsEnabled": true,
-    "facebookAdvertiserIDCollectionEnabled": true,
     "ios": {
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
-      "bundleIdentifier": "tdc.edu.travelogue"
+      "bundleIdentifier": "tdc.edu.travelogue" 
     },
     "android": {
       "package": "tdc.edu.travelogue",
@@ -39,7 +34,7 @@
     "plugins": [
       "expo-router",
       "@react-native-firebase/app",
-      "@react-native-firebase/auth",
+      "@react-native-firebase/auth",      
       [
         "expo-build-properties",
         {
@@ -47,8 +42,7 @@
             "useFrameworks": "static"
           }
         }
-      ],
-      "expo-facebook"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

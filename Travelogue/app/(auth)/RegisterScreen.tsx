@@ -598,7 +598,7 @@ const RegisterScreen = ({ navigation }: any) => {
             type="primary"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
             onPress={onRegisterUser}
-            disabled={isLoading}
+            // disabled={isLoading}
           />
         ) : (
           <ButtonComponent
@@ -607,7 +607,7 @@ const RegisterScreen = ({ navigation }: any) => {
             type="primary"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
             onPress={onRegisterUser}
-            disabled={isLoading}
+            // disabled={isLoading}
           />
         )}
         <SectionComponent>

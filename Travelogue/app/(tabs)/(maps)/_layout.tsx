@@ -18,13 +18,13 @@ const MapLayout = () => {
                     headerStyle: {
                         height: 105
                     },
-                    headerTitle: (props) =>
-                        // Bỏ image vào đây
-                        <Image
-                            source={require('@/assets/images/logo.png')}
-                            resizeMode="contain"
-                        />
-                    ,
+                    // headerTitle: (props) =>
+                    //     // Bỏ image vào đây
+                    //     <Image
+                    //         source={require('@/assets/images/logo.png')}
+                    //         resizeMode="contain"
+                    //     />
+                    // ,
                 }}
             >
                 <Tabs.Screen
