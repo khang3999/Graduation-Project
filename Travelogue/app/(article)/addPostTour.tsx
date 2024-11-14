@@ -988,11 +988,18 @@ const AddPostTour = () => {
         const userRef = ref(database, `accounts/${userId}`);
         let avatar = "";
         let fullname = "";
+        let totalPosts = 0;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
+            if(data.totalPosts){
+              totalPosts = data.totalPosts + 1 ;
+            }
+            else {
+              totalPosts = 0;
+            }
           }
         });
         // lấy thông tin package được chọn
@@ -1043,8 +1050,7 @@ const AddPostTour = () => {
           ),
           content: contents,
           hashtags: combinedHashtags,
-          packages: selectedPackageData,
-          view_mode: isPublic,
+          package: selectedPackageData,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           created_at: timestamp,
@@ -1054,14 +1060,14 @@ const AddPostTour = () => {
           reports,
           match,
           ratingSummary: ratingSummary,
-          status: status,
+          status_id: status,
         };
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
           await set(newPostRef, postData);
           if (account) {
-            const userPost = ref(database, `accounts/${userId}/createdPosts`);
+            const userPost = ref(database, `accounts/${userId}/createdTours`);
             //Tru tien trong tai khoan
             const newAccumulate =
               (account?.balance ?? 0) -
@@ -1071,6 +1077,7 @@ const AddPostTour = () => {
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newAccumulate,
+              totalPosts: totalPosts,
             });
             //Them id bai viet vao tai khoan
             await update(userPost, {
@@ -1106,7 +1113,7 @@ const AddPostTour = () => {
   // *********************************************************************
   //Đọc dữ liệu từ firebase
   useEffect(() => {
-    const packagesRef = ref(database, "package");
+    const packagesRef = ref(database, "packages");
 
     onValue(packagesRef, (snapshot) => {
       const data = snapshot.val() || {};
@@ -1239,7 +1246,7 @@ const AddPostTour = () => {
     }
 
     const existingDay = days.find(
-      (day) =>
+      (day) => 
         day.title === "" ||
         day.description === "" ||
         day.activities.length === 0
@@ -2192,7 +2199,7 @@ const AddPostTour = () => {
                   fontSize: 30,
                   textAlign: "center",
                 }}
-                disabled={true}
+                // disabled={true}
                 color={appColors.primary}
                 onPress={handlePushPost}
               />
