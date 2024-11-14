@@ -94,6 +94,8 @@ export default function EditingProfileScreen() {
       // Step 2: Asynchronously start updating posts in the background
       await updateUserPosts(dataAccount.id, localUserData);
       
+      // Step 3: Asynchronously start updating tours in the background
+      
     } catch (error) {
       alert("Failed to update user data: " + error);
       setIsLoading(false);

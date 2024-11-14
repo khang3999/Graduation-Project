@@ -92,4 +92,34 @@ const updateUserPosts = async (userId: string, localUserData: any) => {
   }
 };
 
+const updateUserTours = async (userId: string, localUserData: any) => {
+  try {
+    const userToursSnapshot = await get(ref(database, 'tours'));
+
+    if (userToursSnapshot.exists()) {
+      const updates: Record<string, any> = {};
+
+      // Find tours authored by the user and prepare updates
+      userToursSnapshot.forEach((tourSnapshot) => {
+        const tour = tourSnapshot.val();
+        if (tour.author.id === userId) {
+          const tourKey = tourSnapshot.key;
+
+          updates[`tours/${tourKey}/author`] = {
+            avatar: localUserData.avatar || tour.author.avatar,
+            fullname: localUserData.fullname || tour.author.fullname,
+            id: userId,
+          };
+        }
+      });
+
+      // Apply the batch update in the background
+      await update(ref(database), updates);
+      console.log("All related tours updated successfully in the background.");
+    }
+  } catch (error) {
+    console.error("Failed to update tours:", error);
+  }
+}
+
 export { getCurrentUserData, getDownloadURL, updateUserData,getImageUrl, updateUserPosts };

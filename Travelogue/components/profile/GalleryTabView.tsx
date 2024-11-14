@@ -141,7 +141,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
     } catch (error) {
       console.log(error);
     }
-  } 
+  }
   //fetching created posts from firebase
   const fetchSavedPosts = async () => {
     try {
@@ -210,11 +210,21 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
 
       const fetchData = async () => {
         setIsLoading(true);
-        if (dataAccount.role === 'user') {
-          await fetchCreatedPosts();
+
+        if (isSearched === true) {
+          if (searchedAccountData.role === 'user') {
+            await fetchCreatedPosts();
+          } else if (searchedAccountData.role === 'business') {
+            await fetchCreatedTours();
+          }
         } else {
-          await fetchCreatedTours();
+          if (dataAccount.role === 'user') {
+            await fetchCreatedPosts();
+          } else {
+            await fetchCreatedTours();
+          }
         }
+
 
         await fetchSavedPosts();
         await fetchSavedTours();
@@ -231,29 +241,29 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
         isActive = false; // Avoid state updates if the effect is cleaned up
 
         if (userId) {
-          if (dataAccount.role === 'user') {
-            const createdPostsRef = ref(
-              database,
-              `accounts/${userId}/createdPosts`
-            );
-            off(createdPostsRef);
-          }else {
-            const createdToursRef = ref(
-              database,
-              `accounts/${userId}/createdTours`
-            );
-            off(createdToursRef);
-          }
-          
-          
+
+          const createdPostsRef = ref(
+            database,
+            `accounts/${userId}/createdPosts`)
+
+          off(createdPostsRef);
+
+          const createdToursRef = ref(
+            database,
+            `accounts/${userId}/createdTours`)
+
+          off(createdToursRef);
+
+
+
           const savedPostsRef = ref(database, `accounts/${userId}/savedPostsList`);
           const savedToursRef = ref(database, `accounts/${userId}/savedToursList`);
-          
+
           off(savedPostsRef);
           off(savedToursRef);
         }
       };
-    }, [userId])
+    }, [userId, isSearched, searchedAccountData, dataAccount])
   );
 
   const FirstRoute = () => {
@@ -274,19 +284,48 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             renderItem={({ item, index }) => (
               <Pressable
                 onPress={() => {
-                  if( dataAccount.role === 'user'){
-                  router.push({
-                    pathname: "postDetail",
-                    params: { initialIndex: index.toString() },
-                  });
-                  setSelectedPost(createdPosts);
-                }else {
-                  router.push({
-                    pathname: "tourDetail",
-                    params: { initialIndex: index.toString() },
-                  });
-                  setSelectedTour(createdPosts);
-                }
+                  // if (dataAccount.role === 'user') {
+                  //   router.push({
+                  //     pathname: "postDetail",
+                  //     params: { initialIndex: index.toString() },
+                  //   });
+                  //   setSelectedPost(createdPosts);
+                  // } else {
+                  //   router.push({
+                  //     pathname: "tourDetail",
+                  //     params: { initialIndex: index.toString() },
+                  //   });
+                  //   setSelectedTour(createdPosts);
+                  // }
+                  if(isSearched === true ){
+                    if (searchedAccountData.role === 'user') {
+                      router.push({
+                        pathname: "postDetail",
+                        params: { initialIndex: index.toString() },
+                      });
+                      setSelectedPost(createdPosts);
+                    } else if (searchedAccountData.role === 'business') {
+                      router.push({
+                        pathname: "tourDetail",
+                        params: { initialIndex: index.toString() },
+                      });
+                      setSelectedTour(createdPosts);
+                    }
+                  }else {
+                    if (dataAccount.role === 'user') {
+                      router.push({
+                        pathname: "postDetail",
+                        params: { initialIndex: index.toString() },
+                      });
+                      setSelectedPost(createdPosts);
+                    } else if (dataAccount.role === 'business') {
+                      router.push({
+                        pathname: "tourDetail",
+                        params: { initialIndex: index.toString() },
+                      });
+                      setSelectedTour(createdPosts);
+                    }
+                  }
                 }}
               >
                 <Image
