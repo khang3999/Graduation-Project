@@ -115,7 +115,7 @@ const PostItem: React.FC<PostItemProps> = ({
   setIsScrollEnabled,
 }) => {
   const TYPE = 0;
-  const MAX_LENGTH = 5;
+  const MAX_LENGTH = 10;
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
@@ -347,7 +347,7 @@ const PostItem: React.FC<PostItemProps> = ({
           <Text>{isExpanded ? "Show less" : "Show more"}</Text>
         </TouchableOpacity>
       </View>
-      <Divider style={styles.divider} />
+      {/* <Divider style={styles.divider} /> */}
       {/* Comment Bottom Sheet */}
       <CommentsActionSheet   
         commentRefAS={commentAS}
@@ -376,8 +376,7 @@ export default function PostsScreen() {
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   return (
-    <>
-
+    <View style={{marginTop:30, flex:1}}>
       <FlatList
         data={memoriedPostItem}
         renderItem={({ item }) => (
@@ -404,7 +403,7 @@ export default function PostsScreen() {
       )} */}
 
 
-    </>
+    </View>
   );
 }
 const styles = StyleSheet.create({
