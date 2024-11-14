@@ -362,12 +362,18 @@ const Map = () => {
       if (!locationArray.includes(location)) {
         locationArray.push(location);
   
-        // Cập nhật lại dữ liệu 
-        const updatedUserData = {
-          content: content,
+      
+        const updatedLocation = {
           location: locationArray,
         };
         // Lưu lại dữ liệu đã cập nhật vào Firebase
+        await update(userRef, updatedLocation);
+      }
+        // Cập nhật lại dữ liệu 
+        if (content) {
+        const updatedUserData = {
+          content: content,
+        };
         await update(userRef, updatedUserData);
       }
     }
@@ -691,7 +697,7 @@ const Map = () => {
           </View>
         </Modal>
         {/* BottomSheet le hoi */}
-        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={460}>
+        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={480}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
@@ -710,7 +716,7 @@ const Map = () => {
                   caroselImageStyle={{
                     marginTop: -30,
                     width: 400,
-                    height: 250,
+                    height: 280,
                     resizeMode: "stretch",
                     overflow: "hidden",
                   }}
@@ -731,8 +737,15 @@ const Map = () => {
 
               {/*  */}
               <Text style={styles.dateText}>
-                <Text style={{ fontWeight: "bold" }}>Ngày</Text>:{" "}
-                {selectedFestival.start} -{selectedFestival.end}
+                {
+                  selectedFestival.type === "landmark" ? (
+                    <Text style={{ fontWeight: "bold" }}>Khung Giờ:</Text>
+                  ) : 
+                  (
+                    <Text style={{ fontWeight: "bold" }}>Ngày:</Text>
+                  )
+                }
+                {" "}{selectedFestival.start} -{selectedFestival.end}
               </Text>
 
               <View style={styles.buttonRow}>
