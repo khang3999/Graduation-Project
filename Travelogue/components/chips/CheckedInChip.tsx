@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import React from 'react';
 import { Chip } from 'react-native-paper';
 
@@ -9,7 +9,7 @@ interface Location {
 }
 
 interface CheckedInChipProps {
-  items: Location[]; 
+  items: Location[];
 }
 
 export default function CheckedInChip({ items }: CheckedInChipProps) {
@@ -17,7 +17,7 @@ export default function CheckedInChip({ items }: CheckedInChipProps) {
     <View style={styles.container}>
       {items.map((item, index) => (
         <Chip key={index} style={styles.chipItem}>
-          {item.locationName}
+          <Text style={styles.chipText}>{item.locationName}</Text>
         </Chip>
       ))}
     </View>
@@ -34,5 +34,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#C1E1C1',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
+    maxWidth: '100%',
+  },
+  chipText: {
+    flexWrap: 'wrap',
+    maxWidth: '100%',
+    flexShrink: 1, // Allows text to wrap without truncation
   },
 });

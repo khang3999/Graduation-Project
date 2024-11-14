@@ -68,11 +68,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({isAuthor}) => {
                 styles.menu,
                 { top: menuPosition.top, left: menuPosition.left },
               ]}
-            >
-              <TouchableOpacity style={styles.menuItem}>
-                <Icon name="image-outline" size={20} style={styles.menuIcon}/>
-                <Text style={styles.menuText}>Chỉnh Sửa</Text> 
-              </TouchableOpacity>
+            >            
               <TouchableOpacity style={styles.menuItem}>
                 <Icon name="trash-can-outline" size={20} style={styles.menuIcon} />
                 <Text style={styles.menuText}>Xóa</Text>

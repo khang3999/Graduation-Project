@@ -63,7 +63,7 @@ const SearchButton = ({
             onModalOpen();
           }}
         >
-          <IconFeather name="search" size={20} />
+          <IconFeather name="search" size={24} />
         </TouchableOpacity>
         {isExpanded && (
           <TextInput
