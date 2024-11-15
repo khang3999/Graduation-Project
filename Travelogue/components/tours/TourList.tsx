@@ -382,12 +382,10 @@ const TourList = () => {
               }>
               {allLocations.map((location: any) => {
                 return (
-                  <>
                     <TouchableOpacity key={location.id}>
                       <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                       <Divider />
                     </TouchableOpacity>
-                  </>
                 )
               })
               }

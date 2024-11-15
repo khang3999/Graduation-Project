@@ -35,6 +35,9 @@ const _layout = () => {
       screenOptions={{
         headerStyle: {
           height: 105,
+          backgroundColor:'#ff5b5b',
+          borderRadius: 20,
+          elevation: 10
         },
         // headerTitle: (props) =>
         //   // Bỏ image vào đây
