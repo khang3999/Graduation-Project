@@ -28,7 +28,7 @@ import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating } from "react-native-ratings";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
@@ -121,13 +121,13 @@ const PostItem: React.FC<PostItemProps> = ({
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
 
+
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
   const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
-  
 
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
@@ -143,7 +143,7 @@ const PostItem: React.FC<PostItemProps> = ({
           id: dataAccount.id,
           avatar:
             dataAccount.avatar,
-          username: dataAccount.fullname,
+          fullname: dataAccount.fullname,
         },
         status_id: 1,
         reports: 0,
@@ -179,6 +179,9 @@ const PostItem: React.FC<PostItemProps> = ({
       }
     }
   }
+
+
+
   const addReplyToComment = (
     comments: Comment[],
     parentId: string,
@@ -331,9 +334,8 @@ const PostItem: React.FC<PostItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
+          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
         </View>
-
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
@@ -366,18 +368,43 @@ export default function PostsScreen() {
   // State to track whether full description is shown
 
   const { selectedPost, setSelectedPost }: any = usePost();
-
-  const { initialIndex } = useLocalSearchParams();
+  const { initialIndex, postId } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-
+  const [dataPost, setDataPost] = useState<any>([])
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
+  const fetchPostById = async (postId: any) => {
+    try {
+      const refPost = ref(database, `posts/${postId}`)
+      const snapshot = await get(refPost);
+      if (snapshot.exists()) {
+        const dataPostJson: any = snapshot.val()
+        setDataPost([dataPostJson])
+      } else {
+        console.log("No data city available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (postId ) {
+        fetchPostById(postId)
+      }
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
   return (
     <View style={{ marginTop: 30, flex: 1 }}>
       <FlatList
-        data={memoriedPostItem}
+        data={postId ? dataPost : memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
             item={item}

@@ -17,7 +17,7 @@ export interface BaseComment {
   export interface Author {
     id: string;
     avatar: any;
-    username: string;
+    fullname: string;
   }
   
   // Extend BaseComment for RatingObject by adding RatingObjectSpecifics fields

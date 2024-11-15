@@ -67,7 +67,7 @@ const TourList = () => {
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
-        'content': dataInput,
+        'content': dataInput?dataInput:'',
         'location': selectedCities.length > 0 ? selectedCities : null
       }
       await update(refBehaviors, dataUpdate);
@@ -340,9 +340,8 @@ const TourList = () => {
           onPress={() => {
             router.push({
               pathname: "/tourDetail",
-              params: { initialIndex: 0 },
+              params: { tourId: tour.item.id },
             });
-            setSelectedTour([tour.item])
           }}
         >
           {/*Author*/}

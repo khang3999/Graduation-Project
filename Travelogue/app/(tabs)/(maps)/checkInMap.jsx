@@ -1,4 +1,4 @@
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import VietNamMap from "@/components/maps/VietNamMap";
 import { useHomeProvider } from "@/contexts/HomeProvider";
@@ -22,13 +22,14 @@ const CheckInMap = () => {
   const [dataCities, setDataCities] = useState([])
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
-  const [selectedCity, setSelectedCity] = useState(null);
+  // const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
 
   const [userId, setUserId] = useState(null)
   const { dataAccount, setDataAccount } = useHomeProvider()
   const {
+    selectedCity, setSelectedCity,
     checkedCityColor,
     selectedCityId, setSelectedCityId,
     dataCheckedCities, setDataCheckedCities
@@ -150,11 +151,33 @@ const CheckInMap = () => {
   }
 
   // Hàm Check in
-  const handleCheckIn = (selectedCityId) => {
+  const handleCheckIn = (selectedCity) => {
     // Show dialog
     Alert.alert(
-      "Remove point",
-      "Are you sure you want to remove this point?",
+      "Xác nhận hủy check in",
+      `Bạn có muốn hủy check in tỉnh ${selectedCity.label} `,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            remove(refP).then(() => {
+              console.log('Data remove successfully');
+            })
+              .catch((error) => {
+                console.error('Error removing data: ', error);
+              }); // Xóa từ khỏi Realtime Database
+          }
+        }
+      ]
+    );
+  }
+
+  // Hàm Check in
+  const handleCheckOut = (selectedCity) => {
+    // Show dialog
+    Alert.alert(
+      "Xác nhận hủy check in",
+      `Bạn có muốn hủy check in tỉnh ${selectedCity.label} `,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -226,7 +249,7 @@ const CheckInMap = () => {
               onFocus={() => console.log('focus')}
             />
           </View>
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{ flexDirection: 'row',justifyContent: 'space-around' }}>
             {/* Chọn tình thành */}
             <Dropdown
               style={[styles.dropdown, { maxWidth: 170, flex: 1 }]}
@@ -247,21 +270,26 @@ const CheckInMap = () => {
                 setSelectedCity(item)
               }}
             />
+            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCity)}>
+              <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
+              <Text style={styles.actionBtnText}>Check in</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckOut(selectedCity)}>
+              <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
+              <Text style={styles.actionBtnText}>Check out</Text>
+            </TouchableOpacity>
           </View>
         </View>
         <View style={{ flexDirection: 'row', paddingHorizontal: 10, marginTop: 10, justifyContent: 'space-around', alignItems: 'center' }}>
           <TouchableOpacity style={styles.btnHeader}>
             <FontAwesome6 name="newspaper" size={24} color="black" />
-            <Text style={styles.actionBtnText}>Xem bài biết</Text>
+            <Text style={styles.actionBtnText}>Xem bài viết</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.btnHeader}>
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCityId)}>
-            <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
-            <Text style={styles.actionBtnText}>Check in</Text>
-          </TouchableOpacity>
+
         </View>
         <View style={styles.information}>
           <Entypo name="location" size={24} color="black" />
