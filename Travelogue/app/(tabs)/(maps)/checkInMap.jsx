@@ -2,10 +2,10 @@ import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } fr
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import VietNamMap from "@/components/maps/VietNamMap";
 import { useHomeProvider } from "@/contexts/HomeProvider";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useCallback, useEffect, useState } from "react";
 import { SelectList } from "react-native-dropdown-select-list";
-import { ref } from "firebase/database";
-import { database, get, onValue } from "@/firebase/firebaseConfig";
+import { ref, remove } from "firebase/database";
+import { database, get, onValue, set, update } from "@/firebase/firebaseConfig";
 import { Dropdown, SelectCountry } from 'react-native-element-dropdown';
 import { Divider } from "react-native-paper";
 import { Entypo, FontAwesome, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -13,6 +13,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler } from "react-native-gesture-handler";
 import { useMapCheckinProvider } from "@/contexts/MapCheckinProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
+import Toast from "react-native-toast-message-custom";
 
 const { width } = Dimensions.get('window')
 
@@ -22,6 +24,7 @@ const CheckInMap = () => {
   const [dataCities, setDataCities] = useState([])
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [hasFetched, setHasFetched] = useState(null);
   // const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
@@ -32,7 +35,8 @@ const CheckInMap = () => {
     selectedCity, setSelectedCity,
     checkedCityColor,
     selectedCityId, setSelectedCityId,
-    dataCheckedCities, setDataCheckedCities
+    dataCheckedCities, setDataCheckedCities,
+    cityRemoved, setCityIdRemoved
   } = useMapCheckinProvider()
 
   // Login state
@@ -45,14 +49,21 @@ const CheckInMap = () => {
   }, []);
 
   // Fetch checkin list by country
-  const fetchCheckinList = async (accountId, countryId) => {
-    const refCheckin = ref(database, `accounts/${accountId}/checkin/${countryId}`);
+  const fetchCheckinList = async (accountId) => {
+    const refCheckin = ref(database, `accounts/${accountId}/checkInList`);
     try {
       const snapshot = await get(refCheckin);
       if (snapshot.exists()) {
         const data = snapshot.val()
-        const allCitiesCheckedByCountry = Object.values(data)
-        console.log('check', allCitiesCheckedByCountry);
+        // Tieu chi 1: co tat ca selectedCities trong postLocation
+        const allCitiesCheckedByCountry = Object.keys(data).flatMap((country) => {
+          return Object.entries(data[country]).map(([cityCode, cityName]) => {
+            return { [cityCode]: cityName };
+          });
+        });
+        setSelectedArea(null)
+        setSelectedCityId(null)
+        setSelectedCity(null)
         setDataCheckedCities(allCitiesCheckedByCountry)
       }
       else {
@@ -64,13 +75,28 @@ const CheckInMap = () => {
   }
   // Lấy các tỉnh đã checkin lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
-    if (dataAccount && selectedCountry) {
-      fetchCheckinList(dataAccount.id, selectedCountry.value)
+    if (dataAccount) {
+      fetchCheckinList(dataAccount.id)
     }
-  }, [dataAccount, selectedCountry]);
+  }, [dataAccount]);
 
-  // Checkin tỉnh đã chọn 
 
+  // useEffect(() => {
+  //   setHasFetched(false)
+  // }, [dataAccount, selectedCountry]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (dataAccount) {
+        console.log("map checkin focus");
+        fetchCheckinList(dataAccount.id)
+      }
+      return () => {
+        console.log('Map Check in screen is unfocused');
+      };
+    }, [dataAccount]) // Cập nhật khi các giá trị này thay đổi
+  );
   // Lấy các quốc gia 
   useEffect(() => {
     const refCountries = ref(database, `countries`)
@@ -85,7 +111,9 @@ const CheckInMap = () => {
           }
         }));
         // console.log(countriesArray);
-
+        setSelectedArea(null)
+        setSelectedCityId(null)
+        setSelectedCity(null)
         setSelectedCountry(countriesArray[0])
         setDataCountries(countriesArray)
       } else {
@@ -120,7 +148,6 @@ const CheckInMap = () => {
       console.error("Error fetching area data search: ", error);
 
     }
-
   }
 
   // Lấy vùng của việt nam (chạy lần đầu) vì default là việt nam
@@ -150,48 +177,115 @@ const CheckInMap = () => {
     }
   }
 
-  // Hàm Check in
-  const handleCheckIn = (selectedCity) => {
-    // Show dialog
-    Alert.alert(
-      "Xác nhận hủy check in",
-      `Bạn có muốn hủy check in tỉnh ${selectedCity.label} `,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "OK", onPress: () => {
-            remove(refP).then(() => {
-              console.log('Data remove successfully');
-            })
-              .catch((error) => {
-                console.error('Error removing data: ', error);
-              }); // Xóa từ khỏi Realtime Database
-          }
-        }
-      ]
-    );
+  // Hàm Update lên firebase
+  const updateCityToFirebase = async (selectedCity, selectedCountryId) => {
+    try {
+      const refCheckinListByCountry = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`)
+      const countrySnapshot = await get(refCheckinListByCountry);
+      // Data update
+      const dataUpdate = { [selectedCity.value]: selectedCity.label };
+      if (countrySnapshot.exists()) {
+        // Nếu quốc gia đã tồn tại, cập nhật dữ liệu của các thành phố
+        await update(refCheckinListByCountry, dataUpdate);
+      } else {
+        // Nếu quốc gia chưa tồn tại, tạo quốc gia mới và thêm dữ liệu thành phố
+        await set(refCheckinListByCountry, dataUpdate);
+        console.log("Country and city data added successfully");
+      }
+
+    } catch (error) {
+      // Alert khi firebase không có connect
+      console.error("Error updating/adding city: ", error);
+    }
   }
 
   // Hàm Check in
-  const handleCheckOut = (selectedCity) => {
-    // Show dialog
-    Alert.alert(
-      "Xác nhận hủy check in",
-      `Bạn có muốn hủy check in tỉnh ${selectedCity.label} `,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "OK", onPress: () => {
-            remove(refP).then(() => {
-              console.log('Data remove successfully');
-            })
-              .catch((error) => {
-                console.error('Error removing data: ', error);
-              }); // Xóa từ khỏi Realtime Database
+  const handleCheckIn = (selectedCity, selectedCountryId) => {
+    if (selectedCountryId && selectedCity) {
+      // Show dialog
+      Alert.alert(
+        "Xác nhận check in",
+        `Bạn có muốn check in tỉnh ${selectedCity.label}`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "OK", onPress: () => {
+              // Check in lên firebase
+              updateCityToFirebase(selectedCity, selectedCountryId)
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
+  }
+
+  // Hàm Update lên firebase
+  const removeCityToFirebase = async (selectedCity, selectedCountryId) => {
+    try {
+      const refCheckinListByCountry = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`)
+      const countrySnapshot = await get(refCheckinListByCountry);
+
+      if (countrySnapshot.exists()) {
+        // Nếu quốc gia đã tồn tại thì mới hợp lẹ để xóa
+        const cityRef = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}/${selectedCity.value}`);
+        // Xóa thành phố khỏi danh sách
+        setCityIdRemoved(selectedCity) // Lưu lại thành phố vừa bị xóa để tô màu lại 
+        await remove(cityRef);
+        // Toast thông báo
+        Toast.show({
+          type: 'success',
+          position: 'top',
+          text1: 'Xóa thành công!',
+          text2: `Bạn đã xóa tỉnh ${selectedCity.label} ra khỏi danh sách.`,
+          visibilityTime: 3000,
+        });
+      } else {
+        console.log('Chưa checkin tỉnh này');
+      }
+
+    } catch (error) {
+      // Alert khi firebase không có connect
+      console.error("Error remove city: ", error);
+    }
+  }
+
+  // Hàm Check out
+  const handleCheckOut = (selectedCity, selectedCountryId) => {
+    if (selectedCountryId && selectedCity) {
+      if (dataCheckedCities.some(city => city.hasOwnProperty(selectedCity.value))) {
+        // Show dialog
+        Alert.alert(
+          "Xác nhận hủy check in",
+          `Bạn có muốn hủy check in tỉnh ${selectedCity.label} `,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "OK", onPress: () => {
+                // Gọi hàm checkout
+                removeCityToFirebase(selectedCity,selectedCountryId)
+              }
+            }
+          ]
+        );
+      } else {
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Có nhầm lẫn gì đó!',
+          text2: `Có vẻ tỉnh ${selectedCity.label} chưa được check in.`,
+          visibilityTime: 3000,
+        });
+      }
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Có nhầm lẫn gì đó!',
+        text2: `Có vẻ bạn chưa chọn tỉnh.`,
+        visibilityTime: 3000,
+      });
+    }
+
   }
 
 
@@ -249,7 +343,7 @@ const CheckInMap = () => {
               onFocus={() => console.log('focus')}
             />
           </View>
-          <View style={{ flexDirection: 'row',justifyContent: 'space-around' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
             {/* Chọn tình thành */}
             <Dropdown
               style={[styles.dropdown, { maxWidth: 170, flex: 1 }]}
@@ -270,11 +364,11 @@ const CheckInMap = () => {
                 setSelectedCity(item)
               }}
             />
-            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCity)}>
+            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCity, selectedCountry.value)}>
               <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
               <Text style={styles.actionBtnText}>Check in</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckOut(selectedCity)}>
+            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckOut(selectedCity, selectedCountry.value)}>
               <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
               <Text style={styles.actionBtnText}>Check out</Text>
             </TouchableOpacity>
