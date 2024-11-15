@@ -67,7 +67,7 @@ const TourList = () => {
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
-        'content': dataInput,
+        'content': dataInput?dataInput:'',
         'location': selectedCities.length > 0 ? selectedCities : null
       }
       await update(refBehaviors, dataUpdate);
