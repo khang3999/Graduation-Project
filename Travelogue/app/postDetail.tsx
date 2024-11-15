@@ -28,7 +28,7 @@ import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating } from "react-native-ratings";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
@@ -65,7 +65,7 @@ type Post = {
   post_status: string;
   reports: number;
   view_mode: boolean;
-  thumnail: any
+  thumbnail: any
 }
 type PostItemProps = {
   item: Post;
@@ -121,14 +121,14 @@ const PostItem: React.FC<PostItemProps> = ({
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
 
+
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
   const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
-  
-
+  const [authorParentCommentId, setAuthorParentCommentId] = useState('')
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -138,6 +138,7 @@ const PostItem: React.FC<PostItemProps> = ({
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
+      parentId ? fetchRealTimeData(parentId):''
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -166,6 +167,13 @@ const PostItem: React.FC<PostItemProps> = ({
           setComments((prevComments) => {
             if (parentId) {
               // Add as a reply with the correct `parentId`
+              // Notify reply comment for parentId
+              console.log('aaa ',dataAccount.id);
+              console.log('aaa ',authorParentCommentId);
+              
+              if (authorParentCommentId!=dataAccount.id) {
+                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId) 
+              }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level Comment
@@ -174,32 +182,33 @@ const PostItem: React.FC<PostItemProps> = ({
           });
 
         }
-        handleAddNotify(newCommentRef.key)
+        // Notify comment for auht post
+        handleAddNotify(newCommentRef.key, item.author.id, parentId)
       } catch (error) {
         console.error("Error adding Comment:", error);
       }
     }
   }
-  const handleAddNotify = async (commentId:any) => {
+  //Tao thong bao
+  const handleAddNotify = async (commentId:any, account_id: any, parentId:any) => {
 
     // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
-    const notifyRef = ref(database, `notifications/${dataAccount.id}`);
+    const notifyRef = ref(database, `notifications/${account_id}`);
 
     // Tạo key tu dong cua firebase
     const newItemKey = push(notifyRef);
-    // const notify = {
-    //   author_id: item.author.id,
-    //   comment_id: commentId,
-    //   commentator_id: dataAccount.id,
-    //   commentator_name: item.author.fullname,
-    //   created_at: Date.now(),
-    //   id: newItemKey.key,
-    //   image: item.thumnail,
-    //   post_id: item.id,
-    //   read:false,
-    // };
-    const notify = "aaa"
-    console.log(notify);
+    const notify = {
+      author_id: item.author.id,
+      comment_id: commentId,
+      commentator_id: dataAccount.id,
+      commentator_name: dataAccount.fullname,
+      created_at: Date.now(),
+      id: newItemKey.key,
+      image: item.thumbnail,
+      post_id: item.id,
+      type: parentId ? "reply": "comment",
+      read:false,
+    };
     // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
     await set(newItemKey, notify)
       .then(() => {
@@ -210,6 +219,21 @@ const PostItem: React.FC<PostItemProps> = ({
       });
 
   };
+  //Get account id of parent comment
+  function fetchRealTimeData(parentId:any) {
+    const dataRef = ref(database, `posts/${item.id}/comments/${parentId}/author/id`);
+    // Set up a real-time listener
+    onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setAuthorParentCommentId(data)
+      } else {
+        console.log("No data parent id available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+  }
 
   const addReplyToComment = (
     comments: Comment[],
@@ -363,9 +387,8 @@ const PostItem: React.FC<PostItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
+          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
         </View>
-
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
       {/* Post Description */}
@@ -398,18 +421,43 @@ export default function PostsScreen() {
   // State to track whether full description is shown
 
   const { selectedPost, setSelectedPost }: any = usePost();
-
-  const { initialIndex } = useLocalSearchParams();
+  const { initialIndex, postId } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-
+  const [dataPost, setDataPost] = useState<any>([])
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
+  const fetchPostById = async (postId: any) => {
+    try {
+      const refPost = ref(database, `posts/${postId}`)
+      const snapshot = await get(refPost);
+      if (snapshot.exists()) {
+        const dataPostJson: any = snapshot.val()
+        setDataPost([dataPostJson])
+      } else {
+        console.log("No data city available");
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+      if (postId ) {
+        fetchPostById(postId)
+      }
+      return () => {
+        console.log('Screen is unfocused');
+      };
+    }, []) // Cập nhật khi các giá trị này thay đổi
+  );
   return (
     <View style={{ marginTop: 30, flex: 1 }}>
       <FlatList
-        data={memoriedPostItem}
+        data={postId ? dataPost : memoriedPostItem}
         renderItem={({ item }) => (
           <PostItem
             item={item}

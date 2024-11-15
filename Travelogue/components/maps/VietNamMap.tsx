@@ -3,20 +3,51 @@ import React, { useEffect, useRef, useState } from 'react'
 import Svg, { ClipPath, Defs, G, Mask, Path, Rect } from 'react-native-svg'
 import { useMapCheckinProvider } from '@/contexts/MapCheckinProvider'
 import Toast from 'react-native-toast-message'
+import { ref } from 'firebase/database'
+import { database, onValue } from '@/firebase/firebaseConfig'
+import { find } from 'lodash'
 
 const VietNamMap = () => {
     // Khai báo biến
-
     const defaultColor = '#c7c7c7'
     const selectedColor = '#ED1C24'
+    const idVietNam = 'avietnam'
     const pathRefs = useRef<any>({});
     const previousCityId = useRef<any>(null);
-
+    const [dataVietNamCities, setDataVietNamCities] = useState([])
     const {
+        selectedCity, setSelectedCity,
         selectedCityId, setSelectedCityId,
         dataCheckedCities, setDataCheckedCities,
         checkedCityColor
     }: any = useMapCheckinProvider()
+
+    // Lấy các tỉnh của Việt Nam
+    useEffect(() => {
+        const refCities = ref(database, `cities/${idVietNam}`)
+        const unsubscribe = onValue(refCities, (snapshot) => {
+            if (snapshot.exists()) {
+                const jsonDataRegions = snapshot.val();
+                const dataCitiesArray: any = Object.entries(jsonDataRegions).flatMap(([region, cities]: any) =>
+                    Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
+                      value: cityCode,
+                      label: cityInfo.name
+                    }))
+                  );
+                console.log(dataCitiesArray, 'vietnam');
+                
+                setDataVietNamCities(dataCitiesArray);
+            } else {
+                console.log("No data available1");
+            }
+        }, (error) => {
+            console.error("Error fetching data:", error);
+        });
+
+        return () => {
+            unsubscribe(); // Sử dụng unsubscribe để hủy listener
+        };
+    }, [])
 
     // Hàm để tạo ref cho mỗi Path và lưu vào pathRefs
     const setPathRef = (id: any, ref: any) => {
@@ -55,19 +86,7 @@ const VietNamMap = () => {
         }
     }, [dataCheckedCities, pathRefs]);
 
-    // const changeSelectedColor = (id: any) => {
-    //     // Khôi phục màu của Path trước đó
-    //     if (selectedCityId && pathRefs.current[selectedCityId]) {
-    //         pathRefs.current[selectedCityId].setNativeProps({ fill: defaultColor });
-    //     }
-    //     // Cập nhật id Path được chọn
-    //     setSelectedCityId(id);
 
-    //     // Thay đổi màu của Path hiện tại
-    //     if (pathRefs.current[id]) {
-    //         pathRefs.current[id].setNativeProps({ fill: selectedColor }); // Màu khi được chọn
-    //     }
-    // }
     const handlePress = (id: any) => {
         // Kiểm tra nếu `id` đã có trong `dataCheckedCities`, thì không cho phép đổi màu
         // if (dataCheckedCities.includes(id)) {
@@ -79,6 +98,10 @@ const VietNamMap = () => {
         //     return; // Thoát khỏi hàm nếu tỉnh đã được check
         // }
         setSelectedCityId(id)
+        const selectedCity = dataVietNamCities.find((city:any) => city.value === id);
+        setSelectedCity(selectedCity)
+        // Lấy id các tinh của việt nam 
+        // Set selectedCity kiểu key, value cho biến đó
     }
 
     return (
