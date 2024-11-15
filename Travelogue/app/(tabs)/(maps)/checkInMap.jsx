@@ -187,12 +187,24 @@ const CheckInMap = () => {
       if (countrySnapshot.exists()) {
         // Nếu quốc gia đã tồn tại, cập nhật dữ liệu của các thành phố
         await update(refCheckinListByCountry, dataUpdate);
+
       } else {
         // Nếu quốc gia chưa tồn tại, tạo quốc gia mới và thêm dữ liệu thành phố
         await set(refCheckinListByCountry, dataUpdate);
         console.log("Country and city data added successfully");
       }
 
+      // Toast thông báo
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: `Check in thành công!`,
+        text2: `Bạn đã thêm tỉnh ${selectedCity.label} vào danh sách.`,
+        visibilityTime: 3000,
+        icon: 'success',
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 }
+      });
     } catch (error) {
       // Alert khi firebase không có connect
       console.error("Error updating/adding city: ", error);
@@ -216,6 +228,17 @@ const CheckInMap = () => {
           }
         ]
       );
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Có nhầm lẫn gì đó!',
+        text2: `Có vẻ bạn chưa chọn tỉnh check in.`,
+        visibilityTime: 3000,
+        icon: 'error',
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 }
+      });
     }
   }
 
@@ -235,9 +258,12 @@ const CheckInMap = () => {
         Toast.show({
           type: 'success',
           position: 'top',
-          text1: 'Xóa thành công!',
+          text1: `Check out thành công!`,
           text2: `Bạn đã xóa tỉnh ${selectedCity.label} ra khỏi danh sách.`,
           visibilityTime: 3000,
+          icon: 'success',
+          text1Style: { fontSize: 16 },
+          text2Style: { fontSize: 14 }
         });
       } else {
         console.log('Chưa checkin tỉnh này');
@@ -262,7 +288,7 @@ const CheckInMap = () => {
             {
               text: "OK", onPress: () => {
                 // Gọi hàm checkout
-                removeCityToFirebase(selectedCity,selectedCountryId)
+                removeCityToFirebase(selectedCity, selectedCountryId)
               }
             }
           ]
@@ -274,6 +300,9 @@ const CheckInMap = () => {
           text1: 'Có nhầm lẫn gì đó!',
           text2: `Có vẻ tỉnh ${selectedCity.label} chưa được check in.`,
           visibilityTime: 3000,
+          icon: 'error',
+          text1Style: { fontSize: 16 },
+          text2Style: { fontSize: 14 }
         });
       }
     } else {
@@ -281,8 +310,11 @@ const CheckInMap = () => {
         type: 'error',
         position: 'top',
         text1: 'Có nhầm lẫn gì đó!',
-        text2: `Có vẻ bạn chưa chọn tỉnh.`,
+        text2: `Có vẻ bạn chưa chọn tỉnh để check out.`,
         visibilityTime: 3000,
+        icon: 'error',
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 }
       });
     }
 
