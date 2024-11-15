@@ -114,7 +114,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     };
     const handleLongPress = (comment: SortedComment) => {
         if (props.accountId === comment.author.id) {
-            setLongPressedComment(comment);            
+            setLongPressedComment(comment);
             authorizedCommentAS.current?.show();
         } else {
             setLongPressedComment(comment);
@@ -166,7 +166,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
     };
 
-    
+
     const reportComment = async (reason: any) => {
         let item: any = {
             reason: {
@@ -299,15 +299,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                     </View>
 
                                     <Text style={styles.ratingCommentText}>{item.content}</Text>
-                                    <Pressable
+                                    {!item.parentId && (
+                                        <Pressable
 
-                                        style={styles.replyButtonContainer}
-                                        onPress={() => handleReplyButtonPress(item)}
-                                    >
-                                        <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
-                                        <Text style={styles.replyButtonText}>Reply</Text>
-                                    </Pressable>
-
+                                            style={styles.replyButtonContainer}
+                                            onPress={() => handleReplyButtonPress(item)}
+                                        >
+                                            <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
+                                            <Text style={styles.replyButtonText}>Reply</Text>
+                                        </Pressable>
+                                    )}
                                 </TouchableOpacity>
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
@@ -353,9 +354,9 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                         onPress={() => {
                             if (longPressedComment) {
                                 handlePressReport(longPressedComment);
-                                
+
                             }
-                            
+
                         }}
                     >
                         <Text style={[styles.actionOptionText, styles.actionOptionTextDelete]}>

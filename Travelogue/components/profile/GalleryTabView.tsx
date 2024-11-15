@@ -300,13 +300,13 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                   if(isSearched === true ){
                     if (searchedAccountData.role === 'user') {
                       router.push({
-                        pathname: "postDetail",
+                        pathname: "/postDetail",
                         params: { initialIndex: index.toString() },
                       });
                       setSelectedPost(createdPosts);
                     } else if (searchedAccountData.role === 'business') {
                       router.push({
-                        pathname: "tourDetail",
+                        pathname: "/tourDetail",
                         params: { initialIndex: index.toString() },
                       });
                       setSelectedTour(createdPosts);
@@ -314,13 +314,13 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                   }else {
                     if (dataAccount.role === 'user') {
                       router.push({
-                        pathname: "postDetail",
+                        pathname: "/postDetail",
                         params: { initialIndex: index.toString() },
                       });
                       setSelectedPost(createdPosts);
                     } else if (dataAccount.role === 'business') {
                       router.push({
-                        pathname: "tourDetail",
+                        pathname: "/tourDetail",
                         params: { initialIndex: index.toString() },
                       });
                       setSelectedTour(createdPosts);
@@ -360,7 +360,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "postDetail",
+                  pathname: "/postDetail",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedPost(savedPosts);
@@ -397,7 +397,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "tourDetail",
+                  pathname: "/tourDetail",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedTour(savedTours);
