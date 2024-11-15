@@ -360,7 +360,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             <Pressable
               onPress={() => {
                 router.push({
-                  pathname: "postDetail",
+                  pathname: "/postDetail",
                   params: { initialIndex: index.toString() },
                 });
                 setSelectedPost(savedPosts);
