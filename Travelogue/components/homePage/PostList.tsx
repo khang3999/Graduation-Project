@@ -83,13 +83,15 @@ const PostList = () => {
                 return Object.keys(post.locations[country])
               }); //["vn_1", 'jp_2']
               // Kiểm tra nội dung
-              console.log(post, 'testposst');
               if (slug(post.content).includes(slug(dataInput))) { // Đúng cả 2 case: không nhâp nội dung và nhập nội dung
                 post.match += 1
               }
               // Đếm city trùng
-              const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
+              // const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
+              
+              const matchLocation = countMatchingLocations(selectedCities, listLocationIdOfPost)
               post.match += matchLocation // cập nhật match
+              
               // Push vào mảng
               if (post.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
                 matchingPost.push(post)
@@ -106,8 +108,6 @@ const PostList = () => {
               if (slug(post.content).includes(slug(dataInput))) {
                 post.match += 1
               }
-              // console.log('check1',listCountriesId);
-              // console.log('check1',selectedCountry);
               // Kiểm tra có quốc gia không
               if (listCountriesId.includes(selectedCountry.key)) {
                 post.match += 1
@@ -186,14 +186,6 @@ const PostList = () => {
   //   setSelectedCities(temp)
   // }, [selectedCitiesTemp])
 
-  /// Log
-  // useEffect(() => {
-  //   console.log('input', dataInput);
-  //   console.log(selectedCountry)
-  //   console.log('cities',selectedCities);
-
-  // }, [selectedCities, dataInput, selectedCountry])
-
   // Hàm chọn một quốc gia: thực hiện 2 việc: 1. Fetch data city, 2. Lưu quốc gia đó ra biến thành phần {key:'a', value:'b'}
   const handleSelecteCountry = (val: any) => {
     // Fetch city tương ứng tương ứng (chính)
@@ -231,14 +223,10 @@ const PostList = () => {
 
   // Hàm lấy các bài viết khi có tương tác
   const fetchPosts = async () => {
-    console.log("test");
     setLoadedPosts(false)
     try {
       const refPosts = ref(database, 'posts/')
       const postsQuery = query(refPosts, orderByChild('status_id'), equalTo(1));
-
-      console.log(postsQuery);
-
       const snapshot = await get(postsQuery);
       if (snapshot.exists()) {
         const dataPostsJson = snapshot.val()
@@ -250,12 +238,10 @@ const PostList = () => {
         const behaviorPosts: any = [];
         const nonBehaviorPosts: any = [];
         jsonArrayPosts.forEach((post: any) => {
-        console.log('post1', post);
           post.match = 0 // Tạo lại giá trị ban đầu
           const contentSlug = slug(post.content)
           
           const behaviorContentSlug = slug(accountBehavior.content)
-          console.log(behaviorContentSlug,'content');
           const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) =>
             Object.keys(post.locations[country])
           ); //["vn_1", 'jp_2']
@@ -268,8 +254,8 @@ const PostList = () => {
           // const countMatchingLocation = listLocationIdOfPost.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
           post.match += countMatchingLocation // cập nhật match
 
-          // Phân loại 
-          if (post.match > 0) {
+          // Phân loại
+          if (post.match > 1) {
             behaviorPosts.push(post)
           } else {
             nonBehaviorPosts.push(post)
@@ -278,7 +264,7 @@ const PostList = () => {
         // Bước 2: Sort
         //2.1. Sort mảng theo behavior: match > created_at
         behaviorPosts.sort((postA: any, postB: any) => {
-          // So sánh theo match trước
+          // So sánh theo match trước ưu tiên trùng hành vi và thời gian
           if (postB.match !== postA.match) {
             return postB.match - postA.match; // Sắp xếp giảm dần theo match
           }

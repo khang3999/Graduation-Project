@@ -87,7 +87,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [reasonsPost, setReasonsPost] = useState([])
     const [dataReason, setDataReason] = useState([])
     const [typeReport, setTypeReport] = useState('')
-    const [idPost, setIdPost] = useState('')
+    const [idPost, setIdPost] = useState<undefined | String>('')
     const [idComment, setIdComment] = useState('')
     const [reasonsComment, setReasonsComment] = useState([])
 
@@ -205,6 +205,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         setModalVisible(true)
         setDataReason(reasonsComment)
         setIdComment(comment.id)
+        setIdPost(props.postId)
         setTypeReport("comment")
         unauthorizedCommentAS.current?.hide();
 
@@ -280,6 +281,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                             data={flatComments}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
+                                item.status_id == 1 ? (
                                 <TouchableOpacity style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
                                     onLongPress={() => handleLongPress(item)}
                                 >
@@ -310,6 +312,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                         </Pressable>
                                     )}
                                 </TouchableOpacity>
+                                ) : null
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />

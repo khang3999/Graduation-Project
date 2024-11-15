@@ -19,7 +19,8 @@ const VietNamMap = () => {
         selectedCity, setSelectedCity,
         selectedCityId, setSelectedCityId,
         dataCheckedCities, setDataCheckedCities,
-        checkedCityColor
+        checkedCityColor,
+        cityRemoved, setCityIdRemoved
     }: any = useMapCheckinProvider()
 
     // Lấy các tỉnh của Việt Nam
@@ -30,12 +31,10 @@ const VietNamMap = () => {
                 const jsonDataRegions = snapshot.val();
                 const dataCitiesArray: any = Object.entries(jsonDataRegions).flatMap(([region, cities]: any) =>
                     Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-                      value: cityCode,
-                      label: cityInfo.name
+                        value: cityCode,
+                        label: cityInfo.name
                     }))
-                  );
-                console.log(dataCitiesArray, 'vietnam');
-                
+                );
                 setDataVietNamCities(dataCitiesArray);
             } else {
                 console.log("No data available1");
@@ -56,10 +55,9 @@ const VietNamMap = () => {
         }
     };
     useEffect(() => {
-        console.log(selectedCityId);
         // Khôi phục màu của Path trước đó: khi đã chọn 1 tỉnh (không phải là lần đầu và có ref của tỉnh đó)
         if (previousCityId.current && pathRefs.current[previousCityId.current]) {
-            if (dataCheckedCities.includes(previousCityId.current)) {
+            if (dataCheckedCities.some((city: any) => city.hasOwnProperty(previousCityId.current))) {
                 pathRefs.current[previousCityId.current].setNativeProps({ fill: checkedCityColor });
             } else {
                 pathRefs.current[previousCityId.current].setNativeProps({ fill: defaultColor });
@@ -74,34 +72,40 @@ const VietNamMap = () => {
         previousCityId.current = selectedCityId;
     }, [selectedCityId]);
 
-    // Tô màu lần đầu cho các tỉnh đã đc check
+    // // Khi remove thì đổi màu
+    // useEffect(() => {
+    //     if (notifyRemoved && dataCheckedCities && pathRefs.current) {
+    //         pathRefs.current[selectedCityId].setNativeProps({ fill: defaultColor });
+    //     }
+    // }, [notifyRemoved]);
+
+    // Tô màu lần đầu cho các tỉnh đã đc check và lắng nghe khi được check in
     useEffect(() => {
+        console.log(cityRemoved,'rm');
+
         if (dataCheckedCities && pathRefs.current) {
-            dataCheckedCities.forEach((cityId: any) => {
+            dataCheckedCities.forEach((cityObj: any) => {
+                // Lấy cityId từ đối tượng (ví dụ: "vn_1", "jp_1")
+                const cityId = Object.keys(cityObj)[0];
                 const path = pathRefs.current[cityId];
                 if (path) {
                     path.setNativeProps({ fill: checkedCityColor }); // Tô màu "green" cho các tỉnh đã được check
                 }
             });
         }
+        // To màu default khi remove
+        if (cityRemoved) {
+            pathRefs.current[cityRemoved.value].setNativeProps({ fill: defaultColor });
+        }
     }, [dataCheckedCities, pathRefs]);
 
 
     const handlePress = (id: any) => {
-        // Kiểm tra nếu `id` đã có trong `dataCheckedCities`, thì không cho phép đổi màu
-        // if (dataCheckedCities.includes(id)) {
-        //     Toast.show({
-        //         type: 'info',
-        //         text1: 'Tỉnh này đã được chọn!',
-        //         text2: 'Bạn không thể chọn lại tỉnh đã được check.',
-        //     });
-        //     return; // Thoát khỏi hàm nếu tỉnh đã được check
-        // }
+        // Set id tỉnh đang chọn
         setSelectedCityId(id)
-        const selectedCity = dataVietNamCities.find((city:any) => city.value === id);
+        // Chuẩn bị dữ liệu để dồng bộ combo box
+        const selectedCity = dataVietNamCities.find((city: any) => city.value === id);
         setSelectedCity(selectedCity)
-        // Lấy id các tinh của việt nam 
-        // Set selectedCity kiểu key, value cho biến đó
     }
 
     return (

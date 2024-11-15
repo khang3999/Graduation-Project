@@ -629,6 +629,7 @@ const TourItem: React.FC<TourItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
+        postId={item.id}
       />
 
 

@@ -4,7 +4,7 @@ import { Tabs } from 'expo-router'
 import TabBarButton from '@/components/navigation/TabBarButton'
 import PlusButton from '@/components/buttons/PlusButton'
 import BellButton from '@/components/buttons/BellButton'
-import { FontAwesome } from '@expo/vector-icons'
+import { Entypo, FontAwesome } from '@expo/vector-icons'
 
 const { width } = Dimensions.get('window');
 const switchTabbar = 120
@@ -16,7 +16,10 @@ const MapLayout = () => {
                 screenOptions={{
                     tabBarStyle: styles.tabBar,
                     headerStyle: {
-                        height: 105
+                        height: 105,
+                        backgroundColor:'#ff5b5b',
+                        borderRadius: 20,
+                        elevation: 10
                     },
                     // headerTitle: (props) =>
                     //     // Bỏ image vào đây
@@ -32,14 +35,16 @@ const MapLayout = () => {
                     name="checkInMap"
                     options={{
                         title: 'Check in',
-                        tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+                        tabBarShowLabel: false,
+                        tabBarIcon: ({ color }) => <Entypo name="location" size={22} color="black" />,
                     }} />
                 <Tabs.Screen
                     key={2}
                     name="realMap"
                     options={{
                         title: 'Real Map',
-                        tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+                        tabBarShowLabel: false,
+                        tabBarIcon: ({ color }) => <FontAwesome name="map-signs" size={24} color="black" />,
                     }} />
             </Tabs >
         </>
@@ -49,7 +54,7 @@ const MapLayout = () => {
 
 const styles = StyleSheet.create({
     tabBar: {
-        top: 50,
+        top: 45,
         left: width - switchTabbar,
         position: 'absolute',
         width: switchTabbar,
