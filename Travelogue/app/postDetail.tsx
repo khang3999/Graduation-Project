@@ -65,8 +65,8 @@ type Post = {
   post_status: string;
   reports: number;
   view_mode: boolean;
-};
-
+  thumnail: any
+}
 type PostItemProps = {
   item: Post;
   setIsScrollEnabled: (value: boolean) => void;
@@ -174,11 +174,43 @@ const PostItem: React.FC<PostItemProps> = ({
           });
 
         }
+        handleAddNotify(newCommentRef.key)
       } catch (error) {
         console.error("Error adding Comment:", error);
       }
     }
   }
+  const handleAddNotify = async (commentId:any) => {
+
+    // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
+    const notifyRef = ref(database, `notifications/${dataAccount.id}`);
+
+    // Tạo key tu dong cua firebase
+    const newItemKey = push(notifyRef);
+    // const notify = {
+    //   author_id: item.author.id,
+    //   comment_id: commentId,
+    //   commentator_id: dataAccount.id,
+    //   commentator_name: item.author.fullname,
+    //   created_at: Date.now(),
+    //   id: newItemKey.key,
+    //   image: item.thumnail,
+    //   post_id: item.id,
+    //   read:false,
+    // };
+    const notify = "aaa"
+    console.log(notify);
+    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
+    await set(newItemKey, notify)
+      .then(() => {
+        console.log('Data added successfully');
+      })
+      .catch((error) => {
+        console.error('Error adding data: ', error);
+      });
+
+  };
+
   const addReplyToComment = (
     comments: Comment[],
     parentId: string,
