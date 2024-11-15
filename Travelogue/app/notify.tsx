@@ -9,12 +9,12 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    let accountId = "";
+    const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
 
     useEffect(() => {
-        accountId = dataAccount.id
+        setAccountId(dataAccount.id)
     }, [dataAccount])
 
     // Fetch data notifications by account id
@@ -25,8 +25,6 @@ const NotificationsScreen = () => {
                 const jsonData = snapshot.val();
                 const dataArray: any = Object.values(jsonData).sort((a: any, b: any) => b.created_at - a.created_at);;
                 setNotifications(dataArray);
-                console.log(dataArray);
-
             } else {
                 console.log("No data available");
             }
@@ -35,7 +33,7 @@ const NotificationsScreen = () => {
         });
 
         return () => notifications();
-    }, []);
+    }, [accountId]);
     // Fetch post by postID
     const fetchPostByPostId = async (postId: any) => {
         try {
