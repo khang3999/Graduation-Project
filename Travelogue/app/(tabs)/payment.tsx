@@ -39,7 +39,6 @@ const Payment = () => {
   const [statusContent, setStatusContent] = useState([]);
   const [dataExchanges, setDataExchanges] = useState([]);
   let [dataExchangesFilter, setDataExchangesFilter] = useState([]);
-  const [name, setName] = useState("");
   //Modal filter
   const [timeStart, setTimeStart] = useState<any>(null);
   const [timeEnd, setTimeEnd] = useState<any>(null);
@@ -80,26 +79,7 @@ const Payment = () => {
 
     return () => statusContentListener();
   }, []);
-  // Name account
-  useEffect(() => {
-    const onValueChange = ref(database, `accounts/${accountId}`);
-    const name = onValue(
-      onValueChange,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const jsonData = snapshot.val();
-          setName(jsonData.fullname);
-        } else {
-          console.log("No data available");
-        }
-      },
-      (error) => {
-        console.error("Error fetching data:", error);
-      }
-    );
-
-    return () => name();
-  }, []);
+  
 
   // Exchange data by account id
   useEffect(() => {
@@ -145,7 +125,6 @@ const Payment = () => {
   }, [dataExchanges]);
 
   const closeDialog = () => {
-    handleAddRequest();
     setIsVisible(false);
     setIsVisibleFilter(false);
     setQrDataURL(null);
@@ -180,6 +159,7 @@ const Payment = () => {
 
       if (response.ok) {
         setQrDataURL(data.data.qrDataURL);
+         handleAddRequest();
       } else {
         setError(data.desc || "An error occurred");
       }
@@ -245,12 +225,11 @@ const Payment = () => {
       account_id: accountId,
       created_at: Date.now(),
       id: newItemKey.key,
-      name: name,
+      name: dataAccount.fullname,
       payment: rawValue,
       status_id: "1",
     };
-
-    await set(newItemKey, item)
+    await set(newItemKey.ref, item)
       .then(() => {
         console.log("Data added successfully");
       })

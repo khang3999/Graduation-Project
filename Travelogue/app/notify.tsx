@@ -116,12 +116,13 @@ const NotificationsScreen = () => {
 
     return (
         <View style={styles.container}>
-            <FlatList
+            {notifications.length>0?(<FlatList
                 data={notifications}
                 renderItem={renderItem}
                 // keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContainer}
-            />
+            />):(<Text style={styles.noAccountsText}>No data</Text>)}
+            
         </View>
     );
 };
@@ -131,7 +132,12 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
         backgroundColor: '#fff',
-    },
+    }, noAccountsText: {
+        textAlign: 'center',
+        fontSize: 16,
+        marginTop: 20,
+        color: '#777'
+      },
     title: {
         fontSize: 24,
         fontWeight: 'bold',

@@ -48,7 +48,6 @@ export default function CommentReport() {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         console.log(jsonData);
-
         setFactorReport(jsonData)
       } else {
         console.log("No data available");
@@ -105,7 +104,7 @@ export default function CommentReport() {
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho comment thanh hidden
-            update(refComment, { status: 3 })
+            update(refComment, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
