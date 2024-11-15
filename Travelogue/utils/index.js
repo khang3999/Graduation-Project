@@ -46,8 +46,10 @@ export const countMatchingLocations = (locationsList, listLocationIdOfPost) => {
     // const locationIdOfTour = Object.keys(tour.locations).flatMap((country) =>
     //     Object.keys(tour.locations[country]) // Lấy id (ví dụ: "vn_1", "vn_2")
     // );
+    
     const match = locationsList.filter(id => listLocationIdOfPost.includes(id)).length; // Số lượng trùng khớp
     const ratio = 100 / listLocationIdOfPost.length // tỉ lệ theo số lượng phần tử của location bài viết
+    console.log(match);
     return match * ratio
 };
 
@@ -65,11 +67,15 @@ export const sortTourAtHomeScreen = (listTour, listLocationIdOfPost) => {
         const locationIdOfTourA = Object.keys(tourA.locations).flatMap((country) =>
             Object.keys(tourA.locations[country]) // Lấy id (ví dụ: "vn_1", "vn_2")
         );
+        console.log(locationIdOfTourA,'aaaaaa');
+        
         const locationIdOfTourB = Object.keys(tourB.locations).flatMap((country) =>
             Object.keys(tourB.locations[country]) // Lấy id (ví dụ: "vn_1", "vn_2")
         );
-        const matchesA = countMatchingLocations(locationIdOfTourA, listLocationIdOfPost);
-        const matchesB = countMatchingLocations(locationIdOfTourB, listLocationIdOfPost);
+        const matchesA = countMatchingLocations(listLocationIdOfPost, locationIdOfTourA);
+        const matchesB = countMatchingLocations(listLocationIdOfPost, locationIdOfTourB);
+        console.log(matchesA," " ,matchesB);
+        
         const factorTourA = tourA.package.hashtag
         const factorTourB = tourB.package.hashtag
         const ratingTourA = tourA.rating

@@ -287,7 +287,7 @@ const TourList = () => {
           // const countMatchingLocation = listLocationIdOfTour.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
           tour.match += countMatchingLocation // cập nhật match
           // Phân loại
-          if (tour.match > 0) {
+          if (tour.match > 1) {
             behaviorTours.push(tour)
           } else {
             nonBehaviorTours.push(tour)

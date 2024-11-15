@@ -251,8 +251,8 @@ const PostList = () => {
           // const countMatchingLocation = listLocationIdOfPost.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
           post.match += countMatchingLocation // cập nhật match
 
-          // Phân loại 
-          if (post.match > 0) {
+          // Phân loại
+          if (post.match > 1) {
             behaviorPosts.push(post)
           } else {
             nonBehaviorPosts.push(post)
