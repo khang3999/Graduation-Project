@@ -9,13 +9,13 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    let accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
 
-    // useEffect(() => {
-    //     accountId = dataAccount.id
-    // }, [dataAccount])
+    useEffect(() => {
+        setAccountId(dataAccount.id)
+    }, [dataAccount])
 
     // Fetch data notifications by account id
     useEffect(() => {
@@ -25,8 +25,6 @@ const NotificationsScreen = () => {
                 const jsonData = snapshot.val();
                 const dataArray: any = Object.values(jsonData).sort((a: any, b: any) => b.created_at - a.created_at);;
                 setNotifications(dataArray);
-                console.log(dataArray);
-
             } else {
                 console.log("No data available");
             }
@@ -35,7 +33,7 @@ const NotificationsScreen = () => {
         });
 
         return () => notifications();
-    }, []);
+    }, [accountId]);
     // Fetch post by postID
     const fetchPostByPostId = async (postId: any) => {
         try {
@@ -98,7 +96,7 @@ const NotificationsScreen = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={{ flex: 2, paddingRight: 10 }}>
                         <Text style={styles.message}>
-                            {notify.item.commentator_name} đã bình luận vào bài viết của bạn
+                            {notify.item.commentator_name} {notify.item.type==="comment"?"đã bình luận vào bài viết của bạn":"đã trả lời bình luận của bạn"}
                         </Text>
                         <Text style={styles.time}>{displayTime}</Text>
                     </View>
