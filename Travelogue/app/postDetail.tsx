@@ -129,7 +129,6 @@ const PostItem: React.FC<PostItemProps> = ({
   const flattenedImagesArray = flattenImages(item.images);
   
 
-
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
       console.error('Missing required author information');
