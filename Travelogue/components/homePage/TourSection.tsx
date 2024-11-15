@@ -24,16 +24,12 @@ const TourSection = () => {
         );
         return (
             <Pressable style={styles.tourItem} key={tour.item.id}
-                onPress={() => {
-                    router.push({
-                        pathname: "/tourDetail",
-                        params: { initialIndex: 0 },
-                    });
-                    setSelectedTour([tour.item])
-                }}
-            >
-
-
+            onPress={() => {
+                router.push({
+                  pathname: "/tourDetail",
+                  params: { tourId: tour.item.id },
+                });
+              }}>
                 <View style={styles.imageWrap}>
                     <View style={styles.locationWrap}>
                         <Carousel
