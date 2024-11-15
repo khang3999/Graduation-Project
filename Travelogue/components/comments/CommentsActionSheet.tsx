@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert, Modal } from 'react-native'
 import React, { useState, RefObject, useRef, useEffect } from 'react'
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { Divider } from 'react-native-paper'
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
-
+import { database, get, onValue, push, ref, update } from '@/firebase/firebaseConfig';
+import { MaterialIcons } from '@expo/vector-icons';
 
 // Extending Comment to create SortedComment with extra fields
 interface SortedComment extends Comment {
@@ -24,6 +25,7 @@ interface CommentsActionSheetProps {
     onDelete?: (item: SortedComment) => void;
     onReport?: (item: SortedComment) => void;
     accountId?: string;
+    postId?: string;
 }
 // Function to sort and nest comments
 function sortAndNestComments(comments: Record<string, SortedComment>): SortedComment[] {
@@ -62,7 +64,7 @@ function flattenComments(comments: SortedComment[], level = 0): SortedComment[] 
             flatList.push(...flattenComments(comment.replies, level + 1));
         }
     });
-    
+
     return flatList;
 }
 
@@ -78,6 +80,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
 
+    //report 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedReason, setSelectedReason] = useState(null);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [reasonsPost, setReasonsPost] = useState([])
+    const [dataReason, setDataReason] = useState([])
+    const [typeReport, setTypeReport] = useState('')
+    const [idPost, setIdPost] = useState('')
+    const [idComment, setIdComment] = useState('')
+    const [reasonsComment, setReasonsComment] = useState([])
 
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
@@ -105,6 +117,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             setLongPressedComment(comment);
             authorizedCommentAS.current?.show();
         } else {
+            setLongPressedComment(comment);
             unauthorizedCommentAS.current?.show();
         }
     }
@@ -114,13 +127,88 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             authorizedCommentAS.current?.hide();
         }
     }
-    const handleReportComment = (comment: SortedComment) => {
-        if (props.onReport && comment) {
-            props.onReport(comment);
-            unauthorizedCommentAS.current?.hide();
-        }
-    }
 
+    // Reason comment
+    useEffect(() => {
+        // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+        const onValueChange = ref(database, 'reasons/comment/');
+        // Lắng nghe thay đổi trong dữ liệu
+        const reason = onValue(onValueChange, (snapshot) => {
+            if (snapshot.exists()) {
+                const jsonData = snapshot.val();
+                // Chuyển đổi object thành array
+                const dataArray: any = Object.entries(jsonData).map(([key, value]) => ({
+                    id: key,
+                    name: value,
+                }));
+                setReasonsComment(dataArray);
+            } else {
+                console.log("No data available");
+            }
+        }, (error) => {
+            console.error("Error fetching data:", error);
+        });
+
+        // Cleanup function để hủy listener khi component unmount
+        return () => reason();
+    }, []);
+
+
+    const handleReport = (reason: any) => {
+        setSelectedReason(reason);
+        setModalVisible(false);
+        setShowConfirmation(true);
+        setTimeout(() => {
+            setShowConfirmation(false);
+        }, 3000);
+
+        reportComment(reason)
+
+    };
+
+
+    const reportComment = async (reason: any) => {
+        let item: any = {
+            reason: {
+
+            }
+        }
+        const reportRef = ref(database, `reports/comment/${idComment}`);
+        // Tạo key tu dong cua firebase
+        const newItemKey = push(ref(database, `reports/comment/${idComment}/reason/`));
+        const snapshot = await get(reportRef);
+        if (snapshot.exists()) {
+            item = snapshot.val();
+
+        }
+        const reasonKey = newItemKey.key as string;
+        const itemNew = {
+            id: idComment,
+            post_id: idPost,
+            reason: {
+                ...item.reason,
+                [reasonKey]: reason
+            },
+            status: 1
+        }
+        await update(reportRef, itemNew)
+            .then(() => {
+                console.log('Data added successfully');
+            })
+            .catch((error) => {
+                console.error('Error adding data: ', error);
+            });
+
+    };
+
+    const handlePressReport = (comment: SortedComment) => {
+        setModalVisible(true)
+        setDataReason(reasonsComment)
+        setIdComment(comment.id)
+        setTypeReport("comment")
+        unauthorizedCommentAS.current?.hide();
+
+    }
 
     // Animate opacity when replyText changes
     useEffect(() => {
@@ -139,7 +227,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         }, {} as Record<string, SortedComment>));
 
         const flattened = flattenComments(nestedComments);
-        
+
         setFlatComments(flattened);
     }, [props.commentsData]);
 
@@ -161,10 +249,10 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     <View style={styles.replyInputContainer}>
                         {selectedComment && (
                             <View style={styles.mentionContainer}>
-                                <Text style={styles.mentionText}>@{selectedComment.author.username}</Text>
-                                <Pressable onPress={handleCancelReply} style={styles.cancelMentionButton}>
+                                <Text style={styles.mentionText}>@{selectedComment.author.fullname}</Text>
+                                <TouchableOpacity onPress={handleCancelReply} style={styles.cancelMentionButton}>
                                     <IconMaterial name="close-circle" size={16} color="#FF3B30" />
-                                </Pressable>
+                                </TouchableOpacity>
                             </View>
                         )}
                         <TextInput
@@ -179,9 +267,9 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
                         {replyText.length > 0 && (
                             <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
-                                <Pressable onPress={handleReplySubmit}>
+                                <TouchableOpacity onPress={handleReplySubmit}>
                                     <IconMaterial name='send' style={styles.replySubmitButtonText} />
-                                </Pressable>
+                                </TouchableOpacity>
                             </Animated.View>
                         )}
                     </View>
@@ -192,7 +280,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                             data={flatComments}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <Pressable style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
+                                <TouchableOpacity style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
                                     onLongPress={() => handleLongPress(item)}
                                 >
                                     <View style={styles.ratingCommentHeader}>
@@ -202,7 +290,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                         />
                                         <View style={styles.ratingCommentUserInfo}>
                                             <Text style={styles.ratingCommentAuthor}>
-                                                {item.author.username}
+                                                {item.author.fullname}
                                             </Text>
                                             <Text style={styles.ratingCommentTime}>
                                                 {item.created_at}
@@ -211,16 +299,17 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                     </View>
 
                                     <Text style={styles.ratingCommentText}>{item.content}</Text>
-                                    <Pressable
+                                    {!item.parentId && (
+                                        <Pressable
 
-                                        style={styles.replyButtonContainer}
-                                        onPress={() => handleReplyButtonPress(item)}
-                                    >
-                                        <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
-                                        <Text style={styles.replyButtonText}>Reply</Text>
-                                    </Pressable>
-
-                                </Pressable>
+                                            style={styles.replyButtonContainer}
+                                            onPress={() => handleReplyButtonPress(item)}
+                                        >
+                                            <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
+                                            <Text style={styles.replyButtonText}>Reply</Text>
+                                        </Pressable>
+                                    )}
+                                </TouchableOpacity>
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />
@@ -264,7 +353,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                         style={styles.actionOption}
                         onPress={() => {
                             if (longPressedComment) {
-                                handleReportComment(longPressedComment);
+                                handlePressReport(longPressedComment);
+
                             }
 
                         }}
@@ -275,7 +365,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.actionOption}
-                        onPress={() => authorizedCommentAS.current?.hide()}
+                        onPress={() => unauthorizedCommentAS.current?.hide()}
                     >
                         <Text style={[styles.actionOptionText, styles.actionOptionTextCancel]}>
                             Hủy
@@ -283,10 +373,93 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     </TouchableOpacity>
                 </View>
             </ActionSheet>
+            {/* Report Modal */}
+            <Modal
+                transparent={true}
+                animationType="slide"
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Select a reason for report</Text>
+                        <FlatList
+                            data={dataReason}
+                            keyExtractor={(_, index) => index.toString()}
+                            renderItem={(item: any) => (
+                                <TouchableOpacity
+                                    style={styles.reasonItem}
+                                    onPress={() => handleReport(item.item.name)}
+                                >
+                                    <Text style={styles.reasonText}>{item.item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                        />
+                        <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+                            <MaterialIcons name="cancel" size={24} color="red" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Confirmation message */}
+            {showConfirmation && (
+                <View style={styles.confirmationBox}>
+                    <Text style={styles.confirmationText}>Your report has been submitted!</Text>
+                </View>
+            )}
         </KeyboardAvoidingView>
     )
 }
 const styles = StyleSheet.create({
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    reasonItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderColor: '#ddd',
+        width: '100%',
+    },
+    reasonText: {
+        fontSize: 16,
+    },
+    confirmationBox: {
+        position: 'absolute',
+        bottom: 30,
+        backgroundColor: '#4CAF50',
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '90%',
+        alignSelf: 'center',
+    },
+    confirmationText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+    },
     actionSheetContainer: {
         backgroundColor: '#ffffff',
         borderTopLeftRadius: 20,

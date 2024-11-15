@@ -6,12 +6,13 @@ import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
 import { router } from 'expo-router';
+import { useTourProvider } from '@/contexts/TourProvider';
 
 const { width } = Dimensions.get('window');
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
     const { dataTours, loadedTours }: any = useHomeProvider();
-
+    const {setSelectedTour}: any = useTourProvider()
     const tourItem = (tour: any) => {
         const locations = tour.item.locations
         const nameLocations = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
@@ -72,8 +73,8 @@ const TourSection = () => {
                     keyExtractor={(tour: any) => tour.id}
                     contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
                     ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                    // pagingEnabled
-                    >
+                // pagingEnabled
+                >
                 </FlatList>
                 :
                 <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>

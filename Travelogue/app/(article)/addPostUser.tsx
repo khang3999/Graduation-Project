@@ -965,11 +965,18 @@ const AddPostUser = () => {
 
         let avatar = "";
         let fullname = "";
+        let totalPosts;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
+            if(data.totalPosts){
+              totalPosts = data.totalPosts + 1 ;
+            }
+            else {
+              totalPosts = 1;
+            }
           }
         });
 
@@ -1006,14 +1013,13 @@ const AddPostUser = () => {
             {}
           ),
           content: contents,
-          view_mode: isPublic,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           likes,
           id : postId,
           reports,
           match,
-          status: status,
+          status_id: status,
           thumbnail,
           created_at: timestamp,
         };
@@ -1047,7 +1053,10 @@ const AddPostUser = () => {
             // Cập nhật dữ liệu
             await update(userRef, updatedUserData);
 
-            //Luu
+            const userTotalPost = ref(database, `accounts/${userId}`);
+            await update(userTotalPost, {
+              totalPosts: totalPosts,
+            });
             //Luu
             await update(userPost, {
               [postId]: true,
@@ -1582,7 +1591,7 @@ const AddPostUser = () => {
           </SectionComponent>
 
           {/* Hình ảnh */}
-          <SectionComponent styles={{ marginTop: 10 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
             {images.length > 0 ? (
               <View>
                 <TouchableOpacity
@@ -1793,7 +1802,6 @@ const AddPostUser = () => {
                fontSize: 30,
                textAlign: "center",
              }}
-             disabled={true}
              color={appColors.primary}
              onPress={handlePushPost}
            />

@@ -27,6 +27,7 @@ const _layout = () => {
     };
     fetchRole();
   }, []);
+
  
   return (
     <Tabs
@@ -35,21 +36,26 @@ const _layout = () => {
         headerStyle: {
           height: 105,
         },
-        headerTitle: (props) =>
-          // Bỏ image vào đây
+        // headerTitle: (props) =>
+        //   // Bỏ image vào đây
         
-          <Image
-            source={require('@/assets/images/logo.png')}
-            resizeMode="contain"
-          />
+        //   <Image
+        //     source={require('@/assets/images/logo.png')}
+        //     resizeMode="contain"
+        //   />
         
-        ,
+        // ,
         headerRight: () => (
           <View style={styles.headerRight}>
             <PlusButton onPress={() => { 
                role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour') 
              }} style={styles.buttonRight}></PlusButton>
-            <BellButton style={styles.buttonRight}></BellButton>
+            
+            <BellButton style={styles.buttonRight} onPress={()=>{
+               router.push({
+                pathname: '/notify'
+              })
+            }}></BellButton>
           </View>
         ),
       }}
@@ -78,6 +84,7 @@ const _layout = () => {
         name="payment"
         options={{
           title: 'Payment',
+          // headerShown: false,
         }} />
       <Tabs.Screen
         key={5}

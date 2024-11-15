@@ -17,7 +17,7 @@ import {
 import IconA from "react-native-vector-icons/AntDesign";
 import IconSend from "react-native-vector-icons/FontAwesome";
 import Icon from "react-native-vector-icons/Fontisto";
-import { ArrowLeft } from "iconsax-react-native";
+import { ArrowLeft, Information } from "iconsax-react-native";
 import { router } from "expo-router";
 import { appColors } from "@/constants/appColors";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -76,11 +76,11 @@ const AddPostTour = () => {
     }[]
   >([]);
   const [citiesDataFilter, setCitiesDataFilter] = useState<
-    { id: string; name: string; id_nuoc: string,area_id : string}[]
+    { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
 
   const [cities, setCities] = useState<
-    { id: string; name: string; id_nuoc: string,area_id : string }[]
+    { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
 
   //Modal
@@ -93,6 +93,8 @@ const AddPostTour = () => {
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalReviewPost, setModalReviewPost] = useState(false);
+
+  const [modalInformation, setModalInformation] = useState(false);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -117,11 +119,16 @@ const AddPostTour = () => {
   } | null>(null);
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
-  {
-    city: { id: string; name: string; id_nuoc: string , area_id: string } | null;
-    images: string[];
-  }[]
->([]);
+    {
+      city: {
+        id: string;
+        name: string;
+        id_nuoc: string;
+        area_id: string;
+      } | null;
+      images: string[];
+    }[]
+  >([]);
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
 
@@ -257,11 +264,11 @@ const AddPostTour = () => {
     }
   }, [selectedCountry]);
 
-   //Xoa các dấu tiếng việt
+  //Xoa các dấu tiếng việt
   const removeDiacritics = (text: any) => {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
-//Search theo ten thanh pho
+  //Search theo ten thanh pho
   useEffect(() => {
     if (searchQueryCity) {
       const filteredCities = citiesData.filter((city) =>
@@ -282,14 +289,20 @@ const AddPostTour = () => {
   // console.log("Cities:", citiesDataFilter);
   //Cac tinh thanh duoc chon
   const handCityPress =
-  (city: { id: string; name: string; id_nuoc: string, area_id : string  }) => () => {
-    setCities([
-      { id: city.id, name: city.name, id_nuoc: city.id_nuoc, area_id: city.area_id },
-      ...cities,
-    ]);
-    setSearchQueryCity("");
-    setModalVisibleCity(false);
-  };
+    (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
+    () => {
+      setCities([
+        {
+          id: city.id,
+          name: city.name,
+          id_nuoc: city.id_nuoc,
+          area_id: city.area_id,
+        },
+        ...cities,
+      ]);
+      setSearchQueryCity("");
+      setModalVisibleCity(false);
+    };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -667,7 +680,7 @@ const AddPostTour = () => {
         //     1000
         //   );
         // }
-        if(location) {
+        if (location) {
           setRegion({
             latitude: parseFloat(location.lat),
             longitude: parseFloat(location.lon),
@@ -705,7 +718,7 @@ const AddPostTour = () => {
       id: city.id,
       name: city.name,
       id_nuoc: city.id_nuoc,
-      area_id: city.area_id
+      area_id: city.area_id,
     };
     setSelectedCityForImages(selectedCity);
     setModalVisibleCityImages(false);
@@ -789,7 +802,7 @@ const AddPostTour = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
- 
+
   const handlePushPost = async () => {
     setButtonPost(true);
     if (cities.length === 0) {
@@ -909,7 +922,12 @@ const AddPostTour = () => {
         // console.log("Image:", image);
         //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
-        const { id_nuoc, id, name: cityName,area_id : id_khuvucimages} = city || {};
+        const {
+          id_nuoc,
+          id,
+          name: cityName,
+          area_id: id_khuvucimages,
+        } = city || {};
 
         //lấy ảnh từ mảng ảnh
         for (const uri of imageUris) {
@@ -949,12 +967,18 @@ const AddPostTour = () => {
             // console.log("id:", uploadedImageUrls[id_nuoc][id]);
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
             // console.log("URL:", uploadedImageUrls);
-             //Anh cho city
-            // URL ảnh theo tỉnh thành  
+            //Anh cho city
+            // URL ảnh theo tỉnh thành
             // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
-            await set(ref(database, `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`), {
-              images: uploadedImageUrls[id_nuoc][id].images_value,
-            });
+            await set(
+              ref(
+                database,
+                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
+              ),
+              {
+                images: uploadedImageUrls[id_nuoc][id].images_value,
+              }
+            );
           }
         }
 
@@ -964,11 +988,18 @@ const AddPostTour = () => {
         const userRef = ref(database, `accounts/${userId}`);
         let avatar = "";
         let fullname = "";
+        let totalPosts;
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
+            if(data.totalPosts){
+              totalPosts = data.totalPosts + 1 ;
+            }
+            else {
+              totalPosts = 1;
+            }
           }
         });
         // lấy thông tin package được chọn
@@ -978,20 +1009,28 @@ const AddPostTour = () => {
         );
 
         // lưu hashtag thành dòng chữ
-        const combinedHashtags = hashtags.map(hashtag => hashtag[0] !== "#" ? "#" + hashtag : hashtag).join(" ");
+        const combinedHashtags = hashtags
+          .map((hashtag) => (hashtag[0] !== "#" ? "#" + hashtag : hashtag))
+          .join(" ");
 
         const likes = 0;
         const reports = 0;
         const match = 0;
+        const ratingSummary = {
+          totalRatingCounter: 0,
+          totalRatingValue: 0,
+        };
         let status;
         if (isPublic) {
-           status = 1;
+          status = 1;
+        } else {
+          status = 2;
         }
-        else {
-           status = 2;
-        }
-        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty                                              
-        const thumbnail = uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]]?.images_value?.[0] || '';
+        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
+        const thumbnail =
+          uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+            Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+          ]?.images_value?.[0] || "";
 
         // tap hop du lieu
         const postData = {
@@ -1011,24 +1050,25 @@ const AddPostTour = () => {
           ),
           content: contents,
           hashtags: combinedHashtags,
-          packages: selectedPackageData,
-          view_mode: isPublic,
+          package: selectedPackageData,
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           created_at: timestamp,
           thumbnail,
           likes,
-          id : postId,
+          id: postId,
           reports,
           match,
-          status: status,
+          ratingSummary: ratingSummary,
+          status_id: status,
         };
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
           await set(newPostRef, postData);
-          //Tru tien trong tai khoan
           if (account) {
+            const userPost = ref(database, `accounts/${userId}/createdTours`);
+            //Tru tien trong tai khoan
             const newAccumulate =
               (account?.balance ?? 0) -
               (selectedPackageData.price -
@@ -1037,6 +1077,11 @@ const AddPostTour = () => {
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newAccumulate,
+              totalPosts: totalPosts,
+            });
+            //Them id bai viet vao tai khoan
+            await update(userPost, {
+              [postId]: true,
             });
           }
         } else {
@@ -1116,8 +1161,7 @@ const AddPostTour = () => {
   //Thêm hashtag
   const handleAddHashtag = () => {
     if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
-
-      // kiểm tra và thay thế khoảng trắng 
+      // kiểm tra và thay thế khoảng trắng
       //\s: Là ký tự đại diện cho bất kỳ khoảng trắng nào.
       //+: một hoặc nhiều ký tự khoảng trắng liên tiếp.
       //g:  tìm tất cả các khoảng trắng trong chuỗi
@@ -1171,11 +1215,10 @@ const AddPostTour = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [packageData, account?.balance]);
-  
 
   // *********************************************************************
-   // Xử lý review bài viết
-   const handleReviewPost = async () => {
+  // Xử lý review bài viết
+  const handleReviewPost = async () => {
     if (cities.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng chọn tỉnh thành checkin.");
@@ -1203,7 +1246,7 @@ const AddPostTour = () => {
     }
 
     const existingDay = days.find(
-      (day) =>
+      (day) => 
         day.title === "" ||
         day.description === "" ||
         day.activities.length === 0
@@ -1306,7 +1349,6 @@ const AddPostTour = () => {
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
-
             {/* Quốc gia */}
             <SectionComponent>
               <View style={styles.countrySelector}>
@@ -1471,8 +1513,9 @@ const AddPostTour = () => {
                 <TextComponent
                   text=" :"
                   size={14}
-                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5 }}
+                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5, marginRight: 5 }}
                 />
+                <Information size="18" color={appColors.danger} style={{marginTop:-5}} onPress={() => setModalInformation(true)} />
               </RowComponent>
               <SectionComponent>
                 {/* Chọn package */}
@@ -1945,7 +1988,7 @@ const AddPostTour = () => {
           </SectionComponent>
 
           {/* Hình ảnh */}
-          <SectionComponent styles={{ marginTop: 10 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
             {images.length > 0 ? (
               <View>
                 <TouchableOpacity
@@ -2120,47 +2163,47 @@ const AddPostTour = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           {buttonPost ? (
-           <RowComponent styles={{ marginHorizontal: 10 }}>
-           <TouchableOpacity
-             onPress={() => {
-               handleReviewPost();
-             }}
-             style={{
-               backgroundColor: appColors.btncity,
-               width: "20%",
-               height: "100%",
-               borderRadius: 10,
-               marginRight: 10,
-               borderColor: "green",
-               borderWidth: 1,
-             }}
-           >
-             <TextComponent
-               text="Review bài viết"
-               size={14}
-               styles={{
-                 fontWeight: "bold",
-                 color: "green",
-                 textAlign: "center",
-                 justifyContent: "center",
-                 marginTop: 3,
-                 padding: 5,
-               }}
-             />
-           </TouchableOpacity>
-           <ButtonComponent
-             text="Đang Đăng Bài...."
-             textStyles={{
-               width: "75%",
-               fontWeight: "bold",
-               fontSize: 30,
-               textAlign: "center",
-             }}
-             disabled={true}
-             color={appColors.primary}
-             onPress={handlePushPost}
-           />
-         </RowComponent>
+            <RowComponent styles={{ marginHorizontal: 10 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  handleReviewPost();
+                }}
+                style={{
+                  backgroundColor: appColors.btncity,
+                  width: "20%",
+                  height: "100%",
+                  borderRadius: 10,
+                  marginRight: 10,
+                  borderColor: "green",
+                  borderWidth: 1,
+                }}
+              >
+                <TextComponent
+                  text="Review bài viết"
+                  size={14}
+                  styles={{
+                    fontWeight: "bold",
+                    color: "green",
+                    textAlign: "center",
+                    justifyContent: "center",
+                    marginTop: 3,
+                    padding: 5,
+                  }}
+                />
+              </TouchableOpacity>
+              <ButtonComponent
+                text="Đang Đăng Bài...."
+                textStyles={{
+                  width: "75%",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  textAlign: "center",
+                }}
+                // disabled={true}
+                color={appColors.primary}
+                onPress={handlePushPost}
+              />
+            </RowComponent>
           ) : (
             <RowComponent styles={{ marginHorizontal: 10 }}>
               <TouchableOpacity
@@ -2241,11 +2284,10 @@ const AddPostTour = () => {
         <Modal
           visible={modalVisibleCity}
           onDismiss={() => {
-            setModalVisibleCity(false)
-            setSearchQueryCity("")
-          }
-          }
-            >
+            setModalVisibleCity(false);
+            setSearchQueryCity("");
+          }}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
             <View style={styles.searchContainer}>
@@ -2255,13 +2297,12 @@ const AddPostTour = () => {
                 value={searchQueryCity}
                 onChangeText={setSearchQueryCity}
               />
-             
             </View>
             {selectedCountry ? (
               <FlatList
                 data={citiesDataFilter}
                 keyExtractor={(item) => item.id}
-                style={[styles.countryList , {minHeight: 200} ]}
+                style={[styles.countryList, { minHeight: 200 }]}
                 renderItem={({ item }) => {
                   //Loc ra nhung thanh pho da chon
                   const isCitySelected = cities.some(
@@ -2286,16 +2327,17 @@ const AddPostTour = () => {
                 }}
               />
             ) : (
-              <Text style={{fontSize: 16, color: 'red'}} >Chưa chọn quốc gia trước khi chọn thành phố</Text>
+              <Text style={{ fontSize: 16, color: "red" }}>
+                Chưa chọn quốc gia trước khi chọn thành phố
+              </Text>
             )}
             <View style={styles.separator} />
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
-                setModalVisibleCity(false)
-                setSearchQueryCity("")
-              }
-            }
+                setModalVisibleCity(false);
+                setSearchQueryCity("");
+              }}
             >
               <Text style={styles.closeButtonText}>Đóng</Text>
             </TouchableOpacity>
@@ -2806,8 +2848,8 @@ const AddPostTour = () => {
           </Modal>
         )}
 
-         {/* Modal review post */}
-         <Modal
+        {/* Modal review post */}
+        <Modal
           visible={modalReviewPost}
           style={styles.modalreview}
           onDismiss={() => setModalReviewPost(false)}
@@ -2835,7 +2877,6 @@ const AddPostTour = () => {
           </SectionComponent>
         </Modal>
 
-
         {/* Modal load */}
         {buttonPost ? (
           <Modal visible={buttonPost}>
@@ -2858,6 +2899,56 @@ const AddPostTour = () => {
             </View>
           </Modal>
         ) : null}
+
+
+        {/* Modal information */}
+        <Modal
+          visible={modalInformation}
+          onDismiss={() => setModalInformation(false)}
+        >
+           <View style={{backgroundColor: 'white', width: 320,height: 230, position: 'absolute', top: -120, left: "5%"}}>
+            <SectionComponent styles={{ marginTop: 10,marginBottom: -10}}>
+            <View>
+              <Text style={[styles.modalTitle, { marginLeft: 10, fontSize: 22}]}>
+                Thông tin ưu đãi gói dịch vụ
+              </Text>
+              <Text style={{ marginLeft: 10 }}>
+                Gói càng cao thì sẽ có nhiều <Text style={{fontWeight: 'bold', color: appColors.danger}}>hashtag</Text> và điểm bài viết <Text style={{fontWeight: 'bold', color: appColors.danger}}>sẽ cao và tiếp cận</Text> được nhiều người hơn.
+              </Text>
+            </View>
+              </SectionComponent>
+              <RowComponent justify="space-between" >
+              <LottieView
+                source={require("../../assets/images/information.json")}
+                autoPlay
+                loop
+                style={{
+                  width: 150,
+                  height: 150,
+                }}
+              />
+               <SectionComponent >
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                {
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  marginRight: 70,
+                },
+              ]}
+              onPress={() => setModalInformation(false)}
+            >
+              <IconA name="close" size={20}  color="#fff" />
+            </TouchableOpacity>
+          </SectionComponent>
+              </RowComponent>
+          
+           </View>
+          </Modal>
+
+
       </View>
     </KeyboardAvoidingView>
   );

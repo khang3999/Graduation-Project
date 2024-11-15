@@ -31,7 +31,7 @@ import { Rating } from "react-native-ratings";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
 import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
@@ -41,6 +41,7 @@ import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
 import { Comment, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useHomeProvider } from "@/contexts/HomeProvider";
+import { MaterialIcons } from '@expo/vector-icons';
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -115,15 +116,16 @@ const PostItem: React.FC<PostItemProps> = ({
   setIsScrollEnabled,
 }) => {
   const TYPE = 0;
-  const MAX_LENGTH = 5;
+  const MAX_LENGTH = 10;
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
 
+
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
-  const isPostAuthor = true;
+  const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
 
@@ -141,7 +143,7 @@ const PostItem: React.FC<PostItemProps> = ({
           id: dataAccount.id,
           avatar:
             dataAccount.avatar,
-          username: dataAccount.fullname,
+          fullname: dataAccount.fullname,
         },
         status_id: 1,
         reports: 0,
@@ -259,11 +261,10 @@ const PostItem: React.FC<PostItemProps> = ({
     );
   };
 
-
-
+  
   //handle report Comment
   const handleReportComment = (Comment: Comment) => {
-
+  
   }
 
 
@@ -299,7 +300,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} />
+          <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
         </View>
       </View>
 
@@ -354,9 +355,9 @@ const PostItem: React.FC<PostItemProps> = ({
         onSubmitComment={handleCommentSubmit}
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
-        onReport={handleReportComment}
+        postId={item.id}
       />
-
+    
 
 
     </View>
@@ -401,7 +402,7 @@ export default function PostsScreen() {
     }, []) // Cập nhật khi các giá trị này thay đổi
   );
   return (
-    <>
+    <View style={{ marginTop: 30, flex: 1 }}>
       <FlatList
         data={postId ? dataPost : memoriedPostItem}
         renderItem={({ item }) => (
@@ -428,10 +429,51 @@ export default function PostsScreen() {
       )} */}
 
 
-    </>
+    </View>
   );
 }
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  }, 
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  reasonItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    width: '100%',
+  },
+  reasonText: {
+    fontSize: 16,
+  },
+  confirmationBox: {
+    position: 'absolute',
+    bottom: 30,
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '90%',
+    alignSelf: 'center',
+  },
+  confirmationText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
   // rating Comment styles
   replyInputContainer: {
     flexDirection: 'row',
@@ -644,23 +686,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10, // Ensures it appears above other content
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Dimmed background
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  
   modalContainer: {
     width: '85%',
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
   },
   modalSubtitle: {
     fontSize: 16,
@@ -753,7 +785,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   divider: {
-    marginVertical: 35,
+    marginBottom: 35,
+    marginTop: 10,
   },
   carouselItem: {
     flex: 1,
