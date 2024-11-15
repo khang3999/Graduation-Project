@@ -65,8 +65,8 @@ type Post = {
   post_status: string;
   reports: number;
   view_mode: boolean;
-};
-
+  thumbnail: any
+}
 type PostItemProps = {
   item: Post;
   setIsScrollEnabled: (value: boolean) => void;
@@ -128,7 +128,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
-
+  const [authorParentCommentId, setAuthorParentCommentId] = useState('')
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -138,6 +138,7 @@ const PostItem: React.FC<PostItemProps> = ({
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
+      parentId ? fetchRealTimeData(parentId):''
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -166,6 +167,13 @@ const PostItem: React.FC<PostItemProps> = ({
           setComments((prevComments) => {
             if (parentId) {
               // Add as a reply with the correct `parentId`
+              // Notify reply comment for parentId
+              console.log('aaa ',dataAccount.id);
+              console.log('aaa ',authorParentCommentId);
+              
+              if (authorParentCommentId!=dataAccount.id) {
+                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId) 
+              }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level Comment
@@ -174,13 +182,58 @@ const PostItem: React.FC<PostItemProps> = ({
           });
 
         }
+        // Notify comment for auht post
+        handleAddNotify(newCommentRef.key, item.author.id, parentId)
       } catch (error) {
         console.error("Error adding Comment:", error);
       }
     }
   }
+  //Tao thong bao
+  const handleAddNotify = async (commentId:any, account_id: any, parentId:any) => {
 
+    // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
+    const notifyRef = ref(database, `notifications/${account_id}`);
 
+    // Tạo key tu dong cua firebase
+    const newItemKey = push(notifyRef);
+    const notify = {
+      author_id: item.author.id,
+      comment_id: commentId,
+      commentator_id: dataAccount.id,
+      commentator_name: dataAccount.fullname,
+      created_at: Date.now(),
+      id: newItemKey.key,
+      image: item.thumbnail,
+      post_id: item.id,
+      type: parentId ? "reply": "comment",
+      read:false,
+    };
+    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
+    await set(newItemKey, notify)
+      .then(() => {
+        console.log('Data added successfully');
+      })
+      .catch((error) => {
+        console.error('Error adding data: ', error);
+      });
+
+  };
+  //Get account id of parent comment
+  function fetchRealTimeData(parentId:any) {
+    const dataRef = ref(database, `posts/${item.id}/comments/${parentId}/author/id`);
+    // Set up a real-time listener
+    onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setAuthorParentCommentId(data)
+      } else {
+        console.log("No data parent id available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+  }
 
   const addReplyToComment = (
     comments: Comment[],

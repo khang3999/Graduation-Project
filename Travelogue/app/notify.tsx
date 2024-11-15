@@ -98,7 +98,7 @@ const NotificationsScreen = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={{ flex: 2, paddingRight: 10 }}>
                         <Text style={styles.message}>
-                            {notify.item.commentator_name} đã bình luận vào bài viết của bạn
+                            {notify.item.commentator_name} {notify.item.type==="comment"?"đã bình luận vào bài viết của bạn":"đã trả lời bình luận của bạn"}
                         </Text>
                         <Text style={styles.time}>{displayTime}</Text>
                     </View>
