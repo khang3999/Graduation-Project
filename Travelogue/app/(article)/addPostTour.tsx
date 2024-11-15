@@ -1000,6 +1000,7 @@ const AddPostTour = () => {
             else {
               totalPosts = 1;
             }
+           
           }
         });
         // lấy thông tin package được chọn
@@ -1069,15 +1070,19 @@ const AddPostTour = () => {
           if (account) {
             const userPost = ref(database, `accounts/${userId}/createdTours`);
             //Tru tien trong tai khoan
-            const newAccumulate =
+            const newBalance =
               (account?.balance ?? 0) -
               (selectedPackageData.price -
                 (selectedPackageData.price * selectedPackageData.discount) /
                   100);
+            const newAccumulate = (account?.accumulate ?? 0) +  (selectedPackageData.price -
+              (selectedPackageData.price * selectedPackageData.discount) /
+                100);
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
-              balance: newAccumulate,
+              balance: newBalance,
               totalPosts: totalPosts,
+              accumulate: newAccumulate,
             });
             //Them id bai viet vao tai khoan
             await update(userPost, {
@@ -2913,7 +2918,7 @@ const AddPostTour = () => {
                 Thông tin ưu đãi gói dịch vụ
               </Text>
               <Text style={{ marginLeft: 10 }}>
-                Gói càng cao thì sẽ có nhiều <Text style={{fontWeight: 'bold', color: appColors.danger}}>hashtag</Text> và điểm bài viết <Text style={{fontWeight: 'bold', color: appColors.danger}}>sẽ cao và tiếp cận</Text> được nhiều người hơn.
+                Gói càng cao thì sẽ có nhiều <Text style={{fontWeight: 'bold', color: appColors.danger}}>hashtag</Text> và<Text style={{fontWeight: 'bold', color: appColors.danger}}> được tích lũy điểm</Text> cho tài khoản và bài viết <Text style={{fontWeight: 'bold', color: appColors.danger}}>sẽ dựa các tiêu chí bao gồm </Text><Text style={{fontWeight: 'bold', color: appColors.primary}}>(điểm tích lũy điểm tài khoản, giá trị gói package, hashtag)</Text> để tiếp cận được nhiều người hơn.
               </Text>
             </View>
               </SectionComponent>
