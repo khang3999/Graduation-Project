@@ -238,10 +238,10 @@ const rejectAcc = (accountId: string) => {
     }
   }
 //Chuyen sang post detail
-const handleNavigateCompanyInformation = () => {
+const handleNavigateCompanyInformation = (accountId:any) => {
   router.push({
-    pathname: '/(maps)/checkInMap',
-    params:{}
+    pathname: '/detail',
+    params:{userId : accountId}
   })
 
 }
@@ -252,7 +252,7 @@ const handleNavigateCompanyInformation = () => {
     return (
       <TouchableOpacity key={account.item.id} style={styles.accountItem}
       onPress={
-        ()=>handleNavigateCompanyInformation()
+        ()=>handleNavigateCompanyInformation(account.item.id)
       }>
         <View >
           <Text style={styles.name}>{CutText(account.item.fullname)}</Text>

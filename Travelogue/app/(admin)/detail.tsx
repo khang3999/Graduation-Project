@@ -1,6 +1,8 @@
 import { View, Text, Pressable, SafeAreaView, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import React, { useEffect } from 'react'
 import { database, get, getDownloadURL, ref, storage, storageRef } from '@/firebase/firebaseConfig';
+import { LocalRouteParamsContext } from 'expo-router/build/Route';
+import { useLocalSearchParams } from 'expo-router';
 
 const getCurrentUserData = async (userId: String) => {
     try {
@@ -33,12 +35,13 @@ const getImageUrl = async (imagePath: string) => {
 
 export default function detail() {
     const [userData, setUserData] = React.useState<any>(null);
-    const userId = "5hHcZLibladWlKOMp9psuFsnqA53";
+    // const userId = "5hHcZLibladWlKOMp9psuFsnqA53";
+    const {userId} = useLocalSearchParams()
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await getCurrentUserData(userId);
+                const data = await getCurrentUserData(userId as String);
                 setUserData(data);
             } catch (error) {
                 console.error("Error fetching user data:", error);
@@ -130,7 +133,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: "#f8f8f8",
-        paddingBottom:100,
+        paddingBottom:10,
     },
     loading: {
         flex: 1,
