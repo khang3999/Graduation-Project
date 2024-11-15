@@ -49,7 +49,6 @@ export const countMatchingLocations = (locationsList, listLocationIdOfPost) => {
     
     const match = locationsList.filter(id => listLocationIdOfPost.includes(id)).length; // Số lượng trùng khớp
     const ratio = 100 / listLocationIdOfPost.length // tỉ lệ theo số lượng phần tử của location bài viết
-    console.log(match);
     return match * ratio
 };
 
@@ -67,14 +66,11 @@ export const sortTourAtHomeScreen = (listTour, listLocationIdOfPost) => {
         const locationIdOfTourA = Object.keys(tourA.locations).flatMap((country) =>
             Object.keys(tourA.locations[country]) // Lấy id (ví dụ: "vn_1", "vn_2")
         );
-        console.log(locationIdOfTourA,'aaaaaa');
-        
         const locationIdOfTourB = Object.keys(tourB.locations).flatMap((country) =>
             Object.keys(tourB.locations[country]) // Lấy id (ví dụ: "vn_1", "vn_2")
         );
         const matchesA = countMatchingLocations(listLocationIdOfPost, locationIdOfTourA);
         const matchesB = countMatchingLocations(listLocationIdOfPost, locationIdOfTourB);
-        console.log(matchesA," " ,matchesB);
         
         const factorTourA = tourA.package.hashtag
         const factorTourB = tourB.package.hashtag
@@ -131,4 +127,35 @@ export const sortTourMatchingAtTourScreen = (listTour) => {
     })
     return listTour;
 }
+
+// // HÀM SORT TOUR CHO MẢNG KHÔNG MATCH MÀN HÌNH TOUR
+// export const sortTourNonMatchingAtTourScreen = (listTour) => {
+//     listTour.sort((tourA, tourB) => {
+//         const matchesA = tourA.match
+//         const matchesB = tourB.match
+//         const factorTourA = tourA.package.hashtag
+//         const factorTourB = tourB.package.hashtag
+//         const ratingTourA = tourA.rating
+//         const ratingTourB = tourB.rating
+//         const likeTourA = tourA.likes
+//         const likeTourB = tourB.likes
+//         const dateTourA = tourA.created_at  
+//         const dateTourB = tourB.created_at
+//         // Nếu 2 tour có hệ số địa điểm trùng bằng nhau 
+//         if (matchesA == matchesB) {
+//             if (factorTourB == factorTourA) {
+//                 if (ratingTourB == ratingTourA) {
+//                     if (likeTourB == likeTourA) {
+//                         return dateTourB - dateTourA
+//                     }
+//                     return likeTourB - likeTourA
+//                 }
+//                 return ratingTourB - ratingTourA
+//             }
+//             return factorTourB - factorTourA
+//         };
+//         return matchesB - matchesA; // Sắp xếp giảm dần theo số lượng trùng khớp
+//     })
+//     return listTour;
+// }
 

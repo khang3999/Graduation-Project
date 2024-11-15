@@ -94,8 +94,12 @@ const TourList = () => {
                 tour.match += 1
               }
               // Đếm city trùng
-              const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfTour.includes(cityID)).length; // Đếm số phần tử trùng
+              // const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfTour.includes(cityID)).length; // Đếm số phần tử trùng
+              // tour.match += matchLocation // cập nhật match
+
+              const matchLocation = countMatchingLocations(selectedCities, listLocationIdOfTour)
               tour.match += matchLocation // cập nhật match
+
               // Push vào mảng
               if (tour.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
                 matchingTour.push(tour)
@@ -256,8 +260,6 @@ const TourList = () => {
     try {
       const refTours = ref(database, 'tours/')
       const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-      console.log(refTours);
-      console.log(toursQuery);
       
       const snapshot = await get(toursQuery);
       if (snapshot.exists()) {
@@ -298,9 +300,10 @@ const TourList = () => {
         const behaviorToursSorted = sortTourMatchingAtTourScreen(behaviorTours)
 
         // 2.2. Sort mảng không match hành vi theo created_at
-        nonBehaviorTours.sort((tourA: any, tourB: any) => {
-          return tourB.created_at - tourA.created_at;
-        })
+        // nonBehaviorTours.sort((tourA: any, tourB: any) => {
+        //   return tourB.created_at - tourA.created_at;
+        // })
+        sortTourMatchingAtTourScreen(nonBehaviorTours)
         //Bước 3: Trộn mảng
         const mergedTours = mergeWithRatio(behaviorToursSorted, nonBehaviorTours, 2, 1)
 

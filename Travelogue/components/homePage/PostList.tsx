@@ -87,8 +87,11 @@ const PostList = () => {
                 post.match += 1
               }
               // Đếm city trùng
-              const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
+              // const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
+              
+              const matchLocation = countMatchingLocations(selectedCities, listLocationIdOfPost)
               post.match += matchLocation // cập nhật match
+              
               // Push vào mảng
               if (post.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
                 matchingPost.push(post)
@@ -261,7 +264,7 @@ const PostList = () => {
         // Bước 2: Sort
         //2.1. Sort mảng theo behavior: match > created_at
         behaviorPosts.sort((postA: any, postB: any) => {
-          // So sánh theo match trước
+          // So sánh theo match trước ưu tiên trùng hành vi và thời gian
           if (postB.match !== postA.match) {
             return postB.match - postA.match; // Sắp xếp giảm dần theo match
           }
