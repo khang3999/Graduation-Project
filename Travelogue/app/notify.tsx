@@ -9,13 +9,13 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    let accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    let accountId = "";
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
 
-    // useEffect(() => {
-    //     accountId = dataAccount.id
-    // }, [dataAccount])
+    useEffect(() => {
+        accountId = dataAccount.id
+    }, [dataAccount])
 
     // Fetch data notifications by account id
     useEffect(() => {
