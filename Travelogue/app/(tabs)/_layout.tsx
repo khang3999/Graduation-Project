@@ -14,7 +14,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler'
 const _layout = () => {
   const [role, setRole] = useState("user");
   const [userID, setUserId] = useState("");
-  const [countNotify, setCountNotify] = useState(0);
+  const [countNotify, setCountNotify] = useState(10);
 
   useEffect(() => {
     const fetchRole = async () => {

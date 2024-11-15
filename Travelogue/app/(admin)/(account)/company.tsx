@@ -4,6 +4,7 @@ import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
 import CutText from '@/components/CutText';
+import { router } from 'expo-router';
 
 export default function CompanyManagementScreen() {
 
@@ -236,13 +237,23 @@ const rejectAcc = (accountId: string) => {
         return null;
     }
   }
+//Chuyen sang post detail
+const handleNavigateCompanyInformation = () => {
+  router.push({
+    pathname: '/(maps)/checkInMap',
+    params:{}
+  })
 
+}
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     console.log('stu', dataStatus[account.item.status_id]);
 
     return (
-      <View key={account.item.id} style={styles.accountItem}>
+      <TouchableOpacity key={account.item.id} style={styles.accountItem}
+      onPress={
+        ()=>handleNavigateCompanyInformation()
+      }>
         <View >
           <Text style={styles.name}>{CutText(account.item.fullname)}</Text>
           <Text style={[styles.reason, { color: color[account.item.status_id] }]}>{dataStatus[account.item.status_id]}</Text>
@@ -250,7 +261,7 @@ const rejectAcc = (accountId: string) => {
 
         {(renderIcon(account.item))}
 
-      </View>
+      </TouchableOpacity>
     )
   };
 

@@ -52,21 +52,25 @@ const NotificationsScreen = () => {
         }
 
     };
+
     //handle read notify
     const handleRead = (notify: any) => {
-        const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
+        if (accountId) {
+            const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
 
-        update(refNotify, { read: true })
-            .then(() => {
-                console.log('Data updated successfully!');
+            update(refNotify, { read: true })
+                .then(() => {
+                    console.log('Data updated successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error updating data:', error);
+                });
+            fetchPostByPostId(notify.post_id)
+            router.push({
+                pathname: '/postDetail'
             })
-            .catch((error) => {
-                console.error('Error updating data:', error);
-            });
-        fetchPostByPostId(notify.post_id)
-        router.push({
-            pathname: '/postDetail'
-        })
+        }
+
     }
 
     const renderItem = (notify: any) => {
@@ -96,7 +100,7 @@ const NotificationsScreen = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={{ flex: 2, paddingRight: 10 }}>
                         <Text style={styles.message}>
-                            {notify.item.commentator_name} {notify.item.type==="comment"?"đã bình luận vào bài viết của bạn":"đã trả lời bình luận của bạn"}
+                            {notify.item.commentator_name} {notify.item.type === "comment" ? "đã bình luận vào bài viết của bạn" : "đã trả lời bình luận của bạn"}
                         </Text>
                         <Text style={styles.time}>{displayTime}</Text>
                     </View>

@@ -138,7 +138,13 @@ const PostItem: React.FC<PostItemProps> = ({
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
-      parentId ? fetchRealTimeData(parentId):''
+      // Usage:
+      try {
+        const data = await fetchRealTimeData(parentId);
+        console.log("Fetched data:", data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -168,11 +174,11 @@ const PostItem: React.FC<PostItemProps> = ({
             if (parentId) {
               // Add as a reply with the correct `parentId`
               // Notify reply comment for parentId
-              console.log('aaa ',dataAccount.id);
-              console.log('aaa ',authorParentCommentId);
-              
-              if (authorParentCommentId!=dataAccount.id) {
-                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId) 
+              console.log('aaa ', dataAccount.id);
+              console.log('aaa ', authorParentCommentId);
+
+              if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
+                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
               }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
@@ -183,14 +189,21 @@ const PostItem: React.FC<PostItemProps> = ({
 
         }
         // Notify comment for auht post
-        handleAddNotify(newCommentRef.key, item.author.id, parentId)
+        console.log("bbb ", dataAccount.id);
+        console.log("bbb ", item.author.id);
+
+        if (dataAccount.id != item.author.id) {
+          handleAddNotify(newCommentRef.key, item.author.id, parentId)
+        }
       } catch (error) {
         console.error("Error adding Comment:", error);
       }
     }
   }
+  console.log('ccc', authorParentCommentId);
+
   //Tao thong bao
-  const handleAddNotify = async (commentId:any, account_id: any, parentId:any) => {
+  const handleAddNotify = async (commentId: any, account_id: any, parentId: any) => {
 
     // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
     const notifyRef = ref(database, `notifications/${account_id}`);
@@ -206,8 +219,8 @@ const PostItem: React.FC<PostItemProps> = ({
       id: newItemKey.key,
       image: item.thumbnail,
       post_id: item.id,
-      type: parentId ? "reply": "comment",
-      read:false,
+      type: parentId ? "reply" : "comment",
+      read: false,
     };
     // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
     await set(newItemKey, notify)
@@ -220,20 +233,32 @@ const PostItem: React.FC<PostItemProps> = ({
 
   };
   //Get account id of parent comment
-  function fetchRealTimeData(parentId:any) {
+  async function fetchRealTimeData(parentId: any) {
     const dataRef = ref(database, `posts/${item.id}/comments/${parentId}/author/id`);
-    // Set up a real-time listener
-    onValue(dataRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        setAuthorParentCommentId(data)
-      } else {
-        console.log("No data parent id available");
-      }
-    }, (error) => {
-      console.error("Error fetching data:", error);
+
+    return new Promise((resolve, reject) => {
+      // Set up a real-time listener
+      onValue(
+        dataRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            setAuthorParentCommentId(data);
+            resolve(data); // Resolve the promise with the fetched data
+          } else {
+            console.log("No data parent id available");
+            resolve(null); // Resolve with null if no data
+          }
+        },
+        (error) => {
+          console.error("Error fetching data:", error);
+          reject(error); // Reject the promise on error
+        }
+      );
     });
   }
+
+
 
   const addReplyToComment = (
     comments: Comment[],
@@ -314,10 +339,10 @@ const PostItem: React.FC<PostItemProps> = ({
     );
   };
 
-  
+
   //handle report Comment
   const handleReportComment = (Comment: Comment) => {
-  
+
   }
 
 
@@ -410,7 +435,7 @@ const PostItem: React.FC<PostItemProps> = ({
         onDelete={handleDeleteComment}
         postId={item.id}
       />
-    
+
 
 
     </View>
@@ -446,7 +471,7 @@ export default function PostsScreen() {
   useFocusEffect(
     useCallback(() => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (postId ) {
+      if (postId) {
         fetchPostById(postId)
       }
       return () => {
@@ -491,7 +516,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  }, 
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -739,7 +764,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10, // Ensures it appears above other content
   },
-  
+
   modalContainer: {
     width: '85%',
     backgroundColor: '#fff',
