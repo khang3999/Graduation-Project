@@ -223,6 +223,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
         ...item.reason,
         [reasonKey] : reason
       },
+      type:"post",
       status: 1
     }
     await update(reportRef, itemNew)
@@ -256,6 +257,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
         ...item.reason,
         [reasonKey] : reason
       },
+      type:'post',
       status: 1
     }
     await update(reportRef, itemNew)

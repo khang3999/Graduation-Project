@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { AntDesign } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
+import { useAccount } from '@/contexts/AccountProvider';
+import { router } from 'expo-router';
 
 export default function AccountManagementScreen() {
 
   const [dataAccountReport, setDataAccountReport] = useState([]);
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
+  const { accountData, setAccountData }: any = useAccount()
+
   //Du lieu Account
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
@@ -87,11 +91,19 @@ export default function AccountManagementScreen() {
       ]
     );
   };
-
+  //Chuyen sang account detail
+  const handleNavigatePostDetail = (accountID:any) => {
+    setAccountData(accountID)
+    router.push({
+      pathname: '/(profiles)/Profile'
+    })
+  }
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     return (
-      <View key={account.item.id} style={styles.accountItem}>
+      <TouchableOpacity key={account.item.id} style={styles.accountItem}
+      onPress={()=>handleNavigatePostDetail(account.item.id)}
+      >
         <View>
           <Text style={styles.name}>{account.item.id}</Text>
           {Object.values(account.item.reason).map((reason: any) => {
@@ -102,11 +114,11 @@ export default function AccountManagementScreen() {
 
         </View>
         <View >
-          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0           }} onPress={() => unlockPost(account.item.id)} />
+          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(account.item.id)} />
 
         </View>
 
-      </View>
+      </TouchableOpacity>
     )
   };
 

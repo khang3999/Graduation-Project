@@ -630,6 +630,7 @@ const TourItem: React.FC<TourItemProps> = ({
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
         postId={item.id}
+        type = {"tour"}
       />
 
 

@@ -1,8 +1,8 @@
-import { View, Text, Pressable, SafeAreaView, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
+import { View, Text, Pressable, SafeAreaView, ScrollView, TextInput, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { useEffect } from 'react'
 import { database, get, getDownloadURL, ref, storage, storageRef } from '@/firebase/firebaseConfig';
 import { LocalRouteParamsContext } from 'expo-router/build/Route';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 const getCurrentUserData = async (userId: String) => {
     try {
@@ -112,11 +112,14 @@ export default function detail() {
                             <Text style={styles.infoText}>Ảnh số đăng ký:</Text>
                             <Image style={styles.cccd} source={{uri : userData.imageUrlBusinessLicense}}></Image>
                         </View>
-                        <Pressable
+                        <TouchableOpacity
                             style={styles.saveButton}
+                            onPress={()=>{
+                                router.back()
+                            }}
                         >
                             <Text style={styles.saveButtonText}>Thoát</Text>
-                        </Pressable>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -208,7 +211,7 @@ const styles = StyleSheet.create({
         color: "#666",
     },
     saveButton: {
-        backgroundColor: "#C1E1C1",
+        backgroundColor: "#BBFFA2",
         paddingVertical: 15,
         borderRadius: 5,
         alignItems: "center",

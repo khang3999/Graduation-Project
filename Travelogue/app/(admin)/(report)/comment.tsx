@@ -1,12 +1,13 @@
 
 import UnlockBtn from '@/components/buttons/UnlockBtn';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { push, remove, update,get } from '@firebase/database';
 import { usePost } from '@/contexts/PostProvider';
 import { router } from 'expo-router';
+import { useTourProvider } from '@/contexts/TourProvider';
 
 
 
@@ -15,6 +16,7 @@ export default function CommentReport() {
   const keyResolve = 2;
   const [factorReport, setFactorReport] = useState(0);
   const { selectedPost, setSelectedPost }: any = usePost()
+  const { selectedTour, setSelectedTour }: any = useTourProvider()
 
 
   //Du lieu Comment
@@ -62,9 +64,9 @@ export default function CommentReport() {
 
 
   // Hàm gỡ lock cho comment
-  const unlockComment = (commentID: string, postId: string) => {
+  const unlockComment = (commentID: string, postId: string, type:string) => {
     const refRemove = ref(database, `reports/comment/${[commentID]}`)
-    const refComment = ref(database, `posts/${[postId]}/comments/${[commentID]}`)
+    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentID]}`)
     Alert.alert(
       "Unlock comment",
       "Are you sure you want to unlock this comment?",
@@ -93,8 +95,8 @@ export default function CommentReport() {
     );
   };
   // Hàm hidden comment
-  const hiddenComment = (commentId: string, postId: string) => {
-    const refComment = ref(database, `posts/${[postId]}/comments/${[commentId]}`)
+  const hiddenComment = (commentId: string, postId: string, type:string) => {
+    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentId]}`)
     const refReport = ref(database, `reports/comment/${[commentId]}`)
     Alert.alert(
       "Hidden comment",
@@ -126,15 +128,14 @@ export default function CommentReport() {
   };
 
    // Fetch post by postID
-   const fetchPostByPostId = async (postId: any) => {
+   const fetchPostByPostId = async (postId: any, type:any) => {
     try {
-      const refCity = ref(database, `posts/${postId}`);
-      const snapshot = await get(refCity);
+      const refPost = ref(database, `${type}s/${postId}`);
+      const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataJson = snapshot.val();
-       
-        setSelectedPost([dataJson])
-        
+       console.log(dataJson);
+       type==="post"?setSelectedPost([dataJson]):setSelectedTour([dataJson])
       } else {
         console.log("No data city available");
       }
@@ -145,11 +146,19 @@ export default function CommentReport() {
   };
 
   //Chuyen sang post detail
-  const handleNavigatePostDetail = (post: any) => {
-    fetchPostByPostId(post)
-    router.push({
-      pathname: '/postDetail'
-    })
+  const handleNavigatePostDetail = (post: any, type:any) => {
+    fetchPostByPostId(post,type)
+    if (type==="tour") {
+      router.push({
+        pathname: '/tourDetail'
+      })
+    }
+    else if (type==="post") {
+      router.push({
+        pathname: '/postDetail'
+      })
+    }
+    
 
   }
 
@@ -157,7 +166,7 @@ export default function CommentReport() {
   const renderCommentItem = (comment: any) => {
     return (
       <TouchableOpacity style={styles.accountItem} onPress={
-        () => handleNavigatePostDetail(comment.item.post_id)
+        () => handleNavigatePostDetail(comment.item.post_id, comment.item.type)
       }>
         <View>
 
@@ -170,8 +179,8 @@ export default function CommentReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={24} color='#3366CC' onPress={() => unlockComment(comment.item.id, comment.item.post_id)} />
-          <AntDesign name="delete" size={24} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id)} />
+          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.id, comment.item.post_id, comment.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id, comment.item.type)} />
         </View>
 
       </TouchableOpacity>

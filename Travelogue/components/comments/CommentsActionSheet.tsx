@@ -26,6 +26,7 @@ interface CommentsActionSheetProps {
     onReport?: (item: SortedComment) => void;
     accountId?: string;
     postId?: string;
+    type: string;
 }
 // Function to sort and nest comments
 function sortAndNestComments(comments: Record<string, SortedComment>): SortedComment[] {
@@ -87,6 +88,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [reasonsPost, setReasonsPost] = useState([])
     const [dataReason, setDataReason] = useState([])
     const [typeReport, setTypeReport] = useState('')
+    const [type, setType] = useState('')
     const [idPost, setIdPost] = useState<undefined | String>('')
     const [idComment, setIdComment] = useState('')
     const [reasonsComment, setReasonsComment] = useState([])
@@ -189,6 +191,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 ...item.reason,
                 [reasonKey]: reason
             },
+            type:type,
             status: 1
         }
         await update(reportRef, itemNew)
@@ -208,7 +211,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         setIdPost(props.postId)
         setTypeReport("comment")
         unauthorizedCommentAS.current?.hide();
-
+        setType(props.type)
     }
 
     // Animate opacity when replyText changes
