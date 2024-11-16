@@ -29,7 +29,7 @@ export default function CommentReport() {
         const jsonData = snapshot.val();
         const jsonDataArr: any = Object.values(jsonData)
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((comment: any) => (comment.status != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
+        const filteredData = jsonDataArr.filter((comment: any) => (comment.status_id != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
         setDataCommentReport(filteredData);
       } else {
         console.log("No data available");
@@ -81,14 +81,7 @@ export default function CommentReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            //Cap nhat report cho comment sau khi unlock
-            update(refComment, { reports: 0 })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
+           
           }
         }
       ]
@@ -180,7 +173,7 @@ export default function CommentReport() {
         </View>
         <View style={{ flexDirection: 'row' }}>
           <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id, comment.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
         </View>
 
       </TouchableOpacity>

@@ -29,7 +29,7 @@ export default function PostReport() {
         const jsonDataArr: any = Object.values(jsonData)
 
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((post: any) => (post.status != keyResolve) && (Object.keys(post.reason).length >= factorReport));
+        const filteredData = jsonDataArr.filter((post: any) => (post.status_id != keyResolve) && (Object.keys(post.reason).length >= factorReport));
 
         setDataPostReport(filteredData);
       } else {
@@ -82,14 +82,7 @@ export default function PostReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            //Cap nhat report cho post sau khi unlock
-            update(refPost, { reports: 0 })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
+            
           }
         }
       ]
