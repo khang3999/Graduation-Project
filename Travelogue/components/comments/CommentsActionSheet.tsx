@@ -77,6 +77,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
+    const [bannedwords, setBannedwords] = useState<any[]>([])
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -104,6 +105,15 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const handleReplySubmit = () => {
 
         if (replyText) {
+            // convert reply text to lowercase for easier comparison
+            const replyTextLower = replyText.toLowerCase();
+
+            // Check for banned words
+            const bannedWord = bannedwords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
+            if (bannedWord) {
+                Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
+                return;
+            }
             if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
 
@@ -191,7 +201,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 ...item.reason,
                 [reasonKey]: reason
             },
-            type:type,
+            type: type,
             status_id: 1
         }
         await update(reportRef, itemNew)
@@ -234,6 +244,32 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
         setFlatComments(flattened);
     }, [props.commentsData]);
+
+    // Get banned words
+    useEffect(() => {
+        const onValueChange = ref(database, 'words/');
+        const bannedwords = onValue(onValueChange, (snapshot) => {
+            if (snapshot.exists()) {
+                const jsonData = snapshot.val();
+                // Chuyển đổi object thành array
+                const dataArray: any = Object.entries(jsonData).map(([key, value]) => ({
+                    id: key,
+                    word: value,
+                }));
+                setBannedwords(dataArray);
+            } else {
+                console.log("No data available");
+            }
+        }, (error) => {
+            console.error("Error fetching data:", error);
+        });
+
+        return () => bannedwords();
+    }, []);
+
+
+
+
 
     return (
         <KeyboardAvoidingView
@@ -285,36 +321,36 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
                                 item.status_id == 1 ? (
-                                <TouchableOpacity style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
-                                    onLongPress={() => handleLongPress(item)}
-                                >
-                                    <View style={styles.ratingCommentHeader}>
-                                        <Image
-                                            source={{ uri: item.author.avatar }}
-                                            style={styles.ratingCommentAvatar}
-                                        />
-                                        <View style={styles.ratingCommentUserInfo}>
-                                            <Text style={styles.ratingCommentAuthor}>
-                                                {item.author.fullname}
-                                            </Text>
-                                            <Text style={styles.ratingCommentTime}>
-                                                {item.created_at}
-                                            </Text>
+                                    <TouchableOpacity style={[styles.ratingCommentCard, { marginLeft: item.indentationLevel ? item.indentationLevel * 30 : 0 }]}
+                                        onLongPress={() => handleLongPress(item)}
+                                    >
+                                        <View style={styles.ratingCommentHeader}>
+                                            <Image
+                                                source={{ uri: item.author.avatar }}
+                                                style={styles.ratingCommentAvatar}
+                                            />
+                                            <View style={styles.ratingCommentUserInfo}>
+                                                <Text style={styles.ratingCommentAuthor}>
+                                                    {item.author.fullname}
+                                                </Text>
+                                                <Text style={styles.ratingCommentTime}>
+                                                    {item.created_at}
+                                                </Text>
+                                            </View>
                                         </View>
-                                    </View>
 
-                                    <Text style={styles.ratingCommentText}>{item.content}</Text>
-                                    {!item.parentId && (
-                                        <Pressable
+                                        <Text style={styles.ratingCommentText}>{item.content}</Text>
+                                        {!item.parentId && (
+                                            <Pressable
 
-                                            style={styles.replyButtonContainer}
-                                            onPress={() => handleReplyButtonPress(item)}
-                                        >
-                                            <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
-                                            <Text style={styles.replyButtonText}>Reply</Text>
-                                        </Pressable>
-                                    )}
-                                </TouchableOpacity>
+                                                style={styles.replyButtonContainer}
+                                                onPress={() => handleReplyButtonPress(item)}
+                                            >
+                                                <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
+                                                <Text style={styles.replyButtonText}>Reply</Text>
+                                            </Pressable>
+                                        )}
+                                    </TouchableOpacity>
                                 ) : null
                             )}
                             contentContainerStyle={{ paddingBottom: 120 }}
