@@ -142,7 +142,7 @@ const Festival = () => {
     };
 
     router.push({
-      pathname: "/(admin)/newPoint",
+      pathname: "/newPoint",
       params: data,
     });
   };

@@ -45,7 +45,7 @@ export default function CompanyManagementScreen() {
         // Lọc các bài có status != 2, da xu ly
         const filteredData = jsonDataArr.filter((account: any) => (account.business_license_id != null));
         // Sắp xếp dữ liệu theo status_id
-        const sortedData = filteredData.sort((a:any, b:any) => a.status_id - b.status_id);
+        const sortedData = filteredData.sort((a: any, b: any) => a.status_id - b.status_id);
         setDatCompany(sortedData);
       } else {
         console.log("No data available");
@@ -80,52 +80,52 @@ export default function CompanyManagementScreen() {
     return () => factor();
   }, []);
 
- // Hàm lock cho account,  user  status la (1) ve 2
- const acceptAcc = (accountId: string) => {
-  const refAcc = ref(database, `accounts/${[accountId]}`)
-  Alert.alert(
-    "Accept account",
-    "Are you sure you want to accept this account?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "OK", onPress: () => {
-          //Cap nhat report cho post sau khi unlock
-          update(refAcc, { status_id: "2" })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
+  // Hàm lock cho account,  user  status la (1) ve 2
+  const acceptAcc = (accountId: string) => {
+    const refAcc = ref(database, `accounts/${[accountId]}`)
+    Alert.alert(
+      "Accept account",
+      "Are you sure you want to accept this account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat report cho post sau khi unlock
+            update(refAcc, { status_id: 2 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
         }
-      }
-    ]
-  );
-};
-// Hàm lock cho account,  user  status la (1) ve 5
-const rejectAcc = (accountId: string) => {
-  const refAcc = ref(database, `accounts/${[accountId]}`)
-  Alert.alert(
-    "Reject account",
-    "Are you sure you want to reject this account?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "OK", onPress: () => {
-          //Cap nhat report cho post sau khi unlock
-          update(refAcc, { status_id: "5" })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
+      ]
+    );
+  };
+  // Hàm lock cho account,  user  status la (1) ve 5
+  const rejectAcc = (accountId: string) => {
+    const refAcc = ref(database, `accounts/${[accountId]}`)
+    Alert.alert(
+      "Reject account",
+      "Are you sure you want to reject this account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "OK", onPress: () => {
+            //Cap nhat report cho post sau khi unlock
+            update(refAcc, { status_id: 5 })
+              .then(() => {
+                console.log('Data updated successfully!');
+              })
+              .catch((error) => {
+                console.error('Error updating data:', error);
+              });
+          }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
   // Hàm gỡ report cho account, khi user co status la 3 ve lai 2
   const unReportAcc = (accountId: string) => {
     const refRemove = ref(database, `reports/account/${[accountId]}`)
@@ -145,7 +145,7 @@ const rejectAcc = (accountId: string) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
             //Cap nhat report cho post sau khi unlock
-            update(refAcc, { status_id: "2" })
+            update(refAcc, { status_id: 2 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -168,7 +168,7 @@ const rejectAcc = (accountId: string) => {
         {
           text: "OK", onPress: () => {
             //Cap nhat report cho post sau khi unlock
-            update(refAcc, { status_id: "2" })
+            update(refAcc, { status_id: 2 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -192,7 +192,7 @@ const rejectAcc = (accountId: string) => {
         {
           text: "OK", onPress: () => {
             //Cap nhat report cho post sau khi unlock
-            update(refAcc, { status_id: "4" })
+            update(refAcc, { status_id: 4 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -213,47 +213,47 @@ const rejectAcc = (accountId: string) => {
     switch (item.status_id) {
       case "1":
         return (
-          <View style={{flexDirection:'row'}}>
-            <Feather name="check-square" size={24} color="green" style={{ left: -25 }} onPress={()=>acceptAcc(item.id)}/>
-            <Feather name="x-square" size={25} color="red" onPress={()=>rejectAcc(item.id)}/>
+          <View style={{ flexDirection: 'row' }}>
+            <Feather name="check-square" size={24} color="green" style={{ left: -25 }} onPress={() => acceptAcc(item.id)} />
+            <Feather name="x-square" size={25} color="red" onPress={() => rejectAcc(item.id)} />
           </View>);
       case "2":
         return (
           <View>
-            <AntDesign name="lock" size={28} color="black" onPress={()=>lockAcc(item.id)}/>
+            <AntDesign name="lock" size={28} color="black" onPress={() => lockAcc(item.id)} />
           </View>);
       case "3":
         return (
-          <View style={{flexDirection:'row'}}>
-            <MaterialIcons name="clear" size={28} color="#3366CC"style={{ bottom: 0 , left: -22}} onPress={()=>unReportAcc(item.id)}/>
-            <AntDesign name="lock" size={28} color="black" onPress={()=>lockAcc(item.id)}/>
+          <View style={{ flexDirection: 'row' }}>
+            <MaterialIcons name="clear" size={28} color="#3366CC" style={{ bottom: 0, left: -22 }} onPress={() => unReportAcc(item.id)} />
+            <AntDesign name="lock" size={28} color="black" onPress={() => lockAcc(item.id)} />
           </View>);
       case "4":
         return (
           <View>
-            <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={()=>unLockAcc(item.id)}/>
+            <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unLockAcc(item.id)} />
           </View>);
       default:
         return null;
     }
   }
-//Chuyen sang post detail
-const handleNavigateCompanyInformation = (accountId:any) => {
-  router.push({
-    pathname: '/detail',
-    params:{userId : accountId}
-  })
+  //Chuyen sang post detail
+  const handleNavigateCompanyInformation = (accountId: any) => {
+    router.push({
+      pathname: '/companyDetail',
+      params: { userId: accountId }
+    })
 
-}
+  }
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     console.log('stu', dataStatus[account.item.status_id]);
 
     return (
       <TouchableOpacity key={account.item.id} style={styles.accountItem}
-      onPress={
-        ()=>handleNavigateCompanyInformation(account.item.id)
-      }>
+        onPress={
+          () => handleNavigateCompanyInformation(account.item.id)
+        }>
         <View >
           <Text style={styles.name}>{CutText(account.item.fullname)}</Text>
           <Text style={[styles.reason, { color: color[account.item.status_id] }]}>{dataStatus[account.item.status_id]}</Text>

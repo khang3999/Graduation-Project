@@ -200,7 +200,6 @@ const PostItem: React.FC<PostItemProps> = ({
       }
     }
   }
-  console.log('ccc', authorParentCommentId);
 
   //Tao thong bao
   const handleAddNotify = async (commentId: any, account_id: any, parentId: any) => {
@@ -379,6 +378,8 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
         <View style={{ zIndex: 1000 }}>
           <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+
+          
         </View>
       </View>
 
@@ -434,6 +435,7 @@ const PostItem: React.FC<PostItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         postId={item.id}
+        type={"post"}
       />
 
 
@@ -910,8 +912,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 10,
+    paddingHorizontal:10,
+    paddingBottom:10,
+    // padding:10,
   },
+
   miniAvatar: {
     width: 40,
     height: 40,

@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
+import { useAccount } from '@/contexts/AccountProvider';
+import { router } from 'expo-router';
 
 export default function AccountManagementScreen() {
 
   const [dataAccountReport, setDataAccountReport] = useState([]);
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
+  const { accountData, setAccountData }: any = useAccount()
+
   //Du lieu Account
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
@@ -56,13 +60,13 @@ export default function AccountManagementScreen() {
     return () => factor();
   }, []);
 
-  // Hàm gỡ lock cho account
-  const unlockPost = (accountId: string) => {
+  // Hàm gỡ report cho account
+  const unreportAccount = (accountId: string) => {
     const refRemove = ref(database, `reports/account/${[accountId]}`)
-    const refPost = ref(database, `accounts/${[accountId]}`)
+    const refAccount = ref(database, `accounts/${[accountId]}`)
     Alert.alert(
-      "Unlock post",
-      "Are you sure you want to unlock this account?",
+      "Unreport account",
+      "Are you sure you want to unreport this account?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -75,7 +79,7 @@ export default function AccountManagementScreen() {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
             //Cap nhat report cho post sau khi unlock
-            update(refPost, { reports: 0 })
+            update(refAccount, { reports: 0 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -87,13 +91,54 @@ export default function AccountManagementScreen() {
       ]
     );
   };
-
+ // Hàm gỡ report cho account
+ const lockAccount = (accountId: string) => {
+  const refReport = ref(database, `reports/account/${[accountId]}`)
+  const refAccount = ref(database, `accounts/${[accountId]}`)
+  Alert.alert(
+    "Lock account",
+    "Are you sure you want to lock this account?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "OK", onPress: () => {
+          //Cap nhat status_id cho account sau khi lock
+          update(refAccount, { status_id: 4 })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+          //Cap nhat status_id cho report sau khi lock
+          update(refReport, { status_id: 2 })
+            .then(() => {
+              console.log('Data updated successfully!');
+            })
+            .catch((error) => {
+              console.error('Error updating data:', error);
+            });
+        }
+      }
+    ]
+  );
+};
+  
+  //Chuyen sang account detail
+  const handleNavigateAccountDetail = (accountID:any) => {
+    router.push({
+      pathname: '/accountDetail',
+      params:{userId:accountID}
+    })
+  }
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     return (
-      <View key={account.item.id} style={styles.accountItem}>
+      <TouchableOpacity key={account.item.account_id} style={styles.accountItem}
+      onPress={()=>handleNavigateAccountDetail(account.item.account_id)}
+      >
         <View>
-          <Text style={styles.name}>{account.item.id}</Text>
+          <Text style={styles.name}>{account.item.account_id}</Text>
           {Object.values(account.item.reason).map((reason: any) => {
             return (
               <Text style={styles.reason}>- {reason}</Text>
@@ -101,12 +146,11 @@ export default function AccountManagementScreen() {
           })}
 
         </View>
-        <View >
-          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0           }} onPress={() => unlockPost(account.item.id)} />
-
+        <View style={{ flexDirection: 'row', top:20, left:-50 }}>
+          <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unreportAccount(account.item.account_id)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => lockAccount(account.item.account_id)} />
         </View>
-
-      </View>
+      </TouchableOpacity>
     )
   };
 
