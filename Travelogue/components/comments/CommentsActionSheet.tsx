@@ -185,14 +185,14 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         }
         const reasonKey = newItemKey.key as string;
         const itemNew = {
-            id: idComment,
+            comment_id: idComment,
             post_id: idPost,
             reason: {
                 ...item.reason,
                 [reasonKey]: reason
             },
             type:type,
-            status: 1
+            status_id: 1
         }
         await update(reportRef, itemNew)
             .then(() => {

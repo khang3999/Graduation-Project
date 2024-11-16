@@ -172,7 +172,8 @@ const Payment = () => {
 
   //Balance Realtime
   useEffect(() => {
-    const onValueChange = ref(database, `accounts/${accountId}`);
+    if (accountId) {
+      const onValueChange = ref(database, `accounts/${accountId}`);
     const reportListener = onValue(
       onValueChange,
       (snapshot) => {
@@ -190,6 +191,8 @@ const Payment = () => {
     );
 
     return () => reportListener();
+    }
+    
   }, [accountId, dataExchanges]);
 
 

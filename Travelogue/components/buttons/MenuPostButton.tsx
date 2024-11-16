@@ -258,7 +258,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
         [reasonKey] : reason
       },
       type:'post',
-      status: 1
+      status_id: 1
     }
     await update(reportRef, itemNew)
       .then(() => {

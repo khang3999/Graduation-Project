@@ -107,7 +107,7 @@ export default function PostReport() {
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho post thanh hidden
-            update(refPost, { status: 3 })
+            update(refPost, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -115,7 +115,7 @@ export default function PostReport() {
                 console.error('Error updating data:', error);
               });
             //Cap nhat status cho report da xu ly
-            update(refReport, { status: keyResolve })
+            update(refReport, { status_id: keyResolve })
               .then(() => {
                 console.log('Data updated successfully!');
               })

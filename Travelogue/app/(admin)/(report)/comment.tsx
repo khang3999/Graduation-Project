@@ -114,7 +114,7 @@ export default function CommentReport() {
                 console.error('Error updating data:', error);
               });
             //Cap nhat status cho report da xu ly
-            update(refReport, { status: keyResolve })
+            update(refReport, { status_id : keyResolve })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -170,7 +170,7 @@ export default function CommentReport() {
       }>
         <View>
 
-          <Text style={styles.name}>{comment.item.id}</Text>
+          <Text style={styles.name}>{comment.item.comment_id}</Text>
           {Object.values(comment.item.reason).map((reason: any) => {
             return (
               <Text style={styles.reason}>- {reason}</Text>
@@ -179,7 +179,7 @@ export default function CommentReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.id, comment.item.post_id, comment.item.type)} />
+          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
           <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id, comment.item.type)} />
         </View>
 
