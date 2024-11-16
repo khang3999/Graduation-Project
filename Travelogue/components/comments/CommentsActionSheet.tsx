@@ -77,7 +77,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
-    const [bannedwords, setBannedwords] = useState<any[]>([])
+    const [bannedWords, setBannedWords] = useState<any[]>([])
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -109,7 +109,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             const replyTextLower = replyText.toLowerCase();
 
             // Check for banned words
-            const bannedWord = bannedwords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
+            const bannedWord = bannedWords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
             if (bannedWord) {
                 Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
                 return;
@@ -248,7 +248,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     // Get banned words
     useEffect(() => {
         const onValueChange = ref(database, 'words/');
-        const bannedwords = onValue(onValueChange, (snapshot) => {
+        const bannedWords = onValue(onValueChange, (snapshot) => {
             if (snapshot.exists()) {
                 const jsonData = snapshot.val();
                 // Chuyển đổi object thành array
@@ -256,7 +256,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     id: key,
                     word: value,
                 }));
-                setBannedwords(dataArray);
+                setBannedWords(dataArray);
             } else {
                 console.log("No data available");
             }
@@ -264,7 +264,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             console.error("Error fetching data:", error);
         });
 
-        return () => bannedwords();
+        return () => bannedWords();
     }, []);
 
 
