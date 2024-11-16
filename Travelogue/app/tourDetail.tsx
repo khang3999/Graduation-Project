@@ -31,7 +31,7 @@ import { Rating } from "react-native-ratings";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
 import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
@@ -182,6 +182,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const flattenedImagesArray = flattenImages(item.images);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [bannedWords, setBannedWords] = useState<any[]>([])
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (replyText.trim().length > 0) {
@@ -409,6 +410,19 @@ const TourItem: React.FC<TourItemProps> = ({
     const userId = dataAccount.id;
     setIsLoading(true);
     try {
+
+      //Step 0: Check banned words
+      // convert reply text to lowercase for easier comparison
+      const replyTextLower = ratingCommentText.toLowerCase();
+
+      // Check for banned words
+      const bannedWord = bannedWords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
+      if (bannedWord) {
+        Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
+        return;
+      }
+
+
       // Step 1: Reference to the user's rating in Realtime Database
       const userRatingRef = ref(database, `tours/${postId}/ratings/${userId}`);
 
@@ -468,14 +482,14 @@ const TourItem: React.FC<TourItemProps> = ({
       });
 
       console.log('Rating and image successfully added');
-
+      setIsRatingModalOpen(false);
+      ratingCommentAS.current?.show()
     } catch (error) {
 
       console.error('Error adding rating and image:', error);
     } finally {
       setIsLoading(false);
-      setIsRatingModalOpen(false);
-      ratingCommentAS.current?.show();
+    ;
     }
   };
   const handleOpenRatingComments = async () => {
@@ -535,6 +549,27 @@ const TourItem: React.FC<TourItemProps> = ({
 
   }
 
+  // Get banned words
+  useEffect(() => {
+    const onValueChange = ref(database, 'words/');
+    const bannedWords = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        // Chuyển đổi object thành array
+        const dataArray: any = Object.entries(jsonData).map(([key, value]) => ({
+          id: key,
+          word: value,
+        }));
+        setBannedWords(dataArray);
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    return () => bannedWords();
+  }, []);
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
@@ -629,6 +664,8 @@ const TourItem: React.FC<TourItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
+        postId={item.id}
+        type={"tour"}
       />
 
 
@@ -717,6 +754,7 @@ const TourItem: React.FC<TourItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteRatingComment}
         onReport={handleReportComment}
+        bannedWords={bannedWords}
       />
     </View>
   );
@@ -766,7 +804,7 @@ export default function ToursScreen() {
     <>
 
       <FlatList
-        data={tourId?dataTour:memoriedTourItem}
+        data={tourId ? dataTour : memoriedTourItem}
         renderItem={({ item }) => (
           <TourItem
             item={item}

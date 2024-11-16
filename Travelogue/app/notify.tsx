@@ -9,13 +9,13 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
-    let accountId = "5qhADrzF93h7oDpo0iYfAVsfYpN2";
+    const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
 
-    // useEffect(() => {
-    //     accountId = dataAccount.id
-    // }, [dataAccount])
+    useEffect(() => {
+        setAccountId(dataAccount.id)
+    }, [dataAccount])
 
     // Fetch data notifications by account id
     useEffect(() => {
@@ -25,8 +25,6 @@ const NotificationsScreen = () => {
                 const jsonData = snapshot.val();
                 const dataArray: any = Object.values(jsonData).sort((a: any, b: any) => b.created_at - a.created_at);;
                 setNotifications(dataArray);
-                console.log(dataArray);
-
             } else {
                 console.log("No data available");
             }
@@ -35,7 +33,7 @@ const NotificationsScreen = () => {
         });
 
         return () => notifications();
-    }, []);
+    }, [accountId]);
     // Fetch post by postID
     const fetchPostByPostId = async (postId: any) => {
         try {
@@ -54,21 +52,25 @@ const NotificationsScreen = () => {
         }
 
     };
+
     //handle read notify
     const handleRead = (notify: any) => {
-        const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
+        if (accountId) {
+            const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
 
-        update(refNotify, { read: true })
-            .then(() => {
-                console.log('Data updated successfully!');
+            update(refNotify, { read: true })
+                .then(() => {
+                    console.log('Data updated successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error updating data:', error);
+                });
+            fetchPostByPostId(notify.post_id)
+            router.push({
+                pathname: '/postDetail'
             })
-            .catch((error) => {
-                console.error('Error updating data:', error);
-            });
-        fetchPostByPostId(notify.post_id)
-        router.push({
-            pathname: '/postDetail'
-        })
+        }
+
     }
 
     const renderItem = (notify: any) => {
@@ -98,7 +100,7 @@ const NotificationsScreen = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={{ flex: 2, paddingRight: 10 }}>
                         <Text style={styles.message}>
-                            {notify.item.commentator_name} đã bình luận vào bài viết của bạn
+                            {notify.item.commentator_name} {notify.item.type === "comment" ? "đã bình luận vào bài viết của bạn" : "đã trả lời bình luận của bạn"}
                         </Text>
                         <Text style={styles.time}>{displayTime}</Text>
                     </View>
@@ -114,12 +116,13 @@ const NotificationsScreen = () => {
 
     return (
         <View style={styles.container}>
-            <FlatList
+            {notifications.length>0?(<FlatList
                 data={notifications}
                 renderItem={renderItem}
                 // keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContainer}
-            />
+            />):(<Text style={styles.noAccountsText}>No data</Text>)}
+            
         </View>
     );
 };
@@ -129,7 +132,12 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
         backgroundColor: '#fff',
-    },
+    }, noAccountsText: {
+        textAlign: 'center',
+        fontSize: 16,
+        marginTop: 20,
+        color: '#777'
+      },
     title: {
         fontSize: 24,
         fontWeight: 'bold',

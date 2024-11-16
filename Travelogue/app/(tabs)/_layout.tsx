@@ -8,14 +8,18 @@ import { useHomeProvider } from '@/contexts/HomeProvider'
 import { ref } from 'firebase/database'
 import { database, get, onValue } from '@/firebase/firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 
 
 const _layout = () => {
-  const [role, setRole] = useState("user"); 
+  const [role, setRole] = useState("user");
+  const [userID, setUserId] = useState("");
+  const [countNotify, setCountNotify] = useState(10);
 
   useEffect(() => {
     const fetchRole = async () => {
       const userID = await AsyncStorage.getItem("userToken");
+      setUserId(userID + "")
       if (userID) {
         const userRef = ref(database, "accounts/" + userID);
         const snapshot = await get(userRef);
@@ -27,8 +31,33 @@ const _layout = () => {
     };
     fetchRole();
   }, []);
+  //Dem nhung thong bao chua xem
+  useEffect(() => {
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const onValueChange = ref(database, `notifications/${userID}`);
+    // Lắng nghe thay đổi trong dữ liệu
+    const count = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        // Chuyển đổi jsonData thành một mảng các đối tượng thông báo và lọc những thông báo chưa đọc
+        const unreadNotifications = Object.values(jsonData).filter(
+          (notification: any) => notification.read === false
+        );
+        setCountNotify(unreadNotifications.length);
+      } else {
+        setCountNotify(0)
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
 
- 
+    // Cleanup function để hủy listener khi component unmount
+    return () => count();
+  }, [userID]);
+  console.log(countNotify);
+
+
   return (
     <Tabs
       tabBar={(props: any) => <TabBar role={role} {...props} />}
@@ -41,15 +70,24 @@ const _layout = () => {
         },
         headerRight: () => (
           <View style={styles.headerRight}>
-            <PlusButton onPress={() => { 
-               role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour') 
-             }} style={styles.buttonRight}></PlusButton>
-            
-            <BellButton style={styles.buttonRight} onPress={()=>{
-               router.push({
-                pathname: '/notify'
-              })
-            }}></BellButton>
+            <PlusButton onPress={() => {
+              role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour')
+            }} style={styles.buttonRight}></PlusButton>
+            {/* Chuong thong bao voi so luong thong bao chua xem */}
+            <TouchableOpacity style={[ styles.container]} >
+              <View style={{}}>
+                <BellButton style={styles.buttonRight} onPress={() => {
+                  router.push({
+                    pathname: '/notify'
+                  })
+                }}></BellButton>
+              </View>
+              {countNotify > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{countNotify}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         ),
       }}
@@ -101,6 +139,26 @@ const styles = StyleSheet.create({
   buttonRight: {
     alignItems: 'center',
     marginHorizontal: 10
-  }
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  container: {
+    position: 'relative',
+  },
 })
 export default _layout

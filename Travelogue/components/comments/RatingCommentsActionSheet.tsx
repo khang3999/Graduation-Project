@@ -67,6 +67,7 @@ interface RatingCommentsActionSheetProps {
     onDelete?: (item: RatingComment) => void;
     onReport?: (item: RatingComment) => void;
     accountId?: string;
+    bannedWords: any[];
 }
 
 export default function RatingCommentsActionSheet(props: RatingCommentsActionSheetProps) {
@@ -76,6 +77,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
     const [flatRatingComments, setFlatRatingComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
+    
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -113,12 +115,20 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
     };
     const handleReplySubmit = () => {
 
+        // convert reply text to lowercase for easier comparison
+        const replyTextLower = replyText.toLowerCase();
+
+        // Check for banned words
+        const bannedWord = props.bannedWords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
+        if (bannedWord) {
+            Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
+            return;
+        }
+
         if (replyText) {
             if (selectedComment && "rating" in selectedComment && props.onSubmitRatingComment) {
                 props.onSubmitRatingComment(selectedComment as RatingComment, replyText);
-
             }
-
             setReplyText("");
             setSelectedComment(null);
 
@@ -147,8 +157,8 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
         }
     }
 
-     // Reason comment
-     useEffect(() => {
+    // Reason comment
+    useEffect(() => {
         // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
         const onValueChange = ref(database, 'reasons/comment/');
         // Lắng nghe thay đổi trong dữ liệu
@@ -173,6 +183,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
     }, []);
 
 
+
     const handleReport = (reason: any) => {
         setSelectedReason(reason);
         setModalVisible(false);
@@ -185,7 +196,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
 
     };
 
-    
+
     const reportComment = async (reason: any) => {
         let item: any = {
             reason: {
@@ -237,6 +248,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
             useNativeDriver: true,
         }).start();
     }, [replyText]);
+
 
 
     return (
@@ -395,8 +407,8 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                     </TouchableOpacity>
                 </View>
             </ActionSheet>
-              {/* Report Modal */}
-              <Modal
+            {/* Report Modal */}
+            <Modal
                 transparent={true}
                 animationType="slide"
                 visible={modalVisible}

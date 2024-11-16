@@ -65,8 +65,8 @@ type Post = {
   post_status: string;
   reports: number;
   view_mode: boolean;
-};
-
+  thumbnail: any
+}
 type PostItemProps = {
   item: Post;
   setIsScrollEnabled: (value: boolean) => void;
@@ -120,15 +120,14 @@ const PostItem: React.FC<PostItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
-
-
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
   const isPostAuthor = dataAccount.id === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
-
+  const [authorParentCommentId, setAuthorParentCommentId] = useState('')
+  
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -138,6 +137,13 @@ const PostItem: React.FC<PostItemProps> = ({
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
+      // Usage:
+      try {
+        const data = await fetchRealTimeData(parentId);
+        console.log("Fetched data:", data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -166,6 +172,13 @@ const PostItem: React.FC<PostItemProps> = ({
           setComments((prevComments) => {
             if (parentId) {
               // Add as a reply with the correct `parentId`
+              // Notify reply comment for parentId
+              console.log('aaa ', dataAccount.id);
+              console.log('aaa ', authorParentCommentId);
+
+              if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
+                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
+              }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level Comment
@@ -174,10 +187,73 @@ const PostItem: React.FC<PostItemProps> = ({
           });
 
         }
+        // Notify comment for auht post
+        console.log("bbb ", dataAccount.id);
+        console.log("bbb ", item.author.id);
+
+        if (dataAccount.id != item.author.id) {
+          handleAddNotify(newCommentRef.key, item.author.id, parentId)
+        }
       } catch (error) {
         console.error("Error adding Comment:", error);
       }
     }
+  }
+
+  //Tao thong bao
+  const handleAddNotify = async (commentId: any, account_id: any, parentId: any) => {
+
+    // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
+    const notifyRef = ref(database, `notifications/${account_id}`);
+
+    // Tạo key tu dong cua firebase
+    const newItemKey = push(notifyRef);
+    const notify = {
+      author_id: item.author.id,
+      comment_id: commentId,
+      commentator_id: dataAccount.id,
+      commentator_name: dataAccount.fullname,
+      created_at: Date.now(),
+      id: newItemKey.key,
+      image: item.thumbnail,
+      post_id: item.id,
+      type: parentId ? "reply" : "comment",
+      read: false,
+    };
+    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
+    await set(newItemKey, notify)
+      .then(() => {
+        console.log('Data added successfully');
+      })
+      .catch((error) => {
+        console.error('Error adding data: ', error);
+      });
+
+  };
+  //Get account id of parent comment
+  async function fetchRealTimeData(parentId: any) {
+    const dataRef = ref(database, `posts/${item.id}/comments/${parentId}/author/id`);
+
+    return new Promise((resolve, reject) => {
+      // Set up a real-time listener
+      onValue(
+        dataRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            setAuthorParentCommentId(data);
+            resolve(data); // Resolve the promise with the fetched data
+          } else {
+            console.log("No data parent id available");
+            resolve(null); // Resolve with null if no data
+          }
+        },
+        (error) => {
+          console.error("Error fetching data:", error);
+          reject(error); // Reject the promise on error
+        }
+      );
+    });
   }
 
 
@@ -261,10 +337,10 @@ const PostItem: React.FC<PostItemProps> = ({
     );
   };
 
-  
+
   //handle report Comment
   const handleReportComment = (Comment: Comment) => {
-  
+
   }
 
 
@@ -301,6 +377,8 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
         <View style={{ zIndex: 1000 }}>
           <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+
+          
         </View>
       </View>
 
@@ -356,8 +434,9 @@ const PostItem: React.FC<PostItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         postId={item.id}
+        type={"post"}
       />
-    
+
 
 
     </View>
@@ -393,7 +472,7 @@ export default function PostsScreen() {
   useFocusEffect(
     useCallback(() => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (postId ) {
+      if (postId) {
         fetchPostById(postId)
       }
       return () => {
@@ -438,7 +517,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  }, 
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -686,7 +765,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10, // Ensures it appears above other content
   },
-  
+
   modalContainer: {
     width: '85%',
     backgroundColor: '#fff',
@@ -832,8 +911,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 10,
+    paddingHorizontal:10,
+    paddingBottom:10,
+    // padding:10,
   },
+
   miniAvatar: {
     width: 40,
     height: 40,

@@ -1,12 +1,13 @@
 
 import UnlockBtn from '@/components/buttons/UnlockBtn';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { push, remove, update,get } from '@firebase/database';
 import { usePost } from '@/contexts/PostProvider';
 import { router } from 'expo-router';
+import { useTourProvider } from '@/contexts/TourProvider';
 
 
 
@@ -15,6 +16,7 @@ export default function CommentReport() {
   const keyResolve = 2;
   const [factorReport, setFactorReport] = useState(0);
   const { selectedPost, setSelectedPost }: any = usePost()
+  const { selectedTour, setSelectedTour }: any = useTourProvider()
 
 
   //Du lieu Comment
@@ -27,7 +29,7 @@ export default function CommentReport() {
         const jsonData = snapshot.val();
         const jsonDataArr: any = Object.values(jsonData)
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((comment: any) => (comment.status != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
+        const filteredData = jsonDataArr.filter((comment: any) => (comment.status_id != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
         setDataCommentReport(filteredData);
       } else {
         console.log("No data available");
@@ -48,7 +50,6 @@ export default function CommentReport() {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         console.log(jsonData);
-
         setFactorReport(jsonData)
       } else {
         console.log("No data available");
@@ -63,9 +64,9 @@ export default function CommentReport() {
 
 
   // Hàm gỡ lock cho comment
-  const unlockComment = (commentID: string, postId: string) => {
+  const unlockComment = (commentID: string, postId: string, type:string) => {
     const refRemove = ref(database, `reports/comment/${[commentID]}`)
-    const refComment = ref(database, `posts/${[postId]}/comments/${[commentID]}`)
+    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentID]}`)
     Alert.alert(
       "Unlock comment",
       "Are you sure you want to unlock this comment?",
@@ -80,22 +81,15 @@ export default function CommentReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            //Cap nhat report cho comment sau khi unlock
-            update(refComment, { reports: 0 })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
+           
           }
         }
       ]
     );
   };
   // Hàm hidden comment
-  const hiddenComment = (commentId: string, postId: string) => {
-    const refComment = ref(database, `posts/${[postId]}/comments/${[commentId]}`)
+  const hiddenComment = (commentId: string, postId: string, type:string) => {
+    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentId]}`)
     const refReport = ref(database, `reports/comment/${[commentId]}`)
     Alert.alert(
       "Hidden comment",
@@ -105,7 +99,7 @@ export default function CommentReport() {
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho comment thanh hidden
-            update(refComment, { status: 3 })
+            update(refComment, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -113,7 +107,7 @@ export default function CommentReport() {
                 console.error('Error updating data:', error);
               });
             //Cap nhat status cho report da xu ly
-            update(refReport, { status: keyResolve })
+            update(refReport, { status_id : keyResolve })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -127,15 +121,14 @@ export default function CommentReport() {
   };
 
    // Fetch post by postID
-   const fetchPostByPostId = async (postId: any) => {
+   const fetchPostByPostId = async (postId: any, type:any) => {
     try {
-      const refCity = ref(database, `posts/${postId}`);
-      const snapshot = await get(refCity);
+      const refPost = ref(database, `${type}s/${postId}`);
+      const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataJson = snapshot.val();
-       
-        setSelectedPost([dataJson])
-        
+       console.log(dataJson);
+       type==="post"?setSelectedPost([dataJson]):setSelectedTour([dataJson])
       } else {
         console.log("No data city available");
       }
@@ -146,11 +139,19 @@ export default function CommentReport() {
   };
 
   //Chuyen sang post detail
-  const handleNavigatePostDetail = (post: any) => {
-    fetchPostByPostId(post)
-    router.push({
-      pathname: '/postDetail'
-    })
+  const handleNavigatePostDetail = (post: any, type:any) => {
+    fetchPostByPostId(post,type)
+    if (type==="tour") {
+      router.push({
+        pathname: '/tourDetail'
+      })
+    }
+    else if (type==="post") {
+      router.push({
+        pathname: '/postDetail'
+      })
+    }
+    
 
   }
 
@@ -158,11 +159,11 @@ export default function CommentReport() {
   const renderCommentItem = (comment: any) => {
     return (
       <TouchableOpacity style={styles.accountItem} onPress={
-        () => handleNavigatePostDetail(comment.item.post_id)
+        () => handleNavigatePostDetail(comment.item.post_id, comment.item.type)
       }>
         <View>
 
-          <Text style={styles.name}>{comment.item.id}</Text>
+          <Text style={styles.name}>{comment.item.comment_id}</Text>
           {Object.values(comment.item.reason).map((reason: any) => {
             return (
               <Text style={styles.reason}>- {reason}</Text>
@@ -171,8 +172,8 @@ export default function CommentReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={24} color='#3366CC' onPress={() => unlockComment(comment.item.id, comment.item.post_id)} />
-          <AntDesign name="delete" size={24} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.id, comment.item.post_id)} />
+          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
         </View>
 
       </TouchableOpacity>

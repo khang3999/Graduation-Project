@@ -280,7 +280,7 @@ const NewPoint = () => {
         <RowComponent>
           <TouchableOpacity onPress={handleChooseImages}>
             <Image
-              source={require("../../assets/images/addImage.png")}
+              source={require("@/assets/images/addImage.png")}
               style={[styles.festivalImage, { margin: 10 }]}
             />
           </TouchableOpacity>

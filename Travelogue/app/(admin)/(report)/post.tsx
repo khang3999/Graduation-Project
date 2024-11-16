@@ -8,12 +8,15 @@ import { push, remove, update, get } from '@firebase/database';
 import { router } from 'expo-router';
 import { useAdminProvider } from '@/contexts/AdminProvider';
 import { usePost } from '@/contexts/PostProvider';
+import { useTourProvider } from '@/contexts/TourProvider';
 
 export default function PostReport() {
   const [dataPostReport, setDataPostReport] = useState([]);
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
   const { selectedPost, setSelectedPost }: any = usePost()
+  const { selectedTour, setSelectedTour }: any = useTourProvider()
+
 
   //Du lieu post
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function PostReport() {
         const jsonDataArr: any = Object.values(jsonData)
 
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((post: any) => (post.status != keyResolve) && (Object.keys(post.reason).length >= factorReport));
+        const filteredData = jsonDataArr.filter((post: any) => (post.status_id != keyResolve) && (Object.keys(post.reason).length >= factorReport));
 
         setDataPostReport(filteredData);
       } else {
@@ -62,9 +65,9 @@ export default function PostReport() {
   }, []);
 
   // Hàm gỡ lock cho post
-  const unlockPost = (postId: string) => {
+  const unlockPost = (postId: string, type:string) => {
     const refRemove = ref(database, `reports/post/${[postId]}`)
-    const refPost = ref(database, `posts/${[postId]}`)
+    const refPost = ref(database, `${type}s/${[postId]}`)
     Alert.alert(
       "Unlock post",
       "Are you sure you want to unlock this post?",
@@ -79,22 +82,15 @@ export default function PostReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            //Cap nhat report cho post sau khi unlock
-            update(refPost, { reports: 0 })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
+            
           }
         }
       ]
     );
   };
   // Hàm hidden post
-  const hiddenPost = (postId: string) => {
-    const refPost = ref(database, `posts/${[postId]}`)
+  const hiddenPost = (postId: string, type:string) => {
+    const refPost = ref(database, `${type}s/${[postId]}`)
     const refReport = ref(database, `reports/post/${[postId]}`)
     Alert.alert(
       "Hidden post",
@@ -104,7 +100,7 @@ export default function PostReport() {
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho post thanh hidden
-            update(refPost, { status: 3 })
+            update(refPost, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -112,7 +108,7 @@ export default function PostReport() {
                 console.error('Error updating data:', error);
               });
             //Cap nhat status cho report da xu ly
-            update(refReport, { status: keyResolve })
+            update(refReport, { status_id: keyResolve })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -126,15 +122,14 @@ export default function PostReport() {
   };
 
   // Fetch post by postID
-  const fetchPostByPostId = async (postId: any) => {
+  const fetchPostByPostId = async (postId: any, type: any) => {
     try {
-      const refCity = ref(database, `posts/${postId}`);
-      const snapshot = await get(refCity);
+      const refPost = ref(database, `${type}s/${postId}`);
+      const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataJson = snapshot.val();
-       
-        setSelectedPost([dataJson])
-        
+        console.log(dataJson);
+        type === "post" ? setSelectedPost([dataJson]) : setSelectedTour([dataJson])
       } else {
         console.log("No data city available");
       }
@@ -145,12 +140,18 @@ export default function PostReport() {
   };
 
   //Chuyen sang post detail
-  const handleNavigatePostDetail = (post: any) => {
-    fetchPostByPostId(post)
-    router.push({
-      pathname: '/postDetail'
-    })
-
+  const handleNavigatePostDetail = (post: any, type: any) => {
+    fetchPostByPostId(post, type)
+    if (type === "tour") {
+      router.push({
+        pathname: '/tourDetail'
+      })
+    }
+    else if (type === "post") {
+      router.push({
+        pathname: '/postDetail'
+      })
+    }
   }
 
   // Render từng item trong danh sách
@@ -158,7 +159,7 @@ export default function PostReport() {
 
     return (
       <TouchableOpacity key={post.item.id} style={styles.accountItem} onPress={
-        () => handleNavigatePostDetail(post.item.post_id)
+        () => handleNavigatePostDetail(post.item.post_id, post.item.type)
       }>
         <View>
           <Text style={styles.name}>{post.item.post_id}</Text>
@@ -170,8 +171,8 @@ export default function PostReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={30} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.post_id)} />
-          <Feather name="x-square" size={30} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.post_id)} />
+          <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.post_id, post.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.post_id, post.item.type)} />
         </View>
 
       </TouchableOpacity>
