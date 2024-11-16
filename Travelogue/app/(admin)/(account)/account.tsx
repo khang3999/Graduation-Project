@@ -25,7 +25,7 @@ export default function AccountManagementScreen() {
         console.log(jsonDataArr);
 
         // Lọc các account có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((account: any) => (account.status != keyResolve) && (Object.keys(account.reason).length >= factorReport));
+        const filteredData = jsonDataArr.filter((account: any) => (account.status_id != keyResolve) && (Object.keys(account.reason).length >= factorReport));
 
         setDataAccountReport(filteredData);
       } else {
@@ -78,14 +78,7 @@ export default function AccountManagementScreen() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            //Cap nhat report cho post sau khi unlock
-            update(refAccount, { reports: 0 })
-              .then(() => {
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
+            
           }
         }
       ]
