@@ -21,7 +21,7 @@ export default function Layout() {
           <Stack.Screen name="(user)" options={{ headerShown: false }} />
           <Stack.Screen name="(article)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" />
-          <Stack.Screen name="notify" options={{ headerShown: true }}/>
+          <Stack.Screen name="notify" options={{ headerShown: true }} />
           <Stack.Screen name="postDetail" options={{
             headerShown: true,
             title: "Posts",
@@ -35,21 +35,21 @@ export default function Layout() {
             },
             headerTitleAlign: "center",
           }} />
-          <Stack.Screen name="tourDetail" 
-           options={{
-            headerShown: true,
-            title: "Tours",
-            headerStyle: {
-              backgroundColor:
-                Colors[colorScheme ? colorScheme : "light"].background,
-            },
-            headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
-            headerTitleAlign: "center",
-          }}/>
-
+          <Stack.Screen name="tourDetail"
+            options={{
+              headerShown: true,
+              title: "Tours",
+              headerStyle: {
+                backgroundColor:
+                  Colors[colorScheme ? colorScheme : "light"].background,
+              },
+              headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+              headerTitleStyle: {
+                fontWeight: "bold",
+              },
+              headerTitleAlign: "center",
+            }} />
+          <Stack.Screen name="gallery"/>
         </Stack>
         <Toast />
 
