@@ -4,10 +4,7 @@ import { Stack } from 'expo-router';
 import ListPoints from '@/components/listPoints/ListPoints';
 
 const Layout = () => {
-    const cities = {
-        id_country : 'avietnam',
-        id_city : 'vn_1',
-    }
+    
     return (
         <View style={{flex: 1}}>
           {/* <AddPostUser /> */}
