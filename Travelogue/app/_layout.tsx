@@ -61,21 +61,21 @@ export default function Layout() {
             },
             headerTitleAlign: "center",
           }} />
-          <Stack.Screen name="tourDetail" 
-           options={{
-            headerShown: true,
-            title: "Tours",
-            headerStyle: {
-              backgroundColor:
-                Colors[colorScheme ? colorScheme : "light"].background,
-            },
-            headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
-            headerTitleAlign: "center",
-          }}/>
-
+          <Stack.Screen name="tourDetail"
+            options={{
+              headerShown: true,
+              title: "Tours",
+              headerStyle: {
+                backgroundColor:
+                  Colors[colorScheme ? colorScheme : "light"].background,
+              },
+              headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+              headerTitleStyle: {
+                fontWeight: "bold",
+              },
+              headerTitleAlign: "center",
+            }} />
+          <Stack.Screen name="gallery"/>
         </Stack>
         <Toast />
 

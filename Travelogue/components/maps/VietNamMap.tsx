@@ -81,8 +81,6 @@ const VietNamMap = () => {
 
     // Tô màu lần đầu cho các tỉnh đã đc check và lắng nghe khi được check in
     useEffect(() => {
-        console.log(cityRemoved,'rm');
-
         if (dataCheckedCities && pathRefs.current) {
             dataCheckedCities.forEach((cityObj: any) => {
                 // Lấy cityId từ đối tượng (ví dụ: "vn_1", "jp_1")
