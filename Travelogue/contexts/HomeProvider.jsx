@@ -60,7 +60,7 @@ const HomeProvider = ({ children }) => {
             asyncStorageEmitter.off("userTokenChanged", fetchUserId);
         };
     }, []);
-    
+
     /// App state ý tưởng khi vòa lại app thì reset behavior
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async nextAppState => {
@@ -94,27 +94,28 @@ const HomeProvider = ({ children }) => {
     /// ------------------------ FETCH NO REALTIME --------------------------
     // Fetch tour theo post không realtime
     useEffect(() => {
-        // if (loadedDataAccount) {
-        const fetchData = async () => {
-            try {
-                const refTours = ref(database, 'tours/')
-                const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-                const snapshot = await get(toursQuery);
-                if (snapshot.exists()) {
-                    const dataToursJson = snapshot.val()
-                    const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
-                    // Sắp xếp lại list tour theo thứ tự
-                    sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
-                    setDataTours(dataToursArray)
-                } else {
-                    console.log("No data available");
+        if (loadedPosts) {
+            const fetchData = async () => {
+                try {
+                    const refTours = ref(database, 'tours/')
+                    const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
+                    const snapshot = await get(toursQuery);
+                    if (snapshot.exists()) {
+                        const dataToursJson = snapshot.val()
+                        const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
+                        // Sắp xếp lại list tour theo thứ tự
+                        sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
+                        setDataTours(dataToursArray)
+                        setLoadedTours(true)
+                    } else {
+                        console.log("No data available");
+                    }
+                } catch (error) {
+                    console.error("Error fetching data: ", error);
                 }
-            } catch (error) {
-                console.error("Error fetching data: ", error);
             }
+            fetchData();
         }
-        fetchData();
-        // }
         // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
     }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
 

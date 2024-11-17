@@ -159,7 +159,7 @@ const PostList = () => {
       setSelectedCities([])
       setDataCities([])
       setLoadedPosts(true) // UnLoad skeleton
-      setLoadedTours(true) // UnLoad skeleton
+      // setLoadedTours(true) // UnLoad skeleton
     } else {
       fetchPosts()
     }
@@ -286,7 +286,7 @@ const PostList = () => {
         setCurrentPostCount(jsonArrayPosts.length)
         // Set loadedTourHome
         setLoadedPosts(true)
-        setLoadedTours(true)
+        // setLoadedTours(true)
       } else {
         console.log("No data post available");
       }
@@ -323,27 +323,30 @@ const PostList = () => {
   //   }
   // }, [loadedDataAccount, dataAccount]);
   // Lấy post lần đầu sau khi đã có dữ liệu của account
-  useEffect(() => {
-    setHasFetched(false)
-  }, [loadedDataAccount, dataAccount]);
+  // useEffect(() => {
+  //   console.log('calll');  
+  //   fetchPosts();
+  // }, [loadedDataAccount, dataAccount]);
 
+  // Khi focus
   useFocusEffect(
     useCallback(() => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (dataAccount && loadedDataAccount && !hasFetched) {
+      if (dataAccount && loadedDataAccount) {
+        setLoadedTours(false)
         console.log("home focus");
         fetchPosts(); // Gọi fetchPosts
-        setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
       }
       return () => {
         console.log('Screen is unfocused');
       };
-    }, []) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, dataAccount]) // Cập nhật khi các giá trị này thay đổi
   );
 
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
+      setLoadedTours(false)
       // Xử lí lưu bài viết đang hiển thị ra biến toàn cục để đổ list tour theo chủ đề của bài viết
       const locations = viewableItems[0].item.locations
       // Lấy tất cả các locationId <=> id của tỉnh thành trong từng bài post ['vn_1', 'jp_1']
