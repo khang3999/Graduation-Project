@@ -7,7 +7,8 @@ import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 import { database, get, onValue, push, ref, update } from '@/firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
-import { query, orderByKey, startAt, limitToFirst, startAfter } from 'firebase/database';
+import { query, orderByKey, startAt, limitToFirst, startAfter, orderByChild } from 'firebase/database';
+import { format } from "date-fns";
 // Extending Comment to create SortedComment with extra fields
 interface SortedComment extends Comment {
     replies?: SortedComment[];
@@ -18,7 +19,7 @@ interface SortedComment extends Comment {
 interface CommentsActionSheetProps {
     commentRefAS: RefObject<ActionSheetRef>;
     isPostAuthor?: boolean;
-    commentsData: SortedComment[];
+    commentsData?: SortedComment[];
     onSubmitComment?: (parentComment: Comment, replyText: string) => void;
     onDelete?: (item: SortedComment) => void;
     onReport?: (item: SortedComment) => void;
@@ -75,6 +76,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     const [bannedWords, setBannedWords] = useState<any[]>([])
+    
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -96,9 +98,9 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-
     const [lastCommentKey, setLastCommentKey] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
+    // const formattedDate = format(new Date(comments.), "dd MMM yyyy HH:mm");
 
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
@@ -108,7 +110,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         setReplyText("");
 
     };
-    const handleReplySubmit = () => {
+    const handleReplySubmit = async () => {
 
         if (replyText) {
             // convert reply text to lowercase for easier comparison
@@ -124,8 +126,9 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             
             if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
-
+                await fetchComments(true);
             }
+
             setReplyText("");
             setSelectedComment(null);
 
@@ -141,10 +144,12 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             unauthorizedCommentAS.current?.show();
         }
     }
-    const handleDeleteComment = (comment: SortedComment) => {
+    const handleDeleteComment = async (comment: SortedComment) => {
         if (props.onDelete && comment) {
             props.onDelete(comment);
+            await fetchComments(true);
             authorizedCommentAS.current?.hide();
+
         }
     }
 
@@ -328,20 +333,24 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     // Firebase function to fetch comments
     const fetchCommentsFromFirebase = async (lastKey: string | null): Promise<SortedComment[]> => {
         const PAGE_SIZE = 10;
-        const commentsRef = ref(database, `posts/${props.postId}/comments`);
+    
+        const commentsRef = props.type ==='tour'? ref(database, `tours/${props.postId}/comments`): ref(database, `posts/${props.postId}/comments`);
         const commentsQuery = lastKey
-            ? query(commentsRef, orderByKey(), startAfter(lastKey), limitToFirst(PAGE_SIZE))
-            : query(commentsRef, orderByKey(), limitToFirst(PAGE_SIZE));
+            ? query(commentsRef, orderByChild("created_at"), startAfter(lastKey), limitToFirst(PAGE_SIZE))
+            : query(commentsRef, orderByChild("created_at"), limitToFirst(PAGE_SIZE));
 
         const snapshot = await get(commentsQuery);
         if (snapshot.exists()) {
-            return Object.values(snapshot.val());
+            const comments = Object.values(snapshot.val()) as SortedComment[];
+            // Reverse the order to get newest to oldest
+            return comments.reverse();
         }
         return [];
     };
 
-
-
+   
+    
+    
 
 
     return (
@@ -377,7 +386,6 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                         />
 
                         {/* Animated Send Button */}
-
                         {replyText.length > 0 && (
                             <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
                                 <TouchableOpacity onPress={handleReplySubmit}>
@@ -407,7 +415,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                                     {item.author.fullname}
                                                 </Text>
                                                 <Text style={styles.ratingCommentTime}>
-                                                    {item.created_at}
+                                                    {format(new Date(item.created_at), "dd MMM yyyy HH:mm")}                                                 
                                                 </Text>
                                             </View>
                                         </View>
@@ -437,7 +445,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                         <ActivityIndicator size="large" color="grey" />
                                     </View>
                                 ) : !hasMore ? (
-                                    <Text style={{ textAlign: 'center', margin: 10 }}>Đã hiển thị tất cả bình luân.</Text>
+                                    <Text style={{ textAlign: 'center', margin: 10 }}>Đã hiển thị tất cả bình luận.</Text>
                                 ) : null
                             }
                             contentContainerStyle={{ paddingBottom: 120 }}

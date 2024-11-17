@@ -153,11 +153,7 @@ const PostItem: React.FC<PostItemProps> = ({
         reports: 0,
         content: replyText,
         parentId: parentId ? parentId : null,
-        created_at: new Date().toLocaleString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
+        created_at: Date.now(),        
       };
       try {
         const commentRef = ref(database, `posts/${item.id}/comments`)
@@ -226,32 +222,6 @@ const PostItem: React.FC<PostItemProps> = ({
       });
 
   };
-  //Get account id of parent comment
-  async function fetchRealTimeData(parentId: any) {
-    const dataRef = ref(database, `posts/${item.id}/comments/${parentId}/author/id`);
-
-    return new Promise((resolve, reject) => {
-      // Set up a real-time listener
-      onValue(
-        dataRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            setAuthorParentCommentId(data);
-            resolve(data); // Resolve the promise with the fetched data
-          } else {
-            console.log("No data parent id available");
-            resolve(null); // Resolve with null if no data
-          }
-        },
-        (error) => {
-          console.error("Error fetching data:", error);
-          reject(error); // Reject the promise on error
-        }
-      );
-    });
-  }
-
 
 
   const addReplyToComment = (
@@ -373,8 +343,6 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
         <View style={{ zIndex: 1000 }}>
           <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
-
-          
         </View>
       </View>
 
