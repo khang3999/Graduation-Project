@@ -120,8 +120,6 @@ const PostItem: React.FC<PostItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
   const { dataAccount }: any = useHomeProvider();
-
-
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
@@ -129,6 +127,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
+  
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
