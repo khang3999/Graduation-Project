@@ -93,7 +93,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [idPost, setIdPost] = useState<undefined | String>('')
     const [idComment, setIdComment] = useState('')
     const [reasonsComment, setReasonsComment] = useState([])
-
+    
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
     };
