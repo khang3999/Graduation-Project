@@ -12,17 +12,15 @@ const Layout = () => {
         <View style={{flex: 1}}>
           {/* <AddPostUser /> */}
           {/* <AddPostTour/> */}
-          {/* <Stack
+          <Stack
             screenOptions={{
                 headerShown: false,
             }}>
             <Stack.Screen name="addPostTour" options={{headerShown: false}}/>
             <Stack.Screen name="addPostUser" options={{headerShown: false}}/>
             <Stack.Screen name="reviewPostUser" options={{headerShown: false}}/>
-        </Stack> */}
-        <ListPoints 
-            cities={cities}
-        />
+        </Stack>
+       
         </View>
     );
 }
