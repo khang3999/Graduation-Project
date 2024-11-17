@@ -136,14 +136,12 @@ const PostItem: React.FC<PostItemProps> = ({
     }
     // return;
     if (replyText.trim().length > 0) {
-      const parentId = parentComment ? parentComment.id : null;
-      // Usage:
-      try {
-        const data = await fetchRealTimeData(parentId);
-        console.log("Fetched data:", data);
-      } catch (error) {
-        console.error("Error:", error);
+      const parentId = parentComment ? parentComment.id : null;     
+      console.log('Parent comment:', parentComment);
+      if (parentComment) {
+        setAuthorParentCommentId(parentComment.author.id)
       }
+    
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -173,8 +171,7 @@ const PostItem: React.FC<PostItemProps> = ({
             if (parentId) {
               // Add as a reply with the correct `parentId`
               // Notify reply comment for parentId
-              console.log('aaa ', dataAccount.id);
-              console.log('aaa ', authorParentCommentId);
+    
 
               if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
                 handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
@@ -188,8 +185,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
         }
         // Notify comment for auht post
-        console.log("bbb ", dataAccount.id);
-        console.log("bbb ", item.author.id);
+   
 
         if (dataAccount.id != item.author.id) {
           handleAddNotify(newCommentRef.key, item.author.id, parentId)

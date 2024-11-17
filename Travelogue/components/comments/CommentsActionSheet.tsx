@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert, Modal } from 'react-native'
+import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert, Modal, RefreshControl, ActivityIndicator } from 'react-native'
 import React, { useState, RefObject, useRef, useEffect } from 'react'
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { Divider } from 'react-native-paper'
@@ -7,15 +7,13 @@ import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 import { database, get, onValue, push, ref, update } from '@/firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
-
+import { query, orderByKey, startAt, limitToFirst, startAfter } from 'firebase/database';
 // Extending Comment to create SortedComment with extra fields
 interface SortedComment extends Comment {
     replies?: SortedComment[];
     indentationLevel?: number;
 }
-interface SortedCommentsProps {
-    comments: Record<string, SortedComment>;
-}
+
 
 interface CommentsActionSheetProps {
     commentRefAS: RefObject<ActionSheetRef>;
@@ -74,7 +72,6 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [replyText, setReplyText] = useState("");
     const [selectedComment, setSelectedComment] = useState<SortedComment | null>(null);
     const [longPressedComment, setLongPressedComment] = useState<SortedComment | null>(null);
-    const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     const [bannedWords, setBannedWords] = useState<any[]>([])
@@ -93,7 +90,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [idPost, setIdPost] = useState<undefined | String>('')
     const [idComment, setIdComment] = useState('')
     const [reasonsComment, setReasonsComment] = useState([])
-    
+
+    //Load more comments
+    const [comments, setComments] = useState<SortedComment[]>([]);
+    const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [lastCommentKey, setLastCommentKey] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
     };
@@ -114,6 +120,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
                 return;
             }
+           
+            
             if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
 
@@ -178,7 +186,6 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
     };
 
-
     const reportComment = async (reason: any) => {
         let item: any = {
             reason: {
@@ -233,17 +240,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         }).start();
     }, [replyText]);
 
-    // Prepare sorted and flattened comments
     useEffect(() => {
-        const nestedComments = sortAndNestComments(props.commentsData.reduce((acc, comment) => {
-            acc[comment.id] = comment;
-            return acc;
-        }, {} as Record<string, SortedComment>));
+        const nestedComments = sortAndNestComments(
+            comments.reduce((acc, comment) => {
+                acc[comment.id] = comment;
+                return acc;
+            }, {} as Record<string, SortedComment>)
+        );
+        setFlatComments(flattenComments(nestedComments));
+    }, [comments]);
 
-        const flattened = flattenComments(nestedComments);
-
-        setFlatComments(flattened);
-    }, [props.commentsData]);
 
     // Get banned words
     useEffect(() => {
@@ -266,6 +272,73 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
         return () => bannedWords();
     }, []);
+
+    // Load more comments
+    // Fetch comments with pagination or refresh
+    const fetchComments = async (reset: boolean = false) => {
+        try {
+            setIsLoading(true);
+
+            // Reset pagination if needed
+            const resetKey = reset ? null : lastCommentKey;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const newComments = await fetchCommentsFromFirebase(resetKey);
+
+            const newLastKey = newComments.length > 0 ? newComments[newComments.length - 1].id : null;
+
+            if (reset) {
+                setComments(newComments);
+                setHasMore(true);
+            } else {
+                setComments((prevComments) => [...prevComments, ...newComments]);
+            }
+
+            setLastCommentKey(newLastKey);
+
+            // Disable further loading if no new data
+            if (newComments.length === 0) {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle pull-to-refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchComments(true); // Reset comments
+        setRefreshing(false);
+    };
+
+    // Handle loading more data
+    const onLoadMore = async () => {
+        if (!isLoading && hasMore) {
+            await fetchComments();
+        }
+    };
+
+    useEffect(() => {
+        fetchComments(true); // Initial fetch
+    }, []);
+
+
+    // Firebase function to fetch comments
+    const fetchCommentsFromFirebase = async (lastKey: string | null): Promise<SortedComment[]> => {
+        const PAGE_SIZE = 10;
+        const commentsRef = ref(database, `posts/${props.postId}/comments`);
+        const commentsQuery = lastKey
+            ? query(commentsRef, orderByKey(), startAfter(lastKey), limitToFirst(PAGE_SIZE))
+            : query(commentsRef, orderByKey(), limitToFirst(PAGE_SIZE));
+
+        const snapshot = await get(commentsQuery);
+        if (snapshot.exists()) {
+            return Object.values(snapshot.val());
+        }
+        return [];
+    };
 
 
 
@@ -315,7 +388,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     </View>
 
                     {/* )} */}
-                    {props.commentsData.length > 0 ? (
+                    {flatComments.length > 0 ? (
                         <FlatList
                             data={flatComments}
                             keyExtractor={(_, index) => index.toString()}
@@ -353,10 +426,24 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                     </TouchableOpacity>
                                 ) : null
                             )}
+                            onEndReached={onLoadMore}
+                            onEndReachedThreshold={0.1}
+                            refreshControl={
+                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                            }
+                            ListFooterComponent={() =>
+                                isLoading ? (
+                                    <View style={styles.footer}>
+                                        <ActivityIndicator size="large" color="grey" />
+                                    </View>
+                                ) : !hasMore ? (
+                                    <Text style={{ textAlign: 'center', margin: 10 }}>Đã hiển thị tất cả bình luân.</Text>
+                                ) : null
+                            }
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />
                     ) : (
-                        <Text style={styles.noCommentsText}>No comments yet.</Text>
+                        <Text style={styles.noCommentsText}>Hãy là người đầu tiên bình luận.</Text>
                     )}
 
                 </View>
@@ -447,13 +534,19 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             {/* Confirmation message */}
             {showConfirmation && (
                 <View style={styles.confirmationBox}>
-                    <Text style={styles.confirmationText}>Your report has been submitted!</Text>
+                    <Text style={styles.confirmationText}>Báo cáo của bạn đã đưọc tiếp nhận !</Text>
                 </View>
             )}
         </KeyboardAvoidingView>
     )
 }
 const styles = StyleSheet.create({
+    footer: {
+        paddingVertical: 20,
+        borderTopWidth: 1,
+        borderColor: '#e0e0e0',
+        alignItems: 'center',
+    },
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
