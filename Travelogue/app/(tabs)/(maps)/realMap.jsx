@@ -425,7 +425,7 @@ const Map = () => {
           })}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
-        <RowComponent styles={{ marginTop: 30 }} justify="center">
+        <RowComponent styles={{ marginTop: 10 }} justify="center">
           <View style={styles.containerScroll}>
             {showLeftArrow && (
               <TouchableOpacity
