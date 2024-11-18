@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert, Modal } from 'react-native'
+import { View, Text, StyleSheet, TextInput, FlatList, Pressable, Image, KeyboardAvoidingView, Platform, Animated, TouchableOpacity, Alert, Modal, RefreshControl, ActivityIndicator } from 'react-native'
 import React, { useState, RefObject, useRef, useEffect } from 'react'
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { Divider } from 'react-native-paper'
@@ -7,20 +7,19 @@ import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
 import { database, get, onValue, push, ref, update } from '@/firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
-
+import { query, orderByKey, startAt, limitToFirst, startAfter, orderByChild } from 'firebase/database';
+import { format } from "date-fns";
 // Extending Comment to create SortedComment with extra fields
 interface SortedComment extends Comment {
     replies?: SortedComment[];
     indentationLevel?: number;
 }
-interface SortedCommentsProps {
-    comments: Record<string, SortedComment>;
-}
+
 
 interface CommentsActionSheetProps {
     commentRefAS: RefObject<ActionSheetRef>;
     isPostAuthor?: boolean;
-    commentsData: SortedComment[];
+    commentsData?: SortedComment[];
     onSubmitComment?: (parentComment: Comment, replyText: string) => void;
     onDelete?: (item: SortedComment) => void;
     onReport?: (item: SortedComment) => void;
@@ -74,10 +73,10 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [replyText, setReplyText] = useState("");
     const [selectedComment, setSelectedComment] = useState<SortedComment | null>(null);
     const [longPressedComment, setLongPressedComment] = useState<SortedComment | null>(null);
-    const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     const [bannedWords, setBannedWords] = useState<any[]>([])
+    
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -94,6 +93,15 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [idComment, setIdComment] = useState('')
     const [reasonsComment, setReasonsComment] = useState([])
 
+    //Load more comments
+    const [comments, setComments] = useState<SortedComment[]>([]);
+    const [flatComments, setFlatComments] = useState<SortedComment[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastCommentKey, setLastCommentKey] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    // const formattedDate = format(new Date(comments.), "dd MMM yyyy HH:mm");
+
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
     };
@@ -102,7 +110,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         setReplyText("");
 
     };
-    const handleReplySubmit = () => {
+    const handleReplySubmit = async () => {
 
         if (replyText) {
             // convert reply text to lowercase for easier comparison
@@ -114,10 +122,13 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
                 return;
             }
+           
+            
             if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
-
+                await fetchComments(true);
             }
+
             setReplyText("");
             setSelectedComment(null);
 
@@ -133,10 +144,12 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             unauthorizedCommentAS.current?.show();
         }
     }
-    const handleDeleteComment = (comment: SortedComment) => {
+    const handleDeleteComment = async (comment: SortedComment) => {
         if (props.onDelete && comment) {
             props.onDelete(comment);
+            await fetchComments(true);
             authorizedCommentAS.current?.hide();
+
         }
     }
 
@@ -177,7 +190,6 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         reportComment(reason)
 
     };
-
 
     const reportComment = async (reason: any) => {
         let item: any = {
@@ -233,17 +245,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         }).start();
     }, [replyText]);
 
-    // Prepare sorted and flattened comments
     useEffect(() => {
-        const nestedComments = sortAndNestComments(props.commentsData.reduce((acc, comment) => {
-            acc[comment.id] = comment;
-            return acc;
-        }, {} as Record<string, SortedComment>));
+        const nestedComments = sortAndNestComments(
+            comments.reduce((acc, comment) => {
+                acc[comment.id] = comment;
+                return acc;
+            }, {} as Record<string, SortedComment>)
+        );
+        setFlatComments(flattenComments(nestedComments));
+    }, [comments]);
 
-        const flattened = flattenComments(nestedComments);
-
-        setFlatComments(flattened);
-    }, [props.commentsData]);
 
     // Get banned words
     useEffect(() => {
@@ -267,8 +278,79 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         return () => bannedWords();
     }, []);
 
+    // Load more comments
+    // Fetch comments with pagination or refresh
+    const fetchComments = async (reset: boolean = false) => {
+        try {
+            setIsLoading(true);
+
+            // Reset pagination if needed
+            const resetKey = reset ? null : lastCommentKey;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const newComments = await fetchCommentsFromFirebase(resetKey);
+
+            const newLastKey = newComments.length > 0 ? newComments[newComments.length - 1].id : null;
+
+            if (reset) {
+                setComments(newComments);
+                setHasMore(true);
+            } else {
+                setComments((prevComments) => [...prevComments, ...newComments]);
+            }
+
+            setLastCommentKey(newLastKey);
+
+            // Disable further loading if no new data
+            if (newComments.length === 0) {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle pull-to-refresh
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchComments(true); // Reset comments
+        setRefreshing(false);
+    };
+
+    // Handle loading more data
+    const onLoadMore = async () => {
+        if (!isLoading && hasMore) {
+            await fetchComments();
+        }
+    };
+
+    useEffect(() => {
+        fetchComments(true); // Initial fetch
+    }, []);
 
 
+    // Firebase function to fetch comments
+    const fetchCommentsFromFirebase = async (lastKey: string | null): Promise<SortedComment[]> => {
+        const PAGE_SIZE = 10;
+    
+        const commentsRef = props.type ==='tour'? ref(database, `tours/${props.postId}/comments`): ref(database, `posts/${props.postId}/comments`);
+        const commentsQuery = lastKey
+            ? query(commentsRef, orderByChild("created_at"), startAfter(lastKey), limitToFirst(PAGE_SIZE))
+            : query(commentsRef, orderByChild("created_at"), limitToFirst(PAGE_SIZE));
+
+        const snapshot = await get(commentsQuery);
+        if (snapshot.exists()) {
+            const comments = Object.values(snapshot.val()) as SortedComment[];
+            // Reverse the order to get newest to oldest
+            return comments.reverse();
+        }
+        return [];
+    };
+
+   
+    
+    
 
 
     return (
@@ -304,7 +386,6 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                         />
 
                         {/* Animated Send Button */}
-
                         {replyText.length > 0 && (
                             <Animated.View style={[styles.replySubmitButton, { opacity: opacityAnim }]}>
                                 <TouchableOpacity onPress={handleReplySubmit}>
@@ -315,7 +396,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                     </View>
 
                     {/* )} */}
-                    {props.commentsData.length > 0 ? (
+                    {flatComments.length > 0 ? (
                         <FlatList
                             data={flatComments}
                             keyExtractor={(_, index) => index.toString()}
@@ -334,7 +415,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                                     {item.author.fullname}
                                                 </Text>
                                                 <Text style={styles.ratingCommentTime}>
-                                                    {item.created_at}
+                                                    {format(new Date(item.created_at), "dd MMM yyyy HH:mm")}                                                 
                                                 </Text>
                                             </View>
                                         </View>
@@ -353,10 +434,24 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                     </TouchableOpacity>
                                 ) : null
                             )}
+                            onEndReached={onLoadMore}
+                            onEndReachedThreshold={0.1}
+                            refreshControl={
+                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                            }
+                            ListFooterComponent={() =>
+                                isLoading ? (
+                                    <View style={styles.footer}>
+                                        <ActivityIndicator size="large" color="grey" />
+                                    </View>
+                                ) : !hasMore ? (
+                                    <Text style={{ textAlign: 'center', margin: 10 }}>Đã hiển thị tất cả bình luận.</Text>
+                                ) : null
+                            }
                             contentContainerStyle={{ paddingBottom: 120 }}
                         />
                     ) : (
-                        <Text style={styles.noCommentsText}>No comments yet.</Text>
+                        <Text style={styles.noCommentsText}>Hãy là người đầu tiên bình luận.</Text>
                     )}
 
                 </View>
@@ -447,13 +542,19 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             {/* Confirmation message */}
             {showConfirmation && (
                 <View style={styles.confirmationBox}>
-                    <Text style={styles.confirmationText}>Your report has been submitted!</Text>
+                    <Text style={styles.confirmationText}>Báo cáo của bạn đã đưọc tiếp nhận !</Text>
                 </View>
             )}
         </KeyboardAvoidingView>
     )
 }
 const styles = StyleSheet.create({
+    footer: {
+        paddingVertical: 20,
+        borderTopWidth: 1,
+        borderColor: '#e0e0e0',
+        alignItems: 'center',
+    },
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',

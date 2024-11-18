@@ -88,7 +88,7 @@ const ChangePassword = () => {
           <ButtonComponent
             text="Đổi mật khẩu"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
-            color={appColors.danger}
+            color={"#C1E1C1"}
             type="primary"
             onPress={handleResetPassword}
           />

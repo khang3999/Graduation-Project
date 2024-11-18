@@ -33,7 +33,7 @@ export default function ProfileLayout() {
         name="editing"
         options={{
           headerShown: true,
-          title: "Edit Profile",
+          title: "Thay đổi hồ sơ",
           headerStyle: {
             backgroundColor:
               Colors[colorScheme ? colorScheme : "light"].background,
@@ -50,7 +50,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="searchResult"
         options={{
           headerShown: true,
-          title: "Search Result",
+          title: "Kết quả tìm kiếm",
           headerStyle: {
             backgroundColor:
               Colors[colorScheme ? colorScheme : "light"].background,
@@ -64,7 +64,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="changePassword"
         options={{
           headerShown: true,
-          title: "Change Password",
+          title: "Đổi mật khẩu",
           headerStyle: {
             backgroundColor:
               Colors[colorScheme ? colorScheme : "light"].background,

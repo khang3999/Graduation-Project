@@ -49,6 +49,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
 import LottieView from "lottie-react-native";
 import ReviewPostUser from "./reviewPostUser";
+import { useBannedWords } from "@/components/wordPosts/BannedWordData";
+import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 
 const AddPostUser = () => {
   interface Country {
@@ -169,6 +171,9 @@ const AddPostUser = () => {
     number | null
   >(null);
 
+  //Lay data banned words
+  const bannedWords = useBannedWords();
+ 
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -236,12 +241,12 @@ const AddPostUser = () => {
       setCitiesDataFilter(filteredCities);
     }
   }, [selectedCountry]);
- 
+
   //Xoa các dấu tiếng việt
   const removeDiacritics = (text: any) => {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
-//Search theo ten thanh pho
+  //Search theo ten thanh pho
   useEffect(() => {
     if (searchQueryCity) {
       const filteredCities = citiesData.filter((city) =>
@@ -802,7 +807,6 @@ const AddPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
       return;
     }
-    
 
     const existingDay = days.find(
       (day) =>
@@ -872,6 +876,92 @@ const AddPostUser = () => {
             .join("<br><br>")}`
       )
       .join("<br><br>")}`;
+
+    //Kiem tra tu cam
+
+    //Kiem tra tu cam thong tin bai viet
+    if (bannedWordsChecker(title, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+      const day = days[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+
+      // Kiểm tra mô tả hoạt động cho từng ngày
+      for (
+        let activityIndex = 0;
+        activityIndex < day.activities.length;
+        activityIndex++
+      ) {
+        const activity = day.activities[activityIndex];
+
+        if (bannedWordsChecker(activity.activity, bannedWords)) {
+          setButtonPost(false);
+          Toast.show({
+            type: "error",
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
+            text1Style: { fontSize: 14 },
+            text2Style: { fontSize: 12 },
+            position: "top",
+          });
+          return;
+        }
+      }
+
+      // Kiểm tra mô tả chung của ngày
+      if (bannedWordsChecker(day.description, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Mô tả chung chứa từ cấm`,
+          text2: `Vui lòng sửa lại mô tả chung ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
 
     const timestamp = Date.now();
 
@@ -971,10 +1061,9 @@ const AddPostUser = () => {
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
-            if(data.totalPosts){
-              totalPosts = data.totalPosts + 1 ;
-            }
-            else {
+            if (data.totalPosts) {
+              totalPosts = data.totalPosts + 1;
+            } else {
               totalPosts = 1;
             }
           }
@@ -986,10 +1075,9 @@ const AddPostUser = () => {
         let status;
         if (isPublic) {
           status = 1;
-       }
-       else {
+        } else {
           status = 2;
-       }
+        }
         //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
         const thumbnail =
           uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
@@ -1016,7 +1104,7 @@ const AddPostUser = () => {
           author: { id: userId, avatar: avatar, fullname: fullname },
           images: uploadedImageUrls,
           likes,
-          id : postId,
+          id: postId,
           reports,
           match,
           status_id: status,
@@ -1164,6 +1252,92 @@ const AddPostUser = () => {
             .join("<br><br>")}`
       )
       .join("<br><br>")}`;
+    console.log("Contents:", "lsjdhdsjldh");
+
+    //Kiem tra tu cam thong tin bai viet
+    if (bannedWordsChecker(title, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+      const day = days[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+
+      // Kiểm tra mô tả hoạt động cho từng ngày
+      for (
+        let activityIndex = 0;
+        activityIndex < day.activities.length;
+        activityIndex++
+      ) {
+        const activity = day.activities[activityIndex];
+
+        if (bannedWordsChecker(activity.activity, bannedWords)) {
+          setButtonPost(false);
+          Toast.show({
+            type: "error",
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
+            text1Style: { fontSize: 14 },
+            text2Style: { fontSize: 12 },
+            position: "top",
+          });
+          return;
+        }
+      }
+
+      // Kiểm tra mô tả chung của ngày
+      if (bannedWordsChecker(day.description, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Mô tả chung chứa từ cấm`,
+          text2: `Vui lòng sửa lại mô tả chung ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+
     //Luư dữ liệu content
     setcontentReviewPost(contents);
 
@@ -1766,46 +1940,46 @@ const AddPostUser = () => {
         {/* Nút chia sẻ */}
         <SectionComponent>
           {buttonPost ? (
-           <RowComponent styles={{ marginHorizontal: 10 }}>
-           <TouchableOpacity
-             onPress={() => {
-               handleReviewPost();
-             }}
-             style={{
-               backgroundColor: appColors.btncity,
-               width: "20%",
-               height: "100%",
-               borderRadius: 10,
-               marginRight: 10,
-               borderColor: "green",
-               borderWidth: 1,
-             }}
-           >
-             <TextComponent
-               text="Review bài viết"
-               size={14}
-               styles={{
-                 fontWeight: "bold",
-                 color: "green",
-                 textAlign: "center",
-                 justifyContent: "center",
-                 marginTop: 3,
-                 padding: 5,
-               }}
-             />
-           </TouchableOpacity>
-           <ButtonComponent
-             text="Đang Đăng Bài...."
-             textStyles={{
-               width: "75%",
-               fontWeight: "bold",
-               fontSize: 30,
-               textAlign: "center",
-             }}
-             color={appColors.primary}
-             onPress={handlePushPost}
-           />
-         </RowComponent>
+            <RowComponent styles={{ marginHorizontal: 10 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  handleReviewPost();
+                }}
+                style={{
+                  backgroundColor: appColors.btncity,
+                  width: "20%",
+                  height: "100%",
+                  borderRadius: 10,
+                  marginRight: 10,
+                  borderColor: "green",
+                  borderWidth: 1,
+                }}
+              >
+                <TextComponent
+                  text="Review bài viết"
+                  size={14}
+                  styles={{
+                    fontWeight: "bold",
+                    color: "green",
+                    textAlign: "center",
+                    justifyContent: "center",
+                    marginTop: 3,
+                    padding: 5,
+                  }}
+                />
+              </TouchableOpacity>
+              <ButtonComponent
+                text="Đang Đăng Bài...."
+                textStyles={{
+                  width: "75%",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  textAlign: "center",
+                }}
+                color={appColors.primary}
+                onPress={handlePushPost}
+              />
+            </RowComponent>
           ) : (
             <RowComponent styles={{ marginHorizontal: 10 }}>
               <TouchableOpacity
@@ -1886,14 +2060,13 @@ const AddPostUser = () => {
         <Modal
           visible={modalVisibleCity}
           onDismiss={() => {
-            setModalVisibleCity(false)
-            setSearchQueryCity("")
-          }
-          }
-            >
+            setModalVisibleCity(false);
+            setSearchQueryCity("");
+          }}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
-              {/* Tìm kiếm thành phố */}
+            {/* Tìm kiếm thành phố */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -1901,13 +2074,12 @@ const AddPostUser = () => {
                 value={searchQueryCity}
                 onChangeText={setSearchQueryCity}
               />
-             
             </View>
             {selectedCountry ? (
               <FlatList
                 data={citiesDataFilter}
                 keyExtractor={(item) => item.id}
-                style={[styles.countryList , {minHeight: 200} ]}
+                style={[styles.countryList, { minHeight: 200 }]}
                 renderItem={({ item }) => {
                   //Loc ra nhung thanh pho da chon
                   const isCitySelected = cities.some(
@@ -1932,16 +2104,17 @@ const AddPostUser = () => {
                 }}
               />
             ) : (
-              <Text style={{fontSize: 16, color: 'red'}} >Chưa chọn quốc gia trước khi chọn thành phố</Text>
+              <Text style={{ fontSize: 16, color: "red" }}>
+                Chưa chọn quốc gia trước khi chọn thành phố
+              </Text>
             )}
             <View style={styles.separator} />
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
-                setModalVisibleCity(false)
-                setSearchQueryCity("")
-              }
-            }
+                setModalVisibleCity(false);
+                setSearchQueryCity("");
+              }}
             >
               <Text style={styles.closeButtonText}>Đóng</Text>
             </TouchableOpacity>

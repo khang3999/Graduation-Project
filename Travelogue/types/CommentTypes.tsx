@@ -2,7 +2,7 @@ export interface BaseComment {
     id: string;
     author: Author;
     content: string;
-    created_at: string;
+    created_at: number;
     status_id: number;
     reports: number;
     parentId: string | null;

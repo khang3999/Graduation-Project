@@ -87,13 +87,10 @@ export default function EditingProfileScreen() {
     try {
       setIsLoading(true);
       // Step 1: Update user data
-      await updateUserData(dataAccount.id, localUserData, selectedImage);
+      await updateUserData(dataAccount.id, localUserData,setLocalUserData, selectedImage);
 
       // Immediately set loading to false and notify the user
       
-      
-      
-
       // Step 2: Asynchronously start updating posts in the background
       await updateUserPosts(dataAccount.id, localUserData);
       
@@ -102,16 +99,14 @@ export default function EditingProfileScreen() {
       
       Alert.alert(
         "Đã cập nhật thành công !",
-        "Xin hãy khởi động lại ứng dụng để cập nhật thông tin.",
+        "Thông tin cá nhân của bạn đã được cập nhật.",
         [
           {
-            text: "Khởi động",
-            onPress: () => {
-              BackHandler.exitApp();
+            text: "OK",
+            onPress: () => {            
             },
           },
-          
-        ]
+        ]      
       );
     
       setIsLoading(false)
@@ -163,21 +158,21 @@ export default function EditingProfileScreen() {
         <View style={styles.container}>
           <Image style={styles.avatar} source={{ uri: selectedImage || "a" }} />
           <Pressable style={styles.editButton} onPress={pickImageAsync}>
-            <Text style={styles.editText}>Edit picture or avatar</Text>
+            <Text style={styles.editText}>Chọn hình đại diện</Text>
           </Pressable>
 
           <View style={styles.infoContainer}>
             <View style={styles.row}>
-              <Text style={styles.infoText}>Fullname:</Text>
+              <Text style={styles.infoText}>Họ và tên: </Text>
               <TextInput
                 style={styles.username}
-                placeholder="fullname"
+                placeholder="Họ và tên"
                 value={localUserData.fullname as string}
                 onChangeText={(text) => handleInputChange("fullname", text)}
               ></TextInput>
             </View>
             <View style={styles.row}>
-              <Text style={styles.infoText}>Phone:</Text>
+              <Text style={styles.infoText}>Số điện thoại:</Text>
               <TextInput
                 style={styles.username}
                 placeholder="0123-455-667"
@@ -190,7 +185,7 @@ export default function EditingProfileScreen() {
               style={styles.saveButton}
               onPress={handleSaveChangesButton}
             >
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
             </Pressable>
           </View>
         </View>
