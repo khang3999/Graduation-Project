@@ -150,7 +150,7 @@ const RegisterScreen = ({ navigation }: any) => {
             storageRef(storage, "defaultAvatar/avatar.png")
           ); // Set default avatar URL
 
-          const status = "2";
+          const status = 2;
           const currentDate = new Date().toLocaleDateString();
           const role = "user";
 
@@ -255,7 +255,7 @@ const RegisterScreen = ({ navigation }: any) => {
           const balance = 0;
           const accumulate = 0;
           const currentDate = new Date().toLocaleDateString();
-          const status = "1";
+          const status = 1;
           const role = "business";
           const avatar = await getDownloadURL(
             storageRef(storage, "defaultAvatar/avatar.png")

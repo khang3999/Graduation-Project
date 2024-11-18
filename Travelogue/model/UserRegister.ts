@@ -15,7 +15,7 @@ export class UserRegister {
   imageBackUrlCCCD?: string | null;
   business_license_id?: string | null;
   imageUrlBusinessLicense?: string | null;
-  status_id: string;
+  status_id: number;
   role : string;
   checkInList?: string | null;
 
@@ -59,7 +59,7 @@ export class UserRegister {
     business_license_id: string | null;
     imageUrlBusinessLicense: string | null;
     checkInList: string | null;
-    status_id: string;
+    status_id: number;
     role: string;
 
   }) {
