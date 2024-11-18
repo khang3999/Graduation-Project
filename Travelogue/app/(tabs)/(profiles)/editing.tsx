@@ -23,7 +23,7 @@ import { auth } from "@/firebase/firebaseConfig";
 import { useAccount } from "@/contexts/AccountProvider";
 import LottieView from "lottie-react-native";
 import { useHomeProvider } from "@/contexts/HomeProvider";
-import RNRestart from 'react-native-restart';
+
 
 export default function EditingProfileScreen() {  
   const { dataAccount }: any = useHomeProvider();
@@ -158,21 +158,21 @@ export default function EditingProfileScreen() {
         <View style={styles.container}>
           <Image style={styles.avatar} source={{ uri: selectedImage || "a" }} />
           <Pressable style={styles.editButton} onPress={pickImageAsync}>
-            <Text style={styles.editText}>Edit picture or avatar</Text>
+            <Text style={styles.editText}>Chọn hình đại diện</Text>
           </Pressable>
 
           <View style={styles.infoContainer}>
             <View style={styles.row}>
-              <Text style={styles.infoText}>Fullname:</Text>
+              <Text style={styles.infoText}>Họ và tên: </Text>
               <TextInput
                 style={styles.username}
-                placeholder="fullname"
+                placeholder="Họ và tên"
                 value={localUserData.fullname as string}
                 onChangeText={(text) => handleInputChange("fullname", text)}
               ></TextInput>
             </View>
             <View style={styles.row}>
-              <Text style={styles.infoText}>Phone:</Text>
+              <Text style={styles.infoText}>Số điện thoại:</Text>
               <TextInput
                 style={styles.username}
                 placeholder="0123-455-667"
@@ -185,7 +185,7 @@ export default function EditingProfileScreen() {
               style={styles.saveButton}
               onPress={handleSaveChangesButton}
             >
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
             </Pressable>
           </View>
         </View>
