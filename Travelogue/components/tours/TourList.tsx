@@ -7,7 +7,7 @@ import { Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-nativ
 import ActionBar from '../actionBars/ActionBar';
 import { formatDate } from '@/utils/commons';
 import { AntDesign, FontAwesome6 } from '@expo/vector-icons';
-import { countMatchingLocations, mergeWithRatio, slug, sortTourMatchingAtTourScreen } from '@/utils';
+import { countMatchingLocations, mergeWithRatio, slug, sortTourAtTourScreen } from '@/utils';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
@@ -67,7 +67,7 @@ const TourList = () => {
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
-        'content': dataInput?dataInput:'',
+        'content': dataInput ? dataInput : '',
         'location': selectedCities.length > 0 ? selectedCities : null
       }
       await update(refBehaviors, dataUpdate);
@@ -81,45 +81,47 @@ const TourList = () => {
           const jsonArrayTours = Object.values(dataToursJson)
           // Bước 1: Lấy mảng theo tiêu chí
           let matchingTour: any[] = []
+
           if (selectedCities && selectedCities.length > 0) { // Có chọn cities
             console.log("case1: selected cities");
             jsonArrayTours.forEach((tour: any) => {
-              tour.match = 0
-              // Tieu chi 1: co tat ca selectedCities trong tourLocation
+              tour.match = 0 // Khởi tạo lại match
+
+              // Tiêu chí 1: Nội dung
+              let matchingContent = 0
+              const contentOfTourSlug = slug(tour.content + tour.hashtags)
+              if (contentOfTourSlug.includes(slug(dataInput))) { // Đúng cả 2 case khi dataInput: không nhâp nội dung và nhập nội dung, vd: nếu nhập content thì phải tìm đúng theo content mới update match, còn không nhập content thì mặc định luôn đúng vì dataInput là ''
+                matchingContent = 1 // Điều kiện để push vào mảng
+                tour.match += 1   // Điều kiện để sắp xếp khi đã push vào mảng
+              }
+
+              // Tiêu chí 2: Địa điểm (Mã thành phố)
               const listLocationIdOfTour = Object.keys(tour.locations).flatMap((country) => {
                 return Object.keys(tour.locations[country])
               }); //["vn_1", 'jp_2']
-              // Kiểm tra nội dung
-              if (slug(tour.content).includes(slug(dataInput))) { // Đúng cả 2 case: không nhâp nội dung và nhập nội dung
-                tour.match += 1
-              }
-              // Đếm city trùng
-              // const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfTour.includes(cityID)).length; // Đếm số phần tử trùng
-              // tour.match += matchLocation // cập nhật match
-
-              const matchLocation = countMatchingLocations(selectedCities, listLocationIdOfTour)
-              tour.match += matchLocation // cập nhật match
+              const matchingLocation = countMatchingLocations(selectedCities, listLocationIdOfTour)
+              tour.match += matchingLocation // cập nhật match
 
               // Push vào mảng
-              if (tour.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
+              if (matchingContent > 0 && matchingLocation > 0) { //PHẢI trùng cả nội dung và vị trí mới push vì đây là phần tìm kiếm
                 matchingTour.push(tour)
               }
             })
-          } else if (selectedCountry !== null) {// không chọn city chỉ chọn quốc gia
+          } else if (selectedCountry !== null) {// Tìm theo quốc gia: không kiểm tra đã chọn city chưa vì đã check chọn city ở if trước rồi
             console.log("case2");// Trùng nội dung và quốc gia mới add vào mảng
-
             jsonArrayTours.forEach((tour: any) => {
-              tour.match = 0
-              // Tieu chi 1: co tat ca selectedCities trong tourLocation
-              const listCountriesId = Object.keys(tour.locations)//["avietnam", 'japan']
-              // Kiểm tra nội dung
-              if (slug(tour.content).includes(slug(dataInput))) {
+              tour.match = 0 // Khởi tạo lại match
+
+              // Tiêu chí 1: Nội dung
+              const contentOfTourSlug = slug(tour.content + tour.hashtags)
+              if (contentOfTourSlug.includes(slug(dataInput))) {// Đúng cả 2 case khi dataInput: không nhâp nội dung và nhập nội dung, vd: nếu nhập content thì phải tìm đúng theo content mới update match, còn không nhập content thì mặc định luôn đúng vì dataInput là ''
                 tour.match += 1
               }
-              // console.log('check1',listCountriesId);
-              // console.log('check1',selectedCountry);
+
+              // Tieu chi 2: tim nhung bai post nào cho chứa mã quoc gia
+              const listCountriesIdOfTour = Object.keys(tour.locations)//["avietnam", 'japan']
               // Kiểm tra có quốc gia không
-              if (listCountriesId.includes(selectedCountry.key)) {
+              if (listCountriesIdOfTour.includes(selectedCountry.key)) {
                 tour.match += 1
               }
               // Push vào mảng
@@ -131,8 +133,10 @@ const TourList = () => {
             console.log("case3"); // trùng nội dung mới add vào
             jsonArrayTours.forEach((tour: any) => {
               tour.match = 0
+
               // Kiểm tra nội dung
-              if (slug(tour.content).includes(slug(dataInput))) {
+              const contentOfTourSlug = slug(tour.content + tour.hashtags)
+              if (contentOfTourSlug.includes(slug(dataInput))) {
                 tour.match += 1
                 // Push vào mảng
                 matchingTour.push(tour)
@@ -141,16 +145,8 @@ const TourList = () => {
           }
 
           // Bước 2: Sort mảng
-          sortTourMatchingAtTourScreen(matchingTour)
-          // matchingTour.sort((tourA: any, tourB: any) => {
-          //   // So sánh theo match trước
-          //   if (tourB.match !== tourA.match) {
-          //     return tourB.match - tourA.match; // Sắp xếp giảm dần theo match
-          //   }
-          //   // Nếu match bằng nhau, so sánh theo created_at
-          //   return (tourB.created_at || 0) - (tourA.created_at || 0); // Sắp xếp giảm dần theo created_at
-          // });
-          // Bước 3: 
+          sortTourAtTourScreen(matchingTour)
+          // Bước 3: Set data
           setDataTours(matchingTour)
         } else {
           console.log("No data tour available");
@@ -194,7 +190,7 @@ const TourList = () => {
     setDataModalSelected(null)
     fetchTours() // Tải lại tất cả tour
     console.log(isSearchingMode);
-    
+
     setIsSearchingMode(false)
   }
 
@@ -206,24 +202,24 @@ const TourList = () => {
     setSelectedCountry(country)
   }
 
-  // Lấy tour lần đầu sau khi đã có dữ liệu của account
-  useEffect(() => {
-    setHasFetched(false)
-  }, [loadedDataAccount, dataAccount]);
+  // // Lấy tour lần đầu sau khi đã có dữ liệu của account
+  // useEffect(() => {
+  //   setHasFetched(false)
+  // }, [loadedDataAccount, dataAccount]);
 
   useFocusEffect(
     useCallback(() => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (dataAccount && loadedDataAccount && !hasFetched) {
+      if (dataAccount && loadedDataAccount) {
         console.log("tour focus");
         fetchTours(); // Gọi fetchTours
-        setIsSearchingMode(true)
-        setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+        // setIsSearchingMode(true)
+        //setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
       }
       return () => {
         console.log('Screen is unfocused');
       };
-    }, []) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, dataAccount]) // Cập nhật khi các giá trị này thay đổi
   );
   // useEffect(() => {
   //   if (loadedDataAccount && !isSearchingMode) {
@@ -260,36 +256,40 @@ const TourList = () => {
     try {
       const refTours = ref(database, 'tours/')
       const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-      
+
       const snapshot = await get(toursQuery);
       if (snapshot.exists()) {
         const dataToursJson = snapshot.val()
-        // console.log(dataToursJson)
         // Chuyển đổi object thành array
         const jsonArrayTours = Object.values(dataToursJson)
         // Ý tưởng: chuyển mảng data thành 2 mảng con và trộn (3 bước: tạo 2 mảng con, sort, trộn)
         //Bước 1: Phân loại bài viết thành 2 mảng
         const behaviorTours: any = [];
         const nonBehaviorTours: any = [];
+
         jsonArrayTours.forEach((tour: any) => {
-          tour.match = 0
-          const contentSlug = slug(tour.content)
-          const behaviorContentSlug = slug(accountBehavior.content||'')
+          tour.match = 0 // Khởi tạo lại match
+
+          // Điều kiện phân loại mảng: Bài viết có chứa nội dung hoặc có chứa địa điểm thì add vào
+          // Tiêu chí 1: Nội dung
+          let matchingContent = 0
+          const contentOfTourSlug = slug(tour.content)
+          const behaviorContentSlug = slug(accountBehavior.content || '')
+          if (contentOfTourSlug.includes(behaviorContentSlug)) { // Đúng cả 2 case khi behaviorContentSlug = '' và != ''
+            matchingContent += 1 // Điều kiện để được push vào mảng: khi có hoặc không có hành vi
+            tour.match += 1 // Điều kiện để sắp xếp mảng
+          }
+
+          //Tiêu chí 2: Địa điểm (Mã thành phố)
+          const listBehaviorLocation = accountBehavior.location ? accountBehavior.location : []
           const listLocationIdOfTour = Object.keys(tour.locations).flatMap((country) =>
             Object.keys(tour.locations[country])
           ); //["vn_1", 'jp_2']
-
-          const listBehaviorLocation = accountBehavior.location ? accountBehavior.location : []
-
-          // Điều kiện phân loại mảng
-          if (contentSlug.includes(behaviorContentSlug)) {
-            tour.match += 1
-          }
           const countMatchingLocation = countMatchingLocations(listBehaviorLocation, listLocationIdOfTour)
-          // const countMatchingLocation = listLocationIdOfTour.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
           tour.match += countMatchingLocation // cập nhật match
+
           // Phân loại
-          if (tour.match > 1) {
+          if (countMatchingLocation > 0 || matchingContent > 0) {//Vì là hàm fetch bình thường nên có nội dung hoặc có địa điểm thì thêm vào mảng nhưng phải kiểm tra địa điểm trước vì nội dung đang làm điều kiện tổng quát cho cả 2 case khi behaviorContent có hoặc không nên cần kiểm tra sau để đúng logic
             behaviorTours.push(tour)
           } else {
             nonBehaviorTours.push(tour)
@@ -297,15 +297,12 @@ const TourList = () => {
         })
         // Bước 2: Sort
         // 2.1. Sort mảng theo behavior: match > fator > rating > like >created_at
-        const behaviorToursSorted = sortTourMatchingAtTourScreen(behaviorTours)
+        sortTourAtTourScreen(behaviorTours)
 
-        // 2.2. Sort mảng không match hành vi theo created_at
-        // nonBehaviorTours.sort((tourA: any, tourB: any) => {
-        //   return tourB.created_at - tourA.created_at;
-        // })
-        sortTourMatchingAtTourScreen(nonBehaviorTours)
+        // 2.2. Sort mảng không theo behavior: match > fator > rating > like >created_at
+        sortTourAtTourScreen(nonBehaviorTours)
         //Bước 3: Trộn mảng
-        const mergedTours = mergeWithRatio(behaviorToursSorted, nonBehaviorTours, 2, 1)
+        const mergedTours = mergeWithRatio(behaviorTours, nonBehaviorTours, 2, 1)
 
         // SET DỮ LIÊU
         // 1. set mảng đã trộn cho dataTour
@@ -382,10 +379,10 @@ const TourList = () => {
               }>
               {allLocations.map((location: any) => {
                 return (
-                    <TouchableOpacity key={location.id}>
-                      <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
-                      <Divider />
-                    </TouchableOpacity>
+                  <TouchableOpacity key={location.id}>
+                    <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+                    <Divider />
+                  </TouchableOpacity>
                 )
               })
               }

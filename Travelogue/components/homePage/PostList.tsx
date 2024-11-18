@@ -72,57 +72,64 @@ const PostList = () => {
           const dataPostsJson = snapshot.val()
           // Chuyển đổi object thành array bang values cua js
           const jsonArrayPosts = Object.values(dataPostsJson)
-          // Bước 1: Lấy mảng theo tiêu chí
+          // Bước 1: Lấy mảng theo 2 tiêu chí: nội dung và địa điểm
           let matchingPost: any[] = []
+
           if (selectedCities && selectedCities.length > 0) { // Chọn nhiều city
             console.log("case1"); // Trùng nội dung và thành phố thì mới add vào mảng
             jsonArrayPosts.forEach((post: any) => {
-              post.match = 0
-              // Tieu chi 1: co tat ca selectedCities trong postLocation
+              post.match = 0 // Khởi tạo lại match
+
+              // Tiêu chí 1: Nội dung
+              let matchingContent = 0
+              const contentOfPostSlug = slug(post.content)
+              if (contentOfPostSlug.includes(slug(dataInput))) { // Đúng cả 2 case khi dataInput: không nhâp nội dung và nhập nội dung, vd: nếu nhập content thì phải tìm đúng theo content mới update match, còn không nhập content thì mặc định luôn đúng vì dataInput là ''
+                matchingContent = 1 // Điều kiện để push vào mảng
+                post.match += 1 //  Điều kiện để sắp xếp khi đã push vào mảng
+              }
+
+              // Tiêu chí 2: Địa điểm (Mã thành phố)
               const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) => {
                 return Object.keys(post.locations[country])
               }); //["vn_1", 'jp_2']
-              // Kiểm tra nội dung
-              if (slug(post.content).includes(slug(dataInput))) { // Đúng cả 2 case: không nhâp nội dung và nhập nội dung
-                post.match += 1
-              }
-              // Đếm city trùng
-              // const matchLocation = selectedCities.filter((cityID: any) => listLocationIdOfPost.includes(cityID)).length; // Đếm số phần tử trùng
-              
-              const matchLocation = countMatchingLocations(selectedCities, listLocationIdOfPost)
-              post.match += matchLocation // cập nhật match
-              
+              const matchingLocation = countMatchingLocations(selectedCities, listLocationIdOfPost)
+              post.match += matchingLocation // cập nhật match
+
               // Push vào mảng
-              if (post.match >= 2) { // Nếu không nhập nội dung hoặc có nội dung thì được 1, thêm vị trí > 2
+              if (matchingContent > 0 && matchingLocation > 0) { // PHẢI trùng cả nội dung và vị trí mới push vì đây là phần tìm kiếm
                 matchingPost.push(post)
               }
             })
-          } else if (selectedCountry !== null) { // không chọn city chỉ chọn quốc gia
+          } else if (selectedCountry !== null) {// Tìm theo quốc gia: không kiểm tra đã chọn city chưa vì đã check chọn city ở if trước rồi
             console.log("case2");// Trùng nội dung và quốc gia mới add vào mảng
-
             jsonArrayPosts.forEach((post: any) => {
-              post.match = 0
-              // Tieu chi 1: co tat ca selectedCities trong postLocation
-              const listCountriesId = Object.keys(post.locations)//["avietnam", 'japan']
-              // Kiểm tra nội dung
-              if (slug(post.content).includes(slug(dataInput))) {
+              post.match = 0  // Khởi tạo lại match
+
+              // Tiêu chí 1: Nội dung
+              const contentOfPostSlug = slug(post.content)
+              if (contentOfPostSlug.includes(slug(dataInput))) { // Đúng cả 2 case khi dataInput: không nhâp nội dung và nhập nội dung, vd: nếu nhập content thì phải tìm đúng theo content mới update match, còn không nhập content thì mặc định luôn đúng vì dataInput là ''
                 post.match += 1
               }
-              // Kiểm tra có quốc gia không
-              if (listCountriesId.includes(selectedCountry.key)) {
+
+              // Tiêu chí 2: Địa điểm (Mã quốc gia)
+              const listCountriesIdOfPost = Object.keys(post.locations)//["avietnam", 'japan']
+              // Kiểm tra có mã quốc gia trong bài post đó không chỉ cần có chứa là được
+              if (listCountriesIdOfPost.includes(selectedCountry.key)) {
                 post.match += 1
               }
+
               // Push vào mảng
-              if (post.match >= 2) {
+              if (post.match >= 2) { // trung khớp nội dung và có chứa mã quốc gia trong bài post
                 matchingPost.push(post)
               }
             })
           } else { // Tìm kiếm theo nội dung 
             console.log("case3"); // trùng nội dung mới add vào
             jsonArrayPosts.forEach((post: any) => {
-              post.match = 0
+              post.match = 0  // Khởi tạo lại match
               // Kiểm tra nội dung
-              if (slug(post.content).includes(slug(dataInput))) {
+              const contentOfPostSlug = slug(post.content)
+              if (contentOfPostSlug.includes(slug(dataInput))) {
                 post.match += 1
                 // Push vào mảng
                 matchingPost.push(post)
@@ -131,6 +138,7 @@ const PostList = () => {
           }
           // Bước 2: Sort mảng
           matchingPost.sort((postA: any, postB: any) => {
+            //Ý tưởng: Chỉ sort theo match và thời gian không sort theo lượt like vì bài cũ thường sẽ nhiều like hơn
             // So sánh theo match trước
             if (postB.match !== postA.match) {
               return postB.match - postA.match; // Sắp xếp giảm dần theo match
@@ -237,25 +245,30 @@ const PostList = () => {
         //Bước 1: Phân loại bài viết thành 2 mảng
         const behaviorPosts: any = [];
         const nonBehaviorPosts: any = [];
+
         jsonArrayPosts.forEach((post: any) => {
-          post.match = 0 // Tạo lại giá trị ban đầu
-          const contentSlug = slug(post.content)
-          
-          const behaviorContentSlug = slug(accountBehavior.content)
+          post.match = 0 // Khởi tạo lại match
+
+          // Điều kiện phân loại mảng: Bài viết có chứa nội dung hoặc có chứa địa điểm thì add vào
+          // Tiêu chí 1: Nội dung
+          let matchingContent = 0
+          const contentOfPostSlug = slug(post.content)
+          const behaviorContentSlug = slug(accountBehavior.content || '')
+          if (contentOfPostSlug.includes(behaviorContentSlug)) { // Đúng cả 2 case khi behaviorContentSlug = '' và != ''
+            matchingContent += 1 // Điều kiện để được push vào mảng: khi có hoặc không có hành vi
+            post.match += 1 // Điều kiện để sắp xếp mảng
+          }
+
+          //  Tiêu chí 2: Địa điểm
+          const listBehaviorLocation = accountBehavior.location ? accountBehavior.location : []
           const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) =>
             Object.keys(post.locations[country])
           ); //["vn_1", 'jp_2']
-          const listBehaviorLocation = accountBehavior.location ? accountBehavior.location : []
-          // Điều kiện phân loại mảng: Trùng content  + 1, đếm match hành vi + match
-          if (contentSlug.includes(behaviorContentSlug)) {
-            post.match += 1
-          }
           const countMatchingLocation = countMatchingLocations(listBehaviorLocation, listLocationIdOfPost)
-          // const countMatchingLocation = listLocationIdOfPost.filter(locationId => listBehaviorLocation.includes(locationId)).length; // Đếm số phần tử trùng
           post.match += countMatchingLocation // cập nhật match
 
-          // Phân loại
-          if (post.match > 1) {
+          // Phân loại: 
+          if (countMatchingLocation > 0 || matchingContent > 0) { //Vì là hàm fetch bình thường nên có nội dung hoặc có địa điểm thì thêm vào mảng nhưng phải kiểm tra địa điểm trước vì nội dung đang làm điều kiện tổng quát cho cả 2 case khi behaviorContent có hoặc không nên cần kiểm tra sau để đúng logic
             behaviorPosts.push(post)
           } else {
             nonBehaviorPosts.push(post)
@@ -264,7 +277,7 @@ const PostList = () => {
         // Bước 2: Sort
         //2.1. Sort mảng theo behavior: match > created_at
         behaviorPosts.sort((postA: any, postB: any) => {
-          // So sánh theo match trước ưu tiên trùng hành vi và thời gian
+          // Vì là bài post nên chỉ So sánh theo hành vi và thời gian
           if (postB.match !== postA.match) {
             return postB.match - postA.match; // Sắp xếp giảm dần theo match
           }

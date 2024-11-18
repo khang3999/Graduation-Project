@@ -352,33 +352,39 @@ const Map = () => {
   const handleSavePoint = async (content, type, location) => {
     const userId = await AsyncStorage.getItem("userToken");
     if (userId) {
-      const userRef = ref(database, `accounts/${userId}/behavior`);
-  
-      const snapshot = await get(userRef);
-      let existingData = snapshot.val();
-  
-      // Kiểm tra xem location có tồn tại 
-      let locationArray = existingData?.location || [];
-      // console.log(locationArray)
+      const refBehavior = ref(database, `accounts/${userId}/behavior`);
+      
+      const dataUpdate = {
+        'content': content,
+        'location': [location]
+      }
 
-      // Thêm địa điểm mới 
-      if (!locationArray.includes(location)) {
-        locationArray.push(location);
+      await update(refBehavior, dataUpdate);
+      // const snapshot = await get(userRef);
+      // let existingData = snapshot.val();
+  
+      // // Kiểm tra xem location có tồn tại 
+      // let locationArray = existingData?.location || [];
+      // // console.log(locationArray)
+
+      // // Thêm địa điểm mới 
+      // if (!locationArray.includes(location)) {
+      //   locationArray.push(location);
   
       
-        const updatedLocation = {
-          location: locationArray,
-        };
-        // Lưu lại dữ liệu đã cập nhật vào Firebase
-        await update(userRef, updatedLocation);
-      }
-        // Cập nhật lại dữ liệu 
-        if (content) {
-        const updatedUserData = {
-          content: content,
-        };
-        await update(userRef, updatedUserData);
-      }
+      //   const updatedLocation = {
+      //     location: locationArray,
+      //   };
+      //   // Lưu lại dữ liệu đã cập nhật vào Firebase
+      //   await update(userRef, updatedLocation);
+      // }
+      //   // Cập nhật lại dữ liệu 
+      //   if (content) {
+      //   const updatedUserData = {
+      //     content: content,
+      //   };
+      //   await update(userRef, updatedUserData);
+      // }
     }
     // Thông báo tùy thuộc vào type
     if (type === "post") {
