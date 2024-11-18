@@ -13,12 +13,14 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler } from "react-native-gesture-handler";
 import { useMapCheckinProvider } from "@/contexts/MapCheckinProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "expo-router";
+import { Link, router, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message-custom";
+import { TabActions, useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get('window')
 
 const CheckInMap = () => {
+  const navigation = useNavigation();
   const [dataCountries, setDataCountries] = useState([])
   const [dataAreas, setDataAreas] = useState([])
   const [dataCities, setDataCities] = useState([])
@@ -232,7 +234,7 @@ const CheckInMap = () => {
       Toast.show({
         type: 'error',
         position: 'top',
-        text1: 'Có nhầm lẫn gì đó!',
+        text1: 'Có vấn đề gì đó!',
         text2: `Có vẻ bạn chưa chọn tỉnh check in.`,
         visibilityTime: 3000,
         icon: 'error',
@@ -297,7 +299,7 @@ const CheckInMap = () => {
         Toast.show({
           type: 'error',
           position: 'top',
-          text1: 'Có nhầm lẫn gì đó!',
+          text1: 'Có vấn đề gì đó!',
           text2: `Có vẻ tỉnh ${selectedCity.label} chưa được check in.`,
           visibilityTime: 3000,
           icon: 'error',
@@ -309,7 +311,7 @@ const CheckInMap = () => {
       Toast.show({
         type: 'error',
         position: 'top',
-        text1: 'Có nhầm lẫn gì đó!',
+        text1: 'Có vấn đề gì đó!',
         text2: `Có vẻ bạn chưa chọn tỉnh để check out.`,
         visibilityTime: 3000,
         icon: 'error',
@@ -320,7 +322,71 @@ const CheckInMap = () => {
 
   }
 
+  // Hàm xem chi tiết tỉnh
+  const handleTapOnGallery = () => {
+    if (selectedCity) {
+      router.push({
+        pathname: "/gallery",
+        params: { city: selectedCity },
 
+      })
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Có vấn đề gì đó!',
+        text2: `Có vẻ bạn chưa chọn tỉnh.`,
+        visibilityTime: 3000,
+        icon: 'error',
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 }
+      });
+    }
+  }
+
+  // Hàm xem bài viết và tour
+  const handleTapByButton = async (selectedCity, tabscreen) => {
+    if (selectedCity && tabscreen) {
+      // Lưu id địa điểm lên behavior và chuyển về home
+      //1. Lưu lên firebase
+      const refBehaviorsLocation = ref(database, `accounts/${userId}/behavior`)
+      const dataUpdate = {
+        'content': '',
+        'location': [selectedCity.value]
+      }
+      await update(refBehaviorsLocation, dataUpdate);
+      // 2. Chuyển về home hoặc tour
+      navigation.navigate(tabscreen)
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Có vấn đề gì đó!',
+        text2: `Có vẻ bạn chưa chọn tỉnh.`,
+        visibilityTime: 3000,
+        icon: 'error',
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 }
+      });
+    }
+
+  }
+
+  //  // Hàm xem tour
+  //  const handleTapOnShowTour = async (locationId) => {
+  //   // Lưu id địa điểm lên behavior và chuyển về home
+  //   //1. Lưu lên firebase
+  //   const refBehaviorsLocation = ref(database, `accounts/${userId}/behavior`)
+  //   const dataUpdate = {
+  //     'content': '',
+  //     'location': [locationId]
+  //   }
+  //   await update(refBehaviorsLocation, dataUpdate);
+  //   // 2. Chuyển về home
+  //   // const jumpToAction = TabActions.jumpTo('index'); // Tên của Tab.Screen mục tiêu
+  //   // navigation.dispatch(jumpToAction);
+  //   navigation.navigate('tour')
+  // }
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.hearder}>
@@ -401,19 +467,23 @@ const CheckInMap = () => {
               <Text style={styles.actionBtnText}>Check in</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckOut(selectedCity, selectedCountry.value)}>
-              <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
+              <MaterialCommunityIcons name="book-remove-outline" size={24} color="black" />
               <Text style={styles.actionBtnText}>Check out</Text>
             </TouchableOpacity>
           </View>
         </View>
         <View style={{ flexDirection: 'row', paddingHorizontal: 10, marginTop: 10, justifyContent: 'space-around', alignItems: 'center' }}>
-          <TouchableOpacity style={styles.btnHeader}>
+          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapByButton(selectedCity, 'index')}>
             <FontAwesome6 name="newspaper" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem bài viết</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader}>
+          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapByButton(selectedCity, 'tour')}>
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapOnGallery()}>
+            <FontAwesome6 name="images" size={24} color="black" />
+            <Text style={styles.actionBtnText}>Gallery</Text>
           </TouchableOpacity>
 
         </View>

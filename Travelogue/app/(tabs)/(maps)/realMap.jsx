@@ -20,12 +20,15 @@ import { ScrollView } from "react-native-gesture-handler";
 import { set } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { update } from "firebase/database";
+import { useNavigation } from "@react-navigation/native";
 
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
   const [areaData, setAreaData] = useState([]);
   const [cityData, setCityData] = useState([]);
   const [points, setPoints] = useState([]);
+  const navigation = useNavigation();
+
 
   // Lua chon kieu points
   const festivalTypeOptions = [
@@ -379,10 +382,12 @@ const Map = () => {
     }
     // Thông báo tùy thuộc vào type
     if (type === "post") {
-      Alert.alert("Thông báo", "Đã lưu bài viết");
+      // 2. Chuyển về home hoặc tour
+      navigation.navigate('index')
     }
     if (type === "tour") {
-      Alert.alert("Thông báo", "Đã lưu tour");
+      // 2. Chuyển về home hoặc tour
+      navigation.navigate('tour')
     }
   };
   
@@ -391,7 +396,7 @@ const Map = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
-        <View style={styles.header}></View>
+        {/* <View style={styles.header}></View> */}
         {/* Map của Google Map */}
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
           {filteredPoints.map((point) => {
@@ -420,7 +425,7 @@ const Map = () => {
           })}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
-        <RowComponent styles={{ marginTop: 30 }} justify="center">
+        <RowComponent styles={{ marginTop: 10 }} justify="center">
           <View style={styles.containerScroll}>
             {showLeftArrow && (
               <TouchableOpacity
@@ -754,7 +759,7 @@ const Map = () => {
                   onPress={() => {
                     handleSavePoint(
                       selectedFestival.title,
-                      "tour",
+                      "post",
                       selectedFestival.cityId
                     );
                   }}
@@ -768,7 +773,7 @@ const Map = () => {
                   onPress={() => {
                     handleSavePoint(
                       selectedFestival.title,
-                      "post",
+                      "tour",
                       selectedFestival.cityId
                     );
                   }}

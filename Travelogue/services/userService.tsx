@@ -34,7 +34,7 @@ const getCurrentUserData = async () => {
   }
 };
 
-const updateUserData = async (userId:string , userData:any, selectedImage:string | null) => {
+const updateUserData = async (userId:string , userData:any,setUserData:any, selectedImage:string | null) => {
   if (!userId) {
     throw new Error("No user ID provided");
   }
@@ -53,7 +53,7 @@ const updateUserData = async (userId:string , userData:any, selectedImage:string
       ...userData,
       avatar: avatarUrl,
     };
-    
+    setUserData(updatedUserData);
     await update(userRef, updatedUserData);
     console.log("User data updated successfully");
   } catch (error) {
@@ -65,7 +65,7 @@ const updateUserData = async (userId:string , userData:any, selectedImage:string
 const updateUserPosts = async (userId: string, localUserData: any) => {
   try {
     const userPostsSnapshot = await get(ref(database, 'posts'));
-
+    const avatar = await getImageUrl(`accounts/${userId}/papers/avatar.png`);
     if (userPostsSnapshot.exists()) {
       const updates: Record<string, any> = {};
 
@@ -77,7 +77,7 @@ const updateUserPosts = async (userId: string, localUserData: any) => {
         // Update the post's main author information if it matches the userId
         if (post.author.id === userId) {
           updates[`posts/${postKey}/author`] = {
-            avatar: localUserData.avatar || post.author.avatar,
+            avatar: avatar || post.author.avatar,
             fullname: localUserData.fullname || post.author.fullname,
             id: userId,
           };
@@ -91,7 +91,7 @@ const updateUserPosts = async (userId: string, localUserData: any) => {
             // Update the author information in the comment if it matches the userId
             if (comment.author.id === userId) {
               updates[`posts/${postKey}/comments/${commentKey}/author`] = {
-                avatar: localUserData.avatar || comment.author.avatar,
+                avatar: avatar || comment.author.avatar,
                 fullname: localUserData.fullname || comment.author.fullname,
                 id: userId,
               };
@@ -113,7 +113,7 @@ const updateUserPosts = async (userId: string, localUserData: any) => {
 const updateUserTours = async (userId: string, localUserData: any) => {
   try {
     const userToursSnapshot = await get(ref(database, 'tours'));
-
+    const avatar = await getImageUrl(`accounts/${userId}/papers/avatar.png`);
     if (userToursSnapshot.exists()) {
       const updates: Record<string, any> = {};
 
@@ -123,7 +123,7 @@ const updateUserTours = async (userId: string, localUserData: any) => {
         const tourKey = tourSnapshot.key;
         if (tour.author.id === userId) {
           updates[`tours/${tourKey}/author`] = {
-            avatar: localUserData.avatar || tour.author.avatar,
+            avatar: avatar || tour.author.avatar,
             fullname: localUserData.fullname || tour.author.fullname,
             id: userId,
           };
@@ -135,7 +135,7 @@ const updateUserTours = async (userId: string, localUserData: any) => {
             // Update the author information in the comment if it matches the userId
             if (comment.author.id === userId) {
               updates[`tours/${tourKey}/comments/${commentKey}/author`] = {
-                avatar: localUserData.avatar || comment.author.avatar,
+                avatar: avatar || comment.author.avatar,
                 fullname: localUserData.fullname || comment.author.fullname,
                 id: userId,
               };
@@ -148,7 +148,7 @@ const updateUserTours = async (userId: string, localUserData: any) => {
             const rating = tour.ratings[ratingKey];
             if (rating.author.id === userId) {
               updates[`tours/${tourKey}/ratings/${ratingKey}/author`] = {
-                avatar: localUserData.avatar || rating.author.avatar,
+                avatar: avatar || rating.author.avatar,
                 fullname: localUserData.fullname || rating.author.fullname,
                 id: userId,
               };

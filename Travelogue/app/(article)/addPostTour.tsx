@@ -52,6 +52,8 @@ import { UserRegister } from "@/model/UserRegister";
 import LottieView from "lottie-react-native";
 import { has } from "lodash";
 import ReviewPostUser from "./reviewPostUser";
+import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
+import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 
 const AddPostTour = () => {
   interface Country {
@@ -176,6 +178,9 @@ const AddPostTour = () => {
   // kiểm tra giá tiền
   const [checkBalance, setCheckBalance] = useState(false);
 
+   //Lay data banned words
+   const bannedWords = useBannedWords();
+  //  console.log("Banned Words:", bannedWords);
   //*********************************************************************
   // Xử lý ngươi dùng
   //*********************************************************************
@@ -900,6 +905,104 @@ const AddPostTour = () => {
       )
       .join("<br><br>")}`;
 
+        //Kiem tra tu cam thong tin bai viet
+     for (let i = 0; i < hashtags.length; i++) {
+      if (bannedWordsChecker(hashtags[i], bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+     if (bannedWordsChecker(title, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+      const day = days[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+
+      // Kiểm tra mô tả hoạt động cho từng ngày
+      for (
+        let activityIndex = 0;
+        activityIndex < day.activities.length;
+        activityIndex++
+      ) {
+        const activity = day.activities[activityIndex];
+
+        if (bannedWordsChecker(activity.activity, bannedWords)) {
+          setButtonPost(false);
+          Toast.show({
+            type: "error",
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
+            text1Style: { fontSize: 14 },
+            text2Style: { fontSize: 12 },
+            position: "top",
+          });
+          return;
+        }
+      }
+
+      // Kiểm tra mô tả chung của ngày
+      if (bannedWordsChecker(day.description, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Mô tả chung chứa từ cấm`,
+          text2: `Vui lòng sửa lại mô tả chung ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+    
     const timestamp = Date.now();
 
     const storage = getStorage();
@@ -994,13 +1097,11 @@ const AddPostTour = () => {
           if (data) {
             avatar = data.avatar;
             fullname = data.fullname;
-            if(data.totalPosts){
-              totalPosts = data.totalPosts + 1 ;
-            }
-            else {
+            if (data.totalPosts) {
+              totalPosts = data.totalPosts + 1;
+            } else {
               totalPosts = 1;
             }
-           
           }
         });
         // lấy thông tin package được chọn
@@ -1075,9 +1176,11 @@ const AddPostTour = () => {
               (selectedPackageData.price -
                 (selectedPackageData.price * selectedPackageData.discount) /
                   100);
-            const newAccumulate = (account?.accumulate ?? 0) +  (selectedPackageData.price -
-              (selectedPackageData.price * selectedPackageData.discount) /
-                100);
+            const newAccumulate =
+              (account?.accumulate ?? 0) +
+              (selectedPackageData.price -
+                (selectedPackageData.price * selectedPackageData.discount) /
+                  100);
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newBalance,
@@ -1251,7 +1354,7 @@ const AddPostTour = () => {
     }
 
     const existingDay = days.find(
-      (day) => 
+      (day) =>
         day.title === "" ||
         day.description === "" ||
         day.activities.length === 0
@@ -1304,6 +1407,106 @@ const AddPostTour = () => {
             .join("<br><br>")}`
       )
       .join("<br><br>")}`;
+
+      
+     //Kiem tra tu cam thong tin bai viet
+     for (let i = 0; i < hashtags.length; i++) {
+      if (bannedWordsChecker(hashtags[i], bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+     if (bannedWordsChecker(title, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+      const day = days[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+
+      // Kiểm tra mô tả hoạt động cho từng ngày
+      for (
+        let activityIndex = 0;
+        activityIndex < day.activities.length;
+        activityIndex++
+      ) {
+        const activity = day.activities[activityIndex];
+
+        if (bannedWordsChecker(activity.activity, bannedWords)) {
+          setButtonPost(false);
+          Toast.show({
+            type: "error",
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
+            text1Style: { fontSize: 14 },
+            text2Style: { fontSize: 12 },
+            position: "top",
+          });
+          return;
+        }
+      }
+
+      // Kiểm tra mô tả chung của ngày
+      if (bannedWordsChecker(day.description, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Mô tả chung chứa từ cấm`,
+          text2: `Vui lòng sửa lại mô tả chung ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+
     //Luư dữ liệu content
     setcontentReviewPost(contents);
 
@@ -1518,9 +1721,19 @@ const AddPostTour = () => {
                 <TextComponent
                   text=" :"
                   size={14}
-                  styles={{ fontWeight: "600", color: "#000", marginBottom: 5, marginRight: 5 }}
+                  styles={{
+                    fontWeight: "600",
+                    color: "#000",
+                    marginBottom: 5,
+                    marginRight: 5,
+                  }}
                 />
-                <Information size="18" color={appColors.danger} style={{marginTop:-5}} onPress={() => setModalInformation(true)} />
+                <Information
+                  size="18"
+                  color={appColors.danger}
+                  style={{ marginTop: -5 }}
+                  onPress={() => setModalInformation(true)}
+                />
               </RowComponent>
               <SectionComponent>
                 {/* Chọn package */}
@@ -2905,24 +3118,52 @@ const AddPostTour = () => {
           </Modal>
         ) : null}
 
-
         {/* Modal information */}
         <Modal
           visible={modalInformation}
           onDismiss={() => setModalInformation(false)}
         >
-           <View style={{backgroundColor: 'white', width: 320,height: 230, position: 'absolute', top: -120, left: "5%"}}>
-            <SectionComponent styles={{ marginTop: 10,marginBottom: -10}}>
-            <View>
-              <Text style={[styles.modalTitle, { marginLeft: 10, fontSize: 22}]}>
-                Thông tin ưu đãi gói dịch vụ
-              </Text>
-              <Text style={{ marginLeft: 10 }}>
-                Gói càng cao thì sẽ có nhiều <Text style={{fontWeight: 'bold', color: appColors.danger}}>hashtag</Text> và<Text style={{fontWeight: 'bold', color: appColors.danger}}> được tích lũy điểm</Text> cho tài khoản và bài viết <Text style={{fontWeight: 'bold', color: appColors.danger}}>sẽ dựa các tiêu chí bao gồm </Text><Text style={{fontWeight: 'bold', color: appColors.primary}}>(điểm tích lũy điểm tài khoản, giá trị gói package, hashtag)</Text> để tiếp cận được nhiều người hơn.
-              </Text>
-            </View>
-              </SectionComponent>
-              <RowComponent justify="space-between" >
+          <View
+            style={{
+              backgroundColor: "white",
+              width: 320,
+              height: 230,
+              position: "absolute",
+              top: -120,
+              left: "5%",
+            }}
+          >
+            <SectionComponent styles={{ marginTop: 10, marginBottom: -10 }}>
+              <View>
+                <Text
+                  style={[styles.modalTitle, { marginLeft: 10, fontSize: 22 }]}
+                >
+                  Thông tin ưu đãi gói dịch vụ
+                </Text>
+                <Text style={{ marginLeft: 10 }}>
+                  Gói càng cao thì sẽ có nhiều{" "}
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    hashtag
+                  </Text>{" "}
+                  và
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    {" "}
+                    được tích lũy điểm
+                  </Text>{" "}
+                  cho tài khoản và bài viết{" "}
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    sẽ dựa các tiêu chí bao gồm{" "}
+                  </Text>
+                  <Text
+                    style={{ fontWeight: "bold", color: appColors.primary }}
+                  >
+                    (điểm tích lũy điểm tài khoản, giá trị gói package, hashtag)
+                  </Text>{" "}
+                  để tiếp cận được nhiều người hơn.
+                </Text>
+              </View>
+            </SectionComponent>
+            <RowComponent justify="space-between">
               <LottieView
                 source={require("../../assets/images/information.json")}
                 autoPlay
@@ -2932,28 +3173,25 @@ const AddPostTour = () => {
                   height: 150,
                 }}
               />
-               <SectionComponent >
-            <TouchableOpacity
-              style={[
-                styles.closeButton,
-                {
-                  justifyContent: "center",
-                  alignItems: "center",
-                  width: "100%",
-                  marginRight: 70,
-                },
-              ]}
-              onPress={() => setModalInformation(false)}
-            >
-              <IconA name="close" size={20}  color="#fff" />
-            </TouchableOpacity>
-          </SectionComponent>
-              </RowComponent>
-          
-           </View>
-          </Modal>
-
-
+              <SectionComponent>
+                <TouchableOpacity
+                  style={[
+                    styles.closeButton,
+                    {
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      marginRight: 70,
+                    },
+                  ]}
+                  onPress={() => setModalInformation(false)}
+                >
+                  <IconA name="close" size={20} color="#fff" />
+                </TouchableOpacity>
+              </SectionComponent>
+            </RowComponent>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );

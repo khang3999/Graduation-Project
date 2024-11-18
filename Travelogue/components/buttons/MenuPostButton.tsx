@@ -159,30 +159,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     // Cleanup function để hủy listener khi component unmount
     return () => reason();
   }, []);
-  // Reason comment
-  useEffect(() => {
-    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'reasons/comment/');
-    // Lắng nghe thay đổi trong dữ liệu
-    const reason = onValue(onValueChange, (snapshot) => {
-      if (snapshot.exists()) {
-        const jsonData = snapshot.val();
-        // Chuyển đổi object thành array
-        const dataArray: any = Object.entries(jsonData).map(([key, value]) => ({
-          id: key,
-          name: value,
-        }));
-        setReasonsComment(dataArray);
-      } else {
-        console.log("No data available");
-      }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
-
-    // Cleanup function để hủy listener khi component unmount
-    return () => reason();
-  }, []);
+  
 
 
   const handleReport = (reason: any) => {

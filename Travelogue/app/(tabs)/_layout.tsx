@@ -68,15 +68,6 @@ const _layout = () => {
           borderRadius: 20,
           elevation: 10
         },
-        // headerTitle: (props) =>
-        //   // Bỏ image vào đây
-
-        //   <Image
-        //     source={require('@/assets/images/logo.png')}
-        //     resizeMode="contain"
-        //   />
-
-        // ,
         headerRight: () => (
           <View style={styles.headerRight}>
             <PlusButton onPress={() => {
@@ -118,7 +109,7 @@ const _layout = () => {
         name="(maps)"
         options={{
           title: 'Map',
-          headerShown: false,
+          headerShown: false
         }} />
       <Tabs.Screen
         key={4}

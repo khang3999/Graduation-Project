@@ -27,10 +27,10 @@ export default function ProfileLayout() {
         headerTitleAlign: "center", // Align title to center
       }}
     >
-      <Stack.Screen name="Profile" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ headerShown: false }} />
      
       <Stack.Screen
-        name="Editing"
+        name="editing"
         options={{
           headerShown: true,
           title: "Edit Profile",
@@ -47,7 +47,7 @@ export default function ProfileLayout() {
       />
        
             
-      <Stack.Screen name="SearchResult"
+      <Stack.Screen name="searchResult"
         options={{
           headerShown: true,
           title: "Search Result",
@@ -61,7 +61,7 @@ export default function ProfileLayout() {
           },
           headerTitleAlign: "center",
         }} />
-      <Stack.Screen name="ChangePassword"
+      <Stack.Screen name="changePassword"
         options={{
           headerShown: true,
           title: "Change Password",

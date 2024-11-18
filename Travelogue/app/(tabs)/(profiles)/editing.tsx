@@ -23,7 +23,7 @@ import { auth } from "@/firebase/firebaseConfig";
 import { useAccount } from "@/contexts/AccountProvider";
 import LottieView from "lottie-react-native";
 import { useHomeProvider } from "@/contexts/HomeProvider";
-
+import RNRestart from 'react-native-restart';
 
 export default function EditingProfileScreen() {  
   const { dataAccount }: any = useHomeProvider();
@@ -87,13 +87,10 @@ export default function EditingProfileScreen() {
     try {
       setIsLoading(true);
       // Step 1: Update user data
-      await updateUserData(dataAccount.id, localUserData, selectedImage);
+      await updateUserData(dataAccount.id, localUserData,setLocalUserData, selectedImage);
 
       // Immediately set loading to false and notify the user
       
-      
-      
-
       // Step 2: Asynchronously start updating posts in the background
       await updateUserPosts(dataAccount.id, localUserData);
       
@@ -102,16 +99,14 @@ export default function EditingProfileScreen() {
       
       Alert.alert(
         "Đã cập nhật thành công !",
-        "Xin hãy khởi động lại ứng dụng để cập nhật thông tin.",
+        "Thông tin cá nhân của bạn đã được cập nhật.",
         [
           {
-            text: "Khởi động",
-            onPress: () => {
-              BackHandler.exitApp();
+            text: "OK",
+            onPress: () => {            
             },
           },
-          
-        ]
+        ]      
       );
     
       setIsLoading(false)

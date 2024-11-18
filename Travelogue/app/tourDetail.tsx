@@ -31,14 +31,14 @@ import { Rating } from "react-native-ratings";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
-import { auth, database, getDownloadURL, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
+import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
 import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
-import { CommentType, RatingComment } from '@/types/CommentTypes';
+import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
@@ -52,19 +52,6 @@ type RatingSummary = {
   totalRatingValue: any;
 };
 
-type Comment = {
-  id: string;
-  author: {
-    id: string
-    avatar: any;
-    fullname: string;
-  };
-  status_id: number;
-  content: string;
-  reports: number;
-  parentId: string | null;
-  created_at: string;
-};
 
 type Tour = {
   id: string;
@@ -85,6 +72,7 @@ type Tour = {
   post_status: string;
   reports: number;
   view_mode: boolean;
+  thumbnail: string;
 };
 
 type TourItemProps = {
@@ -161,11 +149,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
-  const [commentText, setCommentText] = useState("");
-  const [replyingTo, setReplyingTo] = useState<{
-    id: string;
-    fullname: string;
-  } | null>(null);
+  
 
   const { dataAccount }: any = useHomeProvider();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
@@ -181,9 +165,17 @@ const TourItem: React.FC<TourItemProps> = ({
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [authorParentCommentId, setAuthorParentCommentId] = useState('')
+  const [bannedWords, setBannedWords] = useState<any[]>([])
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
+    if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
+      console.error('Missing required author information');
+      return;
+    }
+    if (parentComment) {
+      setAuthorParentCommentId(parentComment.author.id)
+    }
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
       const newComment = {
@@ -197,11 +189,7 @@ const TourItem: React.FC<TourItemProps> = ({
         reports: 0,
         content: replyText,
         parentId: parentId ? parentId : null,
-        created_at: new Date().toLocaleString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
+        created_at: Date.now(),
       };
       try {
         const commentRef = ref(database, `tours/${item.id}/comments`)
@@ -214,14 +202,19 @@ const TourItem: React.FC<TourItemProps> = ({
           setComments((prevComments) => {
             if (parentId) {
               // Add as a reply with the correct `parentId`
+              if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
+                handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
+              }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
             } else {
               // Add as a top-level comment
               return [newCommentWithId, ...prevComments];
             }
           });
-
-          setReplyingTo(null);
+          
+        }
+        if (dataAccount.id != item.author.id) {
+          handleAddNotify(newCommentRef.key, item.author.id, parentId)
         }
       } catch (error) {
         console.error("Error adding rating comment:", error);
@@ -244,11 +237,7 @@ const TourItem: React.FC<TourItemProps> = ({
         reports: 0,
         content: replyText,
         parentId: parentId ? parentId : null,
-        created_at: new Date().toLocaleString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
+        created_at: Date.now(),
       };
       try {
         const ratingsRef = ref(database, `tours/${item.id}/ratings`);
@@ -268,6 +257,35 @@ const TourItem: React.FC<TourItemProps> = ({
         console.error("Error adding rating comment:", error);
       }
     }
+
+  };
+  const handleAddNotify = async (commentId: any, account_id: any, parentId: any) => {
+
+    // Tạo một tham chiếu đến nhánh 'notifications' trong Realtime Database
+    const notifyRef = ref(database, `notifications/${account_id}`);
+
+    // Tạo key tu dong cua firebase
+    const newItemKey = push(notifyRef);
+    const notify = {
+      author_id: item.author.id,
+      comment_id: commentId,
+      commentator_id: dataAccount.id,
+      commentator_name: dataAccount.fullname,
+      created_at: Date.now(),
+      id: newItemKey.key,
+      image: item.thumbnail,
+      post_id: item.id,
+      type: parentId ? "reply" : "comment",
+      read: false,
+    };
+    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
+    await set(newItemKey, notify)
+      .then(() => {
+        console.log('Data added successfully');
+      })
+      .catch((error) => {
+        console.error('Error adding data: ', error);
+      });
 
   };
   const addReplyToComment = (
@@ -409,6 +427,19 @@ const TourItem: React.FC<TourItemProps> = ({
     const userId = dataAccount.id;
     setIsLoading(true);
     try {
+
+      //Step 0: Check banned words
+      // convert reply text to lowercase for easier comparison
+      const replyTextLower = ratingCommentText.toLowerCase();
+
+      // Check for banned words
+      const bannedWord = bannedWords.find((word) => replyTextLower.includes(word.word.toLowerCase()));
+      if (bannedWord) {
+        Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
+        return;
+      }
+
+
       // Step 1: Reference to the user's rating in Realtime Database
       const userRatingRef = ref(database, `tours/${postId}/ratings/${userId}`);
 
@@ -437,11 +468,7 @@ const TourItem: React.FC<TourItemProps> = ({
         id: userRatingRef.key!,
         content: ratingCommentText,
         image: imageUrl,
-        created_at: new Date().toLocaleString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
+        created_at: Date.now(),
         rating: ratingValue,
         reports: 0,
         status_id: 0,
@@ -468,14 +495,14 @@ const TourItem: React.FC<TourItemProps> = ({
       });
 
       console.log('Rating and image successfully added');
-
+      setIsRatingModalOpen(false);
+      ratingCommentAS.current?.show()
     } catch (error) {
 
       console.error('Error adding rating and image:', error);
     } finally {
       setIsLoading(false);
-      setIsRatingModalOpen(false);
-      ratingCommentAS.current?.show();
+    ;
     }
   };
   const handleOpenRatingComments = async () => {
@@ -535,6 +562,27 @@ const TourItem: React.FC<TourItemProps> = ({
 
   }
 
+  // Get banned words
+  useEffect(() => {
+    const onValueChange = ref(database, 'words/');
+    const bannedWords = onValue(onValueChange, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonData = snapshot.val();
+        // Chuyển đổi object thành array
+        const dataArray: any = Object.entries(jsonData).map(([key, value]) => ({
+          id: key,
+          word: value,
+        }));
+        setBannedWords(dataArray);
+      } else {
+        console.log("No data available");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    return () => bannedWords();
+  }, []);
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
@@ -624,13 +672,13 @@ const TourItem: React.FC<TourItemProps> = ({
       <CommentsActionSheet
         isPostAuthor={isPostAuthor}
         commentRefAS={commentAS}
-        commentsData={comments}
+        // commentsData={comments}
         onSubmitComment={handleCommentSubmit}
         accountId={dataAccount.id}
         onDelete={handleDeleteComment}
         onReport={handleReportComment}
         postId={item.id}
-        type = {"tour"}
+        type={"tour"}
       />
 
 
@@ -719,6 +767,8 @@ const TourItem: React.FC<TourItemProps> = ({
         accountId={dataAccount.id}
         onDelete={handleDeleteRatingComment}
         onReport={handleReportComment}
+        bannedWords={bannedWords}
+        
       />
     </View>
   );
@@ -768,7 +818,7 @@ export default function ToursScreen() {
     <>
 
       <FlatList
-        data={tourId?dataTour:memoriedTourItem}
+        data={tourId ? dataTour : memoriedTourItem}
         renderItem={({ item }) => (
           <TourItem
             item={item}
