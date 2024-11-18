@@ -40,7 +40,7 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
 
         <View style={styles.column}>
           <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
-          <Text style={styles.infoText}>posts</Text>
+          <Text style={styles.infoText}>bài viết</Text>
         </View>
 
       </View>

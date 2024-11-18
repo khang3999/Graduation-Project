@@ -8,6 +8,7 @@ import { Rating } from 'react-native-ratings';
 import { database, get, update } from '@/firebase/firebaseConfig';
 import { ref, onValue, push } from 'firebase/database';
 import { MaterialIcons } from '@expo/vector-icons';
+import { format } from 'date-fns';
 
 
 // Extending Comment to create SortedComment with extra fields
@@ -313,7 +314,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                                                 {item.author.fullname}
                                             </Text>
                                             <Text style={styles.ratingCommentTime}>
-                                                {item.created_at}
+                                            {format(new Date(item.created_at), "dd MMM yyyy HH:mm")}   
                                             </Text>
                                         </View>
                                     </View>
