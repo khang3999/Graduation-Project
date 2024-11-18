@@ -349,12 +349,12 @@ const CheckInMap = () => {
     if (selectedCity && tabscreen) {
       // Lưu id địa điểm lên behavior và chuyển về home
       //1. Lưu lên firebase
-      const refBehaviorsLocation = ref(database, `accounts/${userId}/behavior`)
+      const refBehavior = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
         'content': '',
         'location': [selectedCity.value]
       }
-      await update(refBehaviorsLocation, dataUpdate);
+      await update(refBehavior, dataUpdate);
       // 2. Chuyển về home hoặc tour
       navigation.navigate(tabscreen)
     } else {

@@ -34,6 +34,9 @@ export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
 
 // Hàm slug text
 export const slug = (str) => {
+    if (str) {
+        return ''
+    }
     return String(str)
         .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')  //Xóa dấu
         .trim().toLowerCase() //Cắt khoảng trắng đầu, cuối và chuyển chữ thường
@@ -98,7 +101,7 @@ export const sortTourAtHomeScreen = (listTour, listLocationIdOfPost) => {
     return listTour;
 }
 // HÀM SORT TOUR MÀN HÌNH TOUR
-export const sortTourMatchingAtTourScreen = (listTour) => {
+export const sortTourAtTourScreen = (listTour) => {
     listTour.sort((tourA, tourB) => {
         const matchesA = tourA.match
         const matchesB = tourB.match
