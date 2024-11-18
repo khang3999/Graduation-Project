@@ -167,7 +167,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 
 
 
-  const handleReport = (reason: any) => {   
+  const handleReport = (reason: any) => {
     setModalVisible(false);
     setShowConfirmation(true);
     setTimeout(() => {
@@ -175,9 +175,12 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     }, 3000);
     if (typeReport === "post") {
       reportPost(reason)
+      setSelectedReason(null);
+      setReportImages([]);
     }
     else {
       reportComment(reason)
+
     }
   };
 
@@ -219,7 +222,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
   //Update report
   const reportPost = async (reason: any) => {
     let item: any = { reason: {} };
-  
+
     const uploadImages = async (images: string[]) => {
       const imageUrls = [];
       const storage = getStorage(); // Get the Firebase Storage instance
@@ -234,31 +237,34 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       }
       return imageUrls;
     };
-  
+
     let imageUrls: string[] = [];
     if (reportImages.length > 0) {
       imageUrls = await uploadImages(reportImages);
     }
-  
+
     const reportRef = ref(database, `reports/post/${idPost}`);
     const newItemKey = push(ref(database, `reports/post/${idPost}/reason/`));
+    const newImageKey = push(ref(database, `reports/account/${idPost}/images/`));
     const snapshot = await get(reportRef);
     if (snapshot.exists()) {
       item = snapshot.val();
     }
-  
     const reasonKey = newItemKey.key as string;
+    const imageKey = newImageKey.key as string;
     const itemNew = {
       post_id: idPost,
       reason: {
         ...item.reason,
         [reasonKey]: reason
       },
-      type: 'post',
       status_id: 1,
-      images: imageUrls // Include image URLs in the report
-    };
-  
+      images: {
+        ...item.images,
+        [imageKey]: imageUrls,
+      }
+    }
+
     await update(reportRef, itemNew)
       .then(() => {
         console.log('Data added successfully');
@@ -266,6 +272,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       .catch((error) => {
         console.error('Error adding data: ', error);
       });
+
   };
 
 
@@ -276,6 +283,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       setDataReason(reasonsPost)
       setIdPost(postId)
       setTypeReport("post")
+
     }
     else if (type === "comment") {
       setDataReason(reasonsComment)
@@ -398,15 +406,15 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select a reason for report</Text>
+            <Text style={styles.modalTitle}>Hãy chọn 1 lý do báo cáo</Text>
             <FlatList
               data={dataReason}
               keyExtractor={(_, index) => index.toString()}
               renderItem={(item: any) => (
                 <TouchableOpacity
-                  style={[styles.reasonItem ,  selectedReason === item.item.name && styles.selectedReasonItem,]}
+                  style={[styles.reasonItem, selectedReason === item.item.name ? styles.selectedReasonItem : null,]}
                   onPress={() => {
-                    setSelectedReason(item.item.name);                  
+                    setSelectedReason(item.item.name);
                   }}
                 >
                   <Text style={styles.reasonText}>{item.item.name}</Text>
@@ -436,13 +444,13 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                 </View>
               )}
             </View>
-            <TouchableOpacity              
+            <TouchableOpacity
               onPress={() => handleReport(selectedReason)}
-              style={{ marginTop: 20 }}
-              >
-                <Text>Gửi</Text>
-              </TouchableOpacity>
-            
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Gửi</Text>
+            </TouchableOpacity>
+
           </View>
         </View>
       </Modal>
@@ -458,6 +466,19 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 };
 
 const styles = StyleSheet.create({
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "grey",
+  },
+  sendButton: {
+    backgroundColor: "#C1E1C1",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
   removeButton: {
     position: 'absolute',
     top: 5,
@@ -482,13 +503,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
   },
-  ratingImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    marginVertical: 10,
-    alignSelf: 'flex-start',
-  },
   imagePickerTextButton: {
     color: '#2196F3',
     fontWeight: 'bold',
@@ -498,7 +512,7 @@ const styles = StyleSheet.create({
   },
   imagePickerContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginTop: 20,
   },
   imagePickerButton: {
     flexDirection: 'row',
@@ -531,12 +545,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderColor: '#ddd',
-    width: '100%',    
+    width: '100%',
     borderRadius: 10,
     marginBottom: 2,
   },
   selectedReasonItem: {
-    backgroundColor: '#d3d3d3', 
+    backgroundColor: '#d3d3d3',
+
   },
   reasonText: {
     fontSize: 16,

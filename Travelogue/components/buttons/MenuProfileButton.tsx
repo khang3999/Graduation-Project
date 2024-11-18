@@ -1,4 +1,4 @@
-import { auth, database, get, onValue, push, ref, update } from "@/firebase/firebaseConfig";
+import { auth, database, get, getDownloadURL, onValue, push, ref, storageRef, update, uploadBytes } from "@/firebase/firebaseConfig";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
@@ -10,6 +10,8 @@ import {
   Alert,
   TouchableWithoutFeedback,
   FlatList,
+  Pressable,
+  Image
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
@@ -19,6 +21,10 @@ import Toast from "react-native-toast-message-custom";
 import { asyncStorageEmitter } from "@/utils/emitter";
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAccount } from "@/contexts/AccountProvider";
+import * as ImagePicker from 'expo-image-picker';
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
+import { set } from "lodash";
+import { getStorage } from "firebase/storage";
 interface MenuPopupButtonProps {
   menuIcon: string;
   isDisplay: boolean;
@@ -28,9 +34,10 @@ interface MenuPopupButtonProps {
 const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay, isSearched }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   // Position of the menu
-  const {searchedAccountData}:any = useAccount();
+  const { searchedAccountData }: any = useAccount();
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<TouchableOpacity>(null);
+  const [reportImages, setReportImages] = useState<string[]>([]);
 
   //Report
   const [modalVisible, setModalVisible] = useState(false);
@@ -75,7 +82,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
   const handleEditProfile = () => {
     router.push("/editing");
   }
-  
+
   const handleChangePassword = () => {
     router.push('/changePassword')
     return
@@ -109,37 +116,61 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
 
 
   const handleReport = (reason: any) => {
-    setSelectedReason(reason);
     setModalVisible(false);
     setShowConfirmation(true);
     setTimeout(() => {
       setShowConfirmation(false);
     }, 3000);
     reportAccount(reason)
+    setSelectedReason(null);
+    setReportImages([]);
   };
   //Update report
   const reportAccount = async (reason: any) => {
     let item: any = {
       reason: {
-
       }
+    }
+    const uploadImages = async (images: string[]) => {
+      const imageUrls = [];
+      const storage = getStorage(); // Get the Firebase Storage instance
+      for (const imageUri of images) {
+        const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+        const imageRef = storageRef(storage, `reports/${idAccount}/${filename}`);
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        await uploadBytes(imageRef, blob);
+        const downloadUrl = await getDownloadURL(imageRef);
+        imageUrls.push(downloadUrl);
+      }
+      return imageUrls;
+    };
+
+    let imageUrls: string[] = [];
+    if (reportImages.length > 0) {
+      imageUrls = await uploadImages(reportImages);
     }
     const reportRef = ref(database, `reports/account/${idAccount}`);
     // Tạo key tu dong cua firebase
     const newItemKey = push(ref(database, `reports/account/${idAccount}/reason/`));
+    const newImageKey = push(ref(database, `reports/account/${idAccount}/images/`));
     const snapshot = await get(reportRef);
     if (snapshot.exists()) {
       item = snapshot.val();
-
     }
     const reasonKey = newItemKey.key as string;
+    const imageKey = newImageKey.key as string;
     const itemNew = {
       account_id: idAccount,
       reason: {
         ...item.reason,
         [reasonKey]: reason
       },
-      status_id: 1
+      status_id: 1,
+      images: {
+        ...item.images,
+        [imageKey]: imageUrls,
+      }
     }
     await update(reportRef, itemNew)
       .then(() => {
@@ -156,6 +187,24 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
     setIdAccount(searchedAccountData.id)
     setDataReason(reasonsAccount)
   }
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedImages = result.assets.map((image) => image.uri);
+      setReportImages((prevImages) => [...prevImages, ...selectedImages]);
+    }
+  };
+
+  const removeImage = (uri: string) => {
+    setReportImages((prevImages) => prevImages.filter(imageUri => imageUri !== uri));
+  };
+
 
   if (!isDisplay) {
     return;
@@ -238,8 +287,8 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
           </TouchableWithoutFeedback>
         </Modal>
       )}
-        {/* Report Modal */}
-        <Modal
+      {/* Report Modal */}
+      <Modal
         transparent={true}
         animationType="slide"
         visible={modalVisible}
@@ -247,14 +296,16 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select a reason for report</Text>
+            <Text style={styles.modalTitle}>Hãy chọn 1 lý do báo cáo</Text>
             <FlatList
               data={dataReason}
-              keyExtractor={(_,index) => index.toString()}
+              keyExtractor={(_, index) => index.toString()}
               renderItem={(item: any) => (
                 <TouchableOpacity
-                  style={styles.reasonItem}
-                  onPress={() => handleReport(item.item.name)}
+                  style={[styles.reasonItem, selectedReason === item.item.name && styles.selectedReasonItem,]}
+                  onPress={() => {
+                    setSelectedReason(item.item.name);
+                  }}
                 >
                   <Text style={styles.reasonText}>{item.item.name}</Text>
                 </TouchableOpacity>
@@ -262,6 +313,32 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
             />
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="cancel" size={24} color="red" />
+            </TouchableOpacity>
+            <View style={styles.imagePickerContainer}>
+              {reportImages.length == 0 && (
+                <Pressable style={styles.imagePickerButton} onPress={pickImage}>
+                  <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                  <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+                </Pressable>
+              )}
+              {reportImages.length > 0 && (
+                <View style={styles.selectedImageContainer}>
+                  {reportImages.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.selectedImage} />
+                      <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
+                        <IconMaterial name="close-circle" size={20} color="grey" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => handleReport(selectedReason)}
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Gửi</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -279,6 +356,66 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
 
 // Styles for the components
 const styles = StyleSheet.create({
+  selectedReasonItem: {
+    backgroundColor: '#d3d3d3',
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "grey",
+  },
+  sendButton: {
+    backgroundColor: "#C1E1C1",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 10,
+  },
+  selectedImageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  imageWrapper: {
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+  },
+  imagePickerTextButton: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  imagePickerIconButton: {
+    marginRight: 10,
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -302,6 +439,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
     width: '100%',
+    borderRadius: 10,
+    marginBottom: 2,
   },
   reasonText: {
     fontSize: 16,
