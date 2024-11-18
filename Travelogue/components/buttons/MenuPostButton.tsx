@@ -245,7 +245,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 
     const reportRef = ref(database, `reports/post/${idPost}`);
     const newItemKey = push(ref(database, `reports/post/${idPost}/reason/`));
-    const newImageKey = push(ref(database, `reports/account/${idPost}/images/`));
+    const newImageKey = push(ref(database, `reports/post/${idPost}/images/`));
     const snapshot = await get(reportRef);
     if (snapshot.exists()) {
       item = snapshot.val();
