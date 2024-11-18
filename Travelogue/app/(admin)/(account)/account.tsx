@@ -32,6 +32,7 @@ export default function AccountManagementScreen() {
         console.log("No data available");
       }
     }, (error) => {
+      setDataAccountReport([])
       console.error("Error fetching data:", error);
     });
 

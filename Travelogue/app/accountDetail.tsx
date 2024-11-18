@@ -54,6 +54,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
       // Realtime listener to update data when Firebase data changes
       onValue(userRef, async (snapshot) => {
         const data = snapshot.val();
+        console.log(data,"   daa");
         if (data) {
           setAccountData(data);
           setSearchedAccountData(data) // Update state                         

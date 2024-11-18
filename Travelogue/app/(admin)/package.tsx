@@ -31,6 +31,8 @@ const PackageComponent = () => {
         console.log("No data available");
       }
     }, (error) => {
+      setDataPackage([])
+      setLocalDataPackage([])
       console.error("Error fetching data:", error);
     });
 
