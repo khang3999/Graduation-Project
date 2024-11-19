@@ -9,6 +9,7 @@ import { RowComponent, TextComponent } from "@/components";
 import { ArrowLeft } from "iconsax-react-native";
 import { router } from "expo-router";
 import { appColors } from "@/constants/appColors";
+import GalleryPosts from "@/components/gallery/GalleryPosts";
 
 const Gallery = () => {
   const route = useRoute();
@@ -54,7 +55,7 @@ const Gallery = () => {
           <ArrowLeft
             size="32"
             onPress={() => {
-              router.replace("/(maps)/checkInMap");
+              router.back();
             }}
             color="#000"
           />
@@ -75,7 +76,7 @@ const Gallery = () => {
         </View>
       {/* Phần trên */}
       <View style={styles.topSection}>
-        <Text style={styles.topText}>ghjsdg</Text>
+        <GalleryPosts />
       </View>
 
       {/* Phần dưới */}
