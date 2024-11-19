@@ -14,7 +14,7 @@ import { AntDesign } from '@expo/vector-icons';
 const Festival = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedPoint, setSelectedPoint] = useState(1);
+  const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [cityArea, setCityArea] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [cityInformation, setCityInformation] = useState("");
@@ -76,42 +76,43 @@ const Festival = () => {
   }
   // Fetch data point theo city
   useEffect(() => {
-
-    const type = getValueFromKey(selectedPoint)
-    console.log(type);
-
-    const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
-    console.log(onValueChange);
-
-    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const data = onValue(onValueChange, (snapshot) => {
-      if (snapshot.exists()) {
-        const dataPoints = snapshot.val()
-        const pointArr: any = Object.entries(dataPoints).map((key: any) => ({
-          key: key[0],
-          value: key[1],
-        }));
-        setFilteredData(pointArr)
-
-      } else {
-        setFilteredData([])
-        console.log("No data point available");
-      }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
-
-    // Cleanup function để hủy listener khi component unmount
-    return () => data();
-
-  }, [isReady])
-
-  //When selectedCity & selectCountry & selectedPoint is ready
-  useEffect(() => {
     if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
       setIsReady(true)
+
+      const type = getValueFromKey(selectedPoint)
+      console.log(type);
+
+      const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
+      console.log(onValueChange);
+
+      // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+      const data = onValue(onValueChange, (snapshot) => {
+        if (snapshot.exists()) {
+          const dataPoints = snapshot.val()
+          const pointArr: any = Object.entries(dataPoints).map((key: any) => ({
+            key: key[0],
+            value: key[1],
+          }));
+          setFilteredData(pointArr)
+        } else {
+          setFilteredData([])
+          console.log("No data point available");
+        }
+      }, (error) => {
+        console.error("Error fetching data:", error);
+      });
+
+      // Cleanup function để hủy listener khi component unmount
+      return () => data();
     }
   }, [selectedCity, selectedCountry, selectedPoint])
+
+  //When selectedCity & selectCountry & selectedPoint is ready
+  // useEffect(() => {
+  //   if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
+  //     setIsReady(true)
+  //   }
+  // }, [selectedCity, selectedCountry, selectedPoint])
 
 
   //Handle when selected countries
@@ -245,7 +246,7 @@ const Festival = () => {
         {
           isReady && (
             <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-              <Text style={{ color: '#ffffff',fontSize:20 }} >+</Text>
+              <Text style={{ color: '#ffffff', fontSize: 20 }} >+</Text>
             </TouchableOpacity>
           )}
       </View>
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: 10,
     marginRight: 20,
-    height:30
+    height: 30
   },
   addBtn: {
     backgroundColor: '#5E8C31',

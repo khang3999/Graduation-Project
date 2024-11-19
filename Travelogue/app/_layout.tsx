@@ -22,6 +22,7 @@ export default function Layout() {
           <Stack.Screen name="(article)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" />
           <Stack.Screen name="notify" options={{ headerShown: true }}/>
+          <Stack.Screen name="newPoint" options={{ headerShown: true }}/>
           <Stack.Screen name="accountDetail" options={{
             headerShown: true,
             title: "Chi tiết tài khoản",
