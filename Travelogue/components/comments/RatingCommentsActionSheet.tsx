@@ -190,6 +190,10 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
 
 
     const handleReport = (reason: any) => {
+        if (!selectedReason) {
+            Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
+            return;
+        }
         setModalVisible(false);
         setShowConfirmation(true);
         setTimeout(() => {

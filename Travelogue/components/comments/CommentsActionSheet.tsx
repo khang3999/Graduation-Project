@@ -184,6 +184,10 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
 
     const handleReport = (reason: any) => {
+        if (!selectedReason) {
+            Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
+            return;
+        }
         setModalVisible(false);
         setShowConfirmation(true);
         setTimeout(() => {
