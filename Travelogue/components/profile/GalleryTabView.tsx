@@ -310,13 +310,13 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                         pathname: "/postDetail",
                         params: { initialIndex: index.toString() },
                       });
-                      setSelectedPost(createdPosts);
+                      setSelectedPost([item]);
                     } else if (searchedAccountData.role === 'business') {
                       router.push({
                         pathname: "/tourDetail",
                         params: { initialIndex: index.toString() },
                       });
-                      setSelectedTour(createdPosts);
+                      setSelectedTour([item]);
                     }
                   }else {
                     if (dataAccount.role === 'user') {
@@ -324,13 +324,13 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                         pathname: "/postDetail",
                         params: { initialIndex: index.toString() },
                       });
-                      setSelectedPost(createdPosts);
+                      setSelectedPost([item]);
                     } else if (dataAccount.role === 'business') {
                       router.push({
                         pathname: "/tourDetail",
                         params: { initialIndex: index.toString() },
                       });
-                      setSelectedTour(createdPosts);
+                      setSelectedTour([item]);
                     }
                   }
                 }}
@@ -357,7 +357,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             source={require("@/assets/images/camera-circle.png")}
             style={styles.cameraCircle}
           />
-          <Text style={styles.noPostText}>No posts yet</Text>
+          <Text style={styles.noPostText}>Không có bài viết.</Text>
         </>
       ) : (
         <FlatList
@@ -370,7 +370,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                   pathname: "/postDetail",
                   params: { initialIndex: index.toString() },
                 });
-                setSelectedPost(savedPosts);
+                setSelectedPost([item]);
               }}
             >
               <Image
@@ -407,7 +407,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                   pathname: "/tourDetail",
                   params: { initialIndex: index.toString() },
                 });
-                setSelectedTour(savedTours);
+                setSelectedTour([item]);
               }}
             >
               <Image

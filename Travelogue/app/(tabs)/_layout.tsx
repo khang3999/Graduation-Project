@@ -1,11 +1,11 @@
-import { View, Text, Button, Image, StyleSheet, Pressable } from 'react-native'
+import { View, Text, Button, Image, StyleSheet, Pressable, Alert, Linking } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { router, Tabs, useLocalSearchParams } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
 import PlusButton from '@/components/buttons/PlusButton'
 import BellButton from '@/components/buttons/BellButton'
 import { useHomeProvider } from '@/contexts/HomeProvider'
-import { ref } from 'firebase/database'
+import { off, ref } from 'firebase/database'
 import { database, get, onValue } from '@/firebase/firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { TouchableOpacity } from 'react-native-gesture-handler'
@@ -16,21 +16,62 @@ const _layout = () => {
   const [userID, setUserId] = useState("");
   const [countNotify, setCountNotify] = useState(10);
 
+  // useEffect(() => {
+  //   const fetchRole = async () => {
+  //     const userID = await AsyncStorage.getItem("userToken");
+  //     setUserId(userID + "")
+  //     if (userID) {
+  //       const userRef = ref(database, "accounts/" + userID);
+  //       const snapshot = await get(userRef);
+  //       const data = snapshot.val();
+  //       if (data && data.role) {
+  //         setRole(data.role);
+  //       }
+  //     }
+  //   };
+  //   fetchRole();
+  // }, []);
+  //kiểm tra và kick ngay khi tài khoản bị khóa
   useEffect(() => {
-    const fetchRole = async () => {
+    let userRef: any;
+    const checkToken = async () => {
       const userID = await AsyncStorage.getItem("userToken");
       setUserId(userID + "")
       if (userID) {
-        const userRef = ref(database, "accounts/" + userID);
-        const snapshot = await get(userRef);
-        const data = snapshot.val();
-        if (data && data.role) {
-          setRole(data.role);
+        userRef = ref(database, `accounts/${userID}`);
+        // Lắng nghe thay đổi trạng thái tài khoản
+        onValue(userRef, async (snapshot) => {
+          const data = snapshot.val();
+
+          if (data && data.status_id === 2) {
+            setRole(data.role);
+          } else {
+            // Xử lý nếu tài khoản bị khóa
+            Alert.alert(
+              "Tài khoản đã bị cấm",
+              "Vui lòng liên hệ quản trị viên để biết thêm thông tin.",
+              [
+                {
+                  text: "Gọi Tổng Đài",
+                  onPress: () => Linking.openURL("tel:0384946973"),
+                },
+                {
+                  text: "Gửi email",
+                  onPress: () => Linking.openURL("mailto:"),},
+                { text: "Đóng", style: "cancel" },
+              ],
+              { cancelable: true }
+            );
+            await AsyncStorage.removeItem("userToken");
+            router.replace("/(auth)/LoginScreen");
+          }
         }
+        );
       }
-    };
-    fetchRole();
-  }, []);
+    }
+    checkToken();
+  }
+    , []);
   //Dem nhung thong bao chua xem
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực

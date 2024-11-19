@@ -768,7 +768,7 @@ const TourItem: React.FC<TourItemProps> = ({
         onDelete={handleDeleteRatingComment}
         onReport={handleReportComment}
         bannedWords={bannedWords}
-        
+        postId={item.id}
       />
     </View>
   );

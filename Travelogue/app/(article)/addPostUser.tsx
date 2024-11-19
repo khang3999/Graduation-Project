@@ -1043,6 +1043,7 @@ const AddPostUser = () => {
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
+              
               }
             );
           }
@@ -1111,6 +1112,19 @@ const AddPostUser = () => {
           thumbnail,
           created_at: timestamp,
         };
+
+        //Them du leu other cho data
+        await update(
+          ref(
+            database,
+            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+          ),
+          {
+            avatar: avatar,
+            dayUpload: timestamp,
+            name: fullname,
+          }
+        );
 
         // Lưu bài viết vào Realtime Database
         if (postId) {

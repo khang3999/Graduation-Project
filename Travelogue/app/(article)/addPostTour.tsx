@@ -178,8 +178,8 @@ const AddPostTour = () => {
   // kiểm tra giá tiền
   const [checkBalance, setCheckBalance] = useState(false);
 
-   //Lay data banned words
-   const bannedWords = useBannedWords();
+  //Lay data banned words
+  const bannedWords = useBannedWords();
   //  console.log("Banned Words:", bannedWords);
   //*********************************************************************
   // Xử lý ngươi dùng
@@ -905,13 +905,13 @@ const AddPostTour = () => {
       )
       .join("<br><br>")}`;
 
-        //Kiem tra tu cam thong tin bai viet
-     for (let i = 0; i < hashtags.length; i++) {
+    //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
       if (bannedWordsChecker(hashtags[i], bannedWords)) {
         setButtonPost(false);
         Toast.show({
           type: "error",
-          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
           text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
           text1Style: { fontSize: 14 },
           text2Style: { fontSize: 12 },
@@ -920,7 +920,7 @@ const AddPostTour = () => {
         return;
       }
     }
-     if (bannedWordsChecker(title, bannedWords)) {
+    if (bannedWordsChecker(title, bannedWords)) {
       console.log("Title:", title);
       setButtonPost(false);
       Toast.show({
@@ -1002,7 +1002,7 @@ const AddPostTour = () => {
         return;
       }
     }
-    
+
     const timestamp = Date.now();
 
     const storage = getStorage();
@@ -1164,6 +1164,20 @@ const AddPostTour = () => {
           ratingSummary: ratingSummary,
           status_id: status,
         };
+
+        //Them du leu other cho data
+        await update(
+          ref(
+            database,
+             `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
+          ),
+          {
+            avatar: avatar,
+            dayUpload: timestamp,
+            name: fullname,
+          }
+        );
+
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
@@ -1408,14 +1422,13 @@ const AddPostTour = () => {
       )
       .join("<br><br>")}`;
 
-      
-     //Kiem tra tu cam thong tin bai viet
-     for (let i = 0; i < hashtags.length; i++) {
+    //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
       if (bannedWordsChecker(hashtags[i], bannedWords)) {
         setButtonPost(false);
         Toast.show({
           type: "error",
-          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
           text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
           text1Style: { fontSize: 14 },
           text2Style: { fontSize: 12 },
@@ -1424,7 +1437,7 @@ const AddPostTour = () => {
         return;
       }
     }
-     if (bannedWordsChecker(title, bannedWords)) {
+    if (bannedWordsChecker(title, bannedWords)) {
       console.log("Title:", title);
       setButtonPost(false);
       Toast.show({
@@ -1844,6 +1857,78 @@ const AddPostTour = () => {
               multiline={true}
             />
           </SectionComponent>
+          {/* Nhập số tiền của tour */}
+          <SectionComponent>
+            <RowComponent
+              styles={{ justifyContent: "space-between", paddingHorizontal: 10 }}
+            >
+              {/* Input số tiền tour */}
+              <View style={{ flex: 0.7 }}>
+                <TextComponent
+                  text="Nhập số tiền tour của bạn"
+                  size={16}
+                  styles={{
+                    fontWeight: "500",
+                    color: "#000",
+                    marginBottom: 5,
+                  }}
+                />
+                <InputComponent
+                  value={content}
+                  placeholder="Số tiền tour của bạn"
+                  onChange={(val) => setTitle(val)}
+                  textStyle={{
+                    fontSize: 16,
+                    fontWeight: "400",
+                    color: "#000",
+                  }}
+                  inputStyle={{
+                    borderColor: appColors.gray,
+                    height: 40,
+                    backgroundColor: appColors.gray3,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                  }}
+                />
+              </View>
+
+              {/* Input tỉ lệ giảm giá */}
+              <View style={{ flex: 0.2 }}>
+                <TextComponent
+                  text="Tỉ lệ giảm giá"
+                  size={16}
+                  styles={{
+                    fontWeight: "500",
+                    color: "#000",
+                    marginBottom: 5,
+                  }}
+                />
+                <TouchableOpacity
+                  style={{
+                    height: 40,
+                    backgroundColor: appColors.btnDay,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 5,
+                  }}
+                  onPress={() => {
+                    console.log("$$$$");
+                  }}
+                >
+                  <TextComponent
+                    text="0%"
+                    size={14}
+                    styles={{
+                      fontWeight: "500",
+                      color: "#000",
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
+            </RowComponent>
+          </SectionComponent>
+
+          {/* /Ngày  */}
           {days.length > 0 && (
             <SectionComponent>
               <Text
