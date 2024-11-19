@@ -13,12 +13,12 @@ import CartItem from "@/components/cart/CartItem";
 import { ref } from "firebase/database";
 import { database, onValue } from "@/firebase/firebaseConfig";
 import RowComponent from "../RowComponent";
-import LottieView from "lottie-react-native";
 import MapView, { Marker } from "react-native-maps";
 import { appColors } from "@/constants/appColors";
 import { formatAddress } from "@/utils/formatAddress";
 import SectionComponent from "../SectionComponent";
 import Carousel from "react-native-reanimated-carousel";
+import DetailPointSkeleton from "../skeletons/DetailPointSkeleton";
 
 const ListPoints = ({
   cities,
@@ -152,37 +152,43 @@ const ListPoints = ({
   };
   console.log(selectedLocation);
   return (
-    <View style={styles.container}>
-      {/* Phần trên */}
-      <View style={styles.topSection}>
-        <Text style={styles.topText}>ghjsdg</Text>
-      </View>
+    <>
       {/* Phần dưới, chia làm 2 phần */}
       <View style={styles.bottomSection}>
         <View style={styles.leftItem}>
           <Text style={styles.itemTitle}>Lễ Hội</Text>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {festivalData.map((item, index) => (
-              <CartItem
-                onPress={() => handleFestivalModal(item)}
-                key={item.id}
-                title={item.title}
-              />
-            ))}
+            {festivalData ? (
+              festivalData.map((item, index) => (
+                <CartItem
+                  onPress={() => {
+                    handleFestivalModal(item);
+                  }}
+                  key={index}
+                  title={item.title}
+                />
+              ))
+            ) : (
+              <Text>Không có dữ liệu</Text>
+            )}
           </ScrollView>
         </View>
         <View style={styles.rightItem}>
           <Text style={styles.itemTitle}>Địa Điểm</Text>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {landmarkData.map((item, index) => (
-              <CartItem
-                onPress={() => {
-                  handleLandmarkModal(item);
-                }}
-                key={index}
-                title={item.title}
-              />
-            ))}
+            {landmarkData ? (
+              landmarkData.map((item, index) => (
+                <CartItem
+                  onPress={() => {
+                    handleLandmarkModal(item);
+                  }}
+                  key={index}
+                  title={item.title}
+                />
+              ))
+            ) : (
+              <Text>Không có dữ liệu</Text>
+            )}
           </ScrollView>
         </View>
       </View>
@@ -207,7 +213,8 @@ const ListPoints = ({
               style={[styles.modalTitle, { marginBottom: 10 }]}
               numberOfLines={1}
             >
-              Chi tiết: <Text style={{color: 'red'}}>{selectedLocation?.title}</Text>
+              Chi tiết:{" "}
+              <Text style={{ color: "red" }}>{selectedLocation?.title}</Text>
             </Text>
           </RowComponent>
 
@@ -314,7 +321,10 @@ const ListPoints = ({
                     </ScrollView>
                   </>
                 ) : (
-                  <View>{/* Add Skeleton loaders here */}</View>
+                  // Skeleton loading
+                  <>
+                    <DetailPointSkeleton />
+                  </>
                 )}
               </SectionComponent>
             </View>
@@ -342,7 +352,7 @@ const ListPoints = ({
           </ScrollView>
         </View>
       </Modal>
-    </View>
+    </>
   );
 };
 
