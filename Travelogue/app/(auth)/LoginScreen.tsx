@@ -107,7 +107,7 @@ const LoginScreen = ({ navigation }: any) => {
         const role = data.role;
         console.log('dasdsadsad',role);
 
-        if (statusId === "4") {
+        if (statusId === 4) {
           Alert.alert(
             "Tài khoản đã bị cấm",
             "Vui lòng liên hệ quản trị viên để biết thêm thông tin.",
@@ -125,7 +125,7 @@ const LoginScreen = ({ navigation }: any) => {
             ],
             { cancelable: true }
           );
-        } else if (statusId === "1") {
+        } else if (statusId === 1) {
           Alert.alert(
             "Tài khoản chưa được duyệt",
             "Hãy chờ quản trị viên duyệt tài khoản. Mọi sự thắc mắc xin liên hệ quản trị viên.",
@@ -143,7 +143,7 @@ const LoginScreen = ({ navigation }: any) => {
             ],
             { cancelable: true }
           );
-        } else if (statusId === "2") {
+        } else if (statusId === 2) {
           Toast.show({
             type: "success",
             text1: "Đăng nhập thành công",

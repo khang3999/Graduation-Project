@@ -1,29 +1,51 @@
-import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
+import {
+  Alert,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view";
 import VietNamMap from "@/components/maps/VietNamMap";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import { createRef, useCallback, useEffect, useState } from "react";
 import { SelectList } from "react-native-dropdown-select-list";
 import { ref, remove } from "firebase/database";
 import { database, get, onValue, set, update } from "@/firebase/firebaseConfig";
-import { Dropdown, SelectCountry } from 'react-native-element-dropdown';
+import { Dropdown, SelectCountry } from "react-native-element-dropdown";
 import { Divider } from "react-native-paper";
-import { Entypo, FontAwesome, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler } from "react-native-gesture-handler";
+import {
+  Entypo,
+  FontAwesome,
+  FontAwesome6,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+  PanGestureHandler,
+} from "react-native-gesture-handler";
 import { useMapCheckinProvider } from "@/contexts/MapCheckinProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, router, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message-custom";
 import { TabActions, useNavigation } from "@react-navigation/native";
 
-const { width } = Dimensions.get('window')
+const { width } = Dimensions.get("window");
 
 const CheckInMap = () => {
   const navigation = useNavigation();
-  const [dataCountries, setDataCountries] = useState([])
-  const [dataAreas, setDataAreas] = useState([])
-  const [dataCities, setDataCities] = useState([])
+  const [dataCountries, setDataCountries] = useState([]);
+  const [dataAreas, setDataAreas] = useState([]);
+  const [dataCities, setDataCities] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
   const [hasFetched, setHasFetched] = useState(null);
@@ -31,15 +53,19 @@ const CheckInMap = () => {
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
 
-  const [userId, setUserId] = useState(null)
-  const { dataAccount, setDataAccount } = useHomeProvider()
+  const [userId, setUserId] = useState(null);
+  const { dataAccount, setDataAccount } = useHomeProvider();
   const {
-    selectedCity, setSelectedCity,
+    selectedCity,
+    setSelectedCity,
     checkedCityColor,
-    selectedCityId, setSelectedCityId,
-    dataCheckedCities, setDataCheckedCities,
-    cityRemoved, setCityIdRemoved
-  } = useMapCheckinProvider()
+    selectedCityId,
+    setSelectedCityId,
+    dataCheckedCities,
+    setDataCheckedCities,
+    cityRemoved,
+    setCityIdRemoved,
+  } = useMapCheckinProvider();
 
   // Login state
   useEffect(() => {
@@ -47,7 +73,7 @@ const CheckInMap = () => {
       const userId = await AsyncStorage.getItem("userToken");
       setUserId(userId);
     };
-    fetchUserId()
+    fetchUserId();
   }, []);
 
   // Fetch checkin list by country
@@ -56,32 +82,32 @@ const CheckInMap = () => {
     try {
       const snapshot = await get(refCheckin);
       if (snapshot.exists()) {
-        const data = snapshot.val()
+        const data = snapshot.val();
         // Tieu chi 1: co tat ca selectedCities trong postLocation
-        const allCitiesCheckedByCountry = Object.keys(data).flatMap((country) => {
-          return Object.entries(data[country]).map(([cityCode, cityName]) => {
-            return { [cityCode]: cityName };
-          });
-        });
-        setSelectedArea(null)
-        setSelectedCityId(null)
-        setSelectedCity(null)
-        setDataCheckedCities(allCitiesCheckedByCountry)
-      }
-      else {
-        console.log('check');
+        const allCitiesCheckedByCountry = Object.keys(data).flatMap(
+          (country) => {
+            return Object.entries(data[country]).map(([cityCode, cityName]) => {
+              return { [cityCode]: cityName };
+            });
+          }
+        );
+        setSelectedArea(null);
+        setSelectedCityId(null);
+        setSelectedCity(null);
+        setDataCheckedCities(allCitiesCheckedByCountry);
+      } else {
+        console.log("check");
       }
     } catch (error) {
-      console.error('Cannot find <checkin> on firebase', error);
+      console.error("Cannot find <checkin> on firebase", error);
     }
-  }
+  };
   // Lấy các tỉnh đã checkin lần đầu sau khi đã có dữ liệu của account
   useEffect(() => {
     if (dataAccount) {
-      fetchCheckinList(dataAccount.id)
+      fetchCheckinList(dataAccount.id);
     }
   }, [dataAccount]);
-
 
   // useEffect(() => {
   //   setHasFetched(false)
@@ -92,104 +118,111 @@ const CheckInMap = () => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
       if (dataAccount) {
         console.log("map checkin focus");
-        fetchCheckinList(dataAccount.id)
+        fetchCheckinList(dataAccount.id);
       }
       return () => {
-        console.log('Map Check in screen is unfocused');
+        console.log("Map Check in screen is unfocused");
       };
     }, [dataAccount]) // Cập nhật khi các giá trị này thay đổi
   );
-  // Lấy các quốc gia 
+  // Lấy các quốc gia
   useEffect(() => {
-    const refCountries = ref(database, `countries`)
-    const unsubscribe = onValue(refCountries, (snapshot) => {
-      if (snapshot.exists()) {
-        const jsonDataCountries = snapshot.val();
-        const countriesArray = Object.keys(jsonDataCountries).map(key => ({
-          label: jsonDataCountries[key].label,
-          value: key,
-          image: {
-            uri: jsonDataCountries[key].image
-          }
-        }));
-        // console.log(countriesArray);
-        setSelectedArea(null)
-        setSelectedCityId(null)
-        setSelectedCity(null)
-        setSelectedCountry(countriesArray[0])
-        setDataCountries(countriesArray)
-      } else {
-        console.log("No data available1");
+    const refCountries = ref(database, `countries`);
+    const unsubscribe = onValue(
+      refCountries,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const jsonDataCountries = snapshot.val();
+          const countriesArray = Object.keys(jsonDataCountries).map((key) => ({
+            label: jsonDataCountries[key].label,
+            value: key,
+            image: {
+              uri: jsonDataCountries[key].image,
+            },
+          }));
+          // console.log(countriesArray);
+          setSelectedArea(null);
+          setSelectedCityId(null);
+          setSelectedCity(null);
+          setSelectedCountry(countriesArray[0]);
+          setDataCountries(countriesArray);
+        } else {
+          console.log("No data available1");
+        }
+      },
+      (error) => {
+        console.error("Error fetching data:", error);
       }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
+    );
 
     return () => {
       unsubscribe(); // Sử dụng unsubscribe để hủy listener
     };
-  }, [])
+  }, []);
 
   // Lấy vùng theo quốc gia
   const fetchAreasByCountry = async (countryId) => {
     try {
-      const refAreas = ref(database, `areas/${countryId}`)
+      const refAreas = ref(database, `areas/${countryId}`);
       const snapshot = await get(refAreas);
       if (snapshot.exists()) {
-        const dataAreasJson = snapshot.val()
-        const dataAreasArray = Object.entries(dataAreasJson).map(([key, value]) => ({
-          label: value.label,
-          value: key
-        }));
+        const dataAreasJson = snapshot.val();
+        const dataAreasArray = Object.entries(dataAreasJson).map(
+          ([key, value]) => ({
+            label: value.label,
+            value: key,
+          })
+        );
         // console.log(dataAreasArray);
-        setDataAreas(dataAreasArray)
+        setDataAreas(dataAreasArray);
       } else {
         console.log("No data post available");
       }
     } catch (error) {
       console.error("Error fetching area data search: ", error);
-
     }
-  }
+  };
 
   // Lấy vùng của việt nam (chạy lần đầu) vì default là việt nam
   useEffect(() => {
     if (selectedCountry) {
-      fetchAreasByCountry(selectedCountry.value)
+      fetchAreasByCountry(selectedCountry.value);
     }
-  }, [selectedCountry])
+  }, [selectedCountry]);
 
   // Fetch data cities theo vùng miền
   const fetchCitiesByArea = async (countryId, areaId) => {
     try {
-      const refCities = ref(database, `cities/${countryId}/${areaId}`)
+      const refCities = ref(database, `cities/${countryId}/${areaId}`);
       const snapshot = await get(refCities);
       if (snapshot.exists()) {
-        const dataCitiesJson = snapshot.val()
-        const dataCitiesArray = Object.keys(dataCitiesJson).map(key => ({
+        const dataCitiesJson = snapshot.val();
+        const dataCitiesArray = Object.keys(dataCitiesJson).map((key) => ({
           label: dataCitiesJson[key].name,
           value: key,
         }));
-        setDataCities(dataCitiesArray)
+        setDataCities(dataCitiesArray);
       } else {
         console.log("No data cities available");
       }
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
-  }
+  };
 
   // Hàm Update lên firebase
   const updateCityToFirebase = async (selectedCity, selectedCountryId) => {
     try {
-      const refCheckinListByCountry = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`)
+      const refCheckinListByCountry = ref(
+        database,
+        `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`
+      );
       const countrySnapshot = await get(refCheckinListByCountry);
       // Data update
       const dataUpdate = { [selectedCity.value]: selectedCity.label };
       if (countrySnapshot.exists()) {
         // Nếu quốc gia đã tồn tại, cập nhật dữ liệu của các thành phố
         await update(refCheckinListByCountry, dataUpdate);
-
       } else {
         // Nếu quốc gia chưa tồn tại, tạo quốc gia mới và thêm dữ liệu thành phố
         await set(refCheckinListByCountry, dataUpdate);
@@ -198,20 +231,20 @@ const CheckInMap = () => {
 
       // Toast thông báo
       Toast.show({
-        type: 'success',
-        position: 'top',
+        type: "success",
+        position: "top",
         text1: `Check in thành công!`,
         text2: `Bạn đã thêm tỉnh ${selectedCity.label} vào danh sách.`,
         visibilityTime: 3000,
-        icon: 'success',
+        icon: "success",
         text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 }
+        text2Style: { fontSize: 14 },
       });
     } catch (error) {
       // Alert khi firebase không có connect
       console.error("Error updating/adding city: ", error);
     }
-  }
+  };
 
   // Hàm Check in
   const handleCheckIn = (selectedCity, selectedCountryId) => {
@@ -223,64 +256,74 @@ const CheckInMap = () => {
         [
           { text: "Cancel", style: "cancel" },
           {
-            text: "OK", onPress: () => {
+            text: "OK",
+            onPress: () => {
               // Check in lên firebase
-              updateCityToFirebase(selectedCity, selectedCountryId)
-            }
-          }
+              updateCityToFirebase(selectedCity, selectedCountryId);
+            },
+          },
         ]
       );
     } else {
       Toast.show({
-        type: 'error',
-        position: 'top',
-        text1: 'Có vấn đề gì đó!',
+        type: "error",
+        position: "top",
+        text1: "Có vấn đề gì đó!",
         text2: `Có vẻ bạn chưa chọn tỉnh check in.`,
         visibilityTime: 3000,
-        icon: 'error',
+        icon: "error",
         text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 }
+        text2Style: { fontSize: 14 },
       });
     }
-  }
+  };
 
   // Hàm Update lên firebase
   const removeCityToFirebase = async (selectedCity, selectedCountryId) => {
     try {
-      const refCheckinListByCountry = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`)
+      const refCheckinListByCountry = ref(
+        database,
+        `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`
+      );
       const countrySnapshot = await get(refCheckinListByCountry);
 
       if (countrySnapshot.exists()) {
         // Nếu quốc gia đã tồn tại thì mới hợp lẹ để xóa
-        const cityRef = ref(database, `accounts/${dataAccount.id}/checkInList/${selectedCountryId}/${selectedCity.value}`);
+        const cityRef = ref(
+          database,
+          `accounts/${dataAccount.id}/checkInList/${selectedCountryId}/${selectedCity.value}`
+        );
         // Xóa thành phố khỏi danh sách
-        setCityIdRemoved(selectedCity) // Lưu lại thành phố vừa bị xóa để tô màu lại 
+        setCityIdRemoved(selectedCity); // Lưu lại thành phố vừa bị xóa để tô màu lại
         await remove(cityRef);
         // Toast thông báo
         Toast.show({
-          type: 'success',
-          position: 'top',
+          type: "success",
+          position: "top",
           text1: `Check out thành công!`,
           text2: `Bạn đã xóa tỉnh ${selectedCity.label} ra khỏi danh sách.`,
           visibilityTime: 3000,
-          icon: 'success',
+          icon: "success",
           text1Style: { fontSize: 16 },
-          text2Style: { fontSize: 14 }
+          text2Style: { fontSize: 14 },
         });
       } else {
-        console.log('Chưa checkin tỉnh này');
+        console.log("Chưa checkin tỉnh này");
       }
-
     } catch (error) {
       // Alert khi firebase không có connect
       console.error("Error remove city: ", error);
     }
-  }
+  };
 
   // Hàm Check out
   const handleCheckOut = (selectedCity, selectedCountryId) => {
     if (selectedCountryId && selectedCity) {
-      if (dataCheckedCities.some(city => city.hasOwnProperty(selectedCity.value))) {
+      if (
+        dataCheckedCities.some((city) =>
+          city.hasOwnProperty(selectedCity.value)
+        )
+      ) {
         // Show dialog
         Alert.alert(
           "Xác nhận hủy check in",
@@ -288,89 +331,88 @@ const CheckInMap = () => {
           [
             { text: "Cancel", style: "cancel" },
             {
-              text: "OK", onPress: () => {
+              text: "OK",
+              onPress: () => {
                 // Gọi hàm checkout
-                removeCityToFirebase(selectedCity, selectedCountryId)
-              }
-            }
+                removeCityToFirebase(selectedCity, selectedCountryId);
+              },
+            },
           ]
         );
       } else {
         Toast.show({
-          type: 'error',
-          position: 'top',
-          text1: 'Có vấn đề gì đó!',
+          type: "error",
+          position: "top",
+          text1: "Có vấn đề gì đó!",
           text2: `Có vẻ tỉnh ${selectedCity.label} chưa được check in.`,
           visibilityTime: 3000,
-          icon: 'error',
+          icon: "error",
           text1Style: { fontSize: 16 },
-          text2Style: { fontSize: 14 }
+          text2Style: { fontSize: 14 },
         });
       }
     } else {
       Toast.show({
-        type: 'error',
-        position: 'top',
-        text1: 'Có vấn đề gì đó!',
+        type: "error",
+        position: "top",
+        text1: "Có vấn đề gì đó!",
         text2: `Có vẻ bạn chưa chọn tỉnh để check out.`,
         visibilityTime: 3000,
-        icon: 'error',
+        icon: "error",
         text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 }
+        text2Style: { fontSize: 14 },
       });
     }
-
-  }
+  };
 
   // Hàm xem chi tiết tỉnh
   const handleTapOnGallery = () => {
     if (selectedCity) {
       router.push({
         pathname: "/gallery",
-        params: { city: selectedCity },
-
-      })
+        params: { idCity: selectedCity.value, idCountry: selectedCountry.value },
+      });
+      // console.log(selectedCity.value, selectedCountry.value);
     } else {
       Toast.show({
-        type: 'error',
-        position: 'top',
-        text1: 'Có vấn đề gì đó!',
+        type: "error",
+        position: "top",
+        text1: "Có vấn đề gì đó!",
         text2: `Có vẻ bạn chưa chọn tỉnh.`,
         visibilityTime: 3000,
-        icon: 'error',
+        icon: "error",
         text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 }
+        text2Style: { fontSize: 14 },
       });
     }
-  }
+  };
 
   // Hàm xem bài viết và tour
   const handleTapByButton = async (selectedCity, tabscreen) => {
     if (selectedCity && tabscreen) {
       // Lưu id địa điểm lên behavior và chuyển về home
       //1. Lưu lên firebase
-      const refBehavior = ref(database, `accounts/${userId}/behavior`)
+      const refBehavior = ref(database, `accounts/${userId}/behavior`);
       const dataUpdate = {
-        'content': '',
-        'location': [selectedCity.value]
-      }
+        content: "",
+        location: [selectedCity.value],
+      };
       await update(refBehavior, dataUpdate);
       // 2. Chuyển về home hoặc tour
-      navigation.navigate(tabscreen)
+      navigation.navigate(tabscreen);
     } else {
       Toast.show({
-        type: 'error',
-        position: 'top',
-        text1: 'Có vấn đề gì đó!',
+        type: "error",
+        position: "top",
+        text1: "Có vấn đề gì đó!",
         text2: `Có vẻ bạn chưa chọn tỉnh.`,
         visibilityTime: 3000,
-        icon: 'error',
+        icon: "error",
         text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 }
+        text2Style: { fontSize: 14 },
       });
     }
-
-  }
+  };
 
   //  // Hàm xem tour
   //  const handleTapOnShowTour = async (locationId) => {
@@ -391,7 +433,7 @@ const CheckInMap = () => {
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.hearder}>
         <View style={styles.sortContainer}>
-          <View style={{ flexDirection: 'row', marginBottom: 6 }}>
+          <View style={{ flexDirection: "row", marginBottom: 6 }}>
             {/* Chọn quốc gia */}
             <SelectCountry
               style={[styles.dropdown, { flex: 1.1, marginRight: 6 }]}
@@ -400,20 +442,20 @@ const CheckInMap = () => {
               imageStyle={styles.imageStyle}
               inputSearchStyle={[styles.inputSearchStyle, { borderRadius: 10 }]}
               iconStyle={styles.iconStyle}
-              value={selectedCountry ? selectedCountry.value : ''}
+              value={selectedCountry ? selectedCountry.value : ""}
               data={dataCountries ? dataCountries : []}
               search
               maxHeight={210}
               labelField="label"
               valueField="value"
               imageField="image"
-              placeholder='Quốc gia'
+              placeholder="Quốc gia"
               searchPlaceholder="Tìm kiếm..."
-              onChange={item => {
-                fetchAreasByCountry(item.value)
-                setSelectedCityId(null)
-                setSelectedCity(null)
-                setSelectedArea(null)
+              onChange={(item) => {
+                fetchAreasByCountry(item.value);
+                setSelectedCityId(null);
+                setSelectedCity(null);
+                setSelectedArea(null);
                 setSelectedCountry(item);
               }}
             />
@@ -431,17 +473,19 @@ const CheckInMap = () => {
               valueField="value"
               placeholder="Khu vực"
               searchPlaceholder="Tìm kiếm..."
-              value={selectedArea ? selectedArea.value : ''}
-              onChange={item => {
-                fetchCitiesByArea(selectedCountry.value, item.value)
-                setSelectedCityId(null)
-                setSelectedCity(null)
-                setSelectedArea(item)
+              value={selectedArea ? selectedArea.value : ""}
+              onChange={(item) => {
+                fetchCitiesByArea(selectedCountry.value, item.value);
+                setSelectedCityId(null);
+                setSelectedCity(null);
+                setSelectedArea(item);
               }}
-              onFocus={() => console.log('focus')}
+              onFocus={() => console.log("focus")}
             />
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-around" }}
+          >
             {/* Chọn tình thành */}
             <Dropdown
               style={[styles.dropdown, { maxWidth: 170, flex: 1 }]}
@@ -456,48 +500,83 @@ const CheckInMap = () => {
               valueField="value"
               placeholder="Tỉnh thành"
               searchPlaceholder="Tìm kiếm..."
-              value={selectedCity ? selectedCity.value : ''}
-              onChange={item => {
-                setSelectedCityId(item.value)
-                setSelectedCity(item)
+              value={selectedCity ? selectedCity.value : ""}
+              onChange={(item) => {
+                setSelectedCityId(item.value);
+                setSelectedCity(item);
               }}
             />
-            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckIn(selectedCity, selectedCountry.value)}>
-              <MaterialCommunityIcons name="book-check-outline" size={24} color="black" />
+            <TouchableOpacity
+              style={styles.btnHeader}
+              onPress={() => handleCheckIn(selectedCity, selectedCountry.value)}
+            >
+              <MaterialCommunityIcons
+                name="book-check-outline"
+                size={24}
+                color="black"
+              />
               <Text style={styles.actionBtnText}>Check in</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnHeader} onPress={() => handleCheckOut(selectedCity, selectedCountry.value)}>
-              <MaterialCommunityIcons name="book-remove-outline" size={24} color="black" />
+            <TouchableOpacity
+              style={styles.btnHeader}
+              onPress={() =>
+                handleCheckOut(selectedCity, selectedCountry.value)
+              }
+            >
+              <MaterialCommunityIcons
+                name="book-remove-outline"
+                size={24}
+                color="black"
+              />
               <Text style={styles.actionBtnText}>Check out</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', paddingHorizontal: 10, marginTop: 10, justifyContent: 'space-around', alignItems: 'center' }}>
-          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapByButton(selectedCity, 'index')}>
+        <View
+          style={{
+            flexDirection: "row",
+            paddingHorizontal: 10,
+            marginTop: 10,
+            justifyContent: "space-around",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={styles.btnHeader}
+            onPress={() => handleTapByButton(selectedCity, "index")}
+          >
             <FontAwesome6 name="newspaper" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem bài viết</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapByButton(selectedCity, 'tour')}>
+          <TouchableOpacity
+            style={styles.btnHeader}
+            onPress={() => handleTapByButton(selectedCity, "tour")}
+          >
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnHeader} onPress={() => handleTapOnGallery()}>
+          <TouchableOpacity
+            style={styles.btnHeader}
+            onPress={() => handleTapOnGallery()}
+          >
             <FontAwesome6 name="images" size={24} color="black" />
             <Text style={styles.actionBtnText}>Gallery</Text>
           </TouchableOpacity>
-
         </View>
         <View style={styles.information}>
           <Entypo name="location" size={24} color="black" />
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}
-          <Text>{selectedCountry && selectedCity ? `${selectedCity.label}, ${selectedCountry.label}` : `Chưa chọn`}</Text>
+          <Text>
+            {selectedCountry && selectedCity
+              ? `${selectedCity.label}, ${selectedCountry.label}`
+              : `Chưa chọn`}
+          </Text>
         </View>
-
       </View>
-      {selectedCountry ?
-        (selectedCountry.value === 'avietnam' ?
+      {selectedCountry ? (
+        selectedCountry.value === "avietnam" ? (
           <ReactNativeZoomableView
             maxZoom={3}
             minZoom={1}
@@ -507,37 +586,40 @@ const CheckInMap = () => {
             onZoomAfter={this.logOutZoomState}
             style={{
               padding: 10,
-              flex: 1
+              flex: 1,
             }}
           >
             <VietNamMap></VietNamMap>
           </ReactNativeZoomableView>
-          : <Text style={{ fontSize: 20, flex: 1 }}>Tạm thời chưa có dữ liệu</Text>)
-        : <Text style={{ fontSize: 20, flex: 1 }}>Loading</Text>}
-
-
-
+        ) : (
+          <Text style={{ fontSize: 20, flex: 1 }}>
+            Tạm thời chưa có dữ liệu
+          </Text>
+        )
+      ) : (
+        <Text style={{ fontSize: 20, flex: 1 }}>Loading</Text>
+      )}
     </GestureHandlerRootView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   actionBtnText: {
     marginLeft: 6,
     // backgroundColor: 'green',
-    alignSelf: 'center'
+    alignSelf: "center",
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     paddingTop: 10,
     paddingBottom: 60,
     width: 40,
     // width: width,
-    alignItems: 'center',
+    alignItems: "center",
     zIndex: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -547,12 +629,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   btnHeader: {
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 6,
-    flexDirection: 'row',
-    backgroundColor: '#ea4f4f'
+    flexDirection: "row",
+    backgroundColor: "#ea4f4f",
   },
   imageStyle: {
     width: 25,
@@ -565,7 +647,7 @@ const styles = StyleSheet.create({
   selectedTextStyle: {
     fontSize: 16,
     marginLeft: 4,
-    paddingRight: 0
+    paddingRight: 0,
   },
   iconStyle: {
     width: 20,
@@ -574,30 +656,30 @@ const styles = StyleSheet.create({
   dropdown: {
     // flex: 1,
     minHeight: 36,
-    backgroundColor: '#eeeeee',
+    backgroundColor: "#eeeeee",
     borderRadius: 10,
     paddingHorizontal: 6,
     borderWidth: 1,
-    elevation: 10
+    elevation: 10,
   },
   information: {
-    flexDirection: 'row',
-    margin: 10
+    flexDirection: "row",
+    margin: 10,
   },
   sortContainer: {
     paddingHorizontal: 10,
     // backgroundColor:'red',
-    width: '100%'
+    width: "100%",
   },
   hearder: {
     // flex:1
     // backgroundColor:'green',
-    paddingTop: 10
+    paddingTop: 10,
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });
 
-export default CheckInMap
+export default CheckInMap;
