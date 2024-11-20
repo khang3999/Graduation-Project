@@ -76,7 +76,7 @@ const Gallery = () => {
         </View>
       {/* Phần trên */}
       <View style={styles.topSection}>
-        <GalleryPosts />
+        <GalleryPosts dataCity={dataCity}/>
       </View>
 
       {/* Phần dưới */}
@@ -145,9 +145,7 @@ const styles = StyleSheet.create({
   topSection: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#ccc", 
     borderRadius: 8,
     marginBottom: 20,
     padding: 10,

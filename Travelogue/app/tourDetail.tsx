@@ -43,6 +43,7 @@ import { formatDate } from "@/utils/commons"
 import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
+import ImageModal from "react-native-image-modal";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -610,6 +611,7 @@ const TourItem: React.FC<TourItemProps> = ({
             source={{ uri: item.author.avatar }}
             style={styles.miniAvatar}
           />
+
           <View style={styles.column}>
             <Text style={styles.username}>{item.author.fullname}</Text>
             <Text style={styles.time}>{formatDate(item.created_at)}</Text>
@@ -630,7 +632,9 @@ const TourItem: React.FC<TourItemProps> = ({
         scrollAnimationDuration={300}
         renderItem={({ item, index }) => (
           <View style={styles.carouselItem}>
-            <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+            <ImageModal swipeToDismiss={true}
+              resizeMode="cover"
+              imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
             <View style={styles.viewTextStyles}>
               <Text style={styles.carouselText}>
                 {index + 1}/{flattenedImagesArray.length} - {item.cityName}
