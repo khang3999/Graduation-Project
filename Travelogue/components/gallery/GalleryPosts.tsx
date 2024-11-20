@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity } from 'react-native';
-import ImageModal from 'react-native-image-modal';
+import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal } from 'react-native';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 
 interface ImageItem {
@@ -17,7 +17,7 @@ const GALLERY_WIDTH = 346.7;
 const NUM_COLUMNS = 3;
 
 // Calculate the width of each column
-const COLUMN_WIDTH = GALLERY_WIDTH / NUM_COLUMNS - 8; 
+const COLUMN_WIDTH = GALLERY_WIDTH / NUM_COLUMNS - 8;
 
 // Generate random heights for images
 const generateRandomHeight = () => Math.floor(Math.random() * 100) + 150; // Heights between 150 and 250
@@ -39,7 +39,7 @@ const extractImagesData = (postImages: any, defaultImages: string[]) => {
   // Check if postImages exists
   if (postImages) {
 
-    // Extract images from tours
+    // // Extract images from tours
     if (postImages.tours) {
       Object.values(postImages.tours).forEach((tour: any) => {
         if (tour.images) {
@@ -88,7 +88,6 @@ const extractImagesData = (postImages: any, defaultImages: string[]) => {
 
 
 export default function GalleryPosts({ dataCity }: any) {
-
   if (!dataCity.postImages || dataCity.postImages.length === 0) {
     return (
       <View>
@@ -96,13 +95,29 @@ export default function GalleryPosts({ dataCity }: any) {
       </View>
     );
   }
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const images = extractImagesData(dataCity.postImages, dataCity.defaultImages);
   // Distribute images across columns
   const columns = splitImagesIntoColumns(images, NUM_COLUMNS);
 
+  const openModal = (imageUri: string) => {
+    setSelectedImage(imageUri);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
+  };
+  
+
+  
+
   // Render a FlatList to handle scrolling and rendering
   return (
+  <>
     <FlatList
       data={columns}
       keyExtractor={(_, index) => `column-${index}`}
@@ -120,7 +135,8 @@ export default function GalleryPosts({ dataCity }: any) {
                 onPress={() => {
                   const isTour = image.isTour ? true : false;
                   const isDefault = image.isDefault ? true : false;
-                  if (isDefault){
+                  if (isDefault) {
+                    openModal(image.uri)
                     return;
                   }
 
@@ -146,10 +162,44 @@ export default function GalleryPosts({ dataCity }: any) {
         </View>
       )}
     />
+     {/* Image Viewer Modal */}
+     <Modal visible={modalVisible} transparent={true} animationType="fade">
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+            <Icon name="closecircleo" size={25} ></Icon>
+          </TouchableOpacity>
+          {selectedImage && (
+            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+          )}
+        </View>
+      </Modal>
+  </>
   );
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullImage: {
+    width: "90%",
+    height: "70%",
+    resizeMode: "contain",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+    zIndex: 1,
+  },
+  closeText: {
+    color: 'rgba(0, 0, 0, 0.9)',
+    fontSize: 18,
+    fontWeight: "bold",
+  },
   galleryContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
