@@ -54,20 +54,7 @@ import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { getDataPost } from "@/app/(article)/getDataPost";
 
 const EditPostUser = () => {
-  // *********************************************************************
-  //Lấy dữ liệu từ bài viết cần sửa
-  const { postId } = useLocalSearchParams();
-  console.log("ID Post:", postId);
-  useEffect(() => {
-    if (typeof postId === 'string') {
-      getDataPost(postId);
-    }
-  }, [postId]);
-  // *********************************************************************
-  // *********************************************************************
-  // *********************************************************************
-  // *********************************************************************
-
+ 
   interface Country {
     id: string;
     [key: string]: any;
@@ -188,6 +175,35 @@ const EditPostUser = () => {
 
   //Lay data banned words
   const bannedWords = useBannedWords();
+
+
+  // *********************************************************************
+  //Lấy dữ liệu từ bài viết cần sửa
+  const { postId } = useLocalSearchParams();
+  console.log("ID Post:", postId);
+  useEffect(() => {
+    if (typeof postId === 'string') {
+      getDataPost(postId).then(data => {
+        if (data) {
+          setTitle(data.title);
+          setContent(data.content);
+          setDays(data.days);
+          setCities(data.cities);
+          setImages(data.images);
+          setIsCheckIn(data.isCheckIn);
+          if(data.status_id === 1) {
+            setIsPublic(true);
+          } else {
+            setIsPublic(false);
+          } 
+        }
+      });
+    }
+  }, [postId]);
+  // *********************************************************************
+  // *********************************************************************
+  // *********************************************************************
+  // *********************************************************************
 
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
