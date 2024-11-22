@@ -1,5 +1,5 @@
 import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 import { database, onValue, ref } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
@@ -11,8 +11,18 @@ import { useTourProvider } from '@/contexts/TourProvider';
 const { width } = Dimensions.get('window');
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
-    const { dataTours, loadedTours }: any = useHomeProvider();
-    const {setSelectedTour}: any = useTourProvider()
+    const { dataTours, loadedTours,
+        dataToursSorted, setDataToursSorted
+    }: any = useHomeProvider();
+    const { setSelectedTour }: any = useTourProvider()
+    const flatListTourRef: any = useRef(null)
+    useEffect(() => {
+        if (flatListTourRef.current) {
+            flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
+        }
+    }, [dataToursSorted]);
+
+
     const tourItem = (tour: any) => {
         const locations = tour.item.locations
         const nameLocations = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
@@ -24,12 +34,12 @@ const TourSection = () => {
         );
         return (
             <Pressable style={styles.tourItem} key={tour.item.id}
-            onPress={() => {
-                router.push({
-                  pathname: "/tourDetail",
-                  params: { tourId: tour.item.id },
-                });
-              }}>
+                onPress={() => {
+                    router.push({
+                        pathname: "/tourDetail",
+                        params: { tourId: tour.item.id },
+                    });
+                }}>
                 <View style={styles.imageWrap}>
                     <View style={styles.locationWrap}>
                         <Carousel
@@ -66,9 +76,10 @@ const TourSection = () => {
             <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
             {loadedTours ?
                 <FlatList
+                    ref={flatListTourRef}
                     horizontal={true}
                     // scrollToOffset={ }
-                    data={dataTours}
+                    data={dataToursSorted}
                     renderItem={tourItem}
                     keyExtractor={(tour: any) => tour.id}
                     contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}

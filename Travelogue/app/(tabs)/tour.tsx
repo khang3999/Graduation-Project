@@ -8,7 +8,8 @@ import { useHomeProvider } from '@/contexts/HomeProvider'
 
 const Tour = () => {
   const {
-    dataModalSelected, setDataModalSelected
+    dataModalSelected, setDataModalSelected,
+    selectedTypeSearch
   }:any = useTourProvider()
   const {dataAllCities}: any = useHomeProvider()
   return (
@@ -23,13 +24,18 @@ const Tour = () => {
             {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
               <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.country}</Badge>
               :
-              dataModalSelected.cities.map((cityId: any) => {
+              (dataModalSelected.cities).map((cityId: any) => {
                 const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
-                console.log(found);
-                return <Badge size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
+                // console.log(found);
+                return <Badge key={cityId} size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
               })
             }
           </>}
+          {selectedTypeSearch.current === 1 ?
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Mặc định</Badge>
+          :
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Like nhiều nhất</Badge>
+        }
       </View>
       <TourList></TourList>
     </View>
