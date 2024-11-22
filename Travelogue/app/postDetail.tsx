@@ -343,7 +343,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+          <MenuItem locations={item.locations} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
         </View>
       </View>
 

@@ -32,9 +32,10 @@ interface MenuPopupButtonProps {
   isAuthor: boolean;
   postId: string;
   userId: string;
+  locations: any;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, userId }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, userId, locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
@@ -52,6 +53,18 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
   const [idComment, setIdComment] = useState('')
   const [reasonsComment, setReasonsComment] = useState([])
   const [reportImages, setReportImages] = useState<string[]>([]);
+
+  const formatLocations = Object.keys(locations).flatMap((countryKey) => {
+    return Object.keys(locations[countryKey]).flatMap((cityKey) => {
+      return {
+        id: cityKey,
+        name: locations[countryKey][cityKey],
+        country: countryKey,
+      };
+    }
+    );
+  });
+
 
   const toggleModal = () => {
     if (!isModalVisible) {
@@ -103,7 +116,6 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                 // Retrieve all users to check their likedPostsList and savedToursList
                 const accountsRef = ref(database, 'accounts');
                 const snapshot = await get(accountsRef);
-
                 if (snapshot.exists()) {
                   snapshot.forEach((userSnapshot) => {
                     const userKey = userSnapshot.key;
@@ -123,8 +135,38 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                     }
                   });
                 }
+                //loop through all locations and remove the post from the location
+                formatLocations.forEach((location) => {
+                  const countryRef = ref(database, `cities/${location.country}`);
+                  //loop through all areas in the country
+                  get(countryRef).then((countrySnapshot) => {
+                    if (countrySnapshot.exists()) {
+                      //loop through all cities in the area          
+                      countrySnapshot.forEach((area) => {
+                        area.forEach((city) => {
+                          if (location.id === city.key) {
 
-                // Optionally, update the UI or state here if necessary
+                            //remove the post from the city
+                            const postRef = ref(database, `cities/${location.country}/${location.id}/posts/${postId}`);
+                            console.log(postRef)
+
+                          }
+                        });
+
+
+
+
+                      });
+                    }
+                  });
+                });
+
+                
+
+
+
+
+
               } catch (error) {
                 console.error('An error occurred while deleting the post:', error);
               } finally {
@@ -171,7 +213,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     if (!selectedReason) {
       Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
       return;
-  }
+    }
     setModalVisible(false);
     setShowConfirmation(true);
     setTimeout(() => {

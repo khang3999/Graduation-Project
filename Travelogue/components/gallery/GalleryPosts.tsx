@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   imageText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     flexWrap: 'wrap',
     flex: 1,
