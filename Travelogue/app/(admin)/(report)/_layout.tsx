@@ -21,6 +21,14 @@ export default function TabLayout() {
           headerShown:false
         }}
       />
+      <Tabs.Screen
+        name="rating"
+        options={{
+          title: 'Rating',
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="comment" color={color} />,
+          headerShown:false
+        }}
+      />
        <Tabs.Screen
         name="postDetail"
         options={{

@@ -15,7 +15,7 @@ export default function PostReport() {
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
   const { selectedPost, setSelectedPost }: any = usePost()
-  const { selectedTour, setSelectedTour }: any = useTourProvider()
+  const { imagesReport, setImagesReport }: any = useAdminProvider()
 
 
   //Du lieu post
@@ -65,7 +65,7 @@ export default function PostReport() {
   }, []);
 
   // Hàm gỡ lock cho post
-  const unlockPost = (postId: string, type:string) => {
+  const unlockPost = (postId: string, type: string) => {
     const refRemove = ref(database, `reports/post/${[postId]}`)
     const refPost = ref(database, `${type}s/${[postId]}`)
     Alert.alert(
@@ -82,14 +82,14 @@ export default function PostReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-            
+
           }
         }
       ]
     );
   };
   // Hàm hidden post
-  const hiddenPost = (postId: string, type:string) => {
+  const hiddenPost = (postId: string, type: string) => {
     const refPost = ref(database, `${type}s/${[postId]}`)
     const refReport = ref(database, `reports/post/${[postId]}`)
     Alert.alert(
@@ -122,36 +122,31 @@ export default function PostReport() {
   };
 
   // Fetch post by postID
-  const fetchPostByPostId = async (postId: any, type: any) => {
-    try {
-      const refPost = ref(database, `${type}s/${postId}`);
-      const snapshot = await get(refPost);
-      if (snapshot.exists()) {
-        const dataJson = snapshot.val();
-        console.log(dataJson);
-        type === "post" ? setSelectedPost([dataJson]) : setSelectedTour([dataJson])
-      } else {
-        console.log("No data city available");
-      }
-    } catch (error) {
-      console.error("Error fetching data: ", error);
-    }
+  // const fetchPostByPostId = async (postId: any, type: any) => {
+  //   try {
+  //     const refPost = ref(database, `${type}s/${postId}`);
+  //     const snapshot = await get(refPost);
+  //     if (snapshot.exists()) {
+  //       const dataJson = snapshot.val();
+  //       console.log(dataJson);
+  //       type === "post" ? setSelectedPost([dataJson]) : setSelectedTour([dataJson])
+  //     } else {
+  //       console.log("No data city available");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching data: ", error);
+  //   }
 
-  };
+  // };
 
   //Chuyen sang post detail
-  const handleNavigatePostDetail = (post: any, type: any) => {
-    fetchPostByPostId(post, type)
-    if (type === "tour") {
-      router.push({
-        pathname: '/tourDetail'
-      })
-    }
-    else if (type === "post") {
-      router.push({
-        pathname: '/postDetail'
-      })
-    }
+  const handleNavigatePostDetail = (post: any) => {
+    setImagesReport(Object.values(post.images).flat())
+    router.push({
+      pathname: '/imageReport',
+      
+    })
+
   }
 
   // Render từng item trong danh sách
@@ -159,7 +154,7 @@ export default function PostReport() {
 
     return (
       <TouchableOpacity key={post.item.id} style={styles.accountItem} onPress={
-        () => handleNavigatePostDetail(post.item.post_id, post.item.type)
+        () => handleNavigatePostDetail(post.item)
       }>
         <View>
           <Text style={styles.name}>{post.item.post_id}</Text>

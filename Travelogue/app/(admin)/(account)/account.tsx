@@ -5,6 +5,7 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
 import { useAccount } from '@/contexts/AccountProvider';
 import { router } from 'expo-router';
+import { useAdminProvider } from '@/contexts/AdminProvider';
 
 export default function AccountManagementScreen() {
 
@@ -12,6 +13,8 @@ export default function AccountManagementScreen() {
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
   const { accountData, setAccountData }: any = useAccount()
+  const { imagesReport, setImagesReport }: any = useAdminProvider()
+
 
   //Du lieu Account
   useEffect(() => {
@@ -120,16 +123,17 @@ export default function AccountManagementScreen() {
   
   //Chuyen sang account detail
   const handleNavigateAccountDetail = (accountID:any) => {
+    setImagesReport(Object.values(accountID.images).flat())
     router.push({
-      pathname: '/accountDetail',
-      params:{userId:accountID}
+      pathname: '/imageReport',
+      
     })
   }
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     return (
       <TouchableOpacity key={account.item.account_id} style={styles.accountItem}
-      onPress={()=>handleNavigateAccountDetail(account.item.account_id)}
+      onPress={()=>handleNavigateAccountDetail(account.item)}
       >
         <View>
           <Text style={styles.name}>{account.item.account_id}</Text>
