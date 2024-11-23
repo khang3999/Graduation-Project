@@ -76,7 +76,7 @@ const TourSection = () => {
             <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
             {loadedTours ?
                 <FlatList
-                    ref={flatListTourRef}
+                    // ref={flatListTourRef}
                     horizontal={true}
                     // scrollToOffset={ }
                     data={dataToursSorted}

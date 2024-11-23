@@ -24,7 +24,7 @@ const Home = () => {
     dataAllCities,
     setDataAllCities,
     isFocus, setIsFocus, dataAccount,
-    selectedTypeSearch, }: any = useHomeProvider();
+    selectedTypeSearch, dataTypeSearch }: any = useHomeProvider();
 
 
 
@@ -47,11 +47,14 @@ const Home = () => {
               })
             }
           </>}
-        {selectedTypeSearch.current === 1 ?
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Mặc định</Badge>
+
+        <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
+
+        {/* {selectedTypeSearch.current === 1 ?
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
           :
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Like nhiều nhất</Badge>
-        }
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Thích nhiều nhất</Badge>
+        } */}
       </View>
 
       {/* Tour section */}

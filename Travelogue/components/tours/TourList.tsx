@@ -6,7 +6,7 @@ import { types } from '@babel/core';
 import { Badge, Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper';
 import ActionBar from '../actionBars/ActionBar';
 import { formatDate } from '@/utils/commons';
-import { AntDesign, FontAwesome6 } from '@expo/vector-icons';
+import { AntDesign, FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtTourScreen } from '@/utils';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
@@ -304,9 +304,30 @@ const TourList = () => {
     }
   ]
 
+
+  const [isLongPress, setIsLongPress] = useState(false);
+
+  const handlePressOnItemTour = (tourId: any) => {
+    if (!isLongPress) {
+      router.push({
+        pathname: "/tourDetail",
+        params: { tourId: tourId },
+      });
+    }
+    // Reset trạng thái sau khi nhấn
+    setIsLongPress(false);
+  };
+
+  const handleLongPressOnItemTour = () => {
+    setIsLongPress(true); // Đánh dấu rằng đã giữ lâu
+    // Alert.alert('Long Pressed!');
+  };
+
+
   const dataTypeSearch = [
     { key: 1, value: 'Mặc định' },
-    { key: 2, value: 'Thích nhiều nhất' }
+    { key: 2, value: 'Thích nhiều nhất' },
+    { key: 3, value: 'Đánh giá tốt nhất' }
   ]
   // Mở menu theo ID
   const openMenu = (itemIndex: any) => {
@@ -417,7 +438,7 @@ const TourList = () => {
         }
 
         // Bước 2: Sort mảng
-        sortTourAtTourScreen(matchingTour)
+        sortTourAtTourScreen(matchingTour, selectedTypeSearch.current)
         // Bước 3: Set data
         setDataTours(matchingTour)
       } else {
@@ -565,7 +586,6 @@ const TourList = () => {
           // listBehaviorLocation là tham số đầu tiên vì khi nó là rỗng thì phụ thuộc vào nội dung
           // Nếu xếp ngược lại thì khi đó countMatching luôn lớn hơn 0 => luôn được add nếu như không có địa điểm
           const countMatchingLocation = countMatchingLocations(listLocationIdOfTour, listBehaviorLocation)
-
           const closestValue = Math.abs(countMatchingLocation - listLocationIdOfTour.length);
           tour.match += closestValue // cập nhật match
 
@@ -576,12 +596,13 @@ const TourList = () => {
             nonBehaviorTours.push(tour)
           }
         })
-        // Bước 2: Sort
+        // Bước 2: Sort dựa vào typeSearch
         // 2.1. Sort mảng theo behavior: match > fator > rating > like >created_at
-        sortTourAtTourScreen(behaviorTours)
-
+        sortTourAtTourScreen(behaviorTours, selectedTypeSearch.current)
         // 2.2. Sort mảng không theo behavior: match > fator > rating > like >created_at
-        sortTourAtTourScreen(nonBehaviorTours)
+        sortTourAtTourScreen(nonBehaviorTours, selectedTypeSearch.current)
+
+
         //Bước 3: Trộn mảng
         const mergedTours = mergeWithRatio(behaviorTours, nonBehaviorTours, 2, 1)
 
@@ -619,6 +640,7 @@ const TourList = () => {
   const handleCloseAndReLoadModalNewTour = () => {
     // Có thể reload trang nếu cần lại nếu cần
     setDataTours(dataNewTourList)
+    setCurrentTourCount(dataNewTourList.length)
     // Đóng modal
     setModalNewToursVisible(false)
   }
@@ -640,15 +662,16 @@ const TourList = () => {
         name
       }))
     );
+
+
+    let rating = tour.item.ratingSummary.totalRatingValue / tour.item.ratingSummary.totalRatingCounter
+    rating = Math.ceil(rating * 2) / 2
+    rating = isNaN(rating) ? 0 : rating
     return (
       <PaperProvider key={tour.item.id}>
-        <Pressable style={styles.item}
-          onPress={() => {
-            router.push({
-              pathname: "/tourDetail",
-              params: { tourId: tour.item.id },
-            });
-          }}
+        <TouchableOpacity style={styles.item}
+          onPress={() => handlePressOnItemTour(tour.item.id)}
+          onLongPress={() => handleLongPressOnItemTour()}
         >
           {/*Author*/}
           <View style={styles.authorContent}>
@@ -699,9 +722,16 @@ const TourList = () => {
             <Image style={styles.imageTour} source={{ uri: tour.item.thumbnail }}></Image>
           </View>
 
+          <View style={styles.price}>
+              <Text>Deal hot:</Text>
+          </View>
+          <View style={styles.rating}>
+            <Text style={styles.textRating}> Đánh giá: {`${rating.toFixed(1)} / 5.0`}</Text>
+            <FontAwesome name="star" size={20} color="#F6CE00" style={{ marginLeft: 4 }} />
+          </View>
           {/* Button like, comment, save */}
           <ActionBar style={styles.actionBar} data={tour.item} type={TYPE}></ActionBar>
-        </Pressable>
+        </TouchableOpacity>
       </PaperProvider >
     )
   }
@@ -733,7 +763,7 @@ const TourList = () => {
           </View>
           <View style={{ flex: 1.5, paddingLeft: 10 }}>
             <View style={{ flexDirection: 'row' }}>
-              <Text style={styles.textTitle}> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</Text>
+              <Text style={styles.textTitle}> tour.item.title</Text>
             </View>
             <View style={{ flexDirection: 'row', flex: 1, alignItems: 'flex-start', flexWrap: 'wrap', padding: 4 }}>
               <Text style={{ fontWeight: '500', textAlign: 'center', paddingVertical: 1 }}>Địa điểm: </Text>
@@ -755,10 +785,10 @@ const TourList = () => {
       <View style={{ flexDirection: 'row', position: 'relative' }}>
         <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
         {((currentTourCount != newTourCount)) && (
-        <TouchableOpacity style={styles.loadNewTour} onPress={() => handleShowNewTour()}>
-          <FontAwesome6 name="newspaper" size={20} color="black" />
-          <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có tour mới</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.loadNewTour} onPress={() => handleShowNewTour()}>
+            <FontAwesome6 name="newspaper" size={20} color="black" />
+            <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có tour mới</Text>
+          </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.refreshBtn} onPress={() => handleRefreshTourScreen()}>
           <AntDesign name="reload1" size={22} color="black" />
@@ -799,7 +829,7 @@ const TourList = () => {
         )
       ) : (
         <View>
-          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop:100 }}>Không có tour phù hợp</Text>
+          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 100 }}>Không có tour phù hợp</Text>
           <LottieView
             autoPlay
             style={{
@@ -898,7 +928,7 @@ const TourList = () => {
           <View style={[styles.modalBottomView, { height: 500 }]}>
             <Text style={styles.modalTitleText}>Bài viết mới</Text>
             <FlatList
-              data={temp}
+              data={dataNewTours}
               renderItem={newTourItem}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             />
@@ -925,6 +955,31 @@ const TourList = () => {
   )
 }
 const styles = StyleSheet.create({
+  price: {
+    flexDirection: 'row',
+    position: 'absolute',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    padding: 6,
+    bottom: 100,
+    left: 10,
+  },
+  textRating: {
+
+  },
+  rating: {
+    flexDirection: 'row',
+    position: 'absolute',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    padding: 6,
+    bottom: 10,
+    left: 200,
+  },
   textTitle: {
     flex: 1,
     paddingHorizontal: 4,

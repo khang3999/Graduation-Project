@@ -5,13 +5,12 @@ import TourList from '@/components/tours/TourList'
 import { useTourProvider } from '@/contexts/TourProvider'
 import { Badge } from 'react-native-paper'
 import { useHomeProvider } from '@/contexts/HomeProvider'
-
 const Tour = () => {
   const {
     dataModalSelected, setDataModalSelected,
-    selectedTypeSearch
-  }:any = useTourProvider()
-  const {dataAllCities}: any = useHomeProvider()
+    selectedTypeSearch, dataTypeSearch
+  }: any = useTourProvider()
+  const { dataAllCities }: any = useHomeProvider()
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', margin: 10, gap: 6 }}>
@@ -31,11 +30,13 @@ const Tour = () => {
               })
             }
           </>}
-          {selectedTypeSearch.current === 1 ?
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Mặc định</Badge>
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current-1].value}</Badge>
+
+        {/* {selectedTypeSearch.current === 1 ?
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch].value}</Badge>
           :
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Like nhiều nhất</Badge>
-        }
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Thích nhiều nhất</Badge>
+        } */}
       </View>
       <TourList></TourList>
     </View>

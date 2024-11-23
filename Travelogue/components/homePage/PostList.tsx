@@ -37,7 +37,8 @@ const PostList = () => {
     selectedTypeSearch,
     dataNewPostList, setDataNewPostList,
     dataTours, setDataTours,
-    dataToursSorted, setDataToursSorted
+    dataToursSorted, setDataToursSorted,
+    dataTypeSearch
   }: any = useHomeProvider();
 
 
@@ -51,265 +52,6 @@ const PostList = () => {
   const [dataNewPosts, setDataNewPosts] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
   const flatListPostRef: any = useRef(null)
-  const temp = [
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=15f0e28e-a7a6-49b9-b813-0602c9f65729",
-        "fullname": "Đỗ Ngọc Hiếu",
-        "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-      },
-      "content": "# ,bjxc,sB<br><br>lsalsahl<br><br>## **Ngày 1:** mbmb<br><br>hg<br><br>### 11:00 - n.m,<br><br>**Địa điểm:** Triệu Sơn, Huyện Triệu Sơn, Tỉnh Thanh Hóa, Việt Nam",
-      "created_at": 1731602794165,
-      "id": "-OBfZRWwYCSSjGw0xt7X",
-      "images": {
-        "avietnam": {
-          "vn_26": {
-            "city_name": "Nghệ An",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fd424dfa0-c92a-413a-a114-e2fe44f321a9.jpeg?alt=media&token=11dc45d1-cab9-457f-bf7f-36ecd1bb122f",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fcde429d3-a8ed-4345-ae5f-098118b55467.jpeg?alt=media&token=47fdd233-998b-48ef-9a7a-2f7e07049dd4"
-            ]
-          }
-        }
-      },
-      "likes": 1,
-      "locations": {
-        "avietnam": {
-          "vn_26": "Nghệ An"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fd424dfa0-c92a-413a-a114-e2fe44f321a9.jpeg?alt=media&token=11dc45d1-cab9-457f-bf7f-36ecd1bb122f"
-    },
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-        "fullname": "Đỗ Ngọc Hiếu",
-        "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-      },
-      "content": "# Hà Tĩnh Nghệ An<br><br>hzhzjs<br><br>## **Ngày 1:** hshsh<br><br>đjjjs<br><br>### 08:00 - dhhsjs<br><br>**Địa điểm:** Quảng Cư, Huyện Thạch Thành, Tỉnh Thanh Hóa, Việt Nam",
-      "created_at": 1731659357787,
-      "id": "-OBiwCvrf1u5DV4N6YBU",
-      "images": {
-        "avietnam": {
-          "vn_26": {
-            "city_name": "Nghệ An",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2F75f7cc80-87dd-459c-a7dd-6c4e799a6c13.jpeg?alt=media&token=c8c01b5c-ede9-4778-8ec4-166cd4b3ceab"
-            ]
-          },
-          "vn_27": {
-            "city_name": "Hà Tĩnh",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2Fd6aaa101-6773-42ce-82f9-5177daa86b4c.jpeg?alt=media&token=02374da4-3947-4c42-af95-82512ff865a2"
-            ]
-          }
-        }
-      },
-      "likes": 0,
-      "locations": {
-        "avietnam": {
-          "vn_26": "Nghệ An"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2F75f7cc80-87dd-459c-a7dd-6c4e799a6c13.jpeg?alt=media&token=c8c01b5c-ede9-4778-8ec4-166cd4b3ceab"
-    },
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2Fd9Sk3mnsx8MXOF2RAOeO79WaUEi2%2Fpapers%2Favatar.png?alt=media&token=ad0f06ed-5b77-4780-b456-86bec9878d45",
-        "fullname": "Trần Trung Chiến",
-        "id": "d9Sk3mnsx8MXOF2RAOeO79WaUEi2"
-      },
-      "comments": {
-        "-OBuwTiiMYSwHofXleMd": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Hi",
-          "created_at": 1731860752743,
-          "id": "-OBuwTiiMYSwHofXleMd",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwVSLv0MK_XXE6l-y": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Chào",
-          "created_at": 1731860759825,
-          "id": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwZ40Xk7SHiDfSM0t": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Bạn tên gì",
-          "created_at": 1731860774652,
-          "id": "-OBuwZ40Xk7SHiDfSM0t",
-          "parentId": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwe1sIrVyxm9sXR2T": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Đẹp quá",
-          "created_at": 1731860799091,
-          "id": "-OBuwe1sIrVyxm9sXR2T",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwghcyQaUJmfy1JL0": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Xinh",
-          "created_at": 1731860810019,
-          "id": "-OBuwghcyQaUJmfy1JL0",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwgvo_ld5L3p3xYI0": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Xinh",
-          "created_at": 1731860810927,
-          "id": "-OBuwgvo_ld5L3p3xYI0",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBux8uc2qjm_oTjnHpb": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Chào",
-          "created_at": 1731860929635,
-          "id": "-OBux8uc2qjm_oTjnHpb",
-          "parentId": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuxBkQLby5zW6pxvnB": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Pp",
-          "created_at": 1731860941270,
-          "id": "-OBuxBkQLby5zW6pxvnB",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBxmh0HVPCzUHyntZof": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Aa",
-          "created_at": 1731908521466,
-          "id": "-OBxmh0HVPCzUHyntZof",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBxmq4Vl-_qRYhRSEds": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Hhh",
-          "created_at": 1731908558602,
-          "id": "-OBxmq4Vl-_qRYhRSEds",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OByM-wTUJR6p18Vmf5L": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Fu.ckk",
-          "created_at": 1731918039373,
-          "id": "-OByM-wTUJR6p18Vmf5L",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OByM7h8meCrK-WNHmij": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "<<<",
-          "created_at": 1731918071156,
-          "id": "-OByM7h8meCrK-WNHmij",
-          "reports": 0,
-          "status_id": 1
-        }
-      },
-      "content": "# fjcnfkccjfjfiffkfjfjffcjcjcjcncksncjdncisbcxkcncnc cjcjcjcncksncjdncisbcxkcncnc có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải <br><br>cjcjcjcncksncjdncisbcxkcncnc cjcjcjcncksncjdncisbcxkcncnc có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải làm sao để biết thêm thông tin về các vấn đề này k v a private message to k bạn có thể làm được điều đó không phải là người có thể làm được điều đó không phải người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được duy trì được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là <br><br>## **Ngày 1:** y<br><br>cjx<br><br>### 00:00 - cc<br><br>**Địa điểm:** Kon Đào, Huyện Đăk Tô, Tỉnh Kon Tum, 50000, Việt Nam",
-      "created_at": 1731661735938,
-      "id": "-OBj4HT9Ll0JnoJMccKp",
-      "images": {
-        "avietnam": {
-          "vn_30": {
-            "city_name": "Thừa Thiên-Huế",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F38064344-07f7-416d-a181-850e8c65c9a7.jpeg?alt=media&token=379b446d-2647-4893-8074-7f29e8d62d34",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Feae17da8-35f7-4224-920f-6e4eea7f66ee.jpeg?alt=media&token=7e2c3800-5287-4de7-8535-916918479b99",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Fc17d6044-dbb5-4246-b700-4a0ab0f600e1.jpeg?alt=media&token=df3b522e-d411-4a32-b3c3-0c0025ad10e3",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Ff0dcf311-5916-46a0-b6e9-9eb959d28843.jpeg?alt=media&token=c9e9e441-886f-4205-a742-211013c0375a",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F88c828c5-40b1-454a-bbec-d940e29697ff.png?alt=media&token=9686b5d4-d9ec-450b-b40f-61f27cd84b11"
-            ]
-          }
-        }
-      },
-      "likes": 2,
-      "locations": {
-        "avietnam": {
-          "vn_28": "Quảng Bình",
-          "vn_30": "Thừa Thiên-Huế"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F38064344-07f7-416d-a181-850e8c65c9a7.jpeg?alt=media&token=379b446d-2647-4893-8074-7f29e8d62d34"
-    }
-  ]
-  const dataTypeSearch = [
-    { key: 1, value: 'Mặc định' },
-    { key: 2, value: 'Thích nhiều nhất' }
-  ]
 
   useEffect(() => {
     if (flatListPostRef.current) {
@@ -422,24 +164,29 @@ const PostList = () => {
           })
         }
         // Bước 2: Sort mảng
-        matchingPost.sort((postA: any, postB: any) => {
-          //Ý tưởng: Chỉ sort theo match và thời gian không sort theo lượt like vì bài cũ thường sẽ nhiều like hơn
-          // So sánh theo match trước
-          if (postB.match !== postA.match) {
-            return postA.match - postB.match; // Sắp xếp tăng dần theo match vì match là độ lệch, càng ít thì càng ưu tiên
-          }
-          // Nếu match bằng nhau, xem điều kiện sort: nếu mặc định thì theo ngày tháng, nếu chọn thì theo điều kiện
-          if (selectedTypeSearch.current === 2) {
-            if (postB.likes === postA.likes) {
-              return (postB.created_at || 0) - (postA.created_at || 0);
+        // Nếu có sắp xếp theo lượt like thì bỏ qua closestValue(match) vì matchingPost là mảng đã khớp với điều kiện sort
+        if (selectedTypeSearch.current === 2) {// TH1: Có chọn typeSearch thì bỏ qua closestValue sắp xếp theo lượt like
+          matchingPost.sort((postA: any, postB: any) => {
+            if (postB.likes !== postA.likes) {
+              return postB.likes - postA.likes;
             }
-
-            return postB.likes - postA.likes;
-          }
-          return (postB.created_at || 0) - (postA.created_at || 0); // Sắp xếp giảm dần theo created_at
-        });
-
-
+            if (postB.match !== postA.match) {
+              return postA.match - postB.match; // Sắp xếp tăng dần theo match vì match là độ lệch, càng ít thì càng ưu tiên
+            }
+            return (postB.created_at || 0) - (postA.created_at || 0);
+          })
+        } else { // TH2: Không chọn typeSearch thì sắp xếp theo  closestValue và thời gian
+          matchingPost.sort((postA: any, postB: any) => {
+            // So sánh theo match trước
+            if (postB.match !== postA.match) {
+              return postA.match - postB.match; // Sắp xếp tăng dần theo match vì match là độ lệch, càng ít thì càng ưu tiên
+            }
+            if (postB.likes !== postA.likes) {
+              return postB.likes - postA.likes;
+            }
+            return (postB.created_at || 0) - (postA.created_at || 0); // Sắp xếp giảm dần theo created_at
+          });
+        }
         // Bước 3: 
         setDataPosts(matchingPost)
       } else {
@@ -528,8 +275,6 @@ const PostList = () => {
   // Hàm lấy các bài viết khi có tương tác
   const fetchPosts = async () => {
     setLoadedPosts(false)
-    console.log('dât', dataNewPostList);
-
     try {
       if (dataNewPostList.length > 0) {
         // Ý tưởng: chuyển mảng data thành 2 mảng con và trộn (3 bước: tạo 2 mảng con, sort, trộn)
@@ -545,7 +290,7 @@ const PostList = () => {
           const behaviorContentSlug = slug(accountBehavior.content || '')
           if (contentOfPostSlug.includes(behaviorContentSlug)) { // Đúng cả 2 case khi behaviorContentSlug = '' và != ''
             matchingContent = 1 // Điều kiện để được push vào mảng: khi có hoặc không có hành vi
-            post.match -= 1 // Điều kiện để sắp xếp mảng
+            post.match -= 1 // Điều kiện để sắp xếp mảng khi dùng closestValue
           }
 
           //  Tiêu chí 2: Địa điểm
@@ -568,26 +313,40 @@ const PostList = () => {
           }
         });
 
-        // Bước 2: Sort
-        //2.1. Sort mảng theo behavior: match > created_at
-        behaviorPosts.sort((postA: any, postB: any) => {
-          // Vì là bài post nên chỉ So sánh theo hành vi và thời gian
-          if (postB.match !== postA.match) {
-            return postA.match - postB.match; // Sắp xếp tăng dần theo match vì match là độ lệch, càng ít thì càng ưu tiên
-          }
-          // Nếu match bằng nhau, xem điều kiện sort: nếu mặc định thì theo ngày tháng, nếu chọn thì theo điều kiện
-          if (selectedTypeSearch.current === 2) {
+        // Bước 2: Sort mảng. Nếu có chọn kiểu search bỏ qua hệ số trùng
+        if (selectedTypeSearch.current === 2) { //Th1: Có chọn typeSearch
+          console.log('heaer');
+
+          // Sort mảng theo hành vi theo lượt like nếu trùng like thì theo thời gian
+          behaviorPosts.sort((postA: any, postB: any) => {
             if (postB.likes === postA.likes) {
               return (postB.created_at || 0) - (postA.created_at || 0);
             }
             return postB.likes - postA.likes;
-          }
-          return (postB.created_at || 0) - (postA.created_at || 0);
-        });
-        //2.2. Sort mảng không match hành vi theo created_at
-        nonBehaviorPosts.sort((postA: any, postB: any) => {
-          return postB.created_at - postA.created_at;
-        })
+          })
+          // Sort mảng không theo hành vi theo lượt like nếu trùng like thì theo thời gian
+          nonBehaviorPosts.sort((postA: any, postB: any) => {
+            if (postB.likes === postA.likes) {
+              return (postB.created_at || 0) - (postA.created_at || 0);
+            }
+            return postB.likes - postA.likes;
+          })
+        } else { // TH2: Không chon typeSearch
+          //2.1. Sort mảng theo behavior: match > created_at
+          behaviorPosts.sort((postA: any, postB: any) => {
+            // Ưu tiên độ lệch số phần tỉnh thành của bài viết so với hành vi trước mới đến số like 
+            // Vì là bài post nên chỉ So sánh theo hành vi và thời gian
+            if (postB.match !== postA.match) {
+              return postA.match - postB.match; // Sắp xếp tăng dần theo match vì match là độ lệch, càng ít thì càng ưu tiên
+            }
+            return (postB.created_at || 0) - (postA.created_at || 0);
+          });
+          //2.2. Sort mảng không match hành vi theo created_at
+          nonBehaviorPosts.sort((postA: any, postB: any) => {
+            return (postB.created_at || 0) - (postA.created_at || 0);
+          })
+        }
+
         //Bước 3: Trộn mảng
         const mergedPosts = mergeWithRatio(behaviorPosts, nonBehaviorPosts, 2, 1)
         // SET DỮ LIÊU
@@ -761,7 +520,7 @@ const PostList = () => {
     return (
       <View key={post.item.id}>
         < PaperProvider >
-          <Pressable style={styles.item} onPress={() => {
+          <TouchableOpacity style={styles.item} onPress={() => {
             router.push({
               pathname: "/postDetail",
               params: { postId: post.item.id },
@@ -819,7 +578,7 @@ const PostList = () => {
 
             {/* Button like, comment, save */}
             <ActionBar style={styles.actionBar} data={post.item} type={TYPE}></ActionBar>
-          </Pressable>
+          </TouchableOpacity>
         </PaperProvider>
       </View>
     )
@@ -893,7 +652,7 @@ const PostList = () => {
       {dataPosts.length !== 0 ?
         loadedPosts ?
           <FlatList
-            ref={flatListPostRef}
+            // ref={flatListPostRef}
             showsVerticalScrollIndicator={false}
             data={dataPosts}
             renderItem={postItem}
@@ -1024,7 +783,6 @@ const PostList = () => {
               renderItem={newPostItem}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             />
-
             <View style={{ flexDirection: 'row' }}>
               <TouchableOpacity
                 style={styles.buttonSearch}

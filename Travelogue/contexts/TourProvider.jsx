@@ -13,10 +13,14 @@ const TourProvider = ({ children }) => {
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
     // const [selectedTypeSearch, setSelectedTypeSearch] = useState(1);
-    
+
     const [selectedTour, setSelectedTour] = useState(undefined)
     const [dataNewTourList, setDataNewTourList] = useState([])
-    const [dataToursSorted, setDataToursSorted] = useState([])
+    const dataTypeSearch = [
+        { key: 1, value: 'Mặc định' },
+        { key: 2, value: 'Thích nhiều nhất' },
+        { key: 3, value: 'Đánh giá tốt nhất' }
+    ]
 
     const selectedTypeSearch = useRef(1)
 
@@ -25,7 +29,7 @@ const TourProvider = ({ children }) => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng tours
         const refTours = ref(database, 'tours/')
         const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-        const unsubscribe = onValue (toursQuery, (snapshot) => {
+        const unsubscribe = onValue(toursQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewTour = snapshot.size;
                 const dataNewToursJson = snapshot.val()
@@ -53,10 +57,11 @@ const TourProvider = ({ children }) => {
                 newTourCount, setNewTourCount,
                 loadedTours, setLoadedTours,
                 isSearchingMode, setIsSearchingMode,
-                setSelectedTour,selectedTour,
+                setSelectedTour, selectedTour,
                 // selectedTypeSearch, setSelectedTypeSearch,
                 selectedTypeSearch,
-                dataNewTourList, setDataNewTourList
+                dataNewTourList, setDataNewTourList,
+                dataTypeSearch
             }}
         >
             {children}

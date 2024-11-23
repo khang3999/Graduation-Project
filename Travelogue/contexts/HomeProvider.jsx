@@ -40,7 +40,10 @@ const HomeProvider = ({ children }) => {
     const [dataNewPostList, setDataNewPostList] = useState([])
     const [dataToursSorted, setDataToursSorted] = useState([])
     const selectedTypeSearch = useRef(1)
-
+    const dataTypeSearch = [
+        { key: 1, value: 'Mặc định' },
+        { key: 2, value: 'Thích nhiều nhất' }
+    ]
 
     // Login state
     const fetchUserId = async () => {
@@ -209,8 +212,6 @@ const HomeProvider = ({ children }) => {
                 setNewPostCount(countNewPost)
                 // Lấy bài viết mới
                 const dataNewPostsArray = Object.values(dataNewPostsJson)
-                console.log('datt',dataNewPostsArray);
-                
                 setDataNewPostList(dataNewPostsArray)
             } else {
                 console.log("No data available");
@@ -249,7 +250,8 @@ const HomeProvider = ({ children }) => {
                 dataNewPostList, setDataNewPostList,
                 setAllLocationNameFromPost,
                 dataToursSorted, setDataToursSorted,
-                dataAccount
+                dataAccount,
+                dataTypeSearch
             }}
 
         >

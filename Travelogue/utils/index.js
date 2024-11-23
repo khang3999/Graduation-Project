@@ -100,26 +100,26 @@ export const sortTourAtHomeScreen = (listTour, listLocationIdOfPost) => {
         //     }
         //     return factorTourB - factorTourA
         // } else {
-            if (closestValueA === closestValueB) { // Nếu 2 tour có độ lệch bằng nhau
-                if (factorTourB === factorTourA) {
-                    if (ratingTourB === ratingTourA) {
-                        if (likeTourB === likeTourA) {
-                            return dateTourB - dateTourA
-                        }
-                        return likeTourB - likeTourA
-                    }
-                    return ratingTourB - ratingTourA
-                }
-                return factorTourB - factorTourA
-            }
+        if (closestValueA !== closestValueB) { // Nếu 2 tour có độ lệch khác nhau
             return closestValueA - closestValueB; // Sắp xếp tăng dần theo độ lệch
-        // }
+        }
+        if (factorTourB !== factorTourA) {
+            return factorTourB - factorTourA
+        }
+        if (ratingTourB !== ratingTourA) {
+            return ratingTourB - ratingTourA
+        }
+        if (likeTourB !== likeTourA) {
+            return likeTourB - likeTourA
+        }
+        return dateTourB - dateTourA
 
     });
 }
 // HÀM SORT TOUR MÀN HÌNH TOUR
-export const sortTourAtTourScreen = (listTour) => {
+export const sortTourAtTourScreen = (listTour, typeSearch) => {
     listTour.sort((tourA, tourB) => {
+        // matche đang là closestValue. nếu chỉ cần includes thì không cần match
         const matchesA = tourA.match
         const matchesB = tourB.match
         const factorTourA = tourA.package.hashtag
@@ -133,19 +133,49 @@ export const sortTourAtTourScreen = (listTour) => {
         const dateTourA = tourA.created_at
         const dateTourB = tourB.created_at
         // Nếu 2 tour có hệ số địa điểm trùng bằng nhau 
-        if (matchesA === matchesB) {
-            if (factorTourB === factorTourA) {
-                if (ratingTourB === ratingTourA) {
-                    if (likeTourB === likeTourA) {
-                        return dateTourB - dateTourA
-                    }
-                    return likeTourB - likeTourA
-                }
+        if (typeSearch === 1) { //Mặc định
+            if (matchesA !== matchesB) { // Sắp xếp tăng dần theo độ lệch, match là độ lệch
+                return matchesA - matchesB;
+            }
+            if (factorTourB !== factorTourA) {
+                return factorTourB - factorTourA
+            }
+            if (ratingTourB !== ratingTourA) {
                 return ratingTourB - ratingTourA
             }
-            return factorTourB - factorTourA
-        };
-        return matchesA - matchesB; // Sắp xếp tăng dần theo độ lệch, match là độ lệch
+            if (likeTourB !== likeTourA) {
+                return likeTourB - likeTourA
+            }
+            return dateTourB - dateTourA
+        } else if (typeSearch === 2) { // Theo lượt thích
+            if (likeTourB !== likeTourA) {
+                return likeTourB - likeTourA
+            }
+            if (matchesA !== matchesB) {
+                return matchesA - matchesB;
+            }
+            if (factorTourB !== factorTourA) {
+                return factorTourB - factorTourA
+            }
+            if (ratingTourB !== ratingTourA) {
+                return ratingTourB - ratingTourA
+            }
+            return dateTourB - dateTourA
+        } else if (typeSearch === 3) { // Theo rating
+            if (ratingTourB !== ratingTourA) {
+                return ratingTourB - ratingTourA
+            }
+            if (matchesA !== matchesB) { // Sắp xếp tăng dần theo độ lệch, match là độ lệch
+                return matchesA - matchesB;
+            }
+            if (factorTourB !== factorTourA) {
+                return factorTourB - factorTourA
+            }
+            if (likeTourB !== likeTourA) {
+                return likeTourB - likeTourA
+            }
+            return dateTourB - dateTourA
+        }
     })
     return listTour;
 }
