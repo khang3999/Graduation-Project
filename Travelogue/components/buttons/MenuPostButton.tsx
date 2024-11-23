@@ -133,6 +133,13 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       );
     }
   };
+  const handleEditPost = () => {
+    router.push({
+      pathname: "/(article)/editPostUser",
+      params: { postId }
+    });
+    setIsModalVisible(false);
+  }
 
   //Report 
   // Reason post
@@ -315,6 +322,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                   { top: menuPosition.top, left: menuPosition.left },
                 ]}
               >
+                <TouchableOpacity style={styles.menuItem}
+                  onPress={handleEditPost}>
+                  <Icon name="application-edit" size={20} style={styles.menuIcon} />
+                  <Text style={styles.menuText}>Sửa</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem}
                   onPress={handleDeletePost}>
                   <Icon name="trash-can-outline" size={20} style={styles.menuIcon} />

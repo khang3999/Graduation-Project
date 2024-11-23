@@ -17,7 +17,7 @@ import {
 import IconA from "react-native-vector-icons/AntDesign";
 import Icon from "react-native-vector-icons/Fontisto";
 import { ArrowLeft } from "iconsax-react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { appColors } from "@/constants/appColors";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import {
@@ -51,8 +51,10 @@ import LottieView from "lottie-react-native";
 import ReviewPostUser from "./reviewPostUser";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
+import { getDataPost } from "@/app/(article)/getDataPost";
 
-const AddPostUser = () => {
+const EditPostUser = () => {
+ 
   interface Country {
     id: string;
     [key: string]: any;
@@ -173,7 +175,36 @@ const AddPostUser = () => {
 
   //Lay data banned words
   const bannedWords = useBannedWords();
- 
+
+
+  // *********************************************************************
+  //Lấy dữ liệu từ bài viết cần sửa
+  const { postId } = useLocalSearchParams();
+  console.log("ID Post:", postId);
+  useEffect(() => {
+    if (typeof postId === 'string') {
+      getDataPost(postId).then(data => {
+        if (data) {
+          setTitle(data.title);
+          setContent(data.content);
+          setDays(data.days);
+          setCities(data.cities);
+          setImages(data.images);
+          setIsCheckIn(data.isCheckIn);
+          if(data.status_id === 1) {
+            setIsPublic(true);
+          } else {
+            setIsPublic(false);
+          } 
+        }
+      });
+    }
+  }, [postId]);
+  // *********************************************************************
+  // *********************************************************************
+  // *********************************************************************
+  // *********************************************************************
+
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -1043,7 +1074,6 @@ const AddPostUser = () => {
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
-              
               }
             );
           }
@@ -1108,7 +1138,6 @@ const AddPostUser = () => {
           id: postId,
           reports,
           match,
-          isCheckIn,
           title,
           status_id: status,
           thumbnail,
@@ -1125,7 +1154,7 @@ const AddPostUser = () => {
             avatar: avatar,
             dayUpload: timestamp,
             name: fullname,
-            idPost : postId
+            idPost: postId,
           }
         );
 
@@ -2923,4 +2952,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPostUser;
+export default EditPostUser;

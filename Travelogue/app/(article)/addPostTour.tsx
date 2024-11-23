@@ -54,6 +54,7 @@ import { has } from "lodash";
 import ReviewPostUser from "./reviewPostUser";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
+import Slider from "@react-native-community/slider";
 
 const AddPostTour = () => {
   interface Country {
@@ -62,7 +63,6 @@ const AddPostTour = () => {
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-  const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [contentReviewPost, setcontentReviewPost] = useState("");
@@ -178,8 +178,11 @@ const AddPostTour = () => {
   // kiểm tra giá tiền
   const [checkBalance, setCheckBalance] = useState(false);
 
-   //Lay data banned words
-   const bannedWords = useBannedWords();
+  //Lay data banned words
+  const bannedWords = useBannedWords();
+  //Set money and discount cho tour money
+  const [money, setMoney] = useState(0);
+  const [discountTour, setDiscountTour] = useState(0);
   //  console.log("Banned Words:", bannedWords);
   //*********************************************************************
   // Xử lý ngươi dùng
@@ -825,6 +828,12 @@ const AddPostTour = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
+    if(money == 0 || isNaN(money)) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập giá tiền cho tour. Hoặc giá tiền không hợp lệ.");
+      return;
+    }
+    
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
@@ -905,13 +914,13 @@ const AddPostTour = () => {
       )
       .join("<br><br>")}`;
 
-        //Kiem tra tu cam thong tin bai viet
-     for (let i = 0; i < hashtags.length; i++) {
+    //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
       if (bannedWordsChecker(hashtags[i], bannedWords)) {
         setButtonPost(false);
         Toast.show({
           type: "error",
-          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
           text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
           text1Style: { fontSize: 14 },
           text2Style: { fontSize: 12 },
@@ -920,7 +929,7 @@ const AddPostTour = () => {
         return;
       }
     }
-     if (bannedWordsChecker(title, bannedWords)) {
+    if (bannedWordsChecker(title, bannedWords)) {
       console.log("Title:", title);
       setButtonPost(false);
       Toast.show({
@@ -1002,7 +1011,7 @@ const AddPostTour = () => {
         return;
       }
     }
-    
+
     const timestamp = Date.now();
 
     const storage = getStorage();
@@ -1158,12 +1167,29 @@ const AddPostTour = () => {
           created_at: timestamp,
           thumbnail,
           likes,
+          title,
+          money,
+          discountTour,
           id: postId,
           reports,
           match,
           ratingSummary: ratingSummary,
           status_id: status,
         };
+
+        //Them du leu other cho data
+        await update(
+          ref(
+            database,
+            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
+          ),
+          {
+            avatar: avatar,
+            dayUpload: timestamp,
+            name: fullname,
+            idPost: postId,
+          }
+        );
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
@@ -1408,14 +1434,13 @@ const AddPostTour = () => {
       )
       .join("<br><br>")}`;
 
-      
-     //Kiem tra tu cam thong tin bai viet
-     for (let i = 0; i < hashtags.length; i++) {
+    //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
       if (bannedWordsChecker(hashtags[i], bannedWords)) {
         setButtonPost(false);
         Toast.show({
           type: "error",
-          text1: `HashTag thứ ${i + 1} chứa từ cấm`, 
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
           text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
           text1Style: { fontSize: 14 },
           text2Style: { fontSize: 12 },
@@ -1424,7 +1449,7 @@ const AddPostTour = () => {
         return;
       }
     }
-     if (bannedWordsChecker(title, bannedWords)) {
+    if (bannedWordsChecker(title, bannedWords)) {
       console.log("Title:", title);
       setButtonPost(false);
       Toast.show({
@@ -1844,6 +1869,85 @@ const AddPostTour = () => {
               multiline={true}
             />
           </SectionComponent>
+          {/* Nhập số tiền của tour */}
+          <SectionComponent>
+            <RowComponent
+              styles={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 0,
+              }}
+            >
+              {/* Input số tiền tour */}
+              <View style={{ flex: 0.5 }}>
+                <TextComponent
+                  text="Nhập số tiền tour của bạn"
+                  size={16}
+                  styles={{
+                    fontWeight: "500",
+                    color: "#000",
+                  }}
+                />
+                <InputComponent
+                  type="numeric"
+                  value={money.toString()}
+                  placeholder="Số tiền tour"
+                  onChange={(val) => setMoney(Number(val))}
+                  textStyle={{
+                    fontSize: 16,
+                    fontWeight: "400",
+                    color: "#000",
+                  }}
+                  inputStyle={{
+                    borderColor: appColors.gray,
+                    height: 40,
+                    backgroundColor: appColors.gray3,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                  }}
+                />
+              </View>
+
+              {/* Input tỉ lệ giảm giá */}
+              <View style={{ flex: 0.46, marginTop: -10}}>
+                <TextComponent
+                  text="Giảm giá"
+                  size={16}
+                  styles={{
+                    marginLeft: 15,
+                    fontWeight: "500",
+                    color: "#000",
+                  }}
+                />
+                <RowComponent>
+                  <Slider
+                    style={{ width: "100%", height: 50, flex: 0.8 }}
+                    minimumValue={0}
+                    maximumValue={100}
+                    step={1}
+                    value={discountTour}
+                    onValueChange={(value) => setDiscountTour(value)}
+                    minimumTrackTintColor={appColors.btnaddActivity}
+                    maximumTrackTintColor={appColors.gray}
+                    thumbImage={require("@/assets/images/sale.png")}
+                  />
+                  <TextComponent
+                    text={`${discountTour}%`}
+                    size={14}
+                    styles={{
+                      marginLeft: 10,
+                      fontWeight: "500",
+                      color: "#000",
+                      textAlign: "center",
+                      flex: 0.2222,
+                    }}
+                  />
+                </RowComponent>
+              </View>
+            </RowComponent>
+          </SectionComponent>
+
+          {/* /Ngày  */}
           {days.length > 0 && (
             <SectionComponent>
               <Text

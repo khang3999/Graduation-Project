@@ -12,7 +12,9 @@ const CartItem = ({ title, onPress }: { title: string; onPress: () => void }) =>
 const styles = StyleSheet.create({
   cartItem: {
     width: "100%",
-    minHeight: 80,
+    minHeight: 100,
+    minWidth: 120,
+    maxWidth: 120,
     backgroundColor: "#fff",
     padding: 20,
     marginBottom: 15,
@@ -27,7 +29,7 @@ const styles = StyleSheet.create({
   },
   cartItemText: {
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "ultralight",
     color: "#333",
   },
 });
