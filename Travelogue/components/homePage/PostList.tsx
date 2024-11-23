@@ -704,6 +704,7 @@ const PostList = () => {
   const handleCloseAndReLoadModalNewPost = () => {
     // Có thể reload trang nếu cần lại nếu cần
     setDataPosts(dataNewPostList)
+    setCurrentPostCount(dataNewPostList.length)
     // Clear state của button
     // Đóng modal
     setModalNewPostVisible(false)
