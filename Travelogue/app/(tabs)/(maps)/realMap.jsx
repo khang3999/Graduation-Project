@@ -29,7 +29,6 @@ const Map = () => {
   const [points, setPoints] = useState([]);
   const navigation = useNavigation();
 
-
   // Lua chon kieu points
   const festivalTypeOptions = [
     {
@@ -353,32 +352,31 @@ const Map = () => {
     const userId = await AsyncStorage.getItem("userToken");
     if (userId) {
       const refBehavior = ref(database, `accounts/${userId}/behavior`);
-      
+
       const dataUpdate = {
-        'content': content,
-        'location': [location]
-      }
+        content: content,
+        location: [location],
+      };
 
       await update(refBehavior, dataUpdate);
       // const snapshot = await get(userRef);
       // let existingData = snapshot.val();
-  
-      // // Kiểm tra xem location có tồn tại 
+
+      // // Kiểm tra xem location có tồn tại
       // let locationArray = existingData?.location || [];
       // // console.log(locationArray)
 
-      // // Thêm địa điểm mới 
+      // // Thêm địa điểm mới
       // if (!locationArray.includes(location)) {
       //   locationArray.push(location);
-  
-      
+
       //   const updatedLocation = {
       //     location: locationArray,
       //   };
       //   // Lưu lại dữ liệu đã cập nhật vào Firebase
       //   await update(userRef, updatedLocation);
       // }
-      //   // Cập nhật lại dữ liệu 
+      //   // Cập nhật lại dữ liệu
       //   if (content) {
       //   const updatedUserData = {
       //     content: content,
@@ -389,14 +387,13 @@ const Map = () => {
     // Thông báo tùy thuộc vào type
     if (type === "post") {
       // 2. Chuyển về home hoặc tour
-      navigation.navigate('index')
+      navigation.navigate("index");
     }
     if (type === "tour") {
       // 2. Chuyển về home hoặc tour
-      navigation.navigate('tour')
+      navigation.navigate("tour");
     }
   };
-  
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
   return (
@@ -708,13 +705,21 @@ const Map = () => {
           </View>
         </Modal>
         {/* BottomSheet le hoi */}
-        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={480}>
+        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={560}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
-              <Text style={styles.commentsText}>
-                {selectedFestival.content}
-              </Text>
+              <RowComponent><Text style={{fontWeight: '900'}}>Lưu ý: </Text><Text style={{color:'red'}}>Hãy dùng 2 ngón để kéo nội dụng lên</Text></RowComponent>
+              <>
+                <ScrollView
+                  style={{ maxHeight: 60,minHeight: 60, marginBottom: 10 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <Text style={styles.commentsText}>
+                    {selectedFestival.content}
+                  </Text>
+                </ScrollView>
+              </>
 
               {/* Kiểm tra số lượng ảnh */}
               {Array.isArray(selectedFestival.images) ? (
@@ -725,7 +730,7 @@ const Map = () => {
                   preview={false}
                   autoPlay={true}
                   caroselImageStyle={{
-                    marginTop: -30,
+                    marginTop: 10,
                     width: 400,
                     height: 280,
                     resizeMode: "stretch",
@@ -748,15 +753,12 @@ const Map = () => {
 
               {/*  */}
               <Text style={styles.dateText}>
-                {
-                  selectedFestival.type === "landmark" ? (
-                    <Text style={{ fontWeight: "bold" }}>Khung Giờ:</Text>
-                  ) : 
-                  (
-                    <Text style={{ fontWeight: "bold" }}>Ngày:</Text>
-                  )
-                }
-                {" "}{selectedFestival.start} -{selectedFestival.end}
+                {selectedFestival.type === "landmark" ? (
+                  <Text style={{ fontWeight: "bold" }}>Khung Giờ:</Text>
+                ) : (
+                  <Text style={{ fontWeight: "bold" }}>Ngày:</Text>
+                )}{" "}
+                {selectedFestival.start} -{selectedFestival.end}
               </Text>
 
               <View style={styles.buttonRow}>
