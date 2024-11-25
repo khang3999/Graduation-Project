@@ -619,7 +619,7 @@ const TourItem: React.FC<TourItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} />
+          <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} locations={item.locations} />
         </View>
       </View>
 

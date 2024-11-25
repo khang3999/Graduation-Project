@@ -21,13 +21,15 @@ import { child, onValue, push, remove } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
+import { deleteFolder } from "@/services/storageService";
 interface MenuPopupButtonProps {
   isAuthor: boolean;
   tourId: string;
   userId: string;
+  locations: any;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId,locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +48,16 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   const [idComment, setIdComment] = useState('')
   const [reasonsComment, setReasonsComment] = useState([])
 
+  const formatLocations = Object.keys(locations).flatMap((countryKey) => {
+    return Object.keys(locations[countryKey]).flatMap((cityKey) => {
+      return {
+        id: cityKey,
+        name: locations[countryKey][cityKey],
+        country: countryKey,
+      };
+    }
+    );
+  });
   const toggleModal = () => {
     if (!isModalVisible) {
       // Measure the position of the button before showing the menu
@@ -111,6 +123,32 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                     }
                   });
                 }
+                //loop through all locations and remove the post from the location
+                formatLocations.forEach((location) => {
+                  const countryRef = ref(database, `cities/${location.country}`);
+                  //loop through all areas in the country
+                  get(countryRef).then((countrySnapshot) => {
+                    if (countrySnapshot.exists()) {
+                      //loop through all cities in the area          
+                      countrySnapshot.forEach((area) => {
+                        area.forEach((city) => {
+                          if (location.id === city.key) {
+                            const areaKey = area.key;
+                            //remove the post from the city
+                            const tourRef = ref(database, `cities/${location.country}/${areaKey}/${location.id}/postImages/tours/${tourId}`);
+
+                            remove(tourRef);
+
+                          }
+                        });
+
+                      });
+                    }
+                  });
+                });
+
+                //delete all post images from storage
+                deleteFolder(`tours/${tourId}/images`);
 
                 // Optionally, update the UI or state here if necessary
               } catch (error) {
