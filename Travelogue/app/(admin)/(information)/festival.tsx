@@ -76,7 +76,7 @@ const Festival = () => {
   }
   // Fetch data point theo city
   useEffect(() => {
-    if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
+    if (selectedCity != "" && selectedCountry != "" ) {
       setIsReady(true)
 
       const type = getValueFromKey(selectedPoint)
