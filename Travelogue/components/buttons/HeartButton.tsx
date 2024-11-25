@@ -69,7 +69,7 @@ const HeartButton = (props: any) => {
 
         try {
             if (snapshot.exists()) {
-                // Nếu đã tồn tại, xóa postID khỏi savedList
+                // Nếu đã tồn tại, xóa postID khỏi savedzList
                 await remove(refItemInLikedList);
                 setLikeNum(likeNum - 1)
                 // Cập nhật like của bài viết
