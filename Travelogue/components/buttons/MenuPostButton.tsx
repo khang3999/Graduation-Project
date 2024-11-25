@@ -1,4 +1,5 @@
 import { auth } from "@/firebase/firebaseConfig";
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
@@ -10,6 +11,8 @@ import {
   Alert,
   TouchableWithoutFeedback,
   FlatList,
+  Pressable,
+  Image,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
@@ -17,20 +20,22 @@ import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
-import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getStorage, listAll, ref as storageRef, uploadBytes } from "firebase/storage";
 import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
-
-
+import * as ImagePicker from 'expo-image-picker';
+import { requestPayment } from "react-native-momosdk";
+import {deleteFolder} from "@/services/storageService";
 interface MenuPopupButtonProps {
   isAuthor: boolean;
   postId: string;
   userId: string;
+  locations: any;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, userId }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, userId, locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
@@ -47,6 +52,20 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
   const [idPost, setIdPost] = useState('')
   const [idComment, setIdComment] = useState('')
   const [reasonsComment, setReasonsComment] = useState([])
+  const [reportImages, setReportImages] = useState<string[]>([]);
+
+  const formatLocations = Object.keys(locations).flatMap((countryKey) => {
+    return Object.keys(locations[countryKey]).flatMap((cityKey) => {
+      return {
+        id: cityKey,
+        name: locations[countryKey][cityKey],
+        country: countryKey,
+      };
+    }
+    );
+  });
+
+
 
   const toggleModal = () => {
     if (!isModalVisible) {
@@ -91,14 +110,13 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 
                 // Decrease the totalPosts count
                 const totalPostsRef = ref(database, `accounts/${userId}/totalPosts`);
-                await runTransaction(totalPostsRef, (currentValue:any) => {
+                await runTransaction(totalPostsRef, (currentValue: any) => {
                   return (currentValue || 0) - 1;
                 });
 
                 // Retrieve all users to check their likedPostsList and savedToursList
                 const accountsRef = ref(database, 'accounts');
                 const snapshot = await get(accountsRef);
-
                 if (snapshot.exists()) {
                   snapshot.forEach((userSnapshot) => {
                     const userKey = userSnapshot.key;
@@ -118,8 +136,35 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                     }
                   });
                 }
+                //loop through all locations and remove the post from the location
+                formatLocations.forEach((location) => {
+                  const countryRef = ref(database, `cities/${location.country}`);
+                  //loop through all areas in the country
+                  get(countryRef).then((countrySnapshot) => {
+                    if (countrySnapshot.exists()) {
+                      //loop through all cities in the area          
+                      countrySnapshot.forEach((area) => {
+                        area.forEach((city) => {
+                          if (location.id === city.key) {
+                            const areaKey = area.key;
+                            //remove the post from the city
+                            const postRef = ref(database, `cities/${location.country}/${areaKey}/${location.id}/postImages/posts/${postId}`);
 
-                // Optionally, update the UI or state here if necessary
+                            remove(postRef);
+
+                          }
+                        });
+
+                      });
+                    }
+                  });
+                });
+
+                //delete all post images from storage
+                deleteFolder(`posts/${postId}/images`);
+
+                                
+
               } catch (error) {
                 console.error('An error occurred while deleting the post:', error);
               } finally {
@@ -166,28 +211,34 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     // Cleanup function để hủy listener khi component unmount
     return () => reason();
   }, []);
-  
+
 
 
   const handleReport = (reason: any) => {
-    setSelectedReason(reason);
+    if (!selectedReason) {
+      Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
+      return;
+    }
     setModalVisible(false);
     setShowConfirmation(true);
     setTimeout(() => {
       setShowConfirmation(false);
     }, 3000);
-    if (typeReport==="post") {
+    if (typeReport === "post") {
       reportPost(reason)
+      setSelectedReason(null);
+      setReportImages([]);
     }
-    else{
+    else {
       reportComment(reason)
+
     }
   };
 
   //Update report
-  const reportComment = async (reason:any) => {
+  const reportComment = async (reason: any) => {
     let item: any = {
-      reason:{
+      reason: {
 
       }
     }
@@ -205,9 +256,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       post_id: idPost,
       reason: {
         ...item.reason,
-        [reasonKey] : reason
+        [reasonKey]: reason
       },
-      type:"post",
+      type: "post",
       status: 1
     }
     await update(reportRef, itemNew)
@@ -220,30 +271,51 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
 
   };
   //Update report
-  const reportPost = async (reason:any) => {
-    let item: any = {
-      reason:{
+  const reportPost = async (reason: any) => {
+    let item: any = { reason: {} };
 
+    const uploadImages = async (images: string[]) => {
+      const imageUrls = [];
+      const storage = getStorage(); // Get the Firebase Storage instance
+      for (const imageUri of images) {
+        const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+        const imageRef = storageRef(storage, `reports/${idPost}/${filename}`);
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        await uploadBytes(imageRef, blob);
+        const downloadUrl = await getDownloadURL(imageRef);
+        imageUrls.push(downloadUrl);
       }
+      return imageUrls;
+    };
+
+    let imageUrls: string[] = [];
+    if (reportImages.length > 0) {
+      imageUrls = await uploadImages(reportImages);
     }
+
     const reportRef = ref(database, `reports/post/${idPost}`);
-    // Tạo key tu dong cua firebase
     const newItemKey = push(ref(database, `reports/post/${idPost}/reason/`));
+    const newImageKey = push(ref(database, `reports/post/${idPost}/images/`));
     const snapshot = await get(reportRef);
     if (snapshot.exists()) {
       item = snapshot.val();
-
     }
     const reasonKey = newItemKey.key as string;
+    const imageKey = newImageKey.key as string;
     const itemNew = {
       post_id: idPost,
       reason: {
         ...item.reason,
-        [reasonKey] : reason
+        [reasonKey]: reason
       },
-      type:'post',
-      status_id: 1
+      status_id: 1,
+      images: {
+        ...item.images,
+        [imageKey]: imageUrls,
+      }
     }
+
     await update(reportRef, itemNew)
       .then(() => {
         console.log('Data added successfully');
@@ -260,8 +332,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     setIsModalVisible(false)
     if (type === "post") {
       setDataReason(reasonsPost)
-      setIdPost(postId)        
+      setIdPost(postId)
       setTypeReport("post")
+
     }
     else if (type === "comment") {
       setDataReason(reasonsComment)
@@ -270,6 +343,22 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     }
   }
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedImages = result.assets.map((image) => image.uri);
+      setReportImages((prevImages) => [...prevImages, ...selectedImages]);
+    }
+  };
+
+  const removeImage = (uri: string) => {
+    setReportImages((prevImages) => prevImages.filter(imageUri => imageUri !== uri));
+  };
 
   if (isLoading) {
     return (
@@ -373,14 +462,16 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select a reason for report</Text>
+            <Text style={styles.modalTitle}>Hãy chọn 1 lý do báo cáo</Text>
             <FlatList
               data={dataReason}
-              keyExtractor={(_,index) => index.toString()}
+              keyExtractor={(_, index) => index.toString()}
               renderItem={(item: any) => (
                 <TouchableOpacity
-                  style={styles.reasonItem}
-                  onPress={() => handleReport(item.item.name)}
+                  style={[styles.reasonItem, selectedReason === item.item.name ? styles.selectedReasonItem : null,]}
+                  onPress={() => {
+                    setSelectedReason(item.item.name);
+                  }}
                 >
                   <Text style={styles.reasonText}>{item.item.name}</Text>
                 </TouchableOpacity>
@@ -389,6 +480,33 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <MaterialIcons name="cancel" size={24} color="red" />
             </TouchableOpacity>
+            <View style={styles.imagePickerContainer}>
+              {reportImages.length == 0 && (
+                <Pressable style={styles.imagePickerButton} onPress={pickImage}>
+                  <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                  <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+                </Pressable>
+              )}
+              {reportImages.length > 0 && (
+                <View style={styles.selectedImageContainer}>
+                  {reportImages.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.selectedImage} />
+                      <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
+                        <IconMaterial name="close-circle" size={20} color="grey" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => handleReport(selectedReason)}
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Gửi</Text>
+            </TouchableOpacity>
+
           </View>
         </View>
       </Modal>
@@ -402,7 +520,65 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     </View>
   );
 };
+
 const styles = StyleSheet.create({
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "grey",
+  },
+  sendButton: {
+    backgroundColor: "#C1E1C1",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 10,
+  },
+  selectedImageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  imageWrapper: {
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+  },
+  imagePickerTextButton: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  imagePickerIconButton: {
+    marginRight: 10,
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -426,6 +602,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
     width: '100%',
+    borderRadius: 10,
+    marginBottom: 2,
+  },
+  selectedReasonItem: {
+    backgroundColor: '#d3d3d3',
+
   },
   reasonText: {
     fontSize: 16,

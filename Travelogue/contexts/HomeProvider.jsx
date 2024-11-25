@@ -22,16 +22,12 @@ const HomeProvider = ({ children }) => {
     const [dataAllCities, setDataAllCities] = useState([])
     const [loadedDataAccount, setLoadedDataAccount] = useState(false)
     const [dataPosts, setDataPosts] = useState([])
-    const dataPostsRef = useRef([])
     const [dataTours, setDataTours] = useState([])
-    const [postIdCurrent, setPostIdCurrent] = useState(-1);
     // Mảng chứa id tất cả location theo từng bài viết
     const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
     const [allLocationNameFromPost, setAllLocationNameFromPost] = useState([])
-    const [refreshingPost, setRefreshingPost] = useState(false);
     const [loadedPosts, setLoadedPosts] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
-    const [notifyNewPost, setNotifyNewPost] = useState(false)
     const appStateRef = useRef(AppState.currentState)
     const [currentPostCount, setCurrentPostCount] = useState(0);
     const [newPostCount, setNewPostCount] = useState(0);
@@ -41,6 +37,13 @@ const HomeProvider = ({ children }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [dataModalSelected, setDataModalSelected] = useState(null)
+    const [dataNewPostList, setDataNewPostList] = useState([])
+    const [dataToursSorted, setDataToursSorted] = useState([])
+    const selectedTypeSearch = useRef(1)
+    const dataTypeSearch = [
+        { key: 1, value: 'Mặc định' },
+        { key: 2, value: 'Thích nhiều nhất' }
+    ]
 
     // Login state
     const fetchUserId = async () => {
@@ -93,31 +96,31 @@ const HomeProvider = ({ children }) => {
 
     /// ------------------------ FETCH NO REALTIME --------------------------
     // Fetch tour theo post không realtime
-    useEffect(() => {
-        if (loadedPosts) {
-            const fetchData = async () => {
-                try {
-                    const refTours = ref(database, 'tours/')
-                    const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-                    const snapshot = await get(toursQuery);
-                    if (snapshot.exists()) {
-                        const dataToursJson = snapshot.val()
-                        const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
-                        // Sắp xếp lại list tour theo thứ tự
-                        sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
-                        setDataTours(dataToursArray)
-                        setLoadedTours(true)
-                    } else {
-                        console.log("No data available");
-                    }
-                } catch (error) {
-                    console.error("Error fetching data: ", error);
-                }
-            }
-            fetchData();
-        }
-        // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
-    }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
+    // useEffect(() => {
+    //     if (loadedPosts) {
+    //         const fetchData = async () => {
+    //             try {
+    //                 const refTours = ref(database, 'tours/')
+    //                 const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
+    //                 const snapshot = await get(toursQuery);
+    //                 if (snapshot.exists()) {
+    //                     const dataToursJson = snapshot.val()
+    //                     const dataToursArray = Object.values(dataToursJson) // Array all tours from firebase
+    //                     // Sắp xếp lại list tour theo thứ tự
+    //                     sortTourAtHomeScreen(dataToursArray, allLocationIdFromPost)
+    //                     setDataTours(dataToursArray)
+    //                     setLoadedTours(true)
+    //                 } else {
+    //                     console.log("No data available");
+    //                 }
+    //             } catch (error) {
+    //                 console.error("Error fetching data: ", error);
+    //             }
+    //         }
+    //         fetchData();
+    //     }
+    //     // không gọi lại hàm nếu 2 tour kế tiếp có địa điểm giống nhau
+    // }, [postIdCurrent, allLocationIdFromPost])// --------- END FETCH NO REAL TIME--------
 
     /// ----------------------- FETCH REAL TIME ----------------------
     // Lấy các thành phố
@@ -205,7 +208,11 @@ const HomeProvider = ({ children }) => {
         const unsubscribe = onValue(postsQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewPost = snapshot.size;
+                const dataNewPostsJson = snapshot.val()
                 setNewPostCount(countNewPost)
+                // Lấy bài viết mới
+                const dataNewPostsArray = Object.values(dataNewPostsJson)
+                setDataNewPostList(dataNewPostsArray)
             } else {
                 console.log("No data available");
             }
@@ -222,42 +229,29 @@ const HomeProvider = ({ children }) => {
     return (
         <HomeContext.Provider
             value={{
-                dataPosts,
-                dataTours,
-                refreshingPost,
-                notifyNewPost,
-                dataPostsRef,
-                currentPostCount,
-                allLocationIdFromPost,
+                dataPosts, setDataPosts,
+                dataTours, setDataTours,
+                currentPostCount, setCurrentPostCount,
+                allLocationIdFromPost, setAllLocationIdFromPost,
                 newPostCount,
-                accountBehavior,
-                loadedDataAccount,
-                loadedPosts,
-                loadedTours,
-                modalVisible,
-                dataCountries,
-                isSearchingMode,
-                dataModalSelected,
-                dataAllCities,
+                accountBehavior, setAccountBehavior,
+                loadedDataAccount, setLoadedDataAccount,
+                loadedPosts, setLoadedPosts,
+                loadedTours, setLoadedTours,
+                modalVisible, setModalVisible,
+                dataCountries, setDataCountries,
+                isSearchingMode, setIsSearchingMode,
+                dataModalSelected, setDataModalSelected,
+                dataAllCities, setDataAllCities,
                 dataAccount, setDataAccount,
                 isFocus, setIsFocus,
                 userId, setUserId,
-                setDataAllCities,
-                setDataModalSelected,
-                setIsSearchingMode,
-                setDataCountries,
-                setModalVisible,
-                setLoadedPosts,
-                setLoadedTours,
-                setLoadedDataAccount,
-                setAccountBehavior,
-                setCurrentPostCount,
-                setDataPosts,
-                setAllLocationIdFromPost,
+                selectedTypeSearch,
+                dataNewPostList, setDataNewPostList,
                 setAllLocationNameFromPost,
-                setPostIdCurrent,
-                setRefreshingPost,
-                dataAccount
+                dataToursSorted, setDataToursSorted,
+                dataAccount,
+                dataTypeSearch
             }}
 
         >

@@ -64,7 +64,7 @@ export default function Layout() {
           <Stack.Screen name="tourDetail"
             options={{
               headerShown: true,
-              title: "Tours",
+              title: "Bài viết du lịch",
               headerStyle: {
                 backgroundColor:
                   Colors[colorScheme ? colorScheme : "light"].background,
