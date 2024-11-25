@@ -1,29 +1,42 @@
 import { View, Text } from 'react-native'
-import React, { createContext, useEffect, useState } from 'react'
+import React, { createContext, useEffect, useRef, useState } from 'react'
 import { useContext } from 'react'
 import { equalTo, orderByChild, query, ref } from 'firebase/database'
 import { database, onValue } from '@/firebase/firebaseConfig'
 
 const TourContext = createContext(null)
 const TourProvider = ({ children }) => {
-    const [modalVisible, setModalVisible] = useState(false);
     const [dataTours, setDataTours] = useState([]);
     const [dataModalSelected, setDataModalSelected] = useState(null)
     const [currentTourCount, setCurrentTourCount] = useState(0);
     const [newTourCount, setNewTourCount] = useState(0);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
+    // const [selectedTypeSearch, setSelectedTypeSearch] = useState(1);
+
     const [selectedTour, setSelectedTour] = useState(undefined)
+    const [dataNewTourList, setDataNewTourList] = useState([])
+    const dataTypeSearch = [
+        { key: 1, value: 'Mặc định' },
+        { key: 2, value: 'Thích nhiều nhất' },
+        { key: 3, value: 'Đánh giá tốt nhất' }
+    ]
+
+    const selectedTypeSearch = useRef(1)
 
     // Hàm lắng nghe thay khi có tour mới từ firebase để hiển thị button reload
     useEffect(() => {
         // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng tours
         const refTours = ref(database, 'tours/')
         const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
-        const unsubscribe = onValue (toursQuery, (snapshot) => {
+        const unsubscribe = onValue(toursQuery, (snapshot) => {
             if (snapshot.exists()) {
                 const countNewTour = snapshot.size;
+                const dataNewToursJson = snapshot.val()
                 setNewTourCount(countNewTour)
+                // Lấy bài viết mới
+                const dataNewToursArray = Object.values(dataNewToursJson)
+                setDataNewTourList(dataNewToursArray)
             } else {
                 console.log("No data available");
             }
@@ -38,13 +51,17 @@ const TourProvider = ({ children }) => {
     return (
         <TourContext.Provider
             value={{
-                modalVisible, setModalVisible,
                 dataTours, setDataTours,
                 dataModalSelected, setDataModalSelected,
                 currentTourCount, setCurrentTourCount,
                 newTourCount, setNewTourCount,
                 loadedTours, setLoadedTours,
-                isSearchingMode, setIsSearchingMode,setSelectedTour,selectedTour
+                isSearchingMode, setIsSearchingMode,
+                setSelectedTour, selectedTour,
+                // selectedTypeSearch, setSelectedTypeSearch,
+                selectedTypeSearch,
+                dataNewTourList, setDataNewTourList,
+                dataTypeSearch
             }}
         >
             {children}

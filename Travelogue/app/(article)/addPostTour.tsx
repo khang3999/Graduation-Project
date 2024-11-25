@@ -54,6 +54,7 @@ import { has } from "lodash";
 import ReviewPostUser from "./reviewPostUser";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
+import Slider from "@react-native-community/slider";
 
 const AddPostTour = () => {
   interface Country {
@@ -62,7 +63,6 @@ const AddPostTour = () => {
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-  const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [contentReviewPost, setcontentReviewPost] = useState("");
@@ -180,6 +180,9 @@ const AddPostTour = () => {
 
   //Lay data banned words
   const bannedWords = useBannedWords();
+  //Set money and discount cho tour money
+  const [money, setMoney] = useState(0);
+  const [discountTour, setDiscountTour] = useState(0);
   //  console.log("Banned Words:", bannedWords);
   //*********************************************************************
   // Xử lý ngươi dùng
@@ -825,6 +828,12 @@ const AddPostTour = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
+    if(money == 0 || isNaN(money)) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập giá tiền cho tour. Hoặc giá tiền không hợp lệ.");
+      return;
+    }
+    
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
@@ -1158,6 +1167,9 @@ const AddPostTour = () => {
           created_at: timestamp,
           thumbnail,
           likes,
+          title,
+          money,
+          discountTour,
           id: postId,
           reports,
           match,
@@ -1169,15 +1181,15 @@ const AddPostTour = () => {
         await update(
           ref(
             database,
-             `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
+            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${postId}`
           ),
           {
             avatar: avatar,
             dayUpload: timestamp,
             name: fullname,
+            idPost: postId,
           }
         );
-
 
         // Lưu bài viết vào Realtime Database
         if (postId) {
@@ -1860,23 +1872,27 @@ const AddPostTour = () => {
           {/* Nhập số tiền của tour */}
           <SectionComponent>
             <RowComponent
-              styles={{ justifyContent: "space-between", paddingHorizontal: 10 }}
+              styles={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 0,
+              }}
             >
               {/* Input số tiền tour */}
-              <View style={{ flex: 0.7 }}>
+              <View style={{ flex: 0.5 }}>
                 <TextComponent
                   text="Nhập số tiền tour của bạn"
                   size={16}
                   styles={{
                     fontWeight: "500",
                     color: "#000",
-                    marginBottom: 5,
                   }}
                 />
                 <InputComponent
-                  value={content}
-                  placeholder="Số tiền tour của bạn"
-                  onChange={(val) => setTitle(val)}
+                  type="numeric"
+                  value={money.toString()}
+                  placeholder="Số tiền tour"
+                  onChange={(val) => setMoney(Number(val))}
                   textStyle={{
                     fontSize: 16,
                     fontWeight: "400",
@@ -1893,37 +1909,40 @@ const AddPostTour = () => {
               </View>
 
               {/* Input tỉ lệ giảm giá */}
-              <View style={{ flex: 0.2 }}>
+              <View style={{ flex: 0.46, marginTop: -10}}>
                 <TextComponent
-                  text="Tỉ lệ giảm giá"
+                  text="Giảm giá"
                   size={16}
                   styles={{
+                    marginLeft: 15,
                     fontWeight: "500",
                     color: "#000",
-                    marginBottom: 5,
                   }}
                 />
-                <TouchableOpacity
-                  style={{
-                    height: 40,
-                    backgroundColor: appColors.btnDay,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 5,
-                  }}
-                  onPress={() => {
-                    console.log("$$$$");
-                  }}
-                >
+                <RowComponent>
+                  <Slider
+                    style={{ width: "100%", height: 50, flex: 0.8 }}
+                    minimumValue={0}
+                    maximumValue={100}
+                    step={1}
+                    value={discountTour}
+                    onValueChange={(value) => setDiscountTour(value)}
+                    minimumTrackTintColor={appColors.btnaddActivity}
+                    maximumTrackTintColor={appColors.gray}
+                    thumbImage={require("@/assets/images/sale.png")}
+                  />
                   <TextComponent
-                    text="0%"
+                    text={`${discountTour}%`}
                     size={14}
                     styles={{
+                      marginLeft: 10,
                       fontWeight: "500",
                       color: "#000",
+                      textAlign: "center",
+                      flex: 0.2222,
                     }}
                   />
-                </TouchableOpacity>
+                </RowComponent>
               </View>
             </RowComponent>
           </SectionComponent>
