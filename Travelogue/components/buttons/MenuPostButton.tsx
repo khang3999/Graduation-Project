@@ -20,14 +20,14 @@ import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
-import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getStorage, listAll, ref as storageRef, uploadBytes } from "firebase/storage";
 import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
 import * as ImagePicker from 'expo-image-picker';
 import { requestPayment } from "react-native-momosdk";
-
+import {deleteFolder} from "@/services/storageService";
 interface MenuPopupButtonProps {
   isAuthor: boolean;
   postId: string;
@@ -64,6 +64,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
     }
     );
   });
+
 
 
   const toggleModal = () => {
@@ -145,27 +146,24 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, postId, use
                       countrySnapshot.forEach((area) => {
                         area.forEach((city) => {
                           if (location.id === city.key) {
-
+                            const areaKey = area.key;
                             //remove the post from the city
-                            const postRef = ref(database, `cities/${location.country}/${location.id}/posts/${postId}`);
-                            console.log(postRef)
+                            const postRef = ref(database, `cities/${location.country}/${areaKey}/${location.id}/postImages/posts/${postId}`);
+
+                            remove(postRef);
 
                           }
                         });
-
-
-
 
                       });
                     }
                   });
                 });
 
-                
+                //delete all post images from storage
+                deleteFolder(`posts/${postId}/images`);
 
-
-
-
+                                
 
               } catch (error) {
                 console.error('An error occurred while deleting the post:', error);
