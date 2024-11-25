@@ -723,7 +723,11 @@ const TourList = () => {
           </View>
 
           <View style={styles.price}>
-              <Text>Deal hot:</Text>
+            <Text style={styles.priceLabel}>Deal hot:</Text>
+            <View style={{}}>
+              <Text>Deal hot: {tour.item.money}</Text>
+              <Text>Deal hot: {tour.item.money}</Text>
+            </View>
           </View>
           <View style={styles.rating}>
             <Text style={styles.textRating}> Đánh giá: {`${rating.toFixed(1)} / 5.0`}</Text>
@@ -955,6 +959,12 @@ const TourList = () => {
   )
 }
 const styles = StyleSheet.create({
+  priceLabel:{
+    fontSize:20,
+    paddingRight: 6,
+    fontWeight:'500',
+    
+  },
   price: {
     flexDirection: 'row',
     position: 'absolute',
@@ -963,7 +973,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
     padding: 6,
-    bottom: 100,
+    bottom: 60,
     left: 10,
   },
   textRating: {

@@ -525,7 +525,7 @@ const PostList = () => {
               pathname: "/postDetail",
               params: { postId: post.item.id },
             });
-            setSelectedPost([post.item])
+            // setSelectedPost([post.item])
           }}>
             {/*Author*/}
             <View style={styles.authorContent}>
