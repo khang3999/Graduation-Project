@@ -17,7 +17,7 @@ import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
-import { child, onValue, push, remove } from "@firebase/database";
+import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
@@ -29,7 +29,7 @@ interface MenuPopupButtonProps {
   locations: any;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId,locations }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId, locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
   const [isLoading, setIsLoading] = useState(false);
@@ -99,7 +99,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                 // Delete from author's created tours
                 const userTourRef = ref(database, `accounts/${userId}/createdTours/${tourId}`);
                 await remove(userTourRef);
-
+                // Decrease the totalPosts count
+                const totalPostsRef = ref(database, `accounts/${userId}/totalPosts`);
+                await runTransaction(totalPostsRef, (currentValue: any) => {
+                  return (currentValue || 0) - 1;
+                });
                 // Retrieve all users to check their likedtoursList and savedToursList
                 const accountsRef = ref(database, 'accounts');
                 const snapshot = await get(accountsRef);
@@ -219,7 +223,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   const handleReport = (reason: any) => {
     setSelectedReason(reason);
     setModalVisible(false);
-    setShowConfirmation(true);    
+    setShowConfirmation(true);
     setTimeout(() => {
       setShowConfirmation(false);
     }, 3000);
@@ -254,7 +258,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         ...item.reason,
         [reasonKey]: reason
       },
-      type:"tour",
+      type: "tour",
       status: 1
     }
     await update(reportRef, itemNew)
@@ -288,7 +292,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         ...item.reason,
         [reasonKey]: reason
       },
-      type:"tour",
+      type: "tour",
       status_id: 1
     }
     await update(reportRef, itemNew)
@@ -307,12 +311,12 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
     setIsModalVisible(false)
     if (type === "post") {
       setDataReason(reasonsPost)
-      setIdPost(tourId)           
+      setIdPost(tourId)
       setTypeReport("post")
     }
     else if (type === "comment") {
       setDataReason(reasonsComment)
-      setIdComment('') 
+      setIdComment('')
       setTypeReport("comment")
     }
   }
@@ -429,8 +433,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={styles.closeButton} onPress={() => {              
-              setModalVisible(false)}}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => {
+              setModalVisible(false)
+            }}>
               <MaterialIcons name="cancel" size={24} color="red" />
             </TouchableOpacity>
           </View>
