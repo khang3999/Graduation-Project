@@ -392,14 +392,24 @@ const CheckInMap = () => {
     if (selectedCity && tabscreen) {
       // Lưu id địa điểm lên behavior và chuyển về home
       //1. Lưu lên firebase
-      const refBehavior = ref(database, `accounts/${userId}/behavior`);
-      const dataUpdate = {
-        content: "",
-        location: [selectedCity.value],
-      };
-      await update(refBehavior, dataUpdate);
+      // const refBehavior = ref(database, `accounts/${userId}/behavior`);
+      // const dataUpdate = {
+      //   content: "",
+      //   location: [selectedCity.value],
+      // };
+      // await update(refBehavior, dataUpdate);
       // 2. Chuyển về home hoặc tour
-      navigation.navigate(tabscreen);
+      if (tabscreen === 'index') {
+        router.replace({
+          pathname: "/",
+          params: { selectedCityId: selectedCity.value }
+        })
+      } else if (tabscreen === 'tour') {
+        router.replace({
+          pathname: "/tour",
+          params: { selectedCityId: selectedCity.value}
+        })
+      }
     } else {
       Toast.show({
         type: "error",

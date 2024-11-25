@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, Dimensions, TextInput } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth, database, onValue, ref } from "@/firebase/firebaseConfig";
 import SearchBar from '@/components/homePage/SearchBar'
@@ -25,7 +25,25 @@ const Home = () => {
     setDataAllCities,
     isFocus, setIsFocus, dataAccount,
     selectedTypeSearch, dataTypeSearch }: any = useHomeProvider();
+  const { selectedCityId } = useLocalSearchParams()
 
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (selectedCityId) {
+  //       console.log('have param', selectedCityId);
+  //     } 
+  //     return () => {
+  //       console.log('Screen is unfocused');
+  //     };
+  //   }, [selectedCityId]) // Cập nhật khi các giá trị này thay đổi
+  // );
+
+  // useEffect(() => {
+  //   if (selectedCityId) {
+  //     console.log('have param', selectedCityId);
+  //   }
+  // }, [])
 
 
   return (

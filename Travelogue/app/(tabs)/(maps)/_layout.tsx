@@ -22,7 +22,7 @@ const MapLayout = () => {
                     borderRadius: 20,
                     elevation: 10
                 },
-                headerTitle: 'Bản đồ',           
+                headerTitle: 'Bản đồ',
             }}
         >
             <Tabs.Screen
@@ -31,7 +31,7 @@ const MapLayout = () => {
                 options={{
                     title: 'Check in',
                     headerTitle: 'Bản đồ',
-                    headerRight:()=><Text style={styles.headerTitleText}>Check in</Text>,
+                    headerRight: () => <Text style={styles.headerTitleText}>Check in</Text>,
                 }} />
             <Tabs.Screen
                 key={2}
@@ -39,7 +39,7 @@ const MapLayout = () => {
                 options={{
                     title: 'Real Map',
                     headerTitle: 'Danh lam',
-                    headerRight:()=><Text style={styles.headerTitleText}>Lễ hội</Text>,
+                    headerRight: () => <Text style={styles.headerTitleText}>Lễ hội</Text>,
                 }} />
         </Tabs >
 
@@ -56,10 +56,10 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 99,
         paddingHorizontal: 10,
     },
-    headerTitleText:{
+    headerTitleText: {
         marginHorizontal: 20,
         fontSize: 20,
-        fontWeight:'500'
+        fontWeight: '500'
     }
 })
 
