@@ -909,16 +909,12 @@ const EditPostUser = () => {
       .join("<br><br>")}`;
     try {
       const storage = getStorage();
-      const uploadedImageUrls: { [key: string]: { [key: string]: { city_name: string; images_value: string[] } } } = {}; // Để lưu các URL ảnh theo tỉnh/thành
-      const timestamp = Date.now();
+       // Để lưu các URL ảnh theo tỉnh/thành
+      const uploadedImageUrls: { [key: string]: { [key: string]: { city_name: string; images_value: string[] } } } = {};
   
-      // Tạo bài viết trên Realtime Database
-      
+       //Sua tren db      
       const postsRef = ref(database, `posts/${postId}`);
 
-      // const newPostRef = push(postsRef); // Tạo một bài viết mới
-      // const postId: string = newPostRef.key as string; // Lấy ID bài viết mới
-  
       // Xử lý tải ảnh lên Firebase Storage và lưu đường dẫn
       for (const image of images) {
         const { city, images: imageUris } = image;
@@ -981,20 +977,20 @@ const EditPostUser = () => {
         content: contents, 
         images: uploadedImageUrls, 
         thumbnail, 
+        isCheckIn,
         title, 
         status_id: isPublic ? 1 : 2,
       };
   
-      // Lưu bài viết vào Realtime Database
+      // cập nhật thông tin bài viết
       await update(postsRef, postData);
   
-      // Cập nhật thông tin vào tài khoản người dùng
+      // cập nhật thông tin vào tài khoản người dùng
       const userId = await AsyncStorage.getItem("userToken");
-      const userRef = ref(database, `accounts/${userId}`);
-      const userPostRef = ref(database, `accounts/${userId}/createdPosts`);
       const checkInListRef = ref(database, `accounts/${userId}/checkInList`);
   
       // Cập nhật thông tin bài viết vào danh sách bài viết của người dùng
+      if (isCheckIn) {
       const snapshot = await get(checkInListRef);
       const currentData = snapshot.exists() ? snapshot.val() : {};
   
@@ -1008,9 +1004,8 @@ const EditPostUser = () => {
       }, { ...currentData });
   
       // Cập nhật vào Realtime Database
-      const userData = snapshot.val();
       await update(checkInListRef, updatedCheckInList);
-      await update(userPostRef, { [postId as string]: true });
+      }
   
       setButtonPost(false);
       Toast.show({

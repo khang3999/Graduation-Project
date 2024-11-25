@@ -705,21 +705,20 @@ const Map = () => {
           </View>
         </Modal>
         {/* BottomSheet le hoi */}
-        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={560}>
+        <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={650}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
               <RowComponent><Text style={{fontWeight: '900'}}>Lưu ý: </Text><Text style={{color:'red'}}>Hãy dùng 2 ngón để kéo nội dụng lên</Text></RowComponent>
-              <>
+              <View style={{borderColor: '#ccc', borderWidth: 1}}>
                 <ScrollView
-                  style={{ maxHeight: 60,minHeight: 60, marginBottom: 10 }}
-                  keyboardShouldPersistTaps="handled"
+                  style={{ maxHeight: 150,minHeight: 150, marginBottom: 10, padding: 5 }}
                 >
                   <Text style={styles.commentsText}>
                     {selectedFestival.content}
                   </Text>
                 </ScrollView>
-              </>
+              </View>
 
               {/* Kiểm tra số lượng ảnh */}
               {Array.isArray(selectedFestival.images) ? (
