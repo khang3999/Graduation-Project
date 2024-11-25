@@ -5,10 +5,13 @@ import { Divider } from 'react-native-paper'
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
 import { Rating } from 'react-native-ratings';
-import { database, get, onValue, push, ref, update } from '@/firebase/firebaseConfig';
+import { database, get, getDownloadURL, onValue, push, ref, storageRef, update, uploadBytes } from '@/firebase/firebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { query, orderByKey, startAt, limitToFirst, startAfter, orderByChild } from 'firebase/database';
 import { format } from "date-fns";
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage } from 'firebase/storage';
+import { set } from 'lodash';
 // Extending Comment to create SortedComment with extra fields
 interface SortedComment extends Comment {
     replies?: SortedComment[];
@@ -76,7 +79,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const authorizedCommentAS = useRef<ActionSheetRef>(null);
     const unauthorizedCommentAS = useRef<ActionSheetRef>(null);
     const [bannedWords, setBannedWords] = useState<any[]>([])
-    
+
     // Animated value for fade-in effect
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -100,7 +103,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     const [refreshing, setRefreshing] = useState(false);
     const [lastCommentKey, setLastCommentKey] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
-    // const formattedDate = format(new Date(comments.), "dd MMM yyyy HH:mm");
+    const [reportImages, setReportImages] = useState<string[]>([]);
+
 
     const handleReplyButtonPress = (item: SortedComment) => {
         setSelectedComment(item);
@@ -122,8 +126,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 Alert.alert('Từ ngữ vi phạm', `Bình luận của bạn chứa từ ngữ vi phạm: "${bannedWord.word}". Vui lòng chỉnh sửa bình luận của bạn trước khi gửi.`);
                 return;
             }
-           
-            
+
+
             if (props.onSubmitComment) {
                 props.onSubmitComment(selectedComment as Comment, replyText);
                 await fetchComments(true);
@@ -180,7 +184,10 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
 
     const handleReport = (reason: any) => {
-        setSelectedReason(reason);
+        if (!selectedReason) {
+            Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
+            return;
+        }
         setModalVisible(false);
         setShowConfirmation(true);
         setTimeout(() => {
@@ -188,7 +195,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         }, 3000);
 
         reportComment(reason)
-
+        setSelectedReason(null);
+        setReportImages([]);
     };
 
     const reportComment = async (reason: any) => {
@@ -197,15 +205,37 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
 
             }
         }
+        const uploadImages = async (images: string[]) => {
+            const imageUrls = [];
+            const storage = getStorage(); // Get the Firebase Storage instance
+            for (const imageUri of images) {
+              const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+              const imageRef = storageRef(storage, `reports/${idPost}/${filename}`);
+              const response = await fetch(imageUri);
+              const blob = await response.blob();
+              await uploadBytes(imageRef, blob);
+              const downloadUrl = await getDownloadURL(imageRef);
+              imageUrls.push(downloadUrl);
+            }
+            return imageUrls;
+          };
+      
+          let imageUrls: string[] = [];
+          if (reportImages.length > 0) {
+            imageUrls = await uploadImages(reportImages);
+          }
+          
         const reportRef = ref(database, `reports/comment/${idComment}`);
         // Tạo key tu dong cua firebase
         const newItemKey = push(ref(database, `reports/comment/${idComment}/reason/`));
+        const newImageKey = push(ref(database, `reports/comment/${idComment}/images/`));
         const snapshot = await get(reportRef);
         if (snapshot.exists()) {
             item = snapshot.val();
 
         }
         const reasonKey = newItemKey.key as string;
+        const imageKey = newImageKey.key as string;
         const itemNew = {
             comment_id: idComment,
             post_id: idPost,
@@ -214,7 +244,11 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                 [reasonKey]: reason
             },
             type: type,
-            status_id: 1
+            status_id: 1,
+            images: {
+                ...item.images,
+                [imageKey]: imageUrls,
+              },
         }
         await update(reportRef, itemNew)
             .then(() => {
@@ -333,8 +367,8 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     // Firebase function to fetch comments
     const fetchCommentsFromFirebase = async (lastKey: string | null): Promise<SortedComment[]> => {
         const PAGE_SIZE = 10;
-    
-        const commentsRef = props.type ==='tour'? ref(database, `tours/${props.postId}/comments`): ref(database, `posts/${props.postId}/comments`);
+
+        const commentsRef = props.type === 'tour' ? ref(database, `tours/${props.postId}/comments`) : ref(database, `posts/${props.postId}/comments`);
         const commentsQuery = lastKey
             ? query(commentsRef, orderByChild("created_at"), startAfter(lastKey), limitToFirst(PAGE_SIZE))
             : query(commentsRef, orderByChild("created_at"), limitToFirst(PAGE_SIZE));
@@ -348,9 +382,24 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
         return [];
     };
 
-   
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsMultipleSelection: true,
+          quality: 1,
+        });
     
+        if (!result.canceled) {
+          const selectedImages = result.assets.map((image) => image.uri);
+          setReportImages((prevImages) => [...prevImages, ...selectedImages]);
+        }
+      };
     
+      const removeImage = (uri: string) => {
+        setReportImages((prevImages) => prevImages.filter(imageUri => imageUri !== uri));
+      };
+    
+
 
 
     return (
@@ -415,7 +464,7 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                                                     {item.author.fullname}
                                                 </Text>
                                                 <Text style={styles.ratingCommentTime}>
-                                                    {format(new Date(item.created_at), "dd MMM yyyy HH:mm")}                                                 
+                                                    {format(new Date(item.created_at), "dd MMM yyyy HH:mm")}
                                                 </Text>
                                             </View>
                                         </View>
@@ -519,14 +568,16 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Select a reason for report</Text>
+                        <Text style={styles.modalTitle}>Hãy chọn 1 lý do báo cáo</Text>
                         <FlatList
                             data={dataReason}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={(item: any) => (
                                 <TouchableOpacity
-                                    style={styles.reasonItem}
-                                    onPress={() => handleReport(item.item.name)}
+                                    style={[styles.reasonItem, selectedReason === item.item.name ? styles.selectedReasonItem : null,]}
+                                    onPress={() => {
+                                        setSelectedReason(item.item.name);
+                                    }}
                                 >
                                     <Text style={styles.reasonText}>{item.item.name}</Text>
                                 </TouchableOpacity>
@@ -535,9 +586,37 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
                         <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                             <MaterialIcons name="cancel" size={24} color="red" />
                         </TouchableOpacity>
+                        <View style={styles.imagePickerContainer}>
+                            {reportImages.length == 0 && (
+                                <Pressable style={styles.imagePickerButton} onPress={pickImage}>
+                                    <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                                    <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+                                </Pressable>
+                            )}
+                            {reportImages.length > 0 && (
+                                <View style={styles.selectedImageContainer}>
+                                    {reportImages.map((uri, index) => (
+                                        <View key={index} style={styles.imageWrapper}>
+                                            <Image source={{ uri }} style={styles.selectedImage} />
+                                            <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
+                                                <IconMaterial name="close-circle" size={20} color="grey" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => handleReport(selectedReason)}
+                            style={styles.sendButton}
+                        >
+                            <Text style={styles.sendButtonText}>Gửi</Text>
+                        </TouchableOpacity>
+
                     </View>
                 </View>
             </Modal>
+
 
             {/* Confirmation message */}
             {showConfirmation && (
@@ -549,6 +628,67 @@ export default function CommentsActionSheet(props: CommentsActionSheetProps) {
     )
 }
 const styles = StyleSheet.create({
+    selectedReasonItem: {
+        backgroundColor: '#d3d3d3',
+
+    },
+    sendButtonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "grey",
+    },
+    sendButton: {
+        backgroundColor: "#C1E1C1",
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 5,
+        alignItems: "center",
+        marginTop: 20,
+    },
+    removeButton: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        borderRadius: 10,
+    },
+    selectedImageContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    imageWrapper: {
+        margin: 5,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    selectedImage: {
+        width: 100,
+        height: 100,
+    },
+    imagePickerTextButton: {
+        color: '#2196F3',
+        fontWeight: 'bold',
+    },
+    imagePickerIconButton: {
+        marginRight: 10,
+    },
+    imagePickerContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    imagePickerButton: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 20,
+        borderColor: '#ccc',
+        borderWidth: 1,
+    },
     footer: {
         paddingVertical: 20,
         borderTopWidth: 1,
