@@ -786,6 +786,7 @@ const AddPostUser = () => {
   // }, [isCheckIn]);
 
   const handlePushPost = async () => {
+    
     setButtonPost(true);
     if (cities.length === 0) {
       setButtonPost(false);
@@ -1073,6 +1074,7 @@ const AddPostUser = () => {
         const likes = 0;
         const reports = 0;
         const match = 0;
+        const saves = 0;
         let status;
         if (isPublic) {
           status = 1;
@@ -1113,6 +1115,7 @@ const AddPostUser = () => {
           status_id: status,
           thumbnail,
           created_at: timestamp,
+          saves,
         };
 
         //Them du leu other cho data
@@ -2913,13 +2916,14 @@ const styles = StyleSheet.create({
   },
   modalreview: {
     position: "absolute",
-    top: 25,
+    top: 10,
     width: "99%",
     height: "90%",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "white",
     padding: 5,
+    borderRadius: 5
   },
 });
 
