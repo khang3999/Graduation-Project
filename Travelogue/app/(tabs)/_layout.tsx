@@ -109,6 +109,11 @@ const _layout = () => {
           borderRadius: 20,
           elevation: 10
         },
+        headerTitle:"Travelogue",
+        headerTitleStyle:{
+          // fontFamily:'Raleway-Bold'
+          fontSize: 32
+        },
         headerRight: () => (
           <View style={styles.headerRight}>
             <PlusButton onPress={() => {

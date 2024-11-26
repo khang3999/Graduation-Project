@@ -38,6 +38,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, router, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message-custom";
 import { TabActions, useNavigation } from "@react-navigation/native";
+import LottieView from "lottie-react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -407,7 +408,7 @@ const CheckInMap = () => {
       } else if (tabscreen === 'tour') {
         router.replace({
           pathname: "/tour",
-          params: { selectedCityId: selectedCity.value}
+          params: { selectedCityId: selectedCity.value }
         })
       }
     } else {
@@ -517,7 +518,7 @@ const CheckInMap = () => {
               }}
             />
             <TouchableOpacity
-              style={styles.btnHeader}
+              style={[styles.btnHeader, { backgroundColor: '#a8f7c3', borderWidth: 1, borderColor: '#d1d1d1' }]}
               onPress={() => handleCheckIn(selectedCity, selectedCountry.value)}
             >
               <MaterialCommunityIcons
@@ -528,7 +529,7 @@ const CheckInMap = () => {
               <Text style={styles.actionBtnText}>Check in</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.btnHeader}
+              style={[styles.btnHeader, { backgroundColor: '#f87171', borderWidth: 1, borderColor: '#d1d1d1' }]}
               onPress={() =>
                 handleCheckOut(selectedCity, selectedCountry.value)
               }
@@ -552,33 +553,33 @@ const CheckInMap = () => {
           }}
         >
           <TouchableOpacity
-            style={styles.btnHeader}
+            style={[styles.btnHeader, { backgroundColor: '#f7dab9' }]}
             onPress={() => handleTapByButton(selectedCity, "index")}
           >
             <FontAwesome6 name="newspaper" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem bài viết</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.btnHeader}
+            style={[styles.btnHeader, { backgroundColor: '#f7dab9' }]}
             onPress={() => handleTapByButton(selectedCity, "tour")}
           >
             <Entypo name="compass" size={24} color="black" />
             <Text style={styles.actionBtnText}>Xem Tour</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.btnHeader}
+            style={[styles.btnHeader, { backgroundColor: '#f7dab9' }]}
             onPress={() => handleTapOnGallery()}
           >
             <FontAwesome6 name="images" size={24} color="black" />
-            <Text style={styles.actionBtnText}>Gallery</Text>
+            <Text style={styles.actionBtnText}>Khám phá</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.information}>
-          <Entypo name="location" size={24} color="black" />
+          <Entypo name="location" size={24} color="#ce181e" />
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}
-          <Text>
+          <Text style={{ fontWeight: "bold", fontSize: 16, paddingLeft: 8 }}>
             {selectedCountry && selectedCity
               ? `${selectedCity.label}, ${selectedCountry.label}`
               : `Chưa chọn`}
@@ -602,12 +603,34 @@ const CheckInMap = () => {
             <VietNamMap></VietNamMap>
           </ReactNativeZoomableView>
         ) : (
-          <Text style={{ fontSize: 20, flex: 1 }}>
-            Tạm thời chưa có dữ liệu
-          </Text>
+          <View style={{flex:1}}>
+          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 40 }}>Tạm thời chưa có dữ liệu</Text>
+          <LottieView
+            autoPlay
+            style={{
+              position: "absolute",
+              left: 0,
+              width: width,
+              height: 520,
+            }}
+            source={require('@/assets/images/worldMap.json')}
+          />
+        </View>
         )
       ) : (
-        <Text style={{ fontSize: 20, flex: 1 }}>Loading</Text>
+        <View style={{flex:1}}>
+          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 40 }}>Đang tải dữ liệu bản đồ</Text>
+          <LottieView
+            autoPlay
+            style={{
+              position: "absolute",
+              left: 0,
+              width: width,
+              height: 520,
+            }}
+            source={require('@/assets/images/worldMap.json')}
+          />
+        </View>
       )}
     </GestureHandlerRootView>
   );
@@ -645,6 +668,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     flexDirection: "row",
     backgroundColor: "#ea4f4f",
+    elevation: 6
   },
   imageStyle: {
     width: 25,
@@ -674,7 +698,8 @@ const styles = StyleSheet.create({
   },
   information: {
     flexDirection: "row",
-    margin: 10,
+    marginTop: 20,
+    justifyContent: 'center'
   },
   sortContainer: {
     paddingHorizontal: 10,
@@ -683,7 +708,7 @@ const styles = StyleSheet.create({
   },
   hearder: {
     // flex:1
-    // backgroundColor:'green',
+    backgroundColor:'white',
     paddingTop: 10,
   },
   container: {

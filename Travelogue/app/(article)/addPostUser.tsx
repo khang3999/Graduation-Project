@@ -1181,7 +1181,7 @@ const AddPostUser = () => {
           text2: "Thêm bài viết thành công",
           visibilityTime: 2000,
         });
-        router.replace("/(tabs)/");
+        router.back();
       }
     } catch (error) {
       setButtonPost(false);
@@ -1386,7 +1386,7 @@ const AddPostUser = () => {
             size="32"
             style={{ marginBottom: 15 }}
             onPress={() => {
-              router.replace("/(tabs)/");
+              router.back();
             }}
             color="#000"
           />

@@ -43,6 +43,7 @@ import { formatDate } from "@/utils/commons"
 import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
+import ImageModal from "react-native-image-modal";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -539,6 +540,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const pickRatingImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
+      
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
@@ -610,13 +612,14 @@ const TourItem: React.FC<TourItemProps> = ({
             source={{ uri: item.author.avatar }}
             style={styles.miniAvatar}
           />
+
           <View style={styles.column}>
             <Text style={styles.username}>{item.author.fullname}</Text>
             <Text style={styles.time}>{formatDate(item.created_at)}</Text>
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} />
+          <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} locations={item.locations} />
         </View>
       </View>
 
@@ -630,7 +633,9 @@ const TourItem: React.FC<TourItemProps> = ({
         scrollAnimationDuration={300}
         renderItem={({ item, index }) => (
           <View style={styles.carouselItem}>
-            <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+            <ImageModal swipeToDismiss={true}
+              resizeMode="cover"
+              imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
             <View style={styles.viewTextStyles}>
               <Text style={styles.carouselText}>
                 {index + 1}/{flattenedImagesArray.length} - {item.cityName}
@@ -650,7 +655,7 @@ const TourItem: React.FC<TourItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
+          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>

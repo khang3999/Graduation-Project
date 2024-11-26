@@ -13,6 +13,7 @@ const switchTabbar = 120
 const MapLayout = () => {
     return (
         <Tabs
+            sceneContainerStyle={{ backgroundColor: 'white' }}
             tabBar={(props: any) => <TabBarTour {...props} />}
             screenOptions={{
                 tabBarStyle: styles.tabBar,

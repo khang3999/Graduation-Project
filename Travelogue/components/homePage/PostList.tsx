@@ -86,7 +86,8 @@ const PostList = () => {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
       setLoadedTours(false) // Load skeleton tour section
       setLoadedPosts(false) // Load skeleton posts list
-      const userId = await AsyncStorage.getItem("userToken")
+      // const userId = await AsyncStorage.getItem("userToken")
+      const userId = dataAccount.id
       // Chuyển sang chế độ searching
       // setIsSearchingMode(true)
       // Ghi lên firebase content và location không ghi quốc gia
@@ -441,7 +442,6 @@ const PostList = () => {
           fetchTours(); //
         }
       }
-
       console.log();
 
       return () => {
@@ -500,10 +500,19 @@ const PostList = () => {
     setModalNewPostVisible(false)
   }
 
-  const handleTapOnLocationInMenu = (selectedCity: any, selectedCountry: any) => {
+  const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
+    // Update hành vi lên firebase
+    const userId = dataAccount.id
+    // 1. Lưu lên firebase
+    const refBehavior = ref(database, `accounts/${userId}/behavior`);
+    const dataUpdate = {
+      content: "",
+      location: [selectedCityId],
+    };
+    await update(refBehavior, dataUpdate);
     router.push({
       pathname: "/gallery",
-      params: { idCity: selectedCity, idCountry: selectedCountry },
+      params: { idCity: selectedCityId, idCountry: selectedCountryId },
     });
   }
 
@@ -695,6 +704,7 @@ const PostList = () => {
             // ref={flatListPostRef}
             showsVerticalScrollIndicator={false}
             data={dataPosts}
+            extraData={dataPosts}
             renderItem={postItem}
             keyExtractor={(post: any) => post.id}
             // ItemSeparatorComponent={() => <View style={{ height: 20 }} />} // Space between item

@@ -256,6 +256,22 @@ const TourList = () => {
     setSelectedCountry(country)
   }
 
+  const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
+    // Update hành vi lên firebase
+    const userId = dataAccount.id
+    // 1. Lưu lên firebase
+    const refBehavior = ref(database, `accounts/${userId}/behavior`);
+    const dataUpdate = {
+      content: "",
+      location: [selectedCityId],
+    };
+    await update(refBehavior, dataUpdate);
+    router.push({
+      pathname: "/gallery",
+      params: { idCity: selectedCityId, idCountry: selectedCountryId },
+    });
+  }
+
 
   useFocusEffect(
     useCallback(() => {
@@ -415,7 +431,8 @@ const TourList = () => {
       // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
       Object.entries(locations[country]).map(([id, name]) => ({
         id,
-        name
+        name, 
+        country
       }))
     );
 
@@ -467,7 +484,7 @@ const TourList = () => {
               }>
               {allLocations.map((location: any) => {
                 return (
-                  <TouchableOpacity key={location.id}>
+                  <TouchableOpacity key={location.id} onPress={()=>handleTapOnLocationInMenu(location.id, location.country)}>
                     <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                     <Divider />
                   </TouchableOpacity>
@@ -583,6 +600,7 @@ const TourList = () => {
           <FlatList
             style={{ maxHeight: 580 }}
             data={dataTours}
+            extraData={dataTours}
             renderItem={tourItem}
             keyExtractor={(tour: any) => tour.id}
           // ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
