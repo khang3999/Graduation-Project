@@ -17,6 +17,7 @@ const Layout = () => {
             <Stack.Screen name="addPostUser" options={{headerShown: false}}/>
             <Stack.Screen name="reviewPostUser" options={{headerShown: false}}/>
             <Stack.Screen name="editPostUser" options={{headerShown: false}}/>
+            <Stack.Screen name="editPostTour" options={{headerShown: false}}/>
             
         </Stack>
        

@@ -15,8 +15,9 @@ import {
   Platform,
 } from "react-native";
 import IconA from "react-native-vector-icons/AntDesign";
+import IconSend from "react-native-vector-icons/FontAwesome";
 import Icon from "react-native-vector-icons/Fontisto";
-import { ArrowLeft } from "iconsax-react-native";
+import { ArrowLeft, Information } from "iconsax-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { appColors } from "@/constants/appColors";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -27,7 +28,7 @@ import {
   InputComponent,
   TextComponent,
 } from "@/components";
-import { Checkbox, Modal } from "react-native-paper";
+import { Checkbox, Modal, RadioButton } from "react-native-paper";
 import {
   database,
   onValue,
@@ -39,7 +40,6 @@ import {
   getDownloadURL,
   set,
   update,
-  get,
 } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
@@ -47,21 +47,23 @@ import { getStorage } from "firebase/storage";
 import { child } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message-custom";
+import PackageCard from "@/components/cart/PackageCard";
+import { UserRegister } from "@/model/UserRegister";
 import LottieView from "lottie-react-native";
+import { has } from "lodash";
 import ReviewPostUser from "./reviewPostUser";
-import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
-import { getDataPost } from "@/app/(article)/getDataPost";
-import { deleteFolder } from "@/services/storageService";
+import { useBannedWords } from "@/components/wordPosts/BannedWordData";
+import Slider from "@react-native-community/slider";
+import { getDataTour } from "./getDataTour";
 
-const EditPostUser = () => {
+const EditPostTour = () => {
   interface Country {
     id: string;
     [key: string]: any;
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-  const [isCheckIn, setIsCheckIn] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [contentReviewPost, setcontentReviewPost] = useState("");
@@ -79,16 +81,10 @@ const EditPostUser = () => {
   const [citiesDataFilter, setCitiesDataFilter] = useState<
     { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
-  // console.log("Cities:", citiesDataFilter);
 
   const [cities, setCities] = useState<
     { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
-
-  // useEffect(() => {
-  //   console.log("Cities:", cities);
-  //   [cities];
-  // });
 
   //Modal
   const [modalVisibleCity, setModalVisibleCity] = useState(false);
@@ -100,6 +96,8 @@ const EditPostUser = () => {
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalReviewPost, setModalReviewPost] = useState(false);
+
+  const [modalInformation, setModalInformation] = useState(false);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -115,7 +113,6 @@ const EditPostUser = () => {
   //Chosse ảnh
   //lưu trữ ảnh được chọn tạm thời
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-
   //lưu trữ thông tin thành phố đã chọn
   const [selectedCityForImages, setSelectedCityForImages] = useState<{
     id: string;
@@ -123,10 +120,6 @@ const EditPostUser = () => {
     id_nuoc: string;
     area_id: string;
   } | null>(null);
-  useEffect(() => {
-    // console.log("selectedCityForImages:", selectedCityForImages);
-    [selectedCityForImages];
-  });
   // lưu trữ hình ảnh cùng với thành phố tương ứng
   const [images, setImages] = useState<
     {
@@ -139,9 +132,6 @@ const EditPostUser = () => {
       images: string[];
     }[]
   >([]);
-  // useEffect(() => {
-  //   console.log("Images:", images);
-  //   [images]});
   //Lưu vi trí muốn sửa tt ảnh
   const [indexEditImage, setIndexEditImage] = useState<number | null>(null);
 
@@ -173,23 +163,37 @@ const EditPostUser = () => {
     number | null
   >(null);
 
+  //Lưu trữ thông tin người dùng
+  const [account, setAccount] = useState<UserRegister | null>(null);
+
+  //Hashtag
+  const [numberHashtag, setNumberHashtag] = useState(0);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [inputVisible, setInputVisible] = useState(false);
+  const [newHashtag, setNewHashtag] = useState("");
+
   //Lay data banned words
   const bannedWords = useBannedWords();
-
-  // *********************************************************************
+  //Set money and discount cho tour money
+  const [money, setMoney] = useState(0);
+  const [discountTour, setDiscountTour] = useState(0);
+  //  console.log("Banned Words:", bannedWords);
   //Lấy dữ liệu từ bài viết cần sửa
-  const { postId } = useLocalSearchParams();
-  console.log("ID Post:", postId);
+  const { tourId } = useLocalSearchParams();
+  console.log("ID Post:", tourId);
   useEffect(() => {
-    if (typeof postId === "string") {
-      getDataPost(postId).then((data) => {
+    if (typeof tourId === "string") {
+      getDataTour(tourId).then((data) => {
         if (data) {
           setTitle(data.title);
           setContent(data.content);
           setDays(data.days);
           setCities(data.cities);
           setImages(data.images);
-          setIsCheckIn(data.isCheckIn);
+          setMoney(data.money);
+          setDiscountTour(data.discountTour);
+          setHashtags(data.hashTagArray);
+          setNumberHashtag(data.hashtagNumber);
           if (data.status_id === 1) {
             setIsPublic(true);
           } else {
@@ -198,12 +202,27 @@ const EditPostUser = () => {
         }
       });
     }
-  }, [postId]);
-  // *********************************************************************
-  // *********************************************************************
-  // *********************************************************************
-  // *********************************************************************
-
+  }, [tourId]);
+  //*********************************************************************
+  // Xử lý ngươi dùng
+  //*********************************************************************
+  //Lấy thông tin người dùng
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await AsyncStorage.getItem("userToken");
+      // console.log("User:", userId);
+      if (userId) {
+        const userRef = ref(database, `accounts/${userId}`);
+        onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          // console.log("Data:", data);
+          setAccount(data);
+        });
+      }
+    };
+    fetchUserId();
+  }, []);
+  // console.log("Account:", account);
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -810,12 +829,8 @@ const EditPostUser = () => {
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
-  // useEffect(() => {
-  //   console.log("CheckIn:", isCheckIn);
 
-  // }, [isCheckIn]);
-
-  const handleEditPost = async () => {
+  const handleEditTour = async () => {
     setButtonPost(true);
     if (cities.length === 0) {
       setButtonPost(false);
@@ -832,9 +847,23 @@ const EditPostUser = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
+    if (money == 0 || isNaN(money)) {
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng nhập giá tiền cho tour. Hoặc giá tiền không hợp lệ."
+      );
+      return;
+    }
+
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+    if (hashtags.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm hashtag cho bài viết.");
       return;
     }
 
@@ -906,20 +935,117 @@ const EditPostUser = () => {
             .join("<br><br>")}`
       )
       .join("<br><br>")}`;
-    try {
-      const storage = getStorage();
-      // Để lưu các URL ảnh theo tỉnh/thành
-      const uploadedImageUrls: {
-        [key: string]: {
-          [key: string]: { city_name: string; images_value: string[] };
-        };
-      } = {};
 
-      //Sua tren db
-      const postsRef = ref(database, `posts/${postId}`);
-      //Xóa các ảnh cũ
-      // deleteFolder(`posts/${postId}/images`);
-      // Xử lý tải ảnh lên Firebase Storage và lưu đường dẫn
+    //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
+      if (bannedWordsChecker(hashtags[i], bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
+          text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+    if (bannedWordsChecker(title, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+      const day = days[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+
+      // Kiểm tra mô tả hoạt động cho từng ngày
+      for (
+        let activityIndex = 0;
+        activityIndex < day.activities.length;
+        activityIndex++
+      ) {
+        const activity = day.activities[activityIndex];
+
+        if (bannedWordsChecker(activity.activity, bannedWords)) {
+          setButtonPost(false);
+          Toast.show({
+            type: "error",
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
+            text1Style: { fontSize: 14 },
+            text2Style: { fontSize: 12 },
+            position: "top",
+          });
+          return;
+        }
+      }
+
+      // Kiểm tra mô tả chung của ngày
+      if (bannedWordsChecker(day.description, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Mô tả chung chứa từ cấm`,
+          text2: `Vui lòng sửa lại mô tả chung ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
+
+    const storage = getStorage();
+    const uploadedImageUrls: {
+      [key: string]: {
+        [key: string]: { city_name: string; images_value: string[] };
+      };
+    } = {};
+
+    try {
+      //Tạo bảng
+      const postsRef = ref(database, `tours/${tourId}`);
+      //Tạo id bài viết
+
       for (const image of images) {
         const { city, images: imageUris } = image;
         const {
@@ -935,7 +1061,7 @@ const EditPostUser = () => {
             const name = uri.split("/").pop();
             const imageRef = storageRef(
               storage,
-              `posts/${postId}/images/${name}`
+              `tours/${tourId}/images/${name}`
             );
 
             // Tải ảnh lên Firebase Storage
@@ -965,85 +1091,122 @@ const EditPostUser = () => {
           // Cập nhật thông tin ảnh trên Realtime Database
           const cityRef = ref(
             database,
-            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/tours/${tourId}`
           );
           await set(cityRef, {
             images: uploadedImageUrls[id_nuoc][id].images_value,
           });
         }
+
+        // lưu hashtag thành dòng chữ
+        const combinedHashtags = hashtags
+          .map((hashtag) => (hashtag[0] !== "#" ? "#" + hashtag : hashtag))
+          .join("");
+
+        let status;
+        if (isPublic) {
+          status = 1;
+        } else {
+          status = 2;
+        }
+        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
+        const thumbnail =
+          uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+            Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+          ]?.images_value?.[0] || "";
+
+        // tap hop du lieu
+        const postData = {
+          locations: cities.reduce(
+            (acc: { [key: string]: { [key: string]: string } }, city) => {
+              const { id_nuoc, id, name } = city;
+
+              if (id_nuoc && !acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
+
+              acc[id_nuoc][id] = name;
+
+              return acc;
+            },
+            {}
+          ),
+          content: contents,
+          hashtags: combinedHashtags,
+          images: uploadedImageUrls,
+          thumbnail,
+          title,
+          money,
+          discountTour,
+          id: tourId,
+          status_id: status,
+        };
+        // cập nhật thông tin bài viết
+        await update(postsRef, postData);
+
+        setButtonPost(false);
+        // Alert.alert("Thông báo", "Thêm bài viết thành công");
+        Toast.show({
+          type: "success",
+          text1: "Thông báo",
+          text2: "Thêm bài viết thành công",
+          visibilityTime: 2000,
+        });
+        router.back();
       }
-
-      // Sau khi tải lên ảnh, chuẩn bị dữ liệu bài viết
-      const thumbnail =
-        uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
-          Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
-        ]?.images_value?.[0] || "";
-
-      const postData = {
-        locations: cities.reduce(
-          (acc: { [key: string]: { [key: string]: string } }, city) => {
-            const { id_nuoc, id, name } = city;
-            if (!acc[id_nuoc]) {
-              acc[id_nuoc] = {};
-            }
-            acc[id_nuoc][id] = name;
-            return acc;
-          },
-          {}
-        ),
-        content: contents,
-        images: uploadedImageUrls,
-        thumbnail,
-        isCheckIn,
-        title,
-        status_id: isPublic ? 1 : 2,
-      };
-
-      // cập nhật thông tin bài viết
-      await update(postsRef, postData);
-
-      // cập nhật thông tin vào tài khoản người dùng
-      const userId = await AsyncStorage.getItem("userToken");
-      const checkInListRef = ref(database, `accounts/${userId}/checkInList`);
-
-      // Cập nhật thông tin bài viết vào danh sách bài viết của người dùng
-      if (isCheckIn) {
-        const snapshot = await get(checkInListRef);
-        const currentData = snapshot.exists() ? snapshot.val() : {};
-
-        const updatedCheckInList = cities.reduce(
-          (acc, city) => {
-            const { id_nuoc, id, name } = city;
-            if (!acc[id_nuoc]) {
-              acc[id_nuoc] = {};
-            }
-            acc[id_nuoc][id] = name;
-            return acc;
-          },
-          { ...currentData }
-        );
-
-        // Cập nhật vào Realtime Database
-        await update(checkInListRef, updatedCheckInList);
-      }
-
-      setButtonPost(false);
-      Toast.show({
-        type: "success",
-        text1: "Thông báo",
-        text2: "Thêm bài viết thành công",
-        visibilityTime: 2000,
-      });
-      router.replace("/(tabs)/");
     } catch (error) {
       setButtonPost(false);
       console.error("Error:", error);
       Alert.alert("Lỗi", "Không thể thêm bài viết.");
     }
   };
-
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
+  // *********************************************************************
+
+  // *********************************************************************
+  // Xử lý hashtag
+  // *********************************************************************
+  //Thêm hashtag
+  const handleAddHashtag = () => {
+    if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
+      // Xóa ký tự '#' nếu có trong chuỗi
+      const sanitizedHashtag = newHashtag.replace(/#/g, "").replace(/\s+/g, "");
+      //all kí tự
+      //^ là kh bao gồm
+      // const sanitizedText = newHashtag.replace(/[^a-zA-Z0-9\s]/g, "");
+      setHashtags([sanitizedHashtag, ...hashtags]);
+      setNewHashtag("");
+      setInputVisible(false);
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được để trống",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  };
+  // console.log("Hashtags:", hashtags);
+  useEffect(() => {
+    if (newHashtag.length >= 25) {
+      Toast.show({
+        type: "error",
+        text1: "Thông báo",
+        text2: "Hashtag không được quá 25 ký tự",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 11 },
+        visibilityTime: 2000,
+      });
+    }
+  }, [newHashtag]);
+
+  const removeHashtag = (indexChosse: any) => {
+    setHashtags(hashtags.filter((_, index) => index !== indexChosse));
+  };
+
   // *********************************************************************
   // Xử lý review bài viết
   const handleReviewPost = async () => {
@@ -1065,6 +1228,11 @@ const EditPostUser = () => {
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
+      return;
+    }
+    if (hashtags.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm hashtag cho bài viết.");
       return;
     }
 
@@ -1122,9 +1290,22 @@ const EditPostUser = () => {
             .join("<br><br>")}`
       )
       .join("<br><br>")}`;
-    console.log("Contents:", "lsjdhdsjldh");
 
     //Kiem tra tu cam thong tin bai viet
+    for (let i = 0; i < hashtags.length; i++) {
+      if (bannedWordsChecker(hashtags[i], bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `HashTag thứ ${i + 1} chứa từ cấm`,
+          text2: `Vui lòng sửa lại hashtag thứ ${i + 1} bài viết .`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+    }
     if (bannedWordsChecker(title, bannedWords)) {
       console.log("Title:", title);
       setButtonPost(false);
@@ -1239,12 +1420,12 @@ const EditPostUser = () => {
             size="32"
             style={{ marginBottom: 15 }}
             onPress={() => {
-              router.replace("/(tabs)/");
+              router.back();
             }}
             color="#000"
           />
           <TextComponent
-            text="Sửa Bài Viết"
+            text="Sửa bài viết"
             size={24}
             styles={{
               fontWeight: "800",
@@ -1258,23 +1439,6 @@ const EditPostUser = () => {
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
-            <TouchableOpacity style={styles.checkin} disabled={true}>
-              <RowComponent justify="space-between">
-                <Text style={{ fontSize: 12 }}>Check in lên bản đồ</Text>
-                {/* <Icon
-                name="checkbox-active"
-                size={14}
-                style={{ marginLeft: 10 }}
-                color={appColors.success}
-              /> */}
-                <Checkbox
-                  color="green"
-                  status={isCheckIn ? "checked" : "unchecked"}
-                  onPress={() => setIsCheckIn(!isCheckIn)}
-                />
-              </RowComponent>
-            </TouchableOpacity>
-
             {/* Quốc gia */}
             <SectionComponent>
               <View style={styles.countrySelector}>
@@ -1381,7 +1545,7 @@ const EditPostUser = () => {
           </SectionComponent>
 
           {/* Title */}
-          <SectionComponent styles={{ marginTop: -135, marginBottom: -15 }}>
+          <SectionComponent styles={{ marginTop: 10, marginBottom: -15 }}>
             <TextComponent
               text="Tiêu đề"
               size={16}
@@ -1428,6 +1592,85 @@ const EditPostUser = () => {
               multiline={true}
             />
           </SectionComponent>
+          {/* Nhập số tiền của tour */}
+          <SectionComponent>
+            <RowComponent
+              styles={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 0,
+              }}
+            >
+              {/* Input số tiền tour */}
+              <View style={{ flex: 0.5 }}>
+                <TextComponent
+                  text="Nhập số tiền tour của bạn"
+                  size={16}
+                  styles={{
+                    fontWeight: "500",
+                    color: "#000",
+                  }}
+                />
+                <InputComponent
+                  type="numeric"
+                  value={money.toString()}
+                  placeholder="Số tiền tour"
+                  onChange={(val) => setMoney(Number(val))}
+                  textStyle={{
+                    fontSize: 16,
+                    fontWeight: "400",
+                    color: "#000",
+                  }}
+                  inputStyle={{
+                    borderColor: appColors.gray,
+                    height: 40,
+                    backgroundColor: appColors.gray3,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                  }}
+                />
+              </View>
+
+              {/* Input tỉ lệ giảm giá */}
+              <View style={{ flex: 0.46, marginTop: -10 }}>
+                <TextComponent
+                  text="Giảm giá"
+                  size={16}
+                  styles={{
+                    marginLeft: 15,
+                    fontWeight: "500",
+                    color: "#000",
+                  }}
+                />
+                <RowComponent>
+                  <Slider
+                    style={{ width: "100%", height: 50, flex: 0.8 }}
+                    minimumValue={0}
+                    maximumValue={100}
+                    step={1}
+                    value={discountTour}
+                    onValueChange={(value) => setDiscountTour(value)}
+                    minimumTrackTintColor={appColors.btnaddActivity}
+                    maximumTrackTintColor={appColors.gray}
+                    thumbImage={require("@/assets/images/sale.png")}
+                  />
+                  <TextComponent
+                    text={`${discountTour}%`}
+                    size={14}
+                    styles={{
+                      marginLeft: 10,
+                      fontWeight: "500",
+                      color: "#000",
+                      textAlign: "center",
+                      flex: 0.2222,
+                    }}
+                  />
+                </RowComponent>
+              </View>
+            </RowComponent>
+          </SectionComponent>
+
+          {/* /Ngày  */}
           {days.length > 0 && (
             <SectionComponent>
               <Text
@@ -1632,6 +1875,145 @@ const EditPostUser = () => {
               <Text style={{ fontSize: 16 }}>Thêm ngày</Text>
               <IconA name="pluscircleo" size={15} color="#000" />
             </TouchableOpacity>
+          </SectionComponent>
+
+          {/* Hashtag */}
+          <SectionComponent styles={styles.cities}>
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.leftButtons}
+            >
+              {hashtags.length === 0 ? (
+                <Text
+                  style={{
+                    color: appColors.primary,
+                    padding: 10,
+                    fontWeight: "600",
+                  }}
+                >
+                  Chưa có hashtag
+                </Text>
+              ) : (
+                hashtags.map((hashtag, index) => (
+                  <TouchableOpacity
+                    disabled={true}
+                    key={index}
+                    style={styles.buttonHashtags}
+                  >
+                    <Text style={styles.textbtnHashtags}>#{hashtag}</Text>
+                    <TouchableOpacity
+                      style={styles.iconMUL}
+                      onPress={() => removeHashtag(index)}
+                    >
+                      <IconA name="minuscircleo" color="red" />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            {hashtags.length === 0 && !inputVisible ? (
+              <RowComponent>
+                <TouchableOpacity
+                  style={[styles.fixedRightButton, { width: 160, padding: 10 }]}
+                  onPress={() => setInputVisible(true)}
+                >
+                  <Text>
+                    Thêm hashtag{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+                {/* <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text> */}
+                <Text style={{ marginTop: 35 }}>
+                  {hashtags.length}/{numberHashtag}
+                </Text>
+              </RowComponent>
+            ) : null}
+
+            {inputVisible && (
+              <RowComponent>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    padding: 10,
+                    width: 200,
+                    borderRadius: 5,
+                    position: "absolute",
+                    right: 0,
+                    top: -50,
+                    backgroundColor: "#fff",
+                  }}
+                  maxLength={25}
+                  placeholder="Nhập hashtag"
+                  value={newHashtag}
+                  onChangeText={setNewHashtag}
+                />
+                <IconA
+                  name="close"
+                  size={20}
+                  color="red"
+                  style={{ position: "absolute", top: -50, right: 0 }}
+                  onPress={() => {
+                    setInputVisible(false);
+                    setNewHashtag("");
+                  }}
+                />
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#007bff",
+                    padding: 12,
+                    marginLeft: 10,
+                    borderRadius: 5,
+                  }}
+                  onPress={handleAddHashtag}
+                >
+                  <IconSend name="send" size={20} color="#fff" />
+                </TouchableOpacity>
+              </RowComponent>
+            )}
+
+            {hashtags.length > 0 && (
+              <RowComponent>
+                <TouchableOpacity
+                  style={[
+                    styles.fixedRightButton,
+                    {
+                      width: 40,
+                      paddingLeft: 10,
+                      paddingBottom: 6,
+                      paddingRight: 1,
+                      marginLeft: 10,
+                    },
+                  ]}
+                  onPress={() => {
+                    // if (hashtags.length >= packageData.find(item => item.packageId === selectedPackage)?.hashtag) {
+                    if (hashtags.length >= numberHashtag) {
+                      Toast.show({
+                        type: "error",
+                        text1: "Thông báo",
+                        // text2: `Số lượng hashtag vượt quá giới hạn cho phép (${packageData.find(item => item.packageId === selectedPackage)?.hashtag}).`,
+                        text2: `Số lượng hashtag vượt quá giới hạn cho phép (${numberHashtag}).`,
+                        text2Style: { fontSize: 11 },
+                        text1Style: { fontSize: 14 },
+                        visibilityTime: 2000,
+                      });
+                    } else {
+                      setInputVisible(true);
+                    }
+                  }}
+                >
+                  <Text>
+                    <IconA name="pluscircleo" size={20} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+                {/* <Text style={{ marginTop: 35 }}>{hashtags.length}/{packageData.find(item => item.packageId === selectedPackage)?.hashtag}</Text> */}
+                <Text style={{ marginTop: 35 }}>
+                  {hashtags.length}/{numberHashtag}
+                </Text>
+              </RowComponent>
+            )}
           </SectionComponent>
 
           {/* Hình ảnh */}
@@ -1846,8 +2228,9 @@ const EditPostUser = () => {
                   fontSize: 30,
                   textAlign: "center",
                 }}
+                // disabled={true}
                 color={appColors.primary}
-                onPress={handleEditPost}
+                onPress={handleEditTour}
               />
             </RowComponent>
           ) : (
@@ -1888,7 +2271,7 @@ const EditPostUser = () => {
                   textAlign: "center",
                 }}
                 color={appColors.primary}
-                onPress={handleEditPost}
+                onPress={handleEditTour}
               />
             </RowComponent>
           )}
@@ -1936,7 +2319,6 @@ const EditPostUser = () => {
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Chọn Thành Phố</Text>
-            {/* Tìm kiếm thành phố */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -2022,6 +2404,7 @@ const EditPostUser = () => {
                 }}
               />
             </RowComponent>
+
             {/* Search */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -2316,14 +2699,24 @@ const EditPostUser = () => {
                     ]}
                   />
                 </TouchableOpacity>
-                {selectedCityForImages && (
+                {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 140 }]}
+                    style={[styles.fixedRightButton, { width: 130 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
                       {selectedCityForImages.name}{" "}
                       <IconA name="retweet" size={15} color="#000" />
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.fixedRightButton]}
+                    onPress={() => setModalVisibleCityImages(true)}
+                  >
+                    <Text>
+                      Chọn tỉnh{" "}
+                      <IconA name="pluscircleo" size={15} color="#000" />
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -2332,7 +2725,7 @@ const EditPostUser = () => {
               <>
                 {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton, { width: 140 }]}
+                    style={[styles.fixedRightButton, { width: 130 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
@@ -2461,7 +2854,7 @@ const EditPostUser = () => {
           </SectionComponent>
         </Modal>
 
-        {/* Modal loading */}
+        {/* Modal load */}
         {buttonPost ? (
           <Modal visible={buttonPost}>
             <View
@@ -2483,6 +2876,81 @@ const EditPostUser = () => {
             </View>
           </Modal>
         ) : null}
+
+        {/* Modal information */}
+        <Modal
+          visible={modalInformation}
+          onDismiss={() => setModalInformation(false)}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              width: 320,
+              height: 230,
+              position: "absolute",
+              top: -120,
+              left: "5%",
+            }}
+          >
+            <SectionComponent styles={{ marginTop: 10, marginBottom: -10 }}>
+              <View>
+                <Text
+                  style={[styles.modalTitle, { marginLeft: 10, fontSize: 22 }]}
+                >
+                  Thông tin ưu đãi gói dịch vụ
+                </Text>
+                <Text style={{ marginLeft: 10 }}>
+                  Gói càng cao thì sẽ có nhiều{" "}
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    hashtag
+                  </Text>{" "}
+                  và
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    {" "}
+                    được tích lũy điểm
+                  </Text>{" "}
+                  cho tài khoản và bài viết{" "}
+                  <Text style={{ fontWeight: "bold", color: appColors.danger }}>
+                    sẽ dựa các tiêu chí bao gồm{" "}
+                  </Text>
+                  <Text
+                    style={{ fontWeight: "bold", color: appColors.primary }}
+                  >
+                    (điểm tích lũy điểm tài khoản, giá trị gói package, hashtag)
+                  </Text>{" "}
+                  để tiếp cận được nhiều người hơn.
+                </Text>
+              </View>
+            </SectionComponent>
+            <RowComponent justify="space-between">
+              <LottieView
+                source={require("../../assets/images/information.json")}
+                autoPlay
+                loop
+                style={{
+                  width: 150,
+                  height: 150,
+                }}
+              />
+              <SectionComponent>
+                <TouchableOpacity
+                  style={[
+                    styles.closeButton,
+                    {
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      marginRight: 70,
+                    },
+                  ]}
+                  onPress={() => setModalInformation(false)}
+                >
+                  <IconA name="close" size={20} color="#fff" />
+                </TouchableOpacity>
+              </SectionComponent>
+            </RowComponent>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -2494,6 +2962,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingTop: 50,
+  },
+  text: {
+    color: appColors.primary,
+    fontWeight: "bold",
   },
   //Modal map
   containerMap: {
@@ -2531,7 +3003,7 @@ const styles = StyleSheet.create({
   //cities
   cities: {
     flexDirection: "row",
-    height: 200,
+    height: 70,
     justifyContent: "flex-start",
   },
   leftButtons: {
@@ -2567,6 +3039,20 @@ const styles = StyleSheet.create({
   },
   textbtncities: {
     textAlign: "center",
+  },
+  buttonHashtags: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e0e0e0",
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  textbtnHashtags: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "600",
   },
   iconMUL: {
     position: "absolute",
@@ -2773,8 +3259,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
     padding: 5,
-    borderRadius: 5
+    borderRadius: 5,
   },
 });
 
-export default EditPostUser;
+export default EditPostTour;

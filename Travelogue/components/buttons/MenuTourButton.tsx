@@ -320,6 +320,14 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
       setTypeReport("comment")
     }
   }
+  const handleEditTour = () => {
+    router.push({
+      pathname: "/(article)/editPostTour",
+      params: { tourId }
+    });
+    setIsModalVisible(false);
+  }
+
 
   if (isLoading) {
     return (
@@ -371,6 +379,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                   { top: menuPosition.top, left: menuPosition.left },
                 ]}
               >
+                <TouchableOpacity style={styles.menuItem}
+                  onPress={handleEditTour}>
+                  <Icon name="application-edit" size={20} style={styles.menuIcon} />
+                  <Text style={styles.menuText}>Sửa</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem}
                   onPress={handleDeleteTour}>
 
