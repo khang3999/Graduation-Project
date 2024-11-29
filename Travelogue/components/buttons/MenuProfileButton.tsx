@@ -84,7 +84,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
   }
 
   const handleChangePassword = () => {
-    router.push('/changePassword')
+    router.push('/ChangePassword')
     return
   }
 

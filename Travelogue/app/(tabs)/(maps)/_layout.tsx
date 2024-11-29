@@ -19,8 +19,9 @@ const MapLayout = () => {
                 tabBarStyle: styles.tabBar,
                 headerStyle: {
                     height: 105,
-                    backgroundColor: '#ff5b5b',
-                    borderRadius: 20,
+                    backgroundColor: 'white',
+                    borderBottomWidth: 1,
+                    // borderRadius: 20,
                     elevation: 10
                 },
                 headerTitle: 'Bản đồ',
@@ -30,18 +31,20 @@ const MapLayout = () => {
                 key={1}
                 name="checkInMap"
                 options={{
-                    title: 'Check in',
-                    headerTitle: 'Bản đồ',
-                    headerRight: () => <Text style={styles.headerTitleText}>Check in</Text>,
-                }} />
+                    // title: 'Check in',
+                    headerTitle: 'Check in',
+                    // headerRight: () => <Text style={styles.headerTitleText}>Check in</Text>,
+                }}
+            />
             <Tabs.Screen
                 key={2}
                 name="realMap"
                 options={{
-                    title: 'Real Map',
+                    //     title: 'Real Map',
                     headerTitle: 'Danh lam',
                     headerRight: () => <Text style={styles.headerTitleText}>Lễ hội</Text>,
-                }} />
+                }}
+            />
         </Tabs >
 
     )

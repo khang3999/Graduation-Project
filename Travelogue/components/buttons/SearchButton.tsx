@@ -63,12 +63,12 @@ const SearchButton = ({
             onModalOpen();
           }}
         >
-          <IconFeather name="search" size={24} />
+          <IconFeather style={{paddingRight:10}} name="search" size={24} />
         </TouchableOpacity>
         {isExpanded && (
           <TextInput
             style={styles.input}
-            placeholder="Search"
+            placeholder="Tìm kiếm"
             placeholderTextColor="#888"
             value={searchText}
             onChangeText={(text) => {
@@ -90,7 +90,7 @@ const SearchButton = ({
               onModalClose();
             }}
           >
-            <Text style={styles.cancelButton}>Cancel</Text>
+            <Text style={styles.cancelButton}>Hủy</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
     color: '#007aff',
     fontSize: 16,
     marginLeft:3,
+    paddingLeft:10
   },  
 });
 export default SearchButton;

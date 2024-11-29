@@ -147,14 +147,14 @@ export default function ProfileScreen() {
         >
           <View style={styles.modalContent}>
             <View style={styles.row}>
-              <Text style={styles.recentSearchText}>Recent searches</Text>
+              <Text style={styles.recentSearchText}>Gần đây</Text>
             </View>
             <FlatList
               data={filteredData}
               keyExtractor={(item, index) => `${item}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => {
-                  router.push("/searchResult");
+                  router.push("/SearchResult");
                   setSearchedAccountData(item);
                   setRecentSearches([...recentSearches, item]);
                 }}>
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   searchModal: {
     position: "absolute",
-    top: 85,
+    top: 60,
     left: 0,
     right: 0,
     bottom: 0,

@@ -14,9 +14,10 @@ import ActionBar from '../actionBars/ActionBar'
 import Toast from 'react-native-toast-message-custom'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { usePost } from '@/contexts/PostProvider'
-import { debounce, set } from 'lodash'
+import { debounce, isBuffer, set } from 'lodash'
 import LottieView from 'lottie-react-native'
 import { useNavigationState } from '@react-navigation/native'
+import { useAccount } from '@/contexts/AccountProvider'
 
 const { width } = Dimensions.get('window')
 
@@ -54,6 +55,8 @@ const PostList = () => {
   const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
   const flatListPostRef: any = useRef(null)
   const { selectedCityId } = useLocalSearchParams()
+  const { setSearchedAccountData }: any = useAccount();
+
   // useEffect(() => {
   //   // if (flatListPostRef.current) {
   //   //   flatListPostRef.current.scrollToOffset({ offset: 0, animated: true });
@@ -333,7 +336,6 @@ const PostList = () => {
             nonBehaviorPosts.push(post)
           }
         });
-
         // Bước 2: Sort mảng. Nếu có chọn kiểu search bỏ qua hệ số trùng
         if (selectedTypeSearch.current === 2) { //Th1: Có chọn typeSearch
           // Sort mảng theo hành vi theo lượt like nếu trùng like thì theo thời gian
@@ -553,10 +555,31 @@ const PostList = () => {
   const closeMenu = () => {
     setIndexVisibleMenu(-1)
   };
-  const { selectedPost, setSelectedPost }: any = usePost();
+
+  const handleGoToProfileScreen = async (accountId: any) => {
+    if (accountId) {
+      try {
+        const refAccount = ref(database, `accounts/${accountId}`)
+        const snapshot = await get(refAccount);
+        if (snapshot.exists()) {
+          const dataAccountJson = snapshot.val()
+          console.log(dataAccountJson, 'adsd');
+
+          await setSearchedAccountData(dataAccountJson)
+          router.push("/SearchResult");
+        } else {
+          console.log("No data account available");
+        }
+      } catch (error) {
+        console.error("Error fetching data account: ", error);
+      }
+    }
+
+  }
   // ITEM RENDER
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}    
     const locations: any = post.item.locations // Lấy được ĐỐI TƯỢNG locations
+    const authorId = post.item.author.id
     const allLocations: any[] = Object.keys(locations).flatMap((country) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
       // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
       Object.entries(locations[country]).map(([id, name]) => ({
@@ -578,7 +601,7 @@ const PostList = () => {
           }}>
             {/*Author*/}
             <View style={styles.authorContent}>
-              <TouchableOpacity style={styles.avatarWrap}>
+              <TouchableOpacity style={styles.avatarWrap} onPress={() => handleGoToProfileScreen(authorId)}>
                 <Image style={styles.avatar} source={{ uri: post.item.author.avatar }}></Image>
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
@@ -679,7 +702,9 @@ const PostList = () => {
   return (
     <View style={styles.container}>
       <View style={styles.titlePostContainer}>
-        <Text style={styles.textCategory}>Những bài viết mới</Text>
+        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+          <Text style={styles.textCategory}>Bài viết mới</Text>
+        </View>
 
         {/* {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && ( */}
         {((currentPostCount !== newPostCount)) && (
@@ -1004,7 +1029,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   textCategory: {
-    marginBottom: 10,
     fontSize: 14,
     backgroundColor: '#f0f0f0',
     borderTopRightRadius: 10,
@@ -1013,7 +1037,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     fontWeight: '500',
     alignSelf: 'flex-start',
-    elevation: 10
+    elevation: 6
   },
   imagePost: {
     height: 410,

@@ -298,19 +298,19 @@ const AddPostTour = () => {
   //Cac tinh thanh duoc chon
   const handCityPress =
     (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
-    () => {
-      setCities([
-        {
-          id: city.id,
-          name: city.name,
-          id_nuoc: city.id_nuoc,
-          area_id: city.area_id,
-        },
-        ...cities,
-      ]);
-      setSearchQueryCity("");
-      setModalVisibleCity(false);
-    };
+      () => {
+        setCities([
+          {
+            id: city.id,
+            name: city.name,
+            id_nuoc: city.id_nuoc,
+            area_id: city.area_id,
+          },
+          ...cities,
+        ]);
+        setSearchQueryCity("");
+        setModalVisibleCity(false);
+      };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -828,12 +828,12 @@ const AddPostTour = () => {
       Alert.alert("Thông báo", "Vui lòng nhập nội dung chung bài viết.");
       return;
     }
-    if(money == 0 || isNaN(money)) {
+    if (money == 0 || isNaN(money)) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng nhập giá tiền cho tour. Hoặc giá tiền không hợp lệ.");
       return;
     }
-    
+
     if (days.length === 0) {
       setButtonPost(false);
       Alert.alert("Thông báo", "Vui lòng thêm ngày và hoạt động cho bài viết.");
@@ -873,8 +873,7 @@ const AddPostTour = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -903,8 +902,7 @@ const AddPostTour = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -983,12 +981,10 @@ const AddPostTour = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1201,12 +1197,12 @@ const AddPostTour = () => {
               (account?.balance ?? 0) -
               (selectedPackageData.price -
                 (selectedPackageData.price * selectedPackageData.discount) /
-                  100);
+                100);
             const newAccumulate =
               (account?.accumulate ?? 0) +
               (selectedPackageData.price -
                 (selectedPackageData.price * selectedPackageData.discount) /
-                  100);
+                100);
             const userRef = ref(database, `accounts/${userId}`);
             await update(userRef, {
               balance: newBalance,
@@ -1407,8 +1403,7 @@ const AddPostTour = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -1423,8 +1418,7 @@ const AddPostTour = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -1503,12 +1497,10 @@ const AddPostTour = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1606,8 +1598,8 @@ const AddPostTour = () => {
                   >
                     {selectedCountry != null
                       ? countryData.find(
-                          (country) => country.id === selectedCountry
-                        )?.label
+                        (country) => country.id === selectedCountry
+                      )?.label
                       : "Chọn quốc gia"}
                   </Text>
                   <Icon
@@ -1636,7 +1628,7 @@ const AddPostTour = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Chưa có tỉnh CheckIn
+                  Chưa chọn tỉnh thành
                 </Text>
               ) : (
                 cities.map((city) => (
@@ -1771,7 +1763,7 @@ const AddPostTour = () => {
                   {packageData.map((item, index) =>
                     // không đủ tiền thì disable
                     (account?.balance ?? 0) <
-                    item.price - item.price * (item.discount / 100) ? (
+                      item.price - item.price * (item.discount / 100) ? (
                       <PackageCard
                         key={index}
                         name={item.name}
@@ -1781,7 +1773,7 @@ const AddPostTour = () => {
                         packageId={item.id}
                         selectedPackage={selectedPackage}
                         disabled={true}
-                        // onSelect={(id: any) => setSelectedPackage(id)}
+                      // onSelect={(id: any) => setSelectedPackage(id)}
                       />
                     ) : (
                       <PackageCard
@@ -1804,9 +1796,8 @@ const AddPostTour = () => {
                             Toast.show({
                               type: "error",
                               text1: "Thông báo",
-                              text2: `Hãy xóa ${
-                                currentHashtagsCount - allowedHashtagsCount
-                              } hagtag để chỉnh về gói thấp hơn.`,
+                              text2: `Hãy xóa ${currentHashtagsCount - allowedHashtagsCount
+                                } hagtag để chỉnh về gói thấp hơn.`,
                               text1Style: { fontSize: 14 },
                               text2Style: { fontSize: 11 },
                               visibilityTime: 2000,
@@ -1909,7 +1900,7 @@ const AddPostTour = () => {
               </View>
 
               {/* Input tỉ lệ giảm giá */}
-              <View style={{ flex: 0.46, marginTop: -10}}>
+              <View style={{ flex: 0.46, marginTop: -10 }}>
                 <TextComponent
                   text="Giảm giá"
                   size={16}
@@ -2056,9 +2047,8 @@ const AddPostTour = () => {
                                 backgroundColor: appColors.white,
                               }}
                               textStyle={{ color: "#000" }}
-                              placeholder={`Địa điểm hoạt động ${
-                                activityIndex + 1
-                              }`}
+                              placeholder={`Địa điểm hoạt động ${activityIndex + 1
+                                }`}
                               multiline={true}
                               value={activity.address}
                               onChange={(text) =>
@@ -2095,9 +2085,8 @@ const AddPostTour = () => {
                           width: "100%",
                           borderColor: appColors.gray,
                         }}
-                        placeholder={`Nhập mô tả cho hoạt động ${
-                          activityIndex + 1
-                        }`}
+                        placeholder={`Nhập mô tả cho hoạt động ${activityIndex + 1
+                          }`}
                         value={activity.activity}
                         multiline={true}
                         onChange={(text) =>
@@ -2279,11 +2268,10 @@ const AddPostTour = () => {
                         type: "error",
                         text1: "Thông báo",
                         // text2: `Số lượng hashtag vượt quá giới hạn cho phép (${packageData.find(item => item.packageId === selectedPackage)?.hashtag}).`,
-                        text2: `Số lượng hashtag vượt quá giới hạn cho phép (${
-                          packageData.find(
-                            (item) => item.id === selectedPackage
-                          )?.hashtag
-                        }).`,
+                        text2: `Số lượng hashtag vượt quá giới hạn cho phép (${packageData.find(
+                          (item) => item.id === selectedPackage
+                        )?.hashtag
+                          }).`,
                         text2Style: { fontSize: 11 },
                         text1Style: { fontSize: 14 },
                         visibilityTime: 2000,

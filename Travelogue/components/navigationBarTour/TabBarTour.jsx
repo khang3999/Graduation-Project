@@ -8,7 +8,7 @@ const switchTabbar = 160
 
 const TabBarTour = ({ state, descriptors, navigation, isTabBarVisible = true }) => {
   // Color
-  const focusedColor = '#0891b2'
+  const focusedColor = '#ea4f4f'
   const greyColor = '#444444'
   if (!isTabBarVisible) return null
   return (
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 99,
     paddingHorizontal: 10,
+    borderWidth:1,
   },
   tabbarItem: {
     flex: 1,

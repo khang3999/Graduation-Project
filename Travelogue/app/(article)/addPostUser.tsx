@@ -1476,7 +1476,7 @@ const AddPostUser = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Chưa có tỉnh CheckIn
+                  Chưa chọn tỉnh thành
                 </Text>
               ) : (
                 cities.map((city) => (

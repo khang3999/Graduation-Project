@@ -431,7 +431,7 @@ const TourList = () => {
       // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
       Object.entries(locations[country]).map(([id, name]) => ({
         id,
-        name, 
+        name,
         country
       }))
     );
@@ -484,7 +484,7 @@ const TourList = () => {
               }>
               {allLocations.map((location: any) => {
                 return (
-                  <TouchableOpacity key={location.id} onPress={()=>handleTapOnLocationInMenu(location.id, location.country)}>
+                  <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
                     <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                     <Divider />
                   </TouchableOpacity>
@@ -577,7 +577,9 @@ const TourList = () => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', position: 'relative' }}>
-        <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
+        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+          <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
+        </View>
         {((currentTourCount != newTourCount)) && (
           <TouchableOpacity style={styles.loadNewTour} onPress={() => handleShowNewTour()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
@@ -908,7 +910,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginBottom: 10,
     fontWeight: '500',
     alignSelf: 'flex-start',
     elevation: 10

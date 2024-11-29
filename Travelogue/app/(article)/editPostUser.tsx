@@ -54,7 +54,7 @@ import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { getDataPost } from "@/app/(article)/getDataPost";
 
 const EditPostUser = () => {
- 
+
   interface Country {
     id: string;
     [key: string]: any;
@@ -191,11 +191,11 @@ const EditPostUser = () => {
           setCities(data.cities);
           setImages(data.images);
           setIsCheckIn(data.isCheckIn);
-          if(data.status_id === 1) {
+          if (data.status_id === 1) {
             setIsPublic(true);
           } else {
             setIsPublic(false);
-          } 
+          }
         }
       });
     }
@@ -299,19 +299,19 @@ const EditPostUser = () => {
   //Cac tinh thanh duoc chon
   const handCityPress =
     (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
-    () => {
-      setCities([
-        {
-          id: city.id,
-          name: city.name,
-          id_nuoc: city.id_nuoc,
-          area_id: city.area_id,
-        },
-        ...cities,
-      ]);
-      setSearchQueryCity("");
-      setModalVisibleCity(false);
-    };
+      () => {
+        setCities([
+          {
+            id: city.id,
+            name: city.name,
+            id_nuoc: city.id_nuoc,
+            area_id: city.area_id,
+          },
+          ...cities,
+        ]);
+        setSearchQueryCity("");
+        setModalVisibleCity(false);
+      };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -867,8 +867,7 @@ const EditPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -897,8 +896,7 @@ const EditPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -965,12 +963,10 @@ const EditPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1272,8 +1268,7 @@ const EditPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -1288,8 +1283,7 @@ const EditPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -1355,12 +1349,10 @@ const EditPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1475,8 +1467,8 @@ const EditPostUser = () => {
                   >
                     {selectedCountry != null
                       ? countryData.find(
-                          (country) => country.id === selectedCountry
-                        )?.label
+                        (country) => country.id === selectedCountry
+                      )?.label
                       : "Chọn quốc gia"}
                   </Text>
                   <Icon
@@ -1505,7 +1497,7 @@ const EditPostUser = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Chưa có tỉnh CheckIn
+                  Chưa chọn tỉnh thành
                 </Text>
               ) : (
                 cities.map((city) => (
@@ -1712,9 +1704,8 @@ const EditPostUser = () => {
                                 backgroundColor: appColors.white,
                               }}
                               textStyle={{ color: "#000" }}
-                              placeholder={`Địa điểm hoạt động ${
-                                activityIndex + 1
-                              }`}
+                              placeholder={`Địa điểm hoạt động ${activityIndex + 1
+                                }`}
                               multiline={true}
                               value={activity.address}
                               onChange={(text) =>
@@ -1751,9 +1742,8 @@ const EditPostUser = () => {
                           width: "100%",
                           borderColor: appColors.gray,
                         }}
-                        placeholder={`Nhập mô tả cho hoạt động ${
-                          activityIndex + 1
-                        }`}
+                        placeholder={`Nhập mô tả cho hoạt động ${activityIndex + 1
+                          }`}
                         value={activity.activity}
                         multiline={true}
                         onChange={(text) =>
