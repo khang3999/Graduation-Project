@@ -54,7 +54,6 @@ const Layout = () => {
 
     checkToken();
 
-    // Dọn dẹp listener khi component unmount
     return () => {
       if (userRef) off(userRef);
     };
@@ -62,13 +61,14 @@ const Layout = () => {
 
   useEffect(() => {
     if (isAuth) {
+      console.log(isAuth, role);
       if (role === "admin") {
         router.replace("/(admin)/(account)/account");
       } else {
         router.replace("/(tabs)");
       }
     }
-  }, [isAuth, role]);
+  }, [role]);
 
   return <>{!isAuth ? <RouterAuth /> : null}</>;
 };

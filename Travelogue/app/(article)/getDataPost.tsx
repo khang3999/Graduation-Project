@@ -67,7 +67,7 @@ export const getDataPost = async (postId: string) => {
 
       // Map images
       const imageData = data.images; 
-      console.log(imageData);
+      // console.log(imageData);
       Object.entries(imageData).forEach(([countryKey, countryLocations]) => {
         Object.entries(countryLocations as Record<string, { city_name: string; images_value: string[] }>).forEach(([city_id, { city_name, images_value }]) => {
           // Tìm thông tin thành phố trong mảng cities

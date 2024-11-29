@@ -1118,11 +1118,12 @@ const AddPostTour = () => {
         // lưu hashtag thành dòng chữ
         const combinedHashtags = hashtags
           .map((hashtag) => (hashtag[0] !== "#" ? "#" + hashtag : hashtag))
-          .join(" ");
+          .join("");
 
         const likes = 0;
         const reports = 0;
         const match = 0;
+        const saves = 0;
         const ratingSummary = {
           totalRatingCounter: 0,
           totalRatingValue: 0,
@@ -1165,6 +1166,7 @@ const AddPostTour = () => {
           likes,
           title,
           money,
+          saves,
           discountTour,
           id: postId,
           reports,
@@ -1291,11 +1293,11 @@ const AddPostTour = () => {
   //Thêm hashtag
   const handleAddHashtag = () => {
     if (newHashtag.trim().length > 0 && newHashtag.length <= 25) {
-      // kiểm tra và thay thế khoảng trắng
-      //\s: Là ký tự đại diện cho bất kỳ khoảng trắng nào.
-      //+: một hoặc nhiều ký tự khoảng trắng liên tiếp.
-      //g:  tìm tất cả các khoảng trắng trong chuỗi
-      const sanitizedHashtag = newHashtag.replace(/\s+/g, "");
+      // Xóa ký tự '#' nếu có trong chuỗi
+      const sanitizedHashtag = newHashtag.replace(/#/g, "").replace(/\s+/g, "");
+      //all kí tự
+      //^ là kh bao gồm
+      // const sanitizedText = newHashtag.replace(/[^a-zA-Z0-9\s]/g, "");
       setHashtags([sanitizedHashtag, ...hashtags]);
       setNewHashtag("");
       setInputVisible(false);
@@ -2511,7 +2513,22 @@ const AddPostTour = () => {
                 }}
                 // disabled={true}
                 color={appColors.primary}
-                onPress={handlePushPost}
+                onPress={() => {
+                  Alert.alert(
+                    "Xác nhận", 
+                    "Bạn chắc chắn muốn đăng bài không?", 
+                    [
+                      {
+                        text: "Hủy",
+                        style: "cancel"
+                      },
+                      {
+                        text: "Đồng ý", 
+                        onPress: handlePushPost
+                      }
+                    ]
+                  );
+                }}
               />
             </RowComponent>
           ) : (
@@ -2552,7 +2569,22 @@ const AddPostTour = () => {
                   textAlign: "center",
                 }}
                 color={appColors.primary}
-                onPress={handlePushPost}
+                onPress={() => {
+                  Alert.alert(
+                    "Xác nhận", 
+                    "Bạn chắc chắn muốn đăng bài không?", 
+                    [
+                      {
+                        text: "Hủy",
+                        style: "cancel"
+                      },
+                      {
+                        text: "Đồng ý", 
+                        onPress: handlePushPost
+                      }
+                    ]
+                  );
+                }}
               />
             </RowComponent>
           )}
@@ -3585,13 +3617,14 @@ const styles = StyleSheet.create({
   },
   modalreview: {
     position: "absolute",
-    top: 25,
+    top: 10,
     width: "99%",
     height: "90%",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "white",
     padding: 5,
+    borderRadius: 5
   },
 });
 

@@ -52,6 +52,7 @@ import ReviewPostUser from "./reviewPostUser";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { getDataPost } from "@/app/(article)/getDataPost";
+import { deleteFolder } from "@/services/storageService";
 
 const EditPostUser = () => {
 
@@ -176,14 +177,13 @@ const EditPostUser = () => {
   //Lay data banned words
   const bannedWords = useBannedWords();
 
-
   // *********************************************************************
   //Lấy dữ liệu từ bài viết cần sửa
   const { postId } = useLocalSearchParams();
   console.log("ID Post:", postId);
   useEffect(() => {
-    if (typeof postId === 'string') {
-      getDataPost(postId).then(data => {
+    if (typeof postId === "string") {
+      getDataPost(postId).then((data) => {
         if (data) {
           setTitle(data.title);
           setContent(data.content);
@@ -816,7 +816,7 @@ const EditPostUser = () => {
 
   // }, [isCheckIn]);
 
-  const handlePushPost = async () => {
+  const handleEditPost = async () => {
     setButtonPost(true);
     if (cities.length === 0) {
       setButtonPost(false);
@@ -999,19 +999,12 @@ const EditPostUser = () => {
       };
     } = {};
 
-    try {
-      //Tạo bảng
-      const postsRef = ref(database, "posts");
-      //Tạo id bài viết
-      const newPostRef = push(postsRef);
-      //Lấy id bài post
-      const postId = newPostRef.key;
-
-      // console.log("postId:", images);
-      //xử lý ảnh và lưu ảnh
+      //Sua tren db
+      const postsRef = ref(database, `posts/${postId}`);
+      //Xóa các ảnh cũ
+      // deleteFolder(`posts/${postId}/images`);
+      // Xử lý tải ảnh lên Firebase Storage và lưu đường dẫn
       for (const image of images) {
-        // console.log("Image:", image);
-        //Lấy thông tin ảnh và thành phố
         const { city, images: imageUris } = image;
         const {
           id_nuoc,
@@ -1020,200 +1013,119 @@ const EditPostUser = () => {
           area_id: id_khuvucimages,
         } = city || {};
 
-        //lấy ảnh từ mảng ảnh
-        for (const uri of imageUris) {
-          //lấy phần tử cuối để đặc tên ảnh
-          const name = uri.split("/").pop();
-          // console.log("Name", name);
-
-          if (id_nuoc && id) {
+        if (id_nuoc && id) {
+          // Tải lên tất cả ảnh trong `imageUris` đồng thời
+          const uploadTasks = imageUris.map(async (uri) => {
+            const name = uri.split("/").pop();
             const imageRef = storageRef(
               storage,
               `posts/${postId}/images/${name}`
             );
-            //gửi yêu cầu HTTP để tải ảnh từ uri
+
+            // Tải ảnh lên Firebase Storage
             const response = await fetch(uri);
-            //chuyển đổi dữ liệu thành Blob trc khi tải lên
             const blob = await response.blob();
-
-            // Tải ảnh lên Storage
             await uploadBytes(imageRef, blob);
-            //lấy url ảnh từ storage
-            const downloadURL = await getDownloadURL(imageRef);
-            // console.log("URL Down:", downloadURL);
 
-            //Anh post
-            // URL ảnh theo tỉnh thành
-            // tạo id nuoc
-            // console.log("id_nuoc1:", uploadedImageUrls[id_nuoc]);
-            if (!uploadedImageUrls[id_nuoc]) {
-              uploadedImageUrls[id_nuoc] = {};
-            }
-            // console.log("id_nuoc2:", uploadedImageUrls);
-            if (!uploadedImageUrls[id_nuoc][id]) {
-              uploadedImageUrls[id_nuoc][id] = {
-                city_name: cityName || "",
-                images_value: [],
-              };
-            }
-            // console.log("id:", uploadedImageUrls[id_nuoc][id]);
-            uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
-            // console.log("URL:", uploadedImageUrls);
-            //lƯU ẢNH ĐẦU TIÊN
-            //Anh cho city
-            // URL ảnh theo tỉnh thành
-            // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
-            await set(
-              ref(
-                database,
-                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
-              ),
-              {
-                images: uploadedImageUrls[id_nuoc][id].images_value,
-              }
-            );
+            // Lấy URL tải về từ Firebase Storage
+            return await getDownloadURL(imageRef);
+          });
+
+          // Chờ tất cả ảnh được tải lên và lấy URL
+          const imageUrls = await Promise.all(uploadTasks);
+
+          // Lưu URL vào cấu trúc dữ liệu
+          if (!uploadedImageUrls[id_nuoc]) {
+            uploadedImageUrls[id_nuoc] = {};
           }
-        }
-
-        //Lay avatar fullname id user
-        const userId = await AsyncStorage.getItem("userToken");
-        // console.log("userId:", userId);
-        const userRef = ref(database, `accounts/${userId}`);
-
-        let avatar = "";
-        let fullname = "";
-        let totalPosts;
-        onValue(userRef, (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            avatar = data.avatar;
-            fullname = data.fullname;
-            if (data.totalPosts) {
-              totalPosts = data.totalPosts + 1;
-            } else {
-              totalPosts = 1;
-            }
+          if (!uploadedImageUrls[id_nuoc][id]) {
+            uploadedImageUrls[id_nuoc][id] = {
+              city_name: cityName || "",
+              images_value: [],
+            };
           }
-        });
+          uploadedImageUrls[id_nuoc][id].images_value.push(...imageUrls);
 
-        const likes = 0;
-        const reports = 0;
-        const match = 0;
-        let status;
-        if (isPublic) {
-          status = 1;
-        } else {
-          status = 2;
-        }
-        //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
-        const thumbnail =
-          uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
-            Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
-          ]?.images_value?.[0] || "";
-
-        // Cấu trúc dữ liệu bài viết với URL ảnh
-        const postData = {
-          locations: cities.reduce(
-            (acc: { [key: string]: { [key: string]: string } }, city) => {
-              const { id_nuoc, id, name } = city;
-
-              if (id_nuoc && !acc[id_nuoc]) {
-                acc[id_nuoc] = {};
-              }
-
-              acc[id_nuoc][id] = name;
-
-              return acc;
-            },
-            {}
-          ),
-          content: contents,
-          author: { id: userId, avatar: avatar, fullname: fullname },
-          images: uploadedImageUrls,
-          likes,
-          id: postId,
-          reports,
-          match,
-          title,
-          status_id: status,
-          thumbnail,
-          created_at: timestamp,
-        };
-
-        //Them du leu other cho data
-        await update(
-          ref(
+          // Cập nhật thông tin ảnh trên Realtime Database
+          const cityRef = ref(
             database,
             `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
-          ),
-          {
-            avatar: avatar,
-            dayUpload: timestamp,
-            name: fullname,
-            idPost: postId,
-          }
+          );
+          await set(cityRef, {
+            images: uploadedImageUrls[id_nuoc][id].images_value,
+          });
+        }
+      }
+
+      // Sau khi tải lên ảnh, chuẩn bị dữ liệu bài viết
+      const thumbnail =
+        uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+          Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+        ]?.images_value?.[0] || "";
+
+      const postData = {
+        locations: cities.reduce(
+          (acc: { [key: string]: { [key: string]: string } }, city) => {
+            const { id_nuoc, id, name } = city;
+            if (!acc[id_nuoc]) {
+              acc[id_nuoc] = {};
+            }
+            acc[id_nuoc][id] = name;
+            return acc;
+          },
+          {}
+        ),
+        content: contents,
+        images: uploadedImageUrls,
+        thumbnail,
+        isCheckIn,
+        title,
+        status_id: isPublic ? 1 : 2,
+      };
+
+      // cập nhật thông tin bài viết
+      await update(postsRef, postData);
+
+      // cập nhật thông tin vào tài khoản người dùng
+      const userId = await AsyncStorage.getItem("userToken");
+      const checkInListRef = ref(database, `accounts/${userId}/checkInList`);
+
+      // Cập nhật thông tin bài viết vào danh sách bài viết của người dùng
+      if (isCheckIn) {
+        const snapshot = await get(checkInListRef);
+        const currentData = snapshot.exists() ? snapshot.val() : {};
+
+        const updatedCheckInList = cities.reduce(
+          (acc, city) => {
+            const { id_nuoc, id, name } = city;
+            if (!acc[id_nuoc]) {
+              acc[id_nuoc] = {};
+            }
+            acc[id_nuoc][id] = name;
+            return acc;
+          },
+          { ...currentData }
         );
 
-        // Lưu bài viết vào Realtime Database
-        if (postId) {
-          if (userId && isCheckIn) {
-            const userRef = ref(database, `accounts/${userId}/checkInList`);
-            const userPost = ref(database, `accounts/${userId}/createdPosts`);
-            // Lấy dữ liệu hiện tại từ Firebase
-            const snapshot = await get(userRef);
-            const currentData = snapshot.exists() ? snapshot.val() : {};
-
-            // Tạo dữ liệu cập nhật mới từ cities
-            const updatedUserData = cities.reduce(
-              (acc: { [key: string]: { [key: string]: string } }, city) => {
-                const { id_nuoc, id, name } = city;
-
-                // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
-                if (!acc[id_nuoc]) {
-                  acc[id_nuoc] = {};
-                }
-
-                // Thêm city vào danh sách của id_nuoc
-                acc[id_nuoc][id] = name;
-
-                return acc;
-              },
-              { ...currentData }
-            );
-            // Cập nhật dữ liệu
-            await update(userRef, updatedUserData);
-
-            const userTotalPost = ref(database, `accounts/${userId}`);
-            await update(userTotalPost, {
-              totalPosts: totalPosts,
-            });
-            //Luu
-            await update(userPost, {
-              [postId]: true,
-            });
-          }
-
-          await set(newPostRef, postData);
-        } else {
-          setButtonPost(false);
-          throw new Error("Failed");
-        }
-        setButtonPost(false);
-        // Alert.alert("Thông báo", "Thêm bài viết thành công");
-        Toast.show({
-          type: "success",
-          text1: "Thông báo",
-          text2: "Thêm bài viết thành công",
-          visibilityTime: 2000,
-        });
-        router.replace("/(tabs)/");
+        // Cập nhật vào Realtime Database
+        await update(checkInListRef, updatedCheckInList);
       }
+
+      setButtonPost(false);
+      Toast.show({
+        type: "success",
+        text1: "Thông báo",
+        text2: "Thêm bài viết thành công",
+        visibilityTime: 2000,
+      });
+      router.replace("/(tabs)/");
     } catch (error) {
       setButtonPost(false);
       console.error("Error:", error);
       Alert.alert("Lỗi", "Không thể thêm bài viết.");
     }
   };
+
   // *********************************************************************
   //  Xử lý Thêm Bài Viết
   // *********************************************************************
@@ -1412,12 +1324,12 @@ const EditPostUser = () => {
             color="#000"
           />
           <TextComponent
-            text="Hành trình mới"
+            text="Sửa Bài Viết"
             size={24}
             styles={{
               fontWeight: "800",
               margin: 5,
-              marginLeft: "18%",
+              marginLeft: "25%",
               marginBottom: 20,
             }}
           />
@@ -2005,7 +1917,7 @@ const EditPostUser = () => {
                 />
               </TouchableOpacity>
               <ButtonComponent
-                text="Đang Đăng Bài...."
+                text="Đang Sửa Bài...."
                 textStyles={{
                   width: "75%",
                   fontWeight: "bold",
@@ -2013,7 +1925,7 @@ const EditPostUser = () => {
                   textAlign: "center",
                 }}
                 color={appColors.primary}
-                onPress={handlePushPost}
+                onPress={handleEditPost}
               />
             </RowComponent>
           ) : (
@@ -2046,7 +1958,7 @@ const EditPostUser = () => {
                 />
               </TouchableOpacity>
               <ButtonComponent
-                text="Đăng bài"
+                text="Sửa bài viết"
                 textStyles={{
                   width: "75%",
                   fontWeight: "bold",
@@ -2054,7 +1966,7 @@ const EditPostUser = () => {
                   textAlign: "center",
                 }}
                 color={appColors.primary}
-                onPress={handlePushPost}
+                onPress={handleEditPost}
               />
             </RowComponent>
           )}
@@ -2932,13 +2844,14 @@ const styles = StyleSheet.create({
   },
   modalreview: {
     position: "absolute",
-    top: 25,
+    top: 10,
     width: "99%",
     height: "90%",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "white",
     padding: 5,
+    borderRadius: 5
   },
 });
 
