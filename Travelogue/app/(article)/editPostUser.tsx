@@ -991,13 +991,13 @@ const EditPostUser = () => {
     }
 
     const timestamp = Date.now();
-
-    const storage = getStorage();
-    const uploadedImageUrls: {
-      [key: string]: {
-        [key: string]: { city_name: string; images_value: string[] };
-      };
-    } = {};
+    try {
+      const storage = getStorage();
+      const uploadedImageUrls: {
+        [key: string]: {
+          [key: string]: { city_name: string; images_value: string[] };
+        };
+      } = {};
 
       //Sua tren db
       const postsRef = ref(database, `posts/${postId}`);
