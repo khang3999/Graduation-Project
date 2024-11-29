@@ -28,7 +28,7 @@ const TabBarTourButton = (props) => {
         return {
             // Styles
             transform: [{ scale: scaleValue }],
-            top
+            // top
         }
     })
     // Set style for text
