@@ -372,14 +372,14 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
+            <HeartButton style={styles.buttonItem} data={item} type={TYPE}/>
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
+          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
         </View>
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />

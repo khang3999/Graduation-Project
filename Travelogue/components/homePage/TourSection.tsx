@@ -1,7 +1,7 @@
 import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
-import { database, onValue, ref } from '@/firebase/firebaseConfig';
+import { database, onValue, ref, update } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
@@ -15,6 +15,7 @@ const TourSection = () => {
         dataToursSorted, setDataToursSorted
     }: any = useHomeProvider();
     const { setSelectedTour }: any = useTourProvider()
+    const { dataAccount }: any = useHomeProvider()
     const flatListTourRef: any = useRef(null)
     useEffect(() => {
         if (flatListTourRef.current) {
@@ -22,14 +23,30 @@ const TourSection = () => {
         }
     }, [dataToursSorted]);
 
+    const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
+        // Update hành vi lên firebase
+        const userId = dataAccount.id
+        // 1. Lưu lên firebase
+        const refBehavior = ref(database, `accounts/${userId}/behavior`);
+        const dataUpdate = {
+            content: "",
+            location: [selectedCityId],
+        };
+        await update(refBehavior, dataUpdate);
 
+        router.push({
+            pathname: "/gallery",
+            params: { idCity: selectedCityId, idCountry: selectedCountryId },
+        });
+    }
     const tourItem = (tour: any) => {
-        const locations = tour.item.locations
-        const nameLocations = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
+        const locations: any = tour.item.locations
+        const allLocations: any[] = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
             // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
             Object.entries(locations[country]).map(([id, name]) => ({
                 id,
-                name
+                name,
+                country
             }))
         );
         return (
@@ -47,17 +64,18 @@ const TourSection = () => {
                             width={(width - 40) / 3}
                             height={30}
                             autoPlay={true}
-                            data={nameLocations}
+                            data={allLocations}
                             autoPlayInterval={0}
                             scrollAnimationDuration={3000}
+                            style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
                             // onSnapToItem={(index) => console.log('current index:', index)}
                             renderItem={({ item }) => (
-                                <View key={item.id} style={{ flex: 1, justifyContent: 'center' }}>
+                                <TouchableOpacity key={item.id} style={{ flex: 1, justifyContent: 'center' }} onPress={() => handleTapOnLocationInMenu(item.id, item.country)}>
                                     <View style={{ backgroundColor: 'grey', opacity: 0.6, width: '100%', height: 30, position: 'absolute' }}></View>
                                     <Text style={{ textAlign: 'center', fontSize: 14, color: 'white' }}>
                                         {item.name + ""}
                                     </Text>
-                                </View>
+                                </TouchableOpacity>
                             )}
                         />
                     </View>
@@ -73,27 +91,31 @@ const TourSection = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.textCategory, { width: 'auto', marginTop: 12 }]}>Tour du lịch siêu hot</Text>
-            {loadedTours ?
-                <FlatList
-                    // ref={flatListTourRef}
-                    horizontal={true}
-                    // scrollToOffset={ }
-                    data={dataToursSorted}
-                    renderItem={tourItem}
-                    keyExtractor={(tour: any) => tour.id}
-                    contentContainerStyle={{ marginBottom: 8, paddingHorizontal: 10, paddingVertical: 10 }}
-                    ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                // pagingEnabled
-                >
-                </FlatList>
-                :
-                <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
-                    <SkeletonTourHome />
-                    <SkeletonTourHome />
-                    <SkeletonTourHome />
-                </View>
-            }
+            <View style={{ backgroundColor: 'red', marginVertical: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10, alignSelf: 'flex-start' }}>
+                <Text style={[styles.textCategory]}>Tour du lịch</Text>
+            </View>
+            <View style={{ backgroundColor: '#f0f0f0', marginBottom: 8}}>
+                {loadedTours ?
+                    <FlatList
+                        // ref={flatListTourRef}
+                        horizontal={true}
+                        // scrollToOffset={ }
+                        data={dataToursSorted}
+                        renderItem={tourItem}
+                        keyExtractor={(tour: any) => tour.id}
+                        contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10}}
+                        ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
+                    // pagingEnabled
+                    >
+                    </FlatList>
+                    :
+                    <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
+                        <SkeletonTourHome />
+                        <SkeletonTourHome />
+                        <SkeletonTourHome />
+                    </View>
+                }
+            </View>
         </View >
     )
 }
@@ -106,7 +128,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 5,
         fontWeight: '500',
-        alignSelf: 'flex-start',
+        // alignSelf: 'flex-start',
         elevation: 10
     },
     textLocation: {
@@ -125,7 +147,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 4,
         height: 30,
-        top: 30
+        top: 0
     },
     image: {
         width: (width - 40) / 3,

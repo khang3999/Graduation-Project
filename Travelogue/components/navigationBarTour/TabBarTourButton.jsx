@@ -22,13 +22,13 @@ const TabBarTourButton = (props) => {
         );
         const top = interpolate(
             scale.value,
-            [0, 1],
-            [0, 9]
+            [0, 0],
+            [0, 2]
         )
         return {
             // Styles
             transform: [{ scale: scaleValue }],
-            top
+            // top
         }
     })
     // Set style for text
@@ -48,9 +48,9 @@ const TabBarTourButton = (props) => {
             <Animated.View style={[animatedIconStyle]}>
                 {icons[routeName] ? icons[routeName]({ color }) : null}
             </Animated.View>
-            <Animated.Text style={[{ color, fontSize: 12 }, animatedTextStyle]}>
+            {/* <Animated.Text style={[{ color, fontSize: 12 }, animatedTextStyle]}>
                 {label}
-            </Animated.Text>
+            </Animated.Text> */}
         </Pressable>
 
     )

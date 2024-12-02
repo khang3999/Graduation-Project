@@ -12,10 +12,12 @@ import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-lis
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
 import Toast from 'react-native-toast-message-custom'
-import { router, useFocusEffect } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { usePost } from '@/contexts/PostProvider'
-import { debounce, set } from 'lodash'
+import { debounce, isBuffer, set } from 'lodash'
 import LottieView from 'lottie-react-native'
+import { useNavigationState } from '@react-navigation/native'
+import { useAccount } from '@/contexts/AccountProvider'
 
 const { width } = Dimensions.get('window')
 
@@ -52,21 +54,43 @@ const PostList = () => {
   const [dataNewPosts, setDataNewPosts] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
   const flatListPostRef: any = useRef(null)
+  const { selectedCityId } = useLocalSearchParams()
+  const { setSearchedAccountData }: any = useAccount();
 
+  // useEffect(() => {
+  //   // if (flatListPostRef.current) {
+  //   //   flatListPostRef.current.scrollToOffset({ offset: 0, animated: true });
+  //   // }
+  //   setLoadedTours(true)
+  // }, [dataPosts]);
+  // useEffect(() => {
+  //   // Hàm thực hiện hành động sau khi delay
+  //   if (newPostCount < currentPostCount) {
+  //     // Đặt độ trễ
+  //     const timeoutId = setTimeout(fetchPosts, 5000); // Delay 2 giây (2000ms)
+
+  //     // Cleanup: Hủy bỏ timeout nếu `newPostCount` thay đổi trước khi thời gian trôi qua
+  //     return () => clearTimeout(timeoutId);
+  //   }
+  // }, [newPostCount]);
+
+  const navigationState = useNavigationState((state) => state);
   useEffect(() => {
-    if (flatListPostRef.current) {
-      flatListPostRef.current.scrollToOffset({ offset: 0, animated: true });
-    }
-  }, [dataPosts]);
-
+    // In ra các màn hình trong stack
+    console.log('Danh sách các màn hình trong stack:');
+    navigationState.routes.forEach((route, index) => {
+      console.log(`Màn hình ${index + 1}: ${route.name}`);
+    });
+  }, [navigationState]);
 
   // ĐỊNH NGHĨA CÁC HÀM 
   // Hàm search . Khi tap vào button search thì lưu giá trị các biến đã chọn qua 1 biến khác để hiển thị ở home, và set lại giá trị default cho các biến đó
-  const handleTapOnSearchButton = async (dataInput: any, selectedCountry: any, selectedCities: any) => {
+  const handleTapOnSearchButton = async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
       setLoadedTours(false) // Load skeleton tour section
       setLoadedPosts(false) // Load skeleton posts list
-      const userId = await AsyncStorage.getItem("userToken")
+      // const userId = await AsyncStorage.getItem("userToken")
+      const userId = dataAccount.id
       // Chuyển sang chế độ searching
       // setIsSearchingMode(true)
       // Ghi lên firebase content và location không ghi quốc gia
@@ -217,7 +241,7 @@ const PostList = () => {
       fetchPosts()
     }
     // Đóng modal search
-    setModalVisible(!modalVisible)
+    setModalVisible(false)
   }
   // Hàm đóng modal search
   const handleCloseModalSearch = () => {
@@ -312,11 +336,8 @@ const PostList = () => {
             nonBehaviorPosts.push(post)
           }
         });
-
         // Bước 2: Sort mảng. Nếu có chọn kiểu search bỏ qua hệ số trùng
         if (selectedTypeSearch.current === 2) { //Th1: Có chọn typeSearch
-          console.log('heaer');
-
           // Sort mảng theo hành vi theo lượt like nếu trùng like thì theo thời gian
           behaviorPosts.sort((postA: any, postB: any) => {
             if (postB.likes === postA.likes) {
@@ -402,21 +423,33 @@ const PostList = () => {
   // Khi focus
   useFocusEffect(
     useCallback(() => {
-      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (dataAccount && loadedDataAccount) {
-        // Clear data
-        setDataInput('')
-        setSelectedCountry(null)
-        setSelectedCities([])
-        setDataCities([])
-        selectedTypeSearch.current = 1
-        fetchPosts(); // Gọi fetchPosts
-        fetchTours(); //
+      if (selectedCityId) {
+        console.log('have param 1111', selectedCityId);
+        if (dataPosts.length === 0) {
+          handleTapOnSearchButton(dataNewPostList, '', null, [selectedCityId])
+        } else {
+          handleTapOnSearchButton(dataPosts, '', null, [selectedCityId])
+        }
+      } else {
+        // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+        if (dataAccount && loadedDataAccount) {
+          // Clear data
+          console.log('Focus home screen');
+          setDataInput('')
+          setSelectedCountry(null)
+          setSelectedCities([])
+          setDataCities([])
+          selectedTypeSearch.current = 1
+          fetchPosts(); // Gọi fetchPosts
+          fetchTours(); //
+        }
       }
+      console.log();
+
       return () => {
         console.log('Screen is unfocused');
       };
-    }, [loadedDataAccount]) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, selectedCityId]) // Cập nhật khi các giá trị này thay đổi
   );
 
 
@@ -468,6 +501,23 @@ const PostList = () => {
     // Đóng modal
     setModalNewPostVisible(false)
   }
+
+  const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
+    // Update hành vi lên firebase
+    const userId = dataAccount.id
+    // 1. Lưu lên firebase
+    const refBehavior = ref(database, `accounts/${userId}/behavior`);
+    const dataUpdate = {
+      content: "",
+      location: [selectedCityId],
+    };
+    await update(refBehavior, dataUpdate);
+    router.push({
+      pathname: "/gallery",
+      params: { idCity: selectedCityId, idCountry: selectedCountryId },
+    });
+  }
+
   // Xử lý sự kiện khi item hiển thị thay đổi
   const onViewableItemsChanged = ({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
@@ -505,15 +555,37 @@ const PostList = () => {
   const closeMenu = () => {
     setIndexVisibleMenu(-1)
   };
-  const { selectedPost, setSelectedPost }: any = usePost();
+
+  const handleGoToProfileScreen = async (accountId: any) => {
+    if (accountId) {
+      try {
+        const refAccount = ref(database, `accounts/${accountId}`)
+        const snapshot = await get(refAccount);
+        if (snapshot.exists()) {
+          const dataAccountJson = snapshot.val()
+          console.log(dataAccountJson, 'adsd');
+
+          await setSearchedAccountData(dataAccountJson)
+          router.push("/SearchResult");
+        } else {
+          console.log("No data account available");
+        }
+      } catch (error) {
+        console.error("Error fetching data account: ", error);
+      }
+    }
+
+  }
   // ITEM RENDER
   const postItem = (post: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the post = destructuring {item, index}    
     const locations: any = post.item.locations // Lấy được ĐỐI TƯỢNG locations
+    const authorId = post.item.author.id
     const allLocations: any[] = Object.keys(locations).flatMap((country) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
       // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
       Object.entries(locations[country]).map(([id, name]) => ({
         id,
-        name
+        name,
+        country
       }))
     );
 
@@ -529,7 +601,7 @@ const PostList = () => {
           }}>
             {/*Author*/}
             <View style={styles.authorContent}>
-              <TouchableOpacity style={styles.avatarWrap}>
+              <TouchableOpacity style={styles.avatarWrap} onPress={() => handleGoToProfileScreen(authorId)}>
                 <Image style={styles.avatar} source={{ uri: post.item.author.avatar }}></Image>
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
@@ -562,7 +634,7 @@ const PostList = () => {
                 }>
                 {allLocations.map((location: any) => {
                   return (
-                    <TouchableOpacity key={location.id}>
+                    <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
                       <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                       <Divider />
                     </TouchableOpacity>
@@ -630,7 +702,9 @@ const PostList = () => {
   return (
     <View style={styles.container}>
       <View style={styles.titlePostContainer}>
-        <Text style={styles.textCategory}>Những bài viết mới</Text>
+        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+          <Text style={styles.textCategory}>Bài viết mới</Text>
+        </View>
 
         {/* {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && ( */}
         {((currentPostCount !== newPostCount)) && (
@@ -655,6 +729,7 @@ const PostList = () => {
             // ref={flatListPostRef}
             showsVerticalScrollIndicator={false}
             data={dataPosts}
+            extraData={dataPosts}
             renderItem={postItem}
             keyExtractor={(post: any) => post.id}
             // ItemSeparatorComponent={() => <View style={{ height: 20 }} />} // Space between item
@@ -751,7 +826,7 @@ const PostList = () => {
             <View style={{ flexDirection: 'row' }}>
               <Pressable
                 style={styles.buttonSearch}
-                onPress={() => handleTapOnSearchButton(dataInput, selectedCountry, selectedCities)}>
+                onPress={() => handleTapOnSearchButton(dataNewPostList, dataInput, selectedCountry, selectedCities)}>
                 <Text style={styles.textStyle}>Tìm kiếm</Text>
               </Pressable>
               <Pressable
@@ -954,7 +1029,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   textCategory: {
-    marginBottom: 10,
     fontSize: 14,
     backgroundColor: '#f0f0f0',
     borderTopRightRadius: 10,
@@ -963,7 +1037,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     fontWeight: '500',
     alignSelf: 'flex-start',
-    elevation: 10
+    elevation: 6
   },
   imagePost: {
     height: 410,

@@ -21,7 +21,11 @@ export default function Layout() {
           <Stack.Screen name="(user)" options={{ headerShown: false }} />
           <Stack.Screen name="(article)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" />
-          <Stack.Screen name="notify" options={{ headerShown: true }}/>
+          <Stack.Screen name="notify" 
+          options={{ 
+            headerShown: true,
+            title: "Thông báo"
+             }}/>
           <Stack.Screen name="accountDetail" options={{
             headerShown: true,
             title: "Chi tiết tài khoản",
@@ -76,6 +80,20 @@ export default function Layout() {
               headerTitleAlign: "center",
             }} />
           <Stack.Screen name="gallery"/>
+          <Stack.Screen name="SearchResult"
+        options={{
+          headerShown: true,
+          title: "Kết quả tìm kiếm",
+          headerStyle: {
+            backgroundColor:
+              Colors[colorScheme ? colorScheme : "light"].background,
+          },
+          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }} />
         </Stack>
         <Toast />
 

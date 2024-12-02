@@ -13,7 +13,7 @@ import { useTourProvider } from '@/contexts/TourProvider';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { equalTo, orderByChild, query } from 'firebase/database';
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import LottieView from 'lottie-react-native';
 
 const { width } = Dimensions.get('window');
@@ -48,262 +48,7 @@ const TourList = () => {
   const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
   const [dataNewTours, setDataNewTours] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [reloadScreen, setReloadScreen] = useState(false)
-  const temp = [
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=15f0e28e-a7a6-49b9-b813-0602c9f65729",
-        "fullname": "Đỗ Ngọc Hiếu",
-        "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-      },
-      "content": "# ,bjxc,sB<br><br>lsalsahl<br><br>## **Ngày 1:** mbmb<br><br>hg<br><br>### 11:00 - n.m,<br><br>**Địa điểm:** Triệu Sơn, Huyện Triệu Sơn, Tỉnh Thanh Hóa, Việt Nam",
-      "created_at": 1731602794165,
-      "id": "-OBfZRWwYCSSjGw0xt7X",
-      "images": {
-        "avietnam": {
-          "vn_26": {
-            "city_name": "Nghệ An",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fd424dfa0-c92a-413a-a114-e2fe44f321a9.jpeg?alt=media&token=11dc45d1-cab9-457f-bf7f-36ecd1bb122f",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fcde429d3-a8ed-4345-ae5f-098118b55467.jpeg?alt=media&token=47fdd233-998b-48ef-9a7a-2f7e07049dd4"
-            ]
-          }
-        }
-      },
-      "likes": 1,
-      "locations": {
-        "avietnam": {
-          "vn_26": "Nghệ An"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBfZRWwYCSSjGw0xt7X%2Fimages%2Fd424dfa0-c92a-413a-a114-e2fe44f321a9.jpeg?alt=media&token=11dc45d1-cab9-457f-bf7f-36ecd1bb122f"
-    },
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-        "fullname": "Đỗ Ngọc Hiếu",
-        "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-      },
-      "content": "# Hà Tĩnh Nghệ An<br><br>hzhzjs<br><br>## **Ngày 1:** hshsh<br><br>đjjjs<br><br>### 08:00 - dhhsjs<br><br>**Địa điểm:** Quảng Cư, Huyện Thạch Thành, Tỉnh Thanh Hóa, Việt Nam",
-      "created_at": 1731659357787,
-      "id": "-OBiwCvrf1u5DV4N6YBU",
-      "images": {
-        "avietnam": {
-          "vn_26": {
-            "city_name": "Nghệ An",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2F75f7cc80-87dd-459c-a7dd-6c4e799a6c13.jpeg?alt=media&token=c8c01b5c-ede9-4778-8ec4-166cd4b3ceab"
-            ]
-          },
-          "vn_27": {
-            "city_name": "Hà Tĩnh",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2Fd6aaa101-6773-42ce-82f9-5177daa86b4c.jpeg?alt=media&token=02374da4-3947-4c42-af95-82512ff865a2"
-            ]
-          }
-        }
-      },
-      "likes": 0,
-      "locations": {
-        "avietnam": {
-          "vn_26": "Nghệ An"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBiwCvrf1u5DV4N6YBU%2Fimages%2F75f7cc80-87dd-459c-a7dd-6c4e799a6c13.jpeg?alt=media&token=c8c01b5c-ede9-4778-8ec4-166cd4b3ceab"
-    },
-    {
-      "title": "aaaaaaaa",
-      "author": {
-        "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2Fd9Sk3mnsx8MXOF2RAOeO79WaUEi2%2Fpapers%2Favatar.png?alt=media&token=ad0f06ed-5b77-4780-b456-86bec9878d45",
-        "fullname": "Trần Trung Chiến",
-        "id": "d9Sk3mnsx8MXOF2RAOeO79WaUEi2"
-      },
-      "comments": {
-        "-OBuwTiiMYSwHofXleMd": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Hi",
-          "created_at": 1731860752743,
-          "id": "-OBuwTiiMYSwHofXleMd",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwVSLv0MK_XXE6l-y": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Chào",
-          "created_at": 1731860759825,
-          "id": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwZ40Xk7SHiDfSM0t": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Bạn tên gì",
-          "created_at": 1731860774652,
-          "id": "-OBuwZ40Xk7SHiDfSM0t",
-          "parentId": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwe1sIrVyxm9sXR2T": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Đẹp quá",
-          "created_at": 1731860799091,
-          "id": "-OBuwe1sIrVyxm9sXR2T",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwghcyQaUJmfy1JL0": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Xinh",
-          "created_at": 1731860810019,
-          "id": "-OBuwghcyQaUJmfy1JL0",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuwgvo_ld5L3p3xYI0": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Xinh",
-          "created_at": 1731860810927,
-          "id": "-OBuwgvo_ld5L3p3xYI0",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBux8uc2qjm_oTjnHpb": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Chào",
-          "created_at": 1731860929635,
-          "id": "-OBux8uc2qjm_oTjnHpb",
-          "parentId": "-OBuwVSLv0MK_XXE6l-y",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBuxBkQLby5zW6pxvnB": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FxTVHqFbyhTPwlzWDZI7xwEVVTL93%2Fpapers%2Favatar.png?alt=media&token=439cc245-007f-4323-a237-e99570237650",
-            "fullname": "Trần Hiếu Phúc ",
-            "id": "xTVHqFbyhTPwlzWDZI7xwEVVTL93"
-          },
-          "content": "Pp",
-          "created_at": 1731860941270,
-          "id": "-OBuxBkQLby5zW6pxvnB",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBxmh0HVPCzUHyntZof": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Aa",
-          "created_at": 1731908521466,
-          "id": "-OBxmh0HVPCzUHyntZof",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OBxmq4Vl-_qRYhRSEds": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Hhh",
-          "created_at": 1731908558602,
-          "id": "-OBxmq4Vl-_qRYhRSEds",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OByM-wTUJR6p18Vmf5L": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "Fu.ckk",
-          "created_at": 1731918039373,
-          "id": "-OByM-wTUJR6p18Vmf5L",
-          "reports": 0,
-          "status_id": 1
-        },
-        "-OByM7h8meCrK-WNHmij": {
-          "author": {
-            "avatar": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/accounts%2FW5yixxZoQiZ4eg6CGrF0jrdMsDy2%2Fpapers%2Favatar.png?alt=media&token=ab3a8c4c-557b-4614-9eee-1286b76feaba",
-            "fullname": "Đỗ Ngọc Hiếu",
-            "id": "W5yixxZoQiZ4eg6CGrF0jrdMsDy2"
-          },
-          "content": "<<<",
-          "created_at": 1731918071156,
-          "id": "-OByM7h8meCrK-WNHmij",
-          "reports": 0,
-          "status_id": 1
-        }
-      },
-      "content": "# fjcnfkccjfjfiffkfjfjffcjcjcjcncksncjdncisbcxkcncnc cjcjcjcncksncjdncisbcxkcncnc có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải <br><br>cjcjcjcncksncjdncisbcxkcncnc cjcjcjcncksncjdncisbcxkcncnc có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải làm sao để biết thêm thông tin về các vấn đề này k v a private message to k bạn có thể làm được điều đó không phải là người có thể làm được điều đó không phải người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được duy trì được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là người có thể làm được điều đó không phải là <br><br>## **Ngày 1:** y<br><br>cjx<br><br>### 00:00 - cc<br><br>**Địa điểm:** Kon Đào, Huyện Đăk Tô, Tỉnh Kon Tum, 50000, Việt Nam",
-      "created_at": 1731661735938,
-      "id": "-OBj4HT9Ll0JnoJMccKp",
-      "images": {
-        "avietnam": {
-          "vn_30": {
-            "city_name": "Thừa Thiên-Huế",
-            "images_value": [
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F38064344-07f7-416d-a181-850e8c65c9a7.jpeg?alt=media&token=379b446d-2647-4893-8074-7f29e8d62d34",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Feae17da8-35f7-4224-920f-6e4eea7f66ee.jpeg?alt=media&token=7e2c3800-5287-4de7-8535-916918479b99",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Fc17d6044-dbb5-4246-b700-4a0ab0f600e1.jpeg?alt=media&token=df3b522e-d411-4a32-b3c3-0c0025ad10e3",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2Ff0dcf311-5916-46a0-b6e9-9eb959d28843.jpeg?alt=media&token=c9e9e441-886f-4205-a742-211013c0375a",
-              "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F88c828c5-40b1-454a-bbec-d940e29697ff.png?alt=media&token=9686b5d4-d9ec-450b-b40f-61f27cd84b11"
-            ]
-          }
-        }
-      },
-      "likes": 2,
-      "locations": {
-        "avietnam": {
-          "vn_28": "Quảng Bình",
-          "vn_30": "Thừa Thiên-Huế"
-        }
-      },
-      "match": 0,
-      "reports": 0,
-      "status_id": 1,
-      "thumbnail": "https://firebasestorage.googleapis.com/v0/b/travelogue-abb82.appspot.com/o/posts%2F-OBj4HT9Ll0JnoJMccKp%2Fimages%2F38064344-07f7-416d-a181-850e8c65c9a7.jpeg?alt=media&token=379b446d-2647-4893-8074-7f29e8d62d34"
-    }
-  ]
-
+  const { selectedCityId } = useLocalSearchParams()
 
   const [isLongPress, setIsLongPress] = useState(false);
 
@@ -342,7 +87,7 @@ const TourList = () => {
     setSelectedCities(val)
   }
 
-  const handleTapOnSearchButton = async (dataInput: any, selectedCountry: any, selectedCities: any) => {
+  const handleTapOnSearchButton = async (dataTours: any, dataInput: any, selectedCountry: any, selectedCities: any) => {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
       setLoadedTours(false) // Load skeleton
       // Lấy id user
@@ -470,7 +215,7 @@ const TourList = () => {
       fetchTours()
     }
     // Đóng modal
-    setModalVisible(!modalVisible)
+    setModalVisible(false)
   }
 
   // Hàm đóng modal search
@@ -511,26 +256,53 @@ const TourList = () => {
     setSelectedCountry(country)
   }
 
+  const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
+    // Update hành vi lên firebase
+    const userId = dataAccount.id
+    // 1. Lưu lên firebase
+    const refBehavior = ref(database, `accounts/${userId}/behavior`);
+    const dataUpdate = {
+      content: "",
+      location: [selectedCityId],
+    };
+    await update(refBehavior, dataUpdate);
+    router.push({
+      pathname: "/gallery",
+      params: { idCity: selectedCityId, idCountry: selectedCountryId },
+    });
+  }
+
 
   useFocusEffect(
     useCallback(() => {
-      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (dataAccount && loadedDataAccount) {
-        console.log("tour focus");
-        // Clear data
-        setDataInput('')
-        setSelectedCountry(null)
-        setSelectedCities([])
-        setDataCities([])
-        selectedTypeSearch.current = 1
-        fetchTours(); // Gọi fetchTours
-        // setIsSearchingMode(true)
-        //setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+      if (selectedCityId) {
+        console.log('have param 1111', selectedCityId);
+        if (dataTours.length === 0) {
+          handleTapOnSearchButton(dataNewTourList, '', null, [selectedCityId])
+        } else {
+          handleTapOnSearchButton(dataTours, '', null, [selectedCityId])
+
+        }
+      } else {
+        // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+        if (dataAccount && loadedDataAccount) {
+          console.log("tour focus");
+          // Clear data
+          setDataInput('')
+          setSelectedCountry(null)
+          setSelectedCities([])
+          setDataCities([])
+          selectedTypeSearch.current = 1
+          fetchTours(); // Gọi fetchTours
+          // setIsSearchingMode(true)
+          //setHasFetched(true); // Đánh dấu đã fetch để tránh gọi lại
+        }
       }
+
       return () => {
         console.log('Screen is unfocused');
       };
-    }, [loadedDataAccount]) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, selectedCityId]) // Cập nhật khi các giá trị này thay đổi
   );
 
   // Hàm phụ Fetch data cities theo quốc gia
@@ -659,7 +431,8 @@ const TourList = () => {
       // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
       Object.entries(locations[country]).map(([id, name]) => ({
         id,
-        name
+        name,
+        country
       }))
     );
 
@@ -667,6 +440,9 @@ const TourList = () => {
     let rating = tour.item.ratingSummary.totalRatingValue / tour.item.ratingSummary.totalRatingCounter
     rating = Math.ceil(rating * 2) / 2
     rating = isNaN(rating) ? 0 : rating
+
+    const originalPrice = tour.item.money
+    const promotionalPrice = tour.item.money * (100 - tour.item.discountTour) / 100
     return (
       <PaperProvider key={tour.item.id}>
         <TouchableOpacity style={styles.item}
@@ -708,7 +484,7 @@ const TourList = () => {
               }>
               {allLocations.map((location: any) => {
                 return (
-                  <TouchableOpacity key={location.id}>
+                  <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
                     <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                     <Divider />
                   </TouchableOpacity>
@@ -722,13 +498,27 @@ const TourList = () => {
             <Image style={styles.imageTour} source={{ uri: tour.item.thumbnail }}></Image>
           </View>
 
-          <View style={styles.price}>
-            <Text style={styles.priceLabel}>Deal hot:</Text>
-            <View style={{}}>
-              <Text>Deal hot: {tour.item.money}</Text>
-              <Text>Deal hot: {tour.item.money}</Text>
+          {tour.item.discountTour !== 0 ?
+            <View style={styles.priceBackground}>
+              <View style={styles.priceWrap}>
+                <Text style={styles.priceLabel}>Deal hot</Text>
+                <View style={{ paddingRight: 10 }}>
+                  <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                  <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                </View>
+              </View>
             </View>
-          </View>
+            :
+            <View style={styles.priceBackground}>
+              <View style={styles.priceWrap}>
+                <Text style={styles.priceLabel}>Deal hot</Text>
+                <View style={{ paddingRight: 10 }}>
+                  <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                </View>
+              </View>
+            </View>
+          }
+
           <View style={styles.rating}>
             <Text style={styles.textRating}> Đánh giá: {`${rating.toFixed(1)} / 5.0`}</Text>
             <FontAwesome name="star" size={20} color="#F6CE00" style={{ marginLeft: 4 }} />
@@ -787,7 +577,9 @@ const TourList = () => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', position: 'relative' }}>
-        <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
+        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+          <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
+        </View>
         {((currentTourCount != newTourCount)) && (
           <TouchableOpacity style={styles.loadNewTour} onPress={() => handleShowNewTour()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
@@ -810,6 +602,7 @@ const TourList = () => {
           <FlatList
             style={{ maxHeight: 580 }}
             data={dataTours}
+            extraData={dataTours}
             renderItem={tourItem}
             keyExtractor={(tour: any) => tour.id}
           // ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
@@ -902,7 +695,7 @@ const TourList = () => {
             <View style={{ flexDirection: 'row' }}>
               <Pressable
                 style={styles.buttonSearch}
-                onPress={() => handleTapOnSearchButton(dataInput, selectedCountry, selectedCities)}>
+                onPress={() => handleTapOnSearchButton(dataNewTourList, dataInput, selectedCountry, selectedCities)}>
                 <Text style={styles.textStyle}>Tìm kiếm</Text>
               </Pressable>
               <Pressable
@@ -959,20 +752,28 @@ const TourList = () => {
   )
 }
 const styles = StyleSheet.create({
-  priceLabel:{
-    fontSize:20,
-    paddingRight: 6,
-    fontWeight:'500',
-    
+  priceLabel: {
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 50,
+    paddingHorizontal: 10
+    // backgroundColor: '#fcfc85'
   },
-  price: {
+  priceWrap: {
     flexDirection: 'row',
-    position: 'absolute',
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    padding: 6,
+    height: 50,
+  },
+  priceBackground: {
+    position: 'absolute',
+    // backgroundColor: '#fcfc85',
+    backgroundColor: 'red',
+    paddingLeft: 6,
+    borderRadius: 10,
     bottom: 60,
     left: 10,
   },
@@ -1109,7 +910,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginBottom: 10,
     fontWeight: '500',
     alignSelf: 'flex-start',
     elevation: 10

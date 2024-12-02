@@ -5,6 +5,7 @@ import { auth, database, get } from '@/firebase/firebaseConfig';
 import { slug, sortTourAtHomeScreen } from '@/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { asyncStorageEmitter } from '@/utils/emitter';
+import { useAccount } from './AccountProvider';
 // Định nghĩa kiểu cho context
 // interface HomeContextType {=
 //     dataPosts: any[]; // Bạn có thể thay thế `any[]` bằng kiểu chính xác nếu biết
@@ -44,6 +45,8 @@ const HomeProvider = ({ children }) => {
         { key: 1, value: 'Mặc định' },
         { key: 2, value: 'Thích nhiều nhất' }
     ]
+
+    const {setAccountData } = useAccount();
 
     // Login state
     const fetchUserId = async () => {
@@ -186,7 +189,8 @@ const HomeProvider = ({ children }) => {
                     const jsonDataAccount = snapshot.val();
                     // Set behavior
                     setAccountBehavior(jsonDataAccount.behavior)
-                    setDataAccount(jsonDataAccount)
+                    setDataAccount(jsonDataAccount) // homeprovider
+                    setAccountData(jsonDataAccount) //account provider
                     setLoadedDataAccount(true)
                 } else {
                     console.log("No data available1");

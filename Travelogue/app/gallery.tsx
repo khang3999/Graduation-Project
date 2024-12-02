@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useNavigationState, useRoute } from "@react-navigation/native";
 import { List } from "react-native-paper";
 import ListPoints from "@/components/listPoints/ListPoints";
 import { database, onValue } from "@/firebase/firebaseConfig";
@@ -19,6 +19,17 @@ const Gallery = () => {
     id_country: idCountry,
   };
   const [dataCity, setDataCity] = useState<any>([]);
+
+
+  const navigationState = useNavigationState((state) => state);
+  useEffect(() => {
+    // In ra các màn hình trong stack
+    console.log('Danh sách các màn hình trong stack:');
+    navigationState.routes.forEach((route, index) => {
+      console.log(`Màn hình ${index + 1}: ${route.name}`);
+    });
+  }, [navigationState]);
+
   //Lay id cua thanh pho va quoc gia
   useEffect(() => {
     const countryRef = ref(database, `cities/${idCountry}`);
@@ -119,9 +130,9 @@ const Gallery = () => {
             <View>
               {
                 dataCity?.information ? (
-                 <ScrollView>
-                  <Text>{dataCity.information}</Text>
-                 </ScrollView>
+                  <ScrollView>
+                    <Text>{dataCity.information}</Text>
+                  </ScrollView>
                 ) : (
                   <Text>Không có thông tin</Text>
                 )

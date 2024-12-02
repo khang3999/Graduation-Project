@@ -966,6 +966,7 @@ const AddPostUser = () => {
 
     const timestamp = Date.now();
 
+    try {
     const storage = getStorage();
     const uploadedImageUrls: {
       [key: string]: {
@@ -973,7 +974,6 @@ const AddPostUser = () => {
       };
     } = {};
 
-    try {
       //Tạo bảng
       const postsRef = ref(database, "posts");
       //Tạo id bài viết
@@ -1479,7 +1479,7 @@ const AddPostUser = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Chưa có tỉnh CheckIn
+                  Chưa chọn tỉnh thành
                 </Text>
               ) : (
                 cities.map((city) => (

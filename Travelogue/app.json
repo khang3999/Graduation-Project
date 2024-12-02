@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "googleServicesFile": "./GoogleService-Info.plist",
-      "bundleIdentifier": "tdc.edu.travelogue" 
+      "bundleIdentifier": "tdc.edu.travelogue"
     },
     "android": {
       "package": "tdc.edu.travelogue",
@@ -34,7 +34,7 @@
     "plugins": [
       "expo-router",
       "@react-native-firebase/app",
-      "@react-native-firebase/auth",      
+      "@react-native-firebase/auth",
       [
         "expo-build-properties",
         {

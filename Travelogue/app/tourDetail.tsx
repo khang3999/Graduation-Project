@@ -655,7 +655,7 @@ const TourItem: React.FC<TourItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
+          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
