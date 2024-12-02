@@ -703,14 +703,14 @@ const PostList = () => {
     <View style={styles.container}>
       <View style={styles.titlePostContainer}>
         <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
-          <Text style={styles.textCategory}>Bài viết mới</Text>
+          <Text style={styles.textCategory}>Bài viết</Text>
         </View>
 
         {/* {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && ( */}
         {((currentPostCount !== newPostCount)) && (
           <TouchableOpacity style={styles.loadNewPost} onPress={() => handleShowNewPost()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
-            <Text style={styles.iconPost}>Có bài viết mới</Text>
+            <Text style={styles.iconPost}>Bài viết mới</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
