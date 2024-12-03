@@ -16,7 +16,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { usePost } from '@/contexts/PostProvider'
 import { debounce, isBuffer, set } from 'lodash'
 import LottieView from 'lottie-react-native'
-import { useNavigationState } from '@react-navigation/native'
+import { useNavigationState, useRoute } from '@react-navigation/native'
 import { useAccount } from '@/contexts/AccountProvider'
 
 const { width } = Dimensions.get('window')
@@ -54,8 +54,11 @@ const PostList = () => {
   const [dataNewPosts, setDataNewPosts] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
   const flatListPostRef: any = useRef(null)
-  const { selectedCityId } = useLocalSearchParams()
+  // const { selectedCityId, content } = useLocalSearchParams()
   const { setSearchedAccountData }: any = useAccount();
+  const [reloadScreen, setReloadScreen]= useState(false)
+  const route = useRoute();
+  const {selectedCityId, content }: any = useLocalSearchParams();
 
   // useEffect(() => {
   //   // if (flatListPostRef.current) {
@@ -85,7 +88,7 @@ const PostList = () => {
 
   // ĐỊNH NGHĨA CÁC HÀM 
   // Hàm search . Khi tap vào button search thì lưu giá trị các biến đã chọn qua 1 biến khác để hiển thị ở home, và set lại giá trị default cho các biến đó
-  const handleTapOnSearchButton = async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {
+  const handleTapOnSearchButton = async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {    
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
       setLoadedTours(false) // Load skeleton tour section
       setLoadedPosts(false) // Load skeleton posts list
@@ -128,6 +131,7 @@ const PostList = () => {
               matchingContent = 1 // Điều kiện để push vào mảng
               post.match -= 1 //  Điều kiện để sắp xếp khi đã push vào mảng
             }
+            
 
             // Tiêu chí 2: Địa điểm (Mã thành phố)
             const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) => {
@@ -423,12 +427,13 @@ const PostList = () => {
   // Khi focus
   useFocusEffect(
     useCallback(() => {
+      // console.log(contentCheckIn,'ccccccsssssss');
+      
       if (selectedCityId) {
-        console.log('have param 1111', selectedCityId);
         if (dataPosts.length === 0) {
-          handleTapOnSearchButton(dataNewPostList, '', null, [selectedCityId])
+          handleTapOnSearchButton(dataNewPostList, content, null, [selectedCityId])
         } else {
-          handleTapOnSearchButton(dataPosts, '', null, [selectedCityId])
+          handleTapOnSearchButton(dataPosts, content, null, [selectedCityId])
         }
       } else {
         // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
@@ -449,7 +454,7 @@ const PostList = () => {
       return () => {
         console.log('Screen is unfocused');
       };
-    }, [loadedDataAccount, selectedCityId]) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, selectedCityId, content]) // Cập nhật khi các giá trị này thay đổi
   );
 
 
@@ -469,10 +474,18 @@ const PostList = () => {
     setDataCities([])
     selectedTypeSearch.current = 1
     setDataModalSelected(null)
-
-    fetchPosts(); // Tải lại bài viết
-    fetchTours()
+    setReloadScreen(true)
+    // fetchPosts(); // Tải lại bài viết
+    // fetchTours()
   };
+
+  useEffect(()=>{
+    if (reloadScreen) {
+      fetchPosts(); // Tải lại bài viết
+      fetchTours()
+      setReloadScreen(false)
+    }
+  },[reloadScreen])
 
   // Hàm hiển thị những bài viết mới
   const handleShowNewPost = () => {
@@ -669,7 +682,7 @@ const PostList = () => {
       <View key={post.item.id} style={styles.itemNewPostWrap}>
         <View style={{ flexDirection: 'row' }}>
           <View style={{}}>
-            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }}>
+            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={()=>handleGoToProfileScreen(post.item.author.id)}>
               <Image style={{ width: 25, height: 25, borderRadius: 90 }} source={{ uri: post.item.author.avatar }} />
               <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
                 {post.item.author.fullname}
@@ -703,14 +716,14 @@ const PostList = () => {
     <View style={styles.container}>
       <View style={styles.titlePostContainer}>
         <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
-          <Text style={styles.textCategory}>Bài viết mới</Text>
+          <Text style={styles.textCategory}>Bài viết</Text>
         </View>
 
         {/* {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && ( */}
         {((currentPostCount !== newPostCount)) && (
           <TouchableOpacity style={styles.loadNewPost} onPress={() => handleShowNewPost()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
-            <Text style={styles.iconPost}>Có bài viết mới</Text>
+            <Text style={styles.iconPost}>Bài viết mới</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity

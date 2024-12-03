@@ -403,12 +403,12 @@ const CheckInMap = () => {
       if (tabscreen === 'index') {
         router.replace({
           pathname: "/",
-          params: { selectedCityId: selectedCity.value }
+          params: { selectedCityId: selectedCity.value, content:'' }
         })
       } else if (tabscreen === 'tour') {
         router.replace({
           pathname: "/tour",
-          params: { selectedCityId: selectedCity.value }
+          params: { selectedCityId: selectedCity.value, content:'' }
         })
       }
     } else {
@@ -526,7 +526,7 @@ const CheckInMap = () => {
                 size={24}
                 color="black"
               />
-              <Text style={styles.actionBtnText}>Check in</Text>
+              <Text style={styles.actionBtnText}>Đánh dấu</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btnHeader, { backgroundColor: '#f87171', borderWidth: 1, borderColor: '#d1d1d1' }]}
@@ -539,7 +539,7 @@ const CheckInMap = () => {
                 size={24}
                 color="black"
               />
-              <Text style={styles.actionBtnText}>Check out</Text>
+              <Text style={styles.actionBtnText}>Hủy</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -564,7 +564,7 @@ const CheckInMap = () => {
             onPress={() => handleTapByButton(selectedCity, "tour")}
           >
             <Entypo name="compass" size={24} color="black" />
-            <Text style={styles.actionBtnText}>Xem Tour</Text>
+            <Text style={styles.actionBtnText}>Xem tour</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.btnHeader, { backgroundColor: '#f7dab9' }]}

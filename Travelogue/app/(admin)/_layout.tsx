@@ -121,13 +121,23 @@ export default function Layout() {
         <Drawer.Screen
           name="(information)"
           options={{
-            drawerLabel: 'Thông tin địa điểm',
-            title: 'Thông tin địa điểm',
+            drawerLabel: 'Information Locations',
+            title: 'Information Locations',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
         />
+        {/* <Drawer.Screen
+          name="testReport"
+          options={{
+            drawerLabel: 'testReport',
+            title: 'testReport',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        /> */}
        
        
       </Drawer>
