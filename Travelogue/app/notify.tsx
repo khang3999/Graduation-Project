@@ -6,12 +6,15 @@ import { router } from 'expo-router';
 
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useHomeProvider } from '@/contexts/HomeProvider';
+import { useTourProvider } from '@/contexts/TourProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
     const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
+  const { selectedTour, setSelectedTour }: any = useTourProvider()
+
 
     useEffect(() => {
         setAccountId(dataAccount.id)
@@ -35,17 +38,15 @@ const NotificationsScreen = () => {
         return () => notifications();
     }, [accountId]);
     // Fetch post by postID
-    const fetchPostByPostId = async (postId: any) => {
+    const fetchPostByPostId = async (postId: any, type_post:any) => {
         try {
-            const refCity = ref(database, `posts/${postId}`);
+            const refCity = ref(database, `${type_post}s/${postId}`);
             const snapshot = await get(refCity);
             if (snapshot.exists()) {
                 const dataJson = snapshot.val();
-
-                setSelectedPost([dataJson])
-
+                type_post === "post" ? setSelectedPost([dataJson]) : setSelectedTour([dataJson])
             } else {
-                console.log("No data city available");
+                console.log("No data post available");
             }
         } catch (error) {
             console.error("Error fetching data: ", error);
@@ -65,10 +66,15 @@ const NotificationsScreen = () => {
                 .catch((error) => {
                     console.error('Error updating data:', error);
                 });
-            fetchPostByPostId(notify.post_id)
-            router.push({
-                pathname: '/postDetail'
-            })
+                // console.log('postid ',notify.post_id);
+                
+            fetchPostByPostId(notify.post_id, notify.type_post)
+            if (notify.type_post === "tour") {
+                router.push( '/tourDetail')
+              }
+              else if (notify.type_post === "post") {
+                router.push('/postDetail')
+              }
         }
 
     }

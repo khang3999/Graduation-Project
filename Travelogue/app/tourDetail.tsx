@@ -356,7 +356,7 @@ const TourItem: React.FC<TourItemProps> = ({
                 prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/comments/${c.id}`))
               );
 
-              console.log('Comment deleted successfully.', comments);
+              // console.log('Comment deleted successfully.', comments);
 
             } catch (error) {
               console.error("Error deleting comment:", error);
@@ -412,7 +412,7 @@ const TourItem: React.FC<TourItemProps> = ({
                 prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/ratings/${c.id}`))
               );
 
-              console.log('Comment deleted successfully.', comments);
+              // console.log('Comment deleted successfully.', comments);
 
             } catch (error) {
               console.error("Error deleting comment:", error);

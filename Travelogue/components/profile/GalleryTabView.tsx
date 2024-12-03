@@ -67,8 +67,10 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
   const { selectedPost, setSelectedPost }: any = usePost();
   const { setSelectedTour }: any = useTourProvider();
   const { searchedAccountData }: any = useAccount();
+  const [searchedAccountID, setSearchedAccountID] = useState('')
   const { dataAccount }: any = useHomeProvider();
-  const userId = isSearched ? searchedAccountData.id : dataAccount?.id;
+  // const userId = isSearched ? searchedAccountData.id : dataAccount?.id;
+  const userId = isSearched ? searchedAccountID : dataAccount?.id;
   const [isLoading, setIsLoading] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [createdPosts, setCreatedPosts] = React.useState<Post[] | null>(null);
@@ -84,7 +86,12 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
         { key: "third" },
       ]
   );
-
+    useEffect(()=>{
+      if (searchedAccountData) {
+        
+        setSearchedAccountID(searchedAccountData.id)
+      }
+    },[searchedAccountData])
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -211,7 +218,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
       const fetchData = async () => {
         setIsLoading(true);
 
-        if (isSearched === true) {
+        if (isSearched === true&&searchedAccountData) {
           if (searchedAccountData.role === 'user') {
             await fetchCreatedPosts();
           } else if (searchedAccountData.role === 'business') {

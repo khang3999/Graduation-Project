@@ -1,22 +1,29 @@
+import { Foundation, MaterialCommunityIcons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue' }}>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: 'blue',
+        tabBarStyle: {
+          height: 60
+        }
+      }}>
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Account',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />,
-          headerShown:false
+          title: 'Người dùng',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={38} name="account-outline" color={color} />,
+          headerShown: false
         }}
       />
       <Tabs.Screen
         name="company"
         options={{
-          title: 'Company',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="group" color={color} />,
-          headerShown:false
+          title: 'Doanh nghiệp',
+          tabBarIcon: ({ color }) => <Foundation size={38} name="torso-business" color={color} />,
+          headerShown: false
         }}
       />
     </Tabs>

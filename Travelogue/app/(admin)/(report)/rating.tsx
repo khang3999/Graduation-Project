@@ -12,8 +12,8 @@ import { useAdminProvider } from '@/contexts/AdminProvider';
 
 
 
-export default function CommentReport() {
-  const [dataCommentReport, setDataCommentReport] = useState([]);
+export default function RatingReport() {
+  const [dataRatingReport, setDataRatingReport] = useState([]);
   const keyResolve = 2;
   const [factorReport, setFactorReport] = useState(0);
   const { selectedPost, setSelectedPost }: any = usePost()
@@ -22,18 +22,18 @@ export default function CommentReport() {
 
 
 
-  //Du lieu Comment
+  //Du lieu rating
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'reports/comment');
+    const onValueChange = ref(database, 'reports/rating');
     // Lắng nghe thay đổi trong dữ liệu
-    const comment = onValue(onValueChange, (snapshot) => {
+    const rating = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
         const jsonDataArr: any = Object.values(jsonData)
         // Lọc các bài có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((comment: any) => (comment.status_id != keyResolve) && (Object.keys(comment.reason).length >= factorReport));
-        setDataCommentReport(filteredData);
+        const filteredData = jsonDataArr.filter((rating: any) => (rating.status_id != keyResolve) && (Object.keys(rating.reason).length >= factorReport));
+        setDataRatingReport(filteredData);
       } else {
         console.log("No data available");
       }
@@ -41,13 +41,13 @@ export default function CommentReport() {
       console.error("Error fetching data:", error);
     });
     // Cleanup function để hủy listener khi component unmount
-    return () => comment();
+    return () => rating();
   }, [factorReport]);
 
   //Du lieu factor 
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'factors/report/comment');
+    const onValueChange = ref(database, 'factors/report/rating');
     // Lắng nghe thay đổi trong dữ liệu
     const factor = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
@@ -66,13 +66,13 @@ export default function CommentReport() {
   }, []);
 
 
-  // Hàm gỡ lock cho comment
-  const unlockComment = (commentID: string, postId: string, type:string) => {
-    const refRemove = ref(database, `reports/comment/${[commentID]}`)
-    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentID]}`)
+  // Hàm gỡ lock cho rating
+  const unlockrating = (ratingID: string, postId: string, type:string) => {
+    const refRemove = ref(database, `reports/rating/${[ratingID]}`)
+    const refrating = ref(database, `${type}s/${[postId]}/ratings/${[ratingID]}`)
     Alert.alert(
-      "Unlock comment",
-      "Are you sure you want to unlock this comment?",
+      "Unlock rating",
+      "Are you sure you want to unlock this rating?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -90,19 +90,19 @@ export default function CommentReport() {
       ]
     );
   };
-  // Hàm hidden comment
-  const hiddenComment = (commentId: string, postId: string, type:string) => {
-    const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentId]}`)
-    const refReport = ref(database, `reports/comment/${[commentId]}`)
+  // Hàm hidden rating
+  const hiddenrating = (ratingId: string, postId: string, type:string) => {
+    const refrating = ref(database, `${type}s/${[postId]}/ratings/${[ratingId]}`)
+    const refReport = ref(database, `reports/rating/${[ratingId]}`)
     Alert.alert(
-      "Hidden comment",
-      "Are you sure you want to hidden this comment?",
+      "Hidden rating",
+      "Are you sure you want to hidden this rating?",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "OK", onPress: () => {
-            //Cap nhat status cho comment thanh hidden
-            update(refComment, { status_id: 3 })
+            //Cap nhat status cho rating thanh hidden
+            update(refrating, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -151,15 +151,15 @@ export default function CommentReport() {
   }
 
   // Render từng item trong danh sách
-  const renderCommentItem = (comment: any) => {
+  const renderratingItem = (rating: any) => {
     return (
       <TouchableOpacity style={styles.accountItem} onPress={
-        () => handleNavigatePostDetail(comment.item)
+        () => handleNavigatePostDetail(rating.item)
       }>
         <View>
 
-          <Text style={styles.name}>{comment.item.comment_id}</Text>
-          {Object.values(comment.item.reason).map((reason: any) => {
+          <Text style={styles.name}>{rating.item.rating_id}</Text>
+          {Object.values(rating.item.reason).map((reason: any) => {
             return (
               <Text style={styles.reason}>- {reason}</Text>
             )
@@ -167,8 +167,8 @@ export default function CommentReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
+          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockrating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenrating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
         </View>
 
       </TouchableOpacity>
@@ -178,13 +178,13 @@ export default function CommentReport() {
   return (
     <View style={styles.container}>
 
-      {dataCommentReport.length > 0 ? (
+      {dataRatingReport.length > 0 ? (
         <FlatList
-          data={dataCommentReport}
-          renderItem={renderCommentItem}
+          data={dataRatingReport}
+          renderItem={renderratingItem}
         />
       ) : (
-        <Text style={styles.noAccountsText}>No comment</Text>
+        <Text style={styles.noAccountsText}>No rating</Text>
       )}
 
     </View>

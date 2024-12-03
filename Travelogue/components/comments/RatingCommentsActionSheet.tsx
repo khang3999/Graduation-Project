@@ -250,7 +250,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                 ...item.reason,
                 [reasonKey]: reason
             },
-            status: 1,
+            status_id: 1,
             images: {
                 ...item.images,
                 [imageKey]: imageUrls,

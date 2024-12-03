@@ -300,7 +300,7 @@ const Payment = () => {
   //Modal
 
   const handleSelect = (option: any, list: any, setList: any) => {
-    console.log(option);
+    // console.log(option);
 
     setList((prev: any) =>
       prev.includes(option)

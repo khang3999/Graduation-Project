@@ -5,29 +5,38 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import { remove, update } from '@firebase/database';
 import { useAccount } from '@/contexts/AccountProvider';
 import { router } from 'expo-router';
+import { useAdminProvider } from '@/contexts/AdminProvider';
+import CutText from '@/components/CutText';
 
 export default function AccountManagementScreen() {
 
-  const [dataAccountReport, setDataAccountReport] = useState([]);
   const keyResolve = 2
-  const [factorReport, setFactorReport] = useState(0);
-  const { accountData, setAccountData }: any = useAccount()
+  const [dataAccount, setDataAccount] = useState([]);
+  const {
+    dataStatus, setDataStatus,
+    imagesReport, setImagesReport,
+    factorReport, setFactorReport,
+    renderIcon
+  }: any = useAdminProvider();
+  const color = ['', 'green', 'blue', 'brown', 'orange', 'red']
 
   //Du lieu Account
   useEffect(() => {
     // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'reports/account');
+    const onValueChange = ref(database, 'accounts');
     // Lắng nghe thay đổi trong dữ liệu
     const account = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
+        console.log(jsonData);
         const jsonDataArr: any = Object.values(jsonData)
-        console.log(jsonDataArr);
+        // console.log(jsonDataArr);
+        // Lọc các bài có status != 2, da xu ly
+        const filteredData = jsonDataArr.filter((account: any) => (account.role === "user"));
+        // Sắp xếp dữ liệu theo status_id
+        const sortedData = filteredData.sort((a: any, b: any) => a.status_id - b.status_id);
 
-        // Lọc các account có status != 2, da xu ly
-        const filteredData = jsonDataArr.filter((account: any) => (account.status_id != keyResolve) && (Object.keys(account.reason).length >= factorReport));
-
-        setDataAccountReport(filteredData);
+        setDataAccount(sortedData);
       } else {
         console.log("No data available");
       }
@@ -38,111 +47,86 @@ export default function AccountManagementScreen() {
     // Cleanup function để hủy listener khi component unmount
     return () => account();
   }, [factorReport]);
-  //Du lieu factor 
-  useEffect(() => {
-    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'factors/report/account');
-    // Lắng nghe thay đổi trong dữ liệu
-    const factor = onValue(onValueChange, (snapshot) => {
-      if (snapshot.exists()) {
-        const jsonData = snapshot.val();
-        console.log(jsonData);
 
-        setFactorReport(jsonData)
-      } else {
-        console.log("No data available");
-      }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
+  // // Hàm gỡ report cho account
+  // const unreportAccount = (accountId: string) => {
+  //   const refRemove = ref(database, `reports/account/${[accountId]}`)
+  //   const refAccount = ref(database, `accounts/${[accountId]}`)
+  //   Alert.alert(
+  //     "Gỡ báo cáo tài khoản",
+  //     "Bạn muốn gỡ báo cáo cho tài khoản này?",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "OK", onPress: () => {
+  //           // Xoa khoi bang report
+  //           remove(refRemove).then(() => {
+  //             console.log('Data remove successfully');
+  //           })
+  //             .catch((error) => {
+  //               console.error('Error removing data: ', error);
+  //             }); // Xóa từ khỏi Realtime Database
 
-    // Cleanup function để hủy listener khi component unmount
-    return () => factor();
-  }, []);
+  //         }
+  //       }
+  //     ]
+  //   );
+  // };
+  // // Hàm report cho account
+  // const lockAccount = (accountId: string) => {
+  //   const refReport = ref(database, `reports/account/${[accountId]}`)
+  //   const refAccount = ref(database, `accounts/${[accountId]}`)
+  //   Alert.alert(
+  //     "Khóa tài khoản",
+  //     "Bạn chắc chắn muốn khóa tài khoản này?",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       {
+  //         text: "OK", onPress: () => {
+  //           //Cap nhat status_id cho account sau khi lock
+  //           update(refAccount, { status_id: 4 })
+  //             .then(() => {
+  //               console.log('Data updated successfully!');
+  //             })
+  //             .catch((error) => {
+  //               console.error('Error updating data:', error);
+  //             });
+  //           //Cap nhat status_id cho report sau khi lock
+  //           update(refReport, { status_id: 2 })
+  //             .then(() => {
+  //               console.log('Data updated successfully!');
+  //             })
+  //             .catch((error) => {
+  //               console.error('Error updating data:', error);
+  //             });
+  //         }
+  //       }
+  //     ]
+  //   );
+  // };
 
-  // Hàm gỡ report cho account
-  const unreportAccount = (accountId: string) => {
-    const refRemove = ref(database, `reports/account/${[accountId]}`)
-    const refAccount = ref(database, `accounts/${[accountId]}`)
-    Alert.alert(
-      "Unreport account",
-      "Are you sure you want to unreport this account?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "OK", onPress: () => {
-            // Xoa khoi bang report
-            remove(refRemove).then(() => {
-              console.log('Data remove successfully');
-            })
-              .catch((error) => {
-                console.error('Error removing data: ', error);
-              }); // Xóa từ khỏi Realtime Database
-            
-          }
-        }
-      ]
-    );
-  };
- // Hàm gỡ report cho account
- const lockAccount = (accountId: string) => {
-  const refReport = ref(database, `reports/account/${[accountId]}`)
-  const refAccount = ref(database, `accounts/${[accountId]}`)
-  Alert.alert(
-    "Lock account",
-    "Are you sure you want to lock this account?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "OK", onPress: () => {
-          //Cap nhat status_id cho account sau khi lock
-          update(refAccount, { status_id: 4 })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
-          //Cap nhat status_id cho report sau khi lock
-          update(refReport, { status_id: 2 })
-            .then(() => {
-              console.log('Data updated successfully!');
-            })
-            .catch((error) => {
-              console.error('Error updating data:', error);
-            });
-        }
-      }
-    ]
-  );
-};
-  
   //Chuyen sang account detail
-  const handleNavigateAccountDetail = (accountID:any) => {
+  const handleNavigateIndividualUserInformation = (accountId: any) => {
     router.push({
-      pathname: '/accountDetail',
-      params:{userId:accountID}
+      pathname: '/userDetail',
+      params: { userId: accountId }
     })
   }
   // Render từng item trong danh sách
   const renderAccountItem = (account: any) => {
     return (
-      <TouchableOpacity key={account.item.account_id} style={styles.accountItem}
-      onPress={()=>handleNavigateAccountDetail(account.item.account_id)}
-      >
-        <View>
-          <Text style={styles.name}>{account.item.account_id}</Text>
-          {Object.values(account.item.reason).map((reason: any) => {
-            return (
-              <Text style={styles.reason}>- {reason}</Text>
-            )
-          })}
+      <TouchableOpacity key={account.item.id} style={styles.accountItem}
+        onPress={
+          () => handleNavigateIndividualUserInformation(account.item.id)
+        }
+        >
+        <View >
+          <Text style={styles.name}>{CutText(account.item.fullname)}</Text>
+          <Text style={[styles.reason, { color: color[account.item.status_id] }]}>{dataStatus[account.item.status_id]}</Text>
+        </View>
 
-        </View>
-        <View style={{ flexDirection: 'row', top:20, left:-50 }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unreportAccount(account.item.account_id)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => lockAccount(account.item.account_id)} />
-        </View>
+        {(renderIcon(account.item))}
+
       </TouchableOpacity>
     )
   };
@@ -150,14 +134,14 @@ export default function AccountManagementScreen() {
   return (
     <View style={styles.container}>
 
-      {dataAccountReport.length > 0 ? (
+      {dataAccount.length > 0 ? (
         <FlatList
-          data={dataAccountReport}
+          data={dataAccount}
           renderItem={renderAccountItem}
-          keyExtractor={(item:any)=>item.account_id}
+          keyExtractor={(item: any) => item.account_id}
         />
       ) : (
-        <Text style={styles.noAccountsText}>No blocked accounts</Text>
+        <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
       )}
 
     </View>
