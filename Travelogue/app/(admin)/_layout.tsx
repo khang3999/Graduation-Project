@@ -34,7 +34,7 @@ function CustomDrawerContent(props: any) {
       {/* Danh sách các Drawer.Screen */}
       <DrawerItemList {...props} />
       <TouchableOpacity onPress={handleLogout}>
-        <Text  style={{color:'red', fontSize:30, textAlign:'center'}}>Log out</Text>
+        <Text  style={{color:'red', fontSize:30, textAlign:'center', marginTop:40}}>Đăng xuất</Text>
       </TouchableOpacity>
     </DrawerContentScrollView>
   );
@@ -49,8 +49,8 @@ export default function Layout() {
         <Drawer.Screen
           name="(account)"
           options={{
-            drawerLabel: 'Accounts',
-            title: 'Accounts',
+            drawerLabel: 'Tài khoản',
+            title: 'Tài khoản',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="manage-accounts" color={color} size={size} />
             )
@@ -59,8 +59,8 @@ export default function Layout() {
         <Drawer.Screen
           name="(report)"
           options={{
-            drawerLabel: 'Reports',
-            title: 'Reports',
+            drawerLabel: 'Báo cáo',
+            title: 'Báo cáo',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="report" color={color} size={size} />
             )
@@ -69,8 +69,8 @@ export default function Layout() {
         <Drawer.Screen
           name="ban"
           options={{
-            drawerLabel: 'Ban words',
-            title: 'Ban words',
+            drawerLabel: 'Từ khoá',
+            title: 'Từ khoá',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="block" color={color} size={size} />
             )
@@ -89,8 +89,8 @@ export default function Layout() {
         <Drawer.Screen
           name="(reason)"
           options={{
-            drawerLabel: 'Reasons',
-            title: 'Reasons',
+            drawerLabel: 'Lí do báo cáo',
+            title: 'Lí do báo cáo',
             drawerIcon: ({ color, size }) => (
               <Entypo name="list" size={size} color={color} />
             )
@@ -99,8 +99,8 @@ export default function Layout() {
         <Drawer.Screen
           name="exchange"
           options={{
-            drawerLabel: 'Exchanges',
-            title: 'Exchanges',
+            drawerLabel: 'Giao dịch',
+            title: 'Giao dịch',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="currency-exchange" size={size} color={color} />
             )
@@ -109,8 +109,8 @@ export default function Layout() {
         <Drawer.Screen
           name="package"
           options={{
-            drawerLabel: 'Packages',
-            title: 'Packages',
+            drawerLabel: 'Gói doanh nghiệp',
+            title: 'Gói doanh nghiệp',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="package" size={size} color={color} />
             )
@@ -121,23 +121,14 @@ export default function Layout() {
         <Drawer.Screen
           name="(information)"
           options={{
-            drawerLabel: 'Information Locations',
-            title: 'Information Locations',
+            drawerLabel: 'Thông tin địa điểm',
+            title: 'Thông tin địa điểm',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
         />
-        <Drawer.Screen
-          name="testReport"
-          options={{
-            drawerLabel: 'testReport',
-            title: 'testReport',
-            drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        />
+       
        
       </Drawer>
 

@@ -189,7 +189,7 @@ const Festival = () => {
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
           save="key"
-          placeholder='Countries'
+          placeholder='Quốc gia'
         />
         <SelectList
           dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
@@ -197,7 +197,7 @@ const Festival = () => {
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
-          placeholder="Cities"
+          placeholder="Thành phố"
         />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: "space-between", marginHorizontal: 20 }}>

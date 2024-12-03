@@ -255,7 +255,7 @@ const Location = () => {
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
           save="key"
-          placeholder="Countries"
+          placeholder="Quốc gia"
         />
         <SelectList
           dropdownStyles={{
@@ -273,6 +273,8 @@ const Location = () => {
           // placeholder={
           //   dataCities.length > 0 ? dataCities[0].value  : "Cities"
           // }
+          placeholder="Thành phố"
+
         />
       </View>
       <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>

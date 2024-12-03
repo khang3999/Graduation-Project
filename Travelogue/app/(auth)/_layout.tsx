@@ -68,7 +68,7 @@ const Layout = () => {
         router.replace("/(tabs)");
       }
     }
-  }, [isAuth, role]);
+  }, [role]);
 
   return <>{!isAuth ? <RouterAuth /> : null}</>;
 };
