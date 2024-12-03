@@ -21,11 +21,21 @@ export default function Layout() {
           <Stack.Screen name="(user)" options={{ headerShown: false }} />
           <Stack.Screen name="(article)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" />
-          <Stack.Screen name="notify" 
-          options={{ 
+          <Stack.Screen name="notify" options={{ headerShown: true }}/>
+          <Stack.Screen name="newPoint" options={{ headerShown: true }}/>
+          <Stack.Screen name="imageReport" options={{
             headerShown: true,
-            title: "Thông báo"
-             }}/>
+            title: "Hình ảnh minh chứng",
+            headerStyle: {
+              backgroundColor:
+                Colors[colorScheme ? colorScheme : "light"].background,
+            },
+            headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+            headerTitleStyle: {
+              fontWeight: "bold",
+            },
+            headerTitleAlign: "center",
+          }}/>
           <Stack.Screen name="accountDetail" options={{
             headerShown: true,
             title: "Chi tiết tài khoản",

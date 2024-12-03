@@ -211,24 +211,24 @@ export default function CompanyManagementScreen() {
   //Render icon
   const renderIcon = (item: any) => {
     switch (item.status_id) {
-      case "1":
+      case 1:
         return (
           <View style={{ flexDirection: 'row' }}>
             <Feather name="check-square" size={24} color="green" style={{ left: -25 }} onPress={() => acceptAcc(item.id)} />
             <Feather name="x-square" size={25} color="red" onPress={() => rejectAcc(item.id)} />
           </View>);
-      case "2":
+      case 2:
         return (
           <View>
             <AntDesign name="lock" size={28} color="black" onPress={() => lockAcc(item.id)} />
           </View>);
-      case "3":
+      case 3:
         return (
           <View style={{ flexDirection: 'row' }}>
             <MaterialIcons name="clear" size={28} color="#3366CC" style={{ bottom: 0, left: -22 }} onPress={() => unReportAcc(item.id)} />
             <AntDesign name="lock" size={28} color="black" onPress={() => lockAcc(item.id)} />
           </View>);
-      case "4":
+      case 4:
         return (
           <View>
             <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unLockAcc(item.id)} />

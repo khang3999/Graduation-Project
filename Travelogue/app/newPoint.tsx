@@ -52,6 +52,7 @@ const NewPoint = () => {
   const [loading, setLoading] = useState(false);
   const route = useRoute();
   const { idCity, idCountry }: any = route.params;
+  const local = 'vi-VN'
 
   const handleRemoveImage = (index: number) => {
     const updatedImages = [...defaultImages];
@@ -182,12 +183,12 @@ const NewPoint = () => {
         content,
         start:
           selectedOption === "festival"
-            ? timeStartDate.toLocaleDateString().slice(0, 5)
-            : timeStartTime.toLocaleTimeString().slice(0, 5),
+            ? timeStartDate.toLocaleDateString(local).slice(0, 10)
+            : timeStartTime.toLocaleTimeString().slice(0, 4),
         end:
           selectedOption === "festival"
-            ? timeEndDate.toLocaleDateString().slice(0, 5)
-            : timeEndTime.toLocaleTimeString().slice(0, 5),
+            ? timeEndDate.toLocaleDateString(local).slice(0, 10)
+            : timeEndTime.toLocaleTimeString().slice(0, 4),
         images: imageUrls,
       };
 
@@ -258,7 +259,8 @@ const NewPoint = () => {
         <TextInput
           placeholder="Nhập nội dung"
           value={content}
-          numberOfLines={4}
+          numberOfLines={10}
+          multiline={true}
           onChangeText={setContent}
           style={styles.input}
         />
@@ -307,10 +309,10 @@ const NewPoint = () => {
           <Text style={styles.timeText}>
             {selectedOption === "festival"
               ? timeStartDate
-                ? timeStartDate.toLocaleDateString().slice(0, 5)
+                ? timeStartDate.toLocaleDateString(local).slice(0, 10)
                 : "Chọn ngày"
               : timeStartTime
-              ? timeStartTime.toLocaleTimeString().slice(0, 5)
+              ? timeStartTime.toLocaleTimeString().slice(0, 4)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
@@ -320,10 +322,10 @@ const NewPoint = () => {
           <Text style={styles.timeText}>
             {selectedOption === "festival"
               ? timeEndDate
-                ? timeEndDate.toLocaleDateString().slice(0, 5)
+                ? timeEndDate.toLocaleDateString(local).slice(0, 10)
                 : "Chọn ngày"
               : timeEndTime
-              ? timeEndTime.toLocaleTimeString().slice(0, 5)
+              ? timeEndTime.toLocaleTimeString().slice(0, 4)
               : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
@@ -337,6 +339,7 @@ const NewPoint = () => {
                 : timeStartTime || new Date()
             }
             onChange={onChangeStartDate}
+            
           />
         )}
 

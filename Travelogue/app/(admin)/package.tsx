@@ -1,128 +1,131 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { remove, update, push } from '@firebase/database';
-import { useNavigation } from '@react-navigation/native';
-import DropDownPicker from 'react-native-dropdown-picker';
-
-
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native';
+import { ref, onValue, push, set, update, remove } from '@firebase/database';
+import { database } from '@/firebase/firebaseConfig';
 
 const PackageComponent = () => {
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
-  const [dataPackage, setDataPackage] = useState([]);
-  const [localDataPackage, setLocalDataPackage] = useState<any>([]);
-  const [updatedDataPackage, setUpdatedDataPackage] = useState({});
+  const [dataPackage, setDataPackage] = useState<any[]>([]);
+  const [localDataPackage, setLocalDataPackage] = useState<any[]>([]);
+  const [updatedDataPackage, setUpdatedDataPackage] = useState<any>({});
 
   useEffect(() => {
-    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-    const onValueChange = ref(database, 'packages');
-    // Lắng nghe thay đổi trong dữ liệu
-    const packages = onValue(onValueChange, (snapshot) => {
-      if (snapshot.exists()) {
-        const jsonData = snapshot.val();
-        // Chuyển đổi object thành array
-        const dataArray: any = Object.values(jsonData)
-        // .map(([key, value]) => ({value}));
-        console.log('data', dataArray);
-
-        setDataPackage(dataArray);
-        setLocalDataPackage(dataArray)
-      } else {
-        console.log("No data available");
+    const packagesRef = ref(database, 'packages');
+    const listener = onValue(
+      packagesRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const dataArray = Object.values(data).map((item: any) => ({
+            ...item,
+          }));
+          setDataPackage(dataArray);
+          setLocalDataPackage(dataArray);
+        } else {
+          setDataPackage([]);
+          setLocalDataPackage([]);
+        }
+      },
+      (error) => {
+        console.error('Error fetching data:', error);
+        setDataPackage([]);
+        setLocalDataPackage([]);
       }
-    }, (error) => {
-      console.error("Error fetching data:", error);
-    });
+    );
 
-    // Cleanup function để hủy listener khi component unmount
-    return () => packages();
-  }, [])
+    // Cleanup listener
+    return () => {
+      listener();
+    };
+  }, []);
 
   const handleAddPackage = async () => {
-
-    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
     const packagesRef = ref(database, 'packages/');
-
-    // Tạo key tu dong cua firebase
-    const newItemKey = push(packagesRef);
-    const item = {
-      discount: 0,
-      factor: 0,
-      id: newItemKey.key,
+    const newPackageRef = push(packagesRef);
+    const newItem = {
+      id: newPackageRef.key,
+      name: 'New Package',
+      price: 0,
       minAccumulated: 0,
-      name: 'unknown',
-      price: 0
+      discount: 0,
+      hashtag: 0,
     };
 
-    console.log(newItemKey);
-
-    // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
-    await set(newItemKey, item)
-      .then(() => {
-        console.log('Data added successfully');
-      })
-      .catch((error) => {
-        console.error('Error adding data: ', error);
-      });
-
+    try {
+      await set(newPackageRef, newItem);
+      console.log('Package added successfully');
+    } catch (error) {
+      console.error('Error adding package:', error);
+    }
   };
 
   const handleSavePackage = async () => {
-    console.log('aaa');
+    if (!editingPackageId) return;
 
-    // Tạo một tham chiếu đến nhánh 'packages' trong Realtime Database
     const packageUpdateRef = ref(database, `packages/${editingPackageId}`);
     Alert.alert(
-      "Change package",
-      "Are you sure you want to update package ?",
+      'Save Package',
+      'Are you sure you want to save changes?',
       [
         {
-          text: "Cancel", style: "cancel",
+          text: 'Cancel',
+          style: 'cancel',
           onPress: () => {
-            setLocalDataPackage([]);
-            setLocalDataPackage(dataPackage);
-            setUpdatedDataPackage({})
-            setEditingPackageId(null)
-          }
-        }, {
-          text: "OK", onPress: () => {
-            update(packageUpdateRef, updatedDataPackage)
-              .then(() => {
-                setUpdatedDataPackage({})
-                setEditingPackageId(null)
-                console.log('Data updated successfully!');
-              })
-              .catch((error) => {
-                console.error('Error updating data:', error);
-              });
-          }
-        }])
+            setUpdatedDataPackage({});
+            setEditingPackageId(null);
+            setLocalDataPackage(dataPackage); // Reset local data
+          },
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await update(packageUpdateRef, updatedDataPackage);
+              console.log('Package updated successfully');
+              setUpdatedDataPackage({});
+              setEditingPackageId(null);
+            } catch (error) {
+              console.error('Error updating package:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleRemove = (pkg: any) => {
-    const refRemove = ref(database, `packages/${pkg.id}`)
+    const packageRef = ref(database, `packages/${pkg.id}`);
     Alert.alert(
-      "Remove package",
-      "Are you sure you want to remove this package?",
+      'Remove Package',
+      'Are you sure you want to remove this package?',
       [
-        { text: "Cancel", style: "cancel" },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "OK", onPress: () => {
-            remove(refRemove).then(() => {
-              console.log('Data remove successfully');
-            })
-              .catch((error) => {
-                console.error('Error removing data: ', error);
-              }); // Xóa từ khỏi Realtime Database
-          }
-        }
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await remove(packageRef);
+              console.log('Package removed successfully');
+            } catch (error) {
+              console.error('Error removing package:', error);
+            }
+          },
+        },
       ]
     );
-
   };
-  //Render
-  const renderPackage = (item: any) => {
 
+  const renderPackage = (item: any) => {
     return (
       <View key={item.item.id}>
         <TextInput
@@ -130,73 +133,78 @@ const PackageComponent = () => {
           defaultValue={item.item.name}
           onFocus={() => setEditingPackageId(item.item.id)}
           onChangeText={(text) => {
-            setUpdatedDataPackage((prevData) => ({
+            setUpdatedDataPackage((prevData:any) => ({
               ...prevData,
-              "name": text
+              name: text,
             }));
           }}
-        ></TextInput>
+        />
         <View style={styles.item}>
           <Text style={styles.title}>Price</Text>
           <TextInput
-
+            keyboardType="numeric"
             style={styles.input}
             defaultValue={String(item.item.price)}
             onFocus={() => setEditingPackageId(item.item.id)}
             onChangeText={(text) => {
-              setUpdatedDataPackage((prevData) => ({
+              setUpdatedDataPackage((prevData:any) => ({
                 ...prevData,
-                "price": text
+                price: Number(text),
               }));
-
             }}
           />
         </View>
         <View style={styles.item}>
           <Text style={styles.title}>Accumulated</Text>
           <TextInput
+            keyboardType="numeric"
             style={styles.input}
             defaultValue={String(item.item.minAccumulated)}
             onFocus={() => setEditingPackageId(item.item.id)}
             onChangeText={(text) => {
-              setUpdatedDataPackage((prevData) => ({
+              setUpdatedDataPackage((prevData:any) => ({
                 ...prevData,
-                "minAccumulated": text
+                minAccumulated: Number(text),
               }));
-
             }}
           />
-
-
         </View>
         <View style={styles.item}>
           <Text style={styles.title}>Discount</Text>
           <TextInput
+            keyboardType="numeric"
             style={styles.input}
             defaultValue={String(item.item.discount)}
             onFocus={() => setEditingPackageId(item.item.id)}
             onChangeText={(text) => {
-              setUpdatedDataPackage((prevData) => ({
+              setUpdatedDataPackage((prevData:any) => ({
                 ...prevData,
-                "discount": text
+                discount: Number(text),
               }));
-
             }}
-
+          />
+        </View>
+        <View style={styles.item}>
+          <Text style={styles.title}>Hashtag</Text>
+          <TextInput
+            keyboardType="numeric"
+            style={styles.input}
+            defaultValue={String(item.item.hashtag)}
+            onFocus={() => setEditingPackageId(item.item.id)}
+            onChangeText={(text) => {
+              setUpdatedDataPackage((prevData:any) => ({
+                ...prevData,
+                hashtag: Number(text),
+              }));
+            }}
           />
         </View>
 
-
         <View style={styles.buttonContainer}>
-          {/* Hiển thị nút Save nếu gói đang được chỉnh sửa */}
           {editingPackageId === item.item.id && (
-            <TouchableOpacity
-              style={styles.saveBtn}
-              onPress={handleSavePackage}
-            >
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSavePackage}>
               <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
-
           )}
           <TouchableOpacity
             style={styles.deleteBtn}
@@ -204,37 +212,35 @@ const PackageComponent = () => {
           >
             <Text style={styles.buttonText}>Delete</Text>
           </TouchableOpacity>
-
         </View>
         <View style={styles.line} />
       </View>
-
-    )
+    );
   };
 
-
   return (
-    <View style={{ marginTop: 30 }}>
-      <View style={styles.addBar}>
-        <TouchableOpacity style={styles.addBtn} onPress={handleAddPackage}>
-          <Text style={{ color: '#ffffff' }} >Add</Text>
-        </TouchableOpacity>
-
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={{ marginTop: 30 }}>
+        <View style={styles.addBar}>
+          <TouchableOpacity style={styles.addBtn} onPress={handleAddPackage}>
+            <Text style={{ color: '#ffffff' }}>Add</Text>
+          </TouchableOpacity>
+        </View>
+        {localDataPackage.length > 0 ? (
+          <FlatList
+            data={localDataPackage}
+            renderItem={renderPackage}
+            keyExtractor={(item) => item.id}
+            removeClippedSubviews={false}
+          />
+        ) : (
+          <Text style={styles.noAccountsText}>No data</Text>
+        )}
       </View>
-      {localDataPackage.length > 0 ? (
-        <FlatList
-          data={localDataPackage}
-          renderItem={renderPackage}
-          removeClippedSubviews={false}
-        />
-      ) : (
-        <Text style={styles.noAccountsText}>No data</Text>
-      )}
-
-    </View>
+    </TouchableWithoutFeedback>
   );
-
 };
+
 
 // Styles
 const styles = StyleSheet.create({
@@ -319,4 +325,3 @@ const styles = StyleSheet.create({
 });
 
 export default PackageComponent;
-

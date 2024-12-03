@@ -69,33 +69,35 @@ const Location = () => {
     };
   }, []);
   // Fetch data cities theo quốc gia
-  const fetchCityByCountry = async (countryId:any) => {
+  const fetchCityByCountry = (countryId: any) => {
     try {
       const refCity = ref(database, `cities/${countryId}`);
-      const snapshot = await get(refCity);
-      if (snapshot.exists()) {
-        const dataCityJson = snapshot.val();
-        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(
-          ([region, cities]: any) =>
-            Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-              key: cityCode,
-              value: cityInfo.name,
-              area: cityInfo.area_id,
-              information: cityInfo.information,
-              defaultImages: cityInfo.defaultImages,
-            }))
-        );          
-        setDataCities(dataCitiesArray);
-        // setSelectedCity(dataCitiesArray[0].key)
-      } else {
-        console.log("No data city available");
-      }
+      
+      // Real-time listener
+      onValue(refCity, (snapshot) => {
+        if (snapshot.exists()) {
+          const dataCityJson = snapshot.val();
+          const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(
+            ([region, cities]: any) =>
+              Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
+                key: cityCode,
+                value: cityInfo.name,
+                area: cityInfo.area_id,
+                information: cityInfo.information,
+                defaultImages: cityInfo.defaultImages,
+              }))
+          );
+          setDataCities(dataCitiesArray);
+          // Optionally set selected city
+          // setSelectedCity(dataCitiesArray[0].key);
+        } else {
+          console.log("No data city available");
+        }
+      });
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
-  };
-  console.log(selectedCity);
-  
+  }
   //Handle when selected countries
   const handleSelectedCountry = (val: any) => {
     // setDataCities([])
@@ -253,7 +255,7 @@ const Location = () => {
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
           save="key"
-          placeholder="Countries"
+          placeholder="Quốc gia"
         />
         <SelectList
           dropdownStyles={{
@@ -271,6 +273,8 @@ const Location = () => {
           // placeholder={
           //   dataCities.length > 0 ? dataCities[0].value  : "Cities"
           // }
+          placeholder="Thành phố"
+
         />
       </View>
       <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>

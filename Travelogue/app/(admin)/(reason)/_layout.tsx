@@ -1,22 +1,24 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Entypo, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue' }}>
+    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue', tabBarStyle:{
+      height:60
+    }  }}>
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Account',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />,
+          title: 'Người dùng',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={38} name="account-outline" color={color} />,
           headerShown:false
         }}
       />
       <Tabs.Screen
         name="post"
         options={{
-          title: 'Post',
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="post" color={color} />,
+          title: 'Bài viết',
+          tabBarIcon: ({ color }) => <Entypo size={30} name="news" color={color} />,
 
           headerShown:false
         }}
@@ -24,8 +26,8 @@ export default function TabLayout() {
        <Tabs.Screen
         name="comment"
         options={{
-          title: 'Comment',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="comment" color={color} />,
+          title: 'Bình luận',
+          tabBarIcon: ({ color }) => <Fontisto size={28} name="commenting" color={color} />,
 
           headerShown:false
         }}

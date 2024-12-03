@@ -54,6 +54,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
       // Realtime listener to update data when Firebase data changes
       onValue(userRef, async (snapshot) => {
         const data = snapshot.val();
+        console.log(data,"   daa");
         if (data) {
           setAccountData(data);
           setSearchedAccountData(data) // Update state                         
@@ -149,7 +150,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
                 keyExtractor={(item, index) => `${item}-${index}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => {
-                    router.push("/SearchResult");
+                    router.push("/searchResult");
                     setSearchedAccountData(item);
                     setRecentSearches([...recentSearches, item]);
                   }}>
