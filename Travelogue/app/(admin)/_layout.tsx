@@ -128,7 +128,7 @@ export default function Layout() {
             )
           }}
         />
-        <Drawer.Screen
+        {/* <Drawer.Screen
           name="testReport"
           options={{
             drawerLabel: 'testReport',
@@ -137,7 +137,7 @@ export default function Layout() {
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
-        />
+        /> */}
        
       </Drawer>
 

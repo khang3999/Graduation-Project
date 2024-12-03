@@ -154,6 +154,7 @@ export default function AccountManagementScreen() {
         <FlatList
           data={dataAccountReport}
           renderItem={renderAccountItem}
+          keyExtractor={(item:any)=>item.account_id}
         />
       ) : (
         <Text style={styles.noAccountsText}>No blocked accounts</Text>
