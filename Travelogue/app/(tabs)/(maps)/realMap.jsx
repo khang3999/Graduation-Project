@@ -21,6 +21,7 @@ import { set } from "lodash";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { update } from "firebase/database";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 
 const Map = () => {
   const [countryData, setCountryData] = useState([]);
@@ -64,6 +65,7 @@ const Map = () => {
       }));
       // console.log(formattedDataCountry);
       setCountryData(formattedDataCountry);
+      // setSelectedCountry(formattedDataCountry[0].id)
       // console.log("Country Data:", countryData);
     });
     // Lấy dữ liệu từ firebase (khu vực)
@@ -79,6 +81,7 @@ const Map = () => {
           ...data[countryId][key],
         }))
       );
+      
       setAreaData(formattedDataAreas);
       // console.log("Area Data:");
     });
@@ -349,49 +352,58 @@ const Map = () => {
 
   //Lưu các vi tri của điểm
   const handleSavePoint = async (content, type, location) => {
-    const userId = await AsyncStorage.getItem("userToken");
-    if (userId) {
-      const refBehavior = ref(database, `accounts/${userId}/behavior`);
+    // const userId = await AsyncStorage.getItem("userToken");
+    // if (userId) {
+    //   const refBehavior = ref(database, `accounts/${userId}/behavior`);
 
-      const dataUpdate = {
-        content: content,
-        location: [location],
-      };
+    //   const dataUpdate = {
+    //     content: content,
+    //     location: [location],
+    //   };
 
-      await update(refBehavior, dataUpdate);
-      // const snapshot = await get(userRef);
-      // let existingData = snapshot.val();
+    //   await update(refBehavior, dataUpdate);
+    //   // const snapshot = await get(userRef);
+    //   // let existingData = snapshot.val();
 
-      // // Kiểm tra xem location có tồn tại
-      // let locationArray = existingData?.location || [];
-      // // console.log(locationArray)
+    //   // // Kiểm tra xem location có tồn tại
+    //   // let locationArray = existingData?.location || [];
+    //   // // console.log(locationArray)
 
-      // // Thêm địa điểm mới
-      // if (!locationArray.includes(location)) {
-      //   locationArray.push(location);
+    //   // // Thêm địa điểm mới
+    //   // if (!locationArray.includes(location)) {
+    //   //   locationArray.push(location);
 
-      //   const updatedLocation = {
-      //     location: locationArray,
-      //   };
-      //   // Lưu lại dữ liệu đã cập nhật vào Firebase
-      //   await update(userRef, updatedLocation);
-      // }
-      //   // Cập nhật lại dữ liệu
-      //   if (content) {
-      //   const updatedUserData = {
-      //     content: content,
-      //   };
-      //   await update(userRef, updatedUserData);
-      // }
-    }
+    //   //   const updatedLocation = {
+    //   //     location: locationArray,
+    //   //   };
+    //   //   // Lưu lại dữ liệu đã cập nhật vào Firebase
+    //   //   await update(userRef, updatedLocation);
+    //   // }
+    //   //   // Cập nhật lại dữ liệu
+    //   //   if (content) {
+    //   //   const updatedUserData = {
+    //   //     content: content,
+    //   //   };
+    //   //   await update(userRef, updatedUserData);
+    //   // }
+    // }
     // Thông báo tùy thuộc vào type
+    console.log(content,'mmmm');
     if (type === "post") {
       // 2. Chuyển về home hoặc tour
-      navigation.navigate("index");
+      // navigation.navigate("index");
+      router.replace({
+        pathname: "/",
+        params: { selectedCityId: location , content: content }
+      })
     }
     if (type === "tour") {
       // 2. Chuyển về home hoặc tour
-      navigation.navigate("tour");
+      // navigation.navigate("tour");
+      router.replace({
+        pathname: "/tour",
+        params: { selectedCityId: location, content: content }
+      })
     }
   };
 

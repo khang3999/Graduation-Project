@@ -34,8 +34,8 @@ export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
 
 // Hàm slug text
 export const slug = (str) => {
-    if (str) {
-        return ''
+    if (!str || str.trim() === '') {
+        return '';
     }
     return String(str)
         .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')  //Xóa dấu

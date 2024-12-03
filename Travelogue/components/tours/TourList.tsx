@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { equalTo, orderByChild, query } from 'firebase/database';
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import LottieView from 'lottie-react-native';
+import { useAccount } from '@/contexts/AccountProvider';
 
 const { width } = Dimensions.get('window');
 const ITEM_HEIGHT = 270;
@@ -48,7 +49,10 @@ const TourList = () => {
   const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
   const [dataNewTours, setDataNewTours] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [reloadScreen, setReloadScreen] = useState(false)
-  const { selectedCityId } = useLocalSearchParams()
+  const { selectedCityId, content } = useLocalSearchParams()
+  const { setSearchedAccountData }: any = useAccount();
+
+  
 
   const [isLongPress, setIsLongPress] = useState(false);
 
@@ -242,10 +246,18 @@ const TourList = () => {
     setDataCities([])
     selectedTypeSearch.current = 1
     setDataModalSelected(null)
+    setReloadScreen(true)
 
-    fetchTours() // Tải lại tất cả tour
+    // fetchTours() // Tải lại tất cả tour
     // // setIsSearchingMode(false)
   }
+
+  useEffect(()=>{
+    if (reloadScreen) {
+      fetchTours()
+      setReloadScreen(false)
+    }
+  },[reloadScreen])
 
   const handleSelecteCountry = (val: any) => {
     // Fetch city tương ứng tương ứng (chính)
@@ -278,9 +290,9 @@ const TourList = () => {
       if (selectedCityId) {
         console.log('have param 1111', selectedCityId);
         if (dataTours.length === 0) {
-          handleTapOnSearchButton(dataNewTourList, '', null, [selectedCityId])
+          handleTapOnSearchButton(dataNewTourList, content, null, [selectedCityId])
         } else {
-          handleTapOnSearchButton(dataTours, '', null, [selectedCityId])
+          handleTapOnSearchButton(dataTours, content, null, [selectedCityId])
 
         }
       } else {
@@ -302,7 +314,7 @@ const TourList = () => {
       return () => {
         console.log('Screen is unfocused');
       };
-    }, [loadedDataAccount, selectedCityId]) // Cập nhật khi các giá trị này thay đổi
+    }, [loadedDataAccount, selectedCityId, content]) // Cập nhật khi các giá trị này thay đổi
   );
 
   // Hàm phụ Fetch data cities theo quốc gia
@@ -424,6 +436,27 @@ const TourList = () => {
     // Có thể xếp lại các bài viết
   }
 
+  const handleGoToProfileScreen = async (accountId: any) => {
+    if (accountId) {
+      try {
+        const refAccount = ref(database, `accounts/${accountId}`)
+        const snapshot = await get(refAccount);
+        if (snapshot.exists()) {
+          const dataAccountJson = snapshot.val()
+          console.log(dataAccountJson, 'adsd');
+
+          await setSearchedAccountData(dataAccountJson)
+          router.push("/SearchResult");
+        } else {
+          console.log("No data account available");
+        }
+      } catch (error) {
+        console.error("Error fetching data account: ", error);
+      }
+    }
+
+  }
+
   // ITEM RENDER
   const tourItem = (tour: any) => { // từng phần tử trong data có dạng {"index": 0, "item":{du lieu}} co the thay the tour = destructuring {item, index}    
     const locations: any = tour.item.locations // Lấy được ĐỐI TƯỢNG locations
@@ -451,11 +484,11 @@ const TourList = () => {
         >
           {/*Author*/}
           <View style={styles.authorContent}>
-            <TouchableOpacity style={styles.avatarWrap}>
+            <TouchableOpacity style={styles.avatarWrap} onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
               <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
             </TouchableOpacity>
             <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
                 <Text style={{ fontWeight: '600' }} numberOfLines={1}>
                   {tour.item.author.fullname}
                 </Text>
@@ -543,7 +576,7 @@ const TourList = () => {
       <View key={tour.item.id} style={styles.itemNewTourWrap}>
         <View style={{ flexDirection: 'row' }}>
           <View style={{}}>
-            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }}>
+            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
               <Image style={{ width: 25, height: 25, borderRadius: 90 }} source={{ uri: tour.item.author.avatar }} />
               <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
                 {tour.item.author.fullname}
@@ -557,7 +590,7 @@ const TourList = () => {
           </View>
           <View style={{ flex: 1.5, paddingLeft: 10 }}>
             <View style={{ flexDirection: 'row' }}>
-              <Text style={styles.textTitle}> tour.item.title</Text>
+              <Text style={styles.textTitle}> {tour.item.title}</Text>
             </View>
             <View style={{ flexDirection: 'row', flex: 1, alignItems: 'flex-start', flexWrap: 'wrap', padding: 4 }}>
               <Text style={{ fontWeight: '500', textAlign: 'center', paddingVertical: 1 }}>Địa điểm: </Text>
@@ -578,12 +611,12 @@ const TourList = () => {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', position: 'relative' }}>
         <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
-          <Text style={styles.textCategory}>Tour du lịch siêu hot</Text>
+          <Text style={styles.textCategory}>Tour du lịch</Text>
         </View>
         {((currentTourCount != newTourCount)) && (
           <TouchableOpacity style={styles.loadNewTour} onPress={() => handleShowNewTour()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
-            <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Có tour mới</Text>
+            <Text style={{ paddingLeft: 4, fontWeight: '500' }}>Tour mới</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.refreshBtn} onPress={() => handleRefreshTourScreen()}>
