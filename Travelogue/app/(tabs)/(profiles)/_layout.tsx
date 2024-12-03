@@ -45,9 +45,7 @@ export default function ProfileLayout() {
           headerTitleAlign: "center",
         }}
       />
-       
-            
-      <Stack.Screen name="searchResult"
+      {/* <Stack.Screen name="SearchResult"
         options={{
           headerShown: true,
           title: "Kết quả tìm kiếm",
@@ -60,8 +58,8 @@ export default function ProfileLayout() {
             fontWeight: "bold",
           },
           headerTitleAlign: "center",
-        }} />
-      <Stack.Screen name="changePassword"
+        }} /> */}
+      <Stack.Screen name="ChangePassword"
         options={{
           headerShown: true,
           title: "Đổi mật khẩu",

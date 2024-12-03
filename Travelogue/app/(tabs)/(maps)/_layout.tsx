@@ -13,34 +13,38 @@ const switchTabbar = 120
 const MapLayout = () => {
     return (
         <Tabs
+            sceneContainerStyle={{ backgroundColor: 'white' }}
             tabBar={(props: any) => <TabBarTour {...props} />}
             screenOptions={{
                 tabBarStyle: styles.tabBar,
                 headerStyle: {
                     height: 105,
-                    backgroundColor: '#ff5b5b',
-                    borderRadius: 20,
+                    backgroundColor: 'white',
+                    borderBottomWidth: 1,
+                    // borderRadius: 20,
                     elevation: 10
                 },
-                headerTitle: 'Bản đồ',           
+                headerTitle: 'Bản đồ',
             }}
         >
             <Tabs.Screen
                 key={1}
                 name="checkInMap"
                 options={{
-                    title: 'Check in',
-                    headerTitle: 'Bản đồ',
-                    headerRight:()=><Text style={styles.headerTitleText}>Check in</Text>,
-                }} />
+                    // title: 'Check in',
+                    headerTitle: 'Check in',
+                    // headerRight: () => <Text style={styles.headerTitleText}>Check in</Text>,
+                }}
+            />
             <Tabs.Screen
                 key={2}
                 name="realMap"
                 options={{
-                    title: 'Real Map',
+                    //     title: 'Real Map',
                     headerTitle: 'Danh lam',
-                    headerRight:()=><Text style={styles.headerTitleText}>Lễ hội</Text>,
-                }} />
+                    headerRight: () => <Text style={styles.headerTitleText}>Lễ hội</Text>,
+                }}
+            />
         </Tabs >
 
     )
@@ -56,10 +60,10 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 99,
         paddingHorizontal: 10,
     },
-    headerTitleText:{
+    headerTitleText: {
         marginHorizontal: 20,
         fontSize: 20,
-        fontWeight:'500'
+        fontWeight: '500'
     }
 })
 

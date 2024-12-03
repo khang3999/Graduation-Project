@@ -90,6 +90,20 @@ export default function Layout() {
               headerTitleAlign: "center",
             }} />
           <Stack.Screen name="gallery"/>
+          <Stack.Screen name="SearchResult"
+        options={{
+          headerShown: true,
+          title: "Kết quả tìm kiếm",
+          headerStyle: {
+            backgroundColor:
+              Colors[colorScheme ? colorScheme : "light"].background,
+          },
+          headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }} />
         </Stack>
         <Toast />
 

@@ -1,4 +1,4 @@
-import { View, Text, Button, Image, StyleSheet, Pressable, Alert, Linking } from 'react-native'
+import { View, Text, Button, Image, StyleSheet, Pressable, Alert, Linking, Platform } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { router, Tabs, useLocalSearchParams } from 'expo-router'
 import TabBar from '@/components/navigation/TabBar'
@@ -105,14 +105,19 @@ const _layout = () => {
       screenOptions={{
         headerStyle: {
           height: 105,
-          backgroundColor:'#ff5b5b',
-          borderRadius: 20,
+          backgroundColor:'white',
+          // borderRadius: 20,
+          borderBottomWidth:1,
           elevation: 10
+        },
+        headerTitle:"Travelogue",
+        headerTitleStyle:{
+          fontSize: 32
         },
         headerRight: () => (
           <View style={styles.headerRight}>
             <PlusButton onPress={() => {
-              role === "user" ? router.push('../(article)/addPostUser') : router.push('../(article)/addPostTour')
+              role === "user" ? router.push('/(article)/addPostUser') : router.push('/(article)/addPostTour')
             }} style={styles.buttonRight}></PlusButton>
             {/* Chuong thong bao voi so luong thong bao chua xem */}
             <TouchableOpacity style={[ styles.container]} >
@@ -164,7 +169,7 @@ const _layout = () => {
         name="(profiles)"
         options={{
           title: 'Profile',
-          headerShown: false,
+          headerShown: true,
         }} />
     </Tabs >
 

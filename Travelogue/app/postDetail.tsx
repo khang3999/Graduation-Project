@@ -42,6 +42,7 @@ import { Comment, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import { MaterialIcons } from '@expo/vector-icons';
+import ImageModal from "react-native-image-modal";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -127,7 +128,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
-  
+
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -136,12 +137,12 @@ const PostItem: React.FC<PostItemProps> = ({
     }
     // return;
     if (replyText.trim().length > 0) {
-      const parentId = parentComment ? parentComment.id : null;     
+      const parentId = parentComment ? parentComment.id : null;
       console.log('Parent comment:', parentComment);
       if (parentComment) {
         setAuthorParentCommentId(parentComment.author.id)
       }
-    
+
       const newComment = {
         author: {
           id: dataAccount.id,
@@ -153,7 +154,7 @@ const PostItem: React.FC<PostItemProps> = ({
         reports: 0,
         content: replyText,
         parentId: parentId ? parentId : null,
-        created_at: Date.now(),        
+        created_at: Date.now(),
       };
       try {
         const commentRef = ref(database, `posts/${item.id}/comments`)
@@ -167,9 +168,9 @@ const PostItem: React.FC<PostItemProps> = ({
             if (parentId) {
               // Add as a reply with the correct `parentId`
               // Notify reply comment for parentId
-    
 
-              if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
+
+              if (authorParentCommentId != dataAccount.id && authorParentCommentId != '') {
                 handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
               }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
@@ -181,7 +182,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
         }
         // Notify comment for auht post
-   
+
 
         if (dataAccount.id != item.author.id) {
           handleAddNotify(newCommentRef.key, item.author.id, parentId)
@@ -342,7 +343,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+          <MenuItem locations={item.locations} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
         </View>
       </View>
 
@@ -356,7 +357,9 @@ const PostItem: React.FC<PostItemProps> = ({
         scrollAnimationDuration={300}
         renderItem={({ item, index }) => (
           <View style={styles.carouselItem}>
-            <Image style={styles.posts} source={{ uri: item.imageUrl }} />
+            <ImageModal swipeToDismiss={true}
+              resizeMode="contain"
+              imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
             <View style={styles.viewTextStyles}>
               <Text style={styles.carouselText}>
                 {index + 1}/{flattenedImagesArray.length} - {item.cityName}
@@ -369,14 +372,14 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
+            <HeartButton style={styles.buttonItem} data={item} type={TYPE}/>
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} dataID={item.id} type={TYPE} />
+          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
         </View>
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
@@ -875,8 +878,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal:10,
-    paddingBottom:10,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
     // padding:10,
   },
 

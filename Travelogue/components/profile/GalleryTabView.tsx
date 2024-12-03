@@ -282,7 +282,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
               source={require("@/assets/images/camera-circle.png")}
               style={styles.cameraCircle}
             />
-            <Text style={styles.noPostText}>No posts yet</Text>
+            <Text style={styles.noPostText}>Không có bài viết.</Text>
           </>
         ) : (
           <FlatList
@@ -394,7 +394,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
             source={require("@/assets/images/camera-circle.png")}
             style={styles.cameraCircle}
           />
-          <Text style={styles.noPostText}>No posts yet</Text>
+          <Text style={styles.noPostText}>Không có bài viết.</Text>
         </>
       ) : (
         <FlatList
@@ -455,7 +455,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
   }
 
   return (
-    <View style={{ flex: 3 }}>
+    <View style={{ flex: 2.7 }}>
       <TabView
         lazy
         navigationState={{ index, routes }}

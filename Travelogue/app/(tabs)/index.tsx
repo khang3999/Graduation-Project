@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, Dimensions, TextInput } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
 import { auth, database, onValue, ref } from "@/firebase/firebaseConfig";
 import SearchBar from '@/components/homePage/SearchBar'
@@ -13,7 +13,7 @@ import { Badge } from "react-native-paper";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
-import {  off } from "firebase/database";
+import { off } from "firebase/database";
 
 
 const Home = () => {
@@ -23,10 +23,29 @@ const Home = () => {
     setDataModalSelected,
     dataAllCities,
     setDataAllCities,
-    isFocus, setIsFocus,dataAccount }: any = useHomeProvider();
-    
-  
-  
+    isFocus, setIsFocus, dataAccount,
+    selectedTypeSearch, dataTypeSearch }: any = useHomeProvider();
+  const { selectedCityId } = useLocalSearchParams()
+
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (selectedCityId) {
+  //       console.log('have param', selectedCityId);
+  //     } 
+  //     return () => {
+  //       console.log('Screen is unfocused');
+  //     };
+  //   }, [selectedCityId]) // Cập nhật khi các giá trị này thay đổi
+  // );
+
+  // useEffect(() => {
+  //   if (selectedCityId) {
+  //     console.log('have param', selectedCityId);
+  //   }
+  // }, [])
+
+
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', marginHorizontal: 10, gap: 6 }}>
@@ -42,10 +61,18 @@ const Home = () => {
               dataModalSelected.cities.map((cityId: any) => {
                 const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
                 console.log(found);
-                return <Badge size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
+                return <Badge key={cityId} size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
               })
             }
           </>}
+
+        <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
+
+        {/* {selectedTypeSearch.current === 1 ?
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
+          :
+          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Thích nhiều nhất</Badge>
+        } */}
       </View>
 
       {/* Tour section */}

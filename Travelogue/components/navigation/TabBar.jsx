@@ -37,7 +37,8 @@ const TabBar = ({ state, descriptors, navigation, isTabBarVisible = true, role }
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
+            // navigation.navigate(route.name, route.params);
+            navigation.navigate(route.name);
           }
         };
 
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 14,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     borderWidth: 3,

@@ -17,17 +17,19 @@ import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
-import { child, onValue, push, remove } from "@firebase/database";
+import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
+import { deleteFolder } from "@/services/storageService";
 interface MenuPopupButtonProps {
   isAuthor: boolean;
   tourId: string;
   userId: string;
+  locations: any;
 }
 
-const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId }) => {
+const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId, locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +48,16 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   const [idComment, setIdComment] = useState('')
   const [reasonsComment, setReasonsComment] = useState([])
 
+  const formatLocations = Object.keys(locations).flatMap((countryKey) => {
+    return Object.keys(locations[countryKey]).flatMap((cityKey) => {
+      return {
+        id: cityKey,
+        name: locations[countryKey][cityKey],
+        country: countryKey,
+      };
+    }
+    );
+  });
   const toggleModal = () => {
     if (!isModalVisible) {
       // Measure the position of the button before showing the menu
@@ -87,7 +99,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                 // Delete from author's created tours
                 const userTourRef = ref(database, `accounts/${userId}/createdTours/${tourId}`);
                 await remove(userTourRef);
-
+                // Decrease the totalPosts count
+                const totalPostsRef = ref(database, `accounts/${userId}/totalPosts`);
+                await runTransaction(totalPostsRef, (currentValue: any) => {
+                  return (currentValue || 0) - 1;
+                });
                 // Retrieve all users to check their likedtoursList and savedToursList
                 const accountsRef = ref(database, 'accounts');
                 const snapshot = await get(accountsRef);
@@ -111,6 +127,32 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                     }
                   });
                 }
+                //loop through all locations and remove the post from the location
+                formatLocations.forEach((location) => {
+                  const countryRef = ref(database, `cities/${location.country}`);
+                  //loop through all areas in the country
+                  get(countryRef).then((countrySnapshot) => {
+                    if (countrySnapshot.exists()) {
+                      //loop through all cities in the area          
+                      countrySnapshot.forEach((area) => {
+                        area.forEach((city) => {
+                          if (location.id === city.key) {
+                            const areaKey = area.key;
+                            //remove the post from the city
+                            const tourRef = ref(database, `cities/${location.country}/${areaKey}/${location.id}/postImages/tours/${tourId}`);
+
+                            remove(tourRef);
+
+                          }
+                        });
+
+                      });
+                    }
+                  });
+                });
+
+                //delete all post images from storage
+                deleteFolder(`tours/${tourId}/images`);
 
                 // Optionally, update the UI or state here if necessary
               } catch (error) {
@@ -181,7 +223,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   const handleReport = (reason: any) => {
     setSelectedReason(reason);
     setModalVisible(false);
-    setShowConfirmation(true);    
+    setShowConfirmation(true);
     setTimeout(() => {
       setShowConfirmation(false);
     }, 3000);
@@ -250,7 +292,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         ...item.reason,
         [reasonKey]: reason
       },
-      type:"tour",
+      type: "tour",
       status_id: 1
     }
     await update(reportRef, itemNew)
@@ -269,15 +311,23 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
     setIsModalVisible(false)
     if (type === "post") {
       setDataReason(reasonsPost)
-      setIdPost(tourId)           
+      setIdPost(tourId)
       setTypeReport("post")
     }
     else if (type === "comment") {
       setDataReason(reasonsComment)
-      setIdComment('') 
+      setIdComment('')
       setTypeReport("comment")
     }
   }
+  const handleEditTour = () => {
+    router.push({
+      pathname: "/(article)/editPostTour",
+      params: { tourId }
+    });
+    setIsModalVisible(false);
+  }
+
 
   if (isLoading) {
     return (
@@ -329,6 +379,11 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                   { top: menuPosition.top, left: menuPosition.left },
                 ]}
               >
+                <TouchableOpacity style={styles.menuItem}
+                  onPress={handleEditTour}>
+                  <Icon name="application-edit" size={20} style={styles.menuIcon} />
+                  <Text style={styles.menuText}>Sửa</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.menuItem}
                   onPress={handleDeleteTour}>
 
@@ -391,8 +446,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={styles.closeButton} onPress={() => {              
-              setModalVisible(false)}}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => {
+              setModalVisible(false)
+            }}>
               <MaterialIcons name="cancel" size={24} color="red" />
             </TouchableOpacity>
           </View>

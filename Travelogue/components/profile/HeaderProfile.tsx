@@ -48,7 +48,7 @@ export default function HeaderProfile({ onModalOpen = () => { }, onModalClose = 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 0,
   },
   username: {
     fontWeight: "bold",
