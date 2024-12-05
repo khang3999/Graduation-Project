@@ -1,4 +1,4 @@
-import { Entypo, EvilIcons } from '@expo/vector-icons';
+import { Entypo, EvilIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 export default function TabLayout() {
@@ -18,7 +18,7 @@ export default function TabLayout() {
         name="festival"
         options={{
           title: 'Địa điểm',
-          tabBarIcon: ({ color }) => <Entypo size={28} name="location-pin" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="party-popper" size={28} color={color} />,
           headerShown:false
         }}
       />

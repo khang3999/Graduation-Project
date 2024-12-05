@@ -79,12 +79,12 @@ export default function detail() {
                                 style={styles.username}
                             >{userData.phone || ''}</Text>
                         </View>
-                        <View style={styles.row}>
+                        {/* <View style={styles.row}>
                             <Text style={styles.infoText}>Số đăng ký doanh nghiệp:</Text>
                             <Text
                                 style={styles.username}
                             >{userData.business_license_id || ''}</Text>
-                        </View>
+                        </View> */}
                         <View style={styles.row}>
                             <Text style={styles.infoText}>Thời gian tạo:</Text>
                             <Text
@@ -97,13 +97,13 @@ export default function detail() {
                                 style={styles.username}
                             >{userData.email || ''}</Text>
                         </View>
-                        <View style={styles.row}>
+                        {/* <View style={styles.row}>
                             <Text style={styles.infoText}>Số CCCD:</Text>
                             <Text
                                 style={styles.username}
                             >{userData.numberCCCD || ''}</Text>
-                        </View>
-                        <View style={styles.row}>
+                        </View> */}
+                        {/* <View style={styles.row}>
                             <Text style={styles.infoText}>Ảnh CCCD:</Text>
                             <Image accessibilityViewIsModal={true} style={styles.cccd} source={{uri : userData.imageBackUrlCCCD}}></Image>
                             <Image style={styles.cccd} source={{uri : userData.imageFrontUrlCCCD}}></Image>
@@ -111,7 +111,7 @@ export default function detail() {
                         <View style={styles.row}>
                             <Text style={styles.infoText}>Ảnh số đăng ký:</Text>
                             <Image style={styles.cccd} source={{uri : userData.imageUrlBusinessLicense}}></Image>
-                        </View>
+                        </View> */}
                         <TouchableOpacity
                             style={styles.saveButton}
                             onPress={()=>{

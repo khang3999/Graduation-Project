@@ -39,11 +39,11 @@ const Factor = () => {
   const handleSaveReport = () => {
     const reportRef = ref(database, 'factors/report');
     Alert.alert(
-      'Change factor',
-      'Are you sure you want to change factors of the report?',
+      'Xác nhận thay đổi',
+      'Bạn chắc chắn thay đổi này không?',
       [
         {
-          text: 'Cancel',
+          text: 'Hủy',
           style: 'cancel',
           onPress: () => {
             setDataFactorReport([]);
@@ -52,7 +52,7 @@ const Factor = () => {
           },
         },
         {
-          text: 'OK',
+          text: 'Xác nhận',
           onPress: () => {
             update(reportRef, updatedDataReport)
               .then(() => {
@@ -96,7 +96,7 @@ const Factor = () => {
   return (
     <View style={{ marginTop: 30 }}>
       <View style={styles.container}>
-        <Text style={styles.category}>Report</Text>
+        <Text style={styles.category}>Báo cáo</Text>
         {dataFactorReport.length > 0 ? (
           <FlatList
             data={dataFactorReport}
@@ -105,11 +105,11 @@ const Factor = () => {
             removeClippedSubviews={false}
           />
         ) : (
-          <Text style={styles.noAccountsText}>No data</Text>
+          <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
         )}
         <View style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row' }}>
           <TouchableOpacity style={styles.approveBtn} onPress={handleSaveReport}>
-            <Text style={styles.approveText}>Save</Text>
+            <Text style={styles.approveText}>Lưu</Text>
           </TouchableOpacity>
         </View>
       </View>

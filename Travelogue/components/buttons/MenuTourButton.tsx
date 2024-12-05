@@ -431,7 +431,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select a reason for report</Text>
+            <Text style={styles.modalTitle}>Chọn lý do báo cáo</Text>
             <FlatList
               data={dataReason}
               keyExtractor={(_, index) => index.toString()}
@@ -458,7 +458,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
       {/* Confirmation message */}
       {showConfirmation && (
         <View style={styles.confirmationBox}>
-          <Text style={styles.confirmationText}>Your report has been submitted!</Text>
+          <Text style={styles.confirmationText}>Đơn báo cáo của bạn đã được gởi!</Text>
         </View>
       )}
     </View>

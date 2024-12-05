@@ -15,7 +15,7 @@ const ImageReport = () => {
             setDataImagesReport(imagesReport)
         }
     }, [imagesReport])
-    console.log("report    ", imagesReport);
+    // console.log("report    ", imagesReport);
 
     // Ensure images is parsed correctly
     if (!dataImagesReport.length) {

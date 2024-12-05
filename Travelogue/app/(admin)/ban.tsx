@@ -115,7 +115,7 @@ const Ban = () => {
           style={styles.remove}
           onPress={() => unblockBanWord(word.item.id)}
         >
-          <Text style={{ color: '#ffffff' }}>Remove</Text>
+          <Text style={{ color: '#ffffff' }}>Xóa</Text>
         </TouchableOpacity>
       </View>
     )
@@ -134,7 +134,7 @@ const Ban = () => {
           onPress={() => handleAdd()}
           disabled={isDisabled}
         >
-          <Text style={{ color: '#ffffff' }}>Add</Text>
+          <Text style={{ color: '#ffffff' }}>Thêm</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -187,7 +187,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#999999',
   },
   remove: {
-    backgroundColor: '#2986cc',
+    // backgroundColor: '#2986cc',
+    backgroundColor: '#ff3d3d',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8

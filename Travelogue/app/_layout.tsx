@@ -22,7 +22,7 @@ export default function Layout() {
           <Stack.Screen name="(article)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" />
           <Stack.Screen name="notify" options={{ headerShown: true }}/>
-          <Stack.Screen name="newPoint" options={{ headerShown: true }}/>
+          <Stack.Screen name="newPoint" options={{ headerShown: true , title: "Địa điểm mới" }}/>
           <Stack.Screen name="imageReport" options={{
             headerShown: true,
             title: "Hình ảnh minh chứng",
@@ -52,6 +52,19 @@ export default function Layout() {
           <Stack.Screen name="companyDetail" options={{
             headerShown: true,
             title: "Chi tiết doanh nghiệp",
+            headerStyle: {
+              backgroundColor:
+                Colors[colorScheme ? colorScheme : "light"].background,
+            },
+            headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
+            headerTitleStyle: {
+              fontWeight: "bold",
+            },
+            headerTitleAlign: "center",
+          }}/>
+          <Stack.Screen name="userDetail" options={{
+            headerShown: true,
+            title: "Chi tiết tài khoản cá nhân",
             headerStyle: {
               backgroundColor:
                 Colors[colorScheme ? colorScheme : "light"].background,

@@ -4,7 +4,7 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
-import { push, remove, update,get } from '@firebase/database';
+import { push, remove, update, get } from '@firebase/database';
 import { usePost } from '@/contexts/PostProvider';
 import { router } from 'expo-router';
 import { useTourProvider } from '@/contexts/TourProvider';
@@ -67,14 +67,14 @@ export default function RatingReport() {
 
 
   // Hàm gỡ lock cho rating
-  const unlockrating = (ratingID: string, postId: string, type:string) => {
+  const unlockRating = (ratingID: string, postId: string, type: string) => {
     const refRemove = ref(database, `reports/rating/${[ratingID]}`)
     const refrating = ref(database, `${type}s/${[postId]}/ratings/${[ratingID]}`)
     Alert.alert(
-      "Unlock rating",
-      "Are you sure you want to unlock this rating?",
+      "Gỡ báo cáo",
+      "Bạn chắc chắn muốn gỡ báo cáo cho đánh giá này?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             // Xoa khoi bang report
@@ -84,21 +84,21 @@ export default function RatingReport() {
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-           
+
           }
         }
       ]
     );
   };
   // Hàm hidden rating
-  const hiddenrating = (ratingId: string, postId: string, type:string) => {
+  const hiddenRating = (ratingId: string, postId: string, type: string) => {
     const refrating = ref(database, `${type}s/${[postId]}/ratings/${[ratingId]}`)
     const refReport = ref(database, `reports/rating/${[ratingId]}`)
     Alert.alert(
-      "Hidden rating",
-      "Are you sure you want to hidden this rating?",
+      "Ẩn đánh giá",
+      "Bạn chắc chắc muốn ẩn đánh giá bị vi phạm?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho rating thanh hidden
@@ -110,7 +110,7 @@ export default function RatingReport() {
                 console.error('Error updating data:', error);
               });
             //Cap nhat status cho report da xu ly
-            update(refReport, { status_id : keyResolve })
+            update(refReport, { status_id: keyResolve })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -123,15 +123,15 @@ export default function RatingReport() {
     );
   };
 
-   // Fetch post by postID
-   const fetchPostByPostId = async (postId: any, type:any) => {
+  // Fetch post by postID
+  const fetchPostByPostId = async (postId: any, type: any) => {
     try {
       const refPost = ref(database, `${type}s/${postId}`);
       const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataJson = snapshot.val();
-       console.log(dataJson);
-       type==="post"?setSelectedPost([dataJson]):setSelectedTour([dataJson])
+        console.log(dataJson);
+        type === "post" ? setSelectedPost([dataJson]) : setSelectedTour([dataJson])
       } else {
         console.log("No data city available");
       }
@@ -146,7 +146,7 @@ export default function RatingReport() {
     setImagesReport(Object.values(post.images).flat())
     router.push({
       pathname: '/imageReport',
-      
+
     })
   }
 
@@ -156,7 +156,7 @@ export default function RatingReport() {
       <TouchableOpacity style={styles.accountItem} onPress={
         () => handleNavigatePostDetail(rating.item)
       }>
-        <View>
+        <View style={{width:240}}>
 
           <Text style={styles.name}>{rating.item.rating_id}</Text>
           {Object.values(rating.item.reason).map((reason: any) => {
@@ -167,8 +167,8 @@ export default function RatingReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockrating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenrating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
+          <AntDesign name="lock" size={26} color='#3366CC' onPress={() => hiddenRating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenRating(rating.item.rating_id, rating.item.post_id, rating.item.type)} />
         </View>
 
       </TouchableOpacity>

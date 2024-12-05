@@ -47,13 +47,35 @@ const Payment = () => {
 
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedType, setSelectedType] = useState("");
+  const [statusOptions, setStatusOptions] = useState([]);
 
-  const statusOptions = [
-    { id: "1", value: "Pending" },
-    { id: "2", value: "Success" },
-    { id: "3", value: "Failure" },
-  ];
-  const typeOptions = ["Deduction", "Recharge"];
+  useEffect(() => {
+    // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
+    const refStatuspayment = ref(database, 'status/payment')
+    const unsubscribe = onValue(refStatuspayment, (snapshot) => {
+      if (snapshot.exists()) {
+        const dataArray = snapshot.val()
+        const result = dataArray
+          .filter((value: any) => value !== undefined) // Loại bỏ giá trị undefined
+          .map((value: any, index: any) => ({
+            id: index + 1, // Tạo id bắt đầu từ 1
+            value: value   // Giá trị từ mảng gốc
+          }));
+        setStatusOptions(result)
+      } else {
+        console.log("No data available");
+      }
+      // setLoadingPost(false)
+    }, (error) => {
+      console.error("Error fetching data:", error);
+      // setLoadingPost(false)
+    });
+    return () => {
+      unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    };
+  }, [])
+
+  const typeOptions = ["Tiền ra", "Tiền vào"];
   const today = new Date();
 
   useEffect(() => {
@@ -79,7 +101,7 @@ const Payment = () => {
 
     return () => statusContentListener();
   }, []);
-  
+
 
   // Exchange data by account id
   useEffect(() => {
@@ -159,7 +181,7 @@ const Payment = () => {
 
       if (response.ok) {
         setQrDataURL(data.data.qrDataURL);
-         handleAddRequest();
+        handleAddRequest();
       } else {
         setError(data.desc || "An error occurred");
       }
@@ -174,25 +196,25 @@ const Payment = () => {
   useEffect(() => {
     if (accountId) {
       const onValueChange = ref(database, `accounts/${accountId}`);
-    const reportListener = onValue(
-      onValueChange,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const jsonData = snapshot.val();
+      const reportListener = onValue(
+        onValueChange,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const jsonData = snapshot.val();
 
-          setBalance(jsonData.balance);
-        } else {
-          console.log("No data available");
+            setBalance(jsonData.balance);
+          } else {
+            console.log("No data available");
+          }
+        },
+        (error) => {
+          console.error("Error fetching data:", error);
         }
-      },
-      (error) => {
-        console.error("Error fetching data:", error);
-      }
-    );
+      );
 
-    return () => reportListener();
+      return () => reportListener();
     }
-    
+
   }, [accountId, dataExchanges]);
 
 
@@ -278,7 +300,7 @@ const Payment = () => {
   //Modal
 
   const handleSelect = (option: any, list: any, setList: any) => {
-    console.log(option);
+    // console.log(option);
 
     setList((prev: any) =>
       prev.includes(option)
@@ -385,7 +407,7 @@ const Payment = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Balance:</Text>
+          <Text style={styles.balanceLabel}>Số dư:</Text>
           <Text style={styles.balanceAmount}>
             {balance.toLocaleString("vi-VN")}
           </Text>
@@ -397,7 +419,7 @@ const Payment = () => {
             onChangeText={handleTextChange}
             keyboardType="numeric"
             maxLength={15}
-            placeholder="Enter an amount"
+            placeholder="Nhập số tiền cần nạp"
           />
           <TouchableOpacity
             style={[styles.addBtn, isDisabled && styles.disabledBtn]}
@@ -407,7 +429,7 @@ const Payment = () => {
             {loadingQR ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.addBtnText}>Request</Text>
+              <Text style={styles.addBtnText}>Yêu cầu</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -422,14 +444,14 @@ const Payment = () => {
               <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
                 <MaterialIcons name="cancel" size={24} color="red" />
               </TouchableOpacity>
-              <Text style={styles.dialogTitle}>Scan QR code</Text>
+              <Text style={styles.dialogTitle}>Quét mã QR</Text>
               {qrDataURL ? (
                 <Image source={{ uri: qrDataURL }} style={styles.image} />
               ) : (
-                <Text>No QR code available</Text>
+                <Text>Không có mã QR</Text>
               )}
               <Text style={styles.dialogText}>
-                QR code has a one-time value only
+                Mã QR chỉ có giá trị một lần
               </Text>
             </View>
           </View>
@@ -479,18 +501,18 @@ const Payment = () => {
                   </TouchableOpacity>
                   <View style={{ padding: 5, width: "100%" }}>
                     <Text style={{ fontSize: 20, marginBottom: 10 }}>
-                      Transaction Filter
+                      Bộ lọc
                     </Text>
 
                     {/* Date pickers for time */}
-                    <Text style={{ fontWeight: "bold" }}>Start Date</Text>
+                    <Text style={{ fontWeight: "bold" }}>Ngày bắt đầu</Text>
                     <Button
                       mode="outlined"
                       onPress={() => setShowStartPicker(true)}
                     >
                       {timeStart
                         ? timeStart.toLocaleDateString()
-                        : "Select Start Date"}
+                        : "Chọn ngày bắt đầu"}
                     </Button>
                     {showStartPicker && (
                       <DateTimePicker
@@ -502,13 +524,13 @@ const Payment = () => {
                     )}
 
                     <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-                      End Date
+                      Ngày kết thúc
                     </Text>
                     <Button
                       mode="outlined"
                       onPress={() => setShowEndPicker(true)}
                     >
-                      {timeEnd ? timeEnd.toLocaleDateString() : "Select End Date"}
+                      {timeEnd ? timeEnd.toLocaleDateString() : "Chọn ngày kết thúc"}
                     </Button>
                     {showEndPicker && (
                       <DateTimePicker
@@ -522,10 +544,10 @@ const Payment = () => {
                     <Divider style={{ marginVertical: 10 }} />
 
                     {/* Transaction Status */}
-                    <Text style={{ fontWeight: "bold" }}>Transaction Status</Text>
+                    <Text style={{ fontWeight: "bold" }}>Trạng thái giao dịch</Text>
                     {statusOptions.map((option: any) => (
                       <View
-                        key={option}
+                        key={option.id}
                         style={{ flexDirection: "row", alignItems: "center" }}
                       >
                         <Checkbox
@@ -549,7 +571,7 @@ const Payment = () => {
                     <Divider style={{ marginVertical: 10 }} />
 
                     {/* Transaction Type */}
-                    <Text style={{ fontWeight: "bold" }}>Transaction Type</Text>
+                    <Text style={{ fontWeight: "bold" }}>Kiểu giao dịch</Text>
                     {typeOptions.map((option, index) => (
                       <View
                         key={index}
@@ -574,7 +596,7 @@ const Payment = () => {
                       style={{ marginTop: 20 }}
                       onPress={handleFilter}
                     >
-                      <Text>Apply Filters</Text>
+                      <Text>Áp dụng</Text>
                     </Button>
                   </View>
                 </View>
@@ -592,7 +614,7 @@ const Payment = () => {
             // keyExtractor={(item) => item.id}
             />
           ) : (
-            <Text style={styles.noAccountsText}>No data</Text>
+            <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
           )}
         </View>
       </View>

@@ -70,10 +70,10 @@ const Account = () => {
   const handleRemove = (reasonId: string) => {
     const refRemove = ref(database, `/reasons/account/${reasonId}`)
     Alert.alert(
-      "Remove reason",
-      "Are you sure you want to remove this reason?",
+      "Xác nhận xóa",
+      "Bạn chắc chắn muốn xóa?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             remove(refRemove).then(() => {
@@ -123,14 +123,14 @@ const Account = () => {
           style={styles.textInput}
           value={inputText}
           onChangeText={handleTextChange}
-          placeholder='Add reason report for account'
+          placeholder='Thêm lí do mới'
         />
         <TouchableOpacity
           style={[styles.addBtn, isDisabled && styles.disabledBtn]}
           onPress={() => handleAdd()}
           disabled={isDisabled}
         >
-          <Text style={{ color: '#ffffff' }}>Add</Text>
+          <Text style={{ color: '#ffffff' }}>Thêm</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.container}>

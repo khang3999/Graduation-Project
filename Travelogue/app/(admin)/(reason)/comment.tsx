@@ -69,8 +69,8 @@ const Comment = () => {
   const handleRemove = (reasonId: string) => {
     const refRemove = ref(database, `/reasons/comment/${reasonId}`)
     Alert.alert(
-      "Remove reason",
-      "Are you sure you want to remove this reason?",
+      "Xác nhận xóa",
+      "Bạn chắc chắn muốn xóa?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -122,14 +122,14 @@ const Comment = () => {
           style={styles.textInput}
           value={inputText}
           onChangeText={handleTextChange}
-          placeholder='Add reason report for comment'
+          placeholder='Thêm lí do mới'
         />
         <TouchableOpacity
           style={[styles.addBtn, isDisabled && styles.disabledBtn]}
           onPress={() => handleAdd()}
           disabled={isDisabled}
         >
-          <Text style={{ color: '#ffffff' }}>Add</Text>
+          <Text style={{ color: '#ffffff' }}>Thêm</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.container}>

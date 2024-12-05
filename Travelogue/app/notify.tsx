@@ -66,18 +66,14 @@ const NotificationsScreen = () => {
                 .catch((error) => {
                     console.error('Error updating data:', error);
                 });
-                console.log('postid ',notify.post_id);
+                // console.log('postid ',notify.post_id);
                 
             fetchPostByPostId(notify.post_id, notify.type_post)
             if (notify.type_post === "tour") {
-                router.push({
-                  pathname: '/tourDetail'
-                })
+                router.push( '/tourDetail')
               }
               else if (notify.type_post === "post") {
-                router.push({
-                  pathname: '/postDetail'
-                })
+                router.push('/postDetail')
               }
         }
 

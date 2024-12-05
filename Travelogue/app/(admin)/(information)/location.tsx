@@ -28,8 +28,8 @@ import Toast from "react-native-toast-message-custom";
 import { set } from "lodash";
 
 const Location = () => {
-  const [selectedCountry, setSelectedCountry] = useState();
-  const [selectedCity, setSelectedCity] = useState();
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
   const [cityArea, setCityArea] = useState("");
   const [cityInformation, setCityInformation] = useState("");
   const [dataCountries, setDataCountries] = useState([]);
@@ -169,11 +169,11 @@ const Location = () => {
       );
 
       Alert.alert(
-        "Change information",
-        "Are you sure you want to update information of " + selectedCity + " ?",
+        "Xác nhận thay đổi",
+        "Bạn chắc chắn muốn lưu những thay đổi?",
         [
           {
-            text: "Cancel",
+            text: "Hủy",
             style: "cancel",
           },
           {
@@ -343,14 +343,14 @@ const Location = () => {
         style={styles.textArea}
         multiline={true}
         numberOfLines={4} // sets the height based on line count
-        placeholder="Write your comment here..."
+        placeholder="Nhập thông tin địa điểm ..."
         value={cityInformation}
         onChangeText={setCityInformation}
         onFocus={() => setEditText(true)}
       />
       {editText && (
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.buttonText}>Save</Text>
+          <Text style={styles.buttonText}>Lưu</Text>
         </TouchableOpacity>
       )}
       {/* Loading */}
