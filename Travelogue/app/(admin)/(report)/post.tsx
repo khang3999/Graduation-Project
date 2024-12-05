@@ -65,14 +65,14 @@ export default function PostReport() {
   }, []);
 
   // Hàm gỡ lock cho post
-  const unlockPost = (postId: string, type: string) => {
+  const unreportPost = (postId: string, type: string) => {
     const refRemove = ref(database, `reports/post/${[postId]}`)
     const refPost = ref(database, `${type}s/${[postId]}`)
     Alert.alert(
-      "Unlock post",
-      "Are you sure you want to unlock this post?",
+      "Gỡ báo cáo",
+      "Bạn chắc chắn muốn gỡ báo cáo cho bài viết này?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             // Xoa khoi bang report
@@ -93,10 +93,10 @@ export default function PostReport() {
     const refPost = ref(database, `${type}s/${[postId]}`)
     const refReport = ref(database, `reports/post/${[postId]}`)
     Alert.alert(
-      "Hidden post",
-      "Are you sure you want to hidden this post?",
+      "Ẩn bài viết",
+      "Bạn chắc chắc muốn ẩn bài viết bị vi phạm?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho post thanh hidden
@@ -144,7 +144,7 @@ export default function PostReport() {
     setImagesReport(Object.values(post.images).flat())
     router.push({
       pathname: '/imageReport',
-      
+
     })
 
   }
@@ -156,7 +156,7 @@ export default function PostReport() {
       <TouchableOpacity key={post.item.id} style={styles.accountItem} onPress={
         () => handleNavigatePostDetail(post.item)
       }>
-        <View>
+        <View style={{width:240}}>
           <Text style={styles.name}>{post.item.post_id}</Text>
           {Object.values(post.item.reason).map((reason: any) => {
             return (
@@ -166,8 +166,8 @@ export default function PostReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => unlockPost(post.item.post_id, post.item.type)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => hiddenPost(post.item.post_id, post.item.type)} />
+          <AntDesign name="lock" size={26} color='#3366CC' style={{ bottom: 0 }} onPress={() => hiddenPost(post.item.post_id, post.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red', bottom: -1 }} onPress={() => unreportPost(post.item.post_id, post.item.type)} />
         </View>
 
       </TouchableOpacity>

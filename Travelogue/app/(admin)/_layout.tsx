@@ -83,8 +83,8 @@ export default function Layout() {
         <Drawer.Screen
           name="factorA"
           options={{
-            drawerLabel: 'Factor',
-            title: 'Factor',
+            drawerLabel: 'Hệ số',
+            title: 'Hệ số',
             drawerIcon: ({ color, size }) => (
               <Octicons name="number" size={32} color={color} />
             )

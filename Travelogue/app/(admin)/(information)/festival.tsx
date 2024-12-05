@@ -9,11 +9,12 @@ import { TextInput } from 'react-native-gesture-handler';
 import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 import { router } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message-custom';
 
 
 const Festival = () => {
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [cityArea, setCityArea] = useState("");
   const [filteredData, setFilteredData] = useState([]);
@@ -61,10 +62,12 @@ const Festival = () => {
           Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
             key: cityCode,
             value: cityInfo.name,
-            area: cityInfo.area_id,
-            information: cityInfo.information
+            // area: cityInfo.area_id,
+            // information: cityInfo.information
           }))
         );
+        console.log(dataCitiesArray,'array');
+        
         setDataCities(dataCitiesArray)
       } else {
         setDataCities([])
@@ -80,10 +83,10 @@ const Festival = () => {
       setIsReady(true)
 
       const type = getValueFromKey(selectedPoint)
-      console.log(type);
+      // console.log(type);
 
       const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
-      console.log(onValueChange);
+      // console.log(onValueChange);
 
       // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
       const data = onValue(onValueChange, (snapshot) => {
@@ -124,11 +127,11 @@ const Festival = () => {
   const handleSelectedCity = (val: any) => {
     setSelectedCity(val)
 
-    if (val != null && val != undefined) {
-      const a: any = dataCities.find((e: any) => (e.key == val))
-      setCityArea(a.area)
-      setCityInformation(a.information)
-    }
+    // if (val != null && val != undefined) {
+    //   const a: any = dataCities.find((e: any) => (e.key == val))
+    //   setCityArea(a.area)
+    //   setCityInformation(a.information)
+    // }
   }
   // Find type
   const getValueFromKey = (key: any) => {
@@ -136,7 +139,8 @@ const Festival = () => {
     return item ? item.value : null;
   };
   const handleAdd = async () => {
-    // Dữ liệu mà bạn muốn truyền
+    if (selectedCity && selectedCity) {
+      // Dữ liệu mà bạn muốn truyền
     const data = {
       idCity: selectedCity,
       idCountry: selectedCountry,
@@ -146,6 +150,18 @@ const Festival = () => {
       pathname: "/newPoint",
       params: data,
     });
+    } else {
+      Toast.show({
+        type: "error",
+        position: "top",
+        text1: "Có vấn đề gì đó!",
+        text2: `Có vẻ bạn chưa chọn tỉnh.`,
+        visibilityTime: 3000,
+        text1Style: { fontSize: 16 },
+        text2Style: { fontSize: 14 },
+      });
+    }
+    
   };
   // Remove
   const handleRemove = (id: string) => {
@@ -181,10 +197,10 @@ const Festival = () => {
   };
 
   return (
-    <View style={{ padding: 15, backgroundColor: 'white' }}>
+    <View style={{flex:1, padding: 15, backgroundColor: 'white' }}>
       <View style={styles.selectContainer}>
         <SelectList
-          dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
+          dropdownStyles={{width: 170, backgroundColor: 'white' }}
           boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
@@ -192,7 +208,7 @@ const Festival = () => {
           placeholder='Quốc gia'
         />
         <SelectList
-          dropdownStyles={{ zIndex: 10, position: 'absolute', width: 170, backgroundColor: 'white', top: 40 }}
+          dropdownStyles={{width: 170, backgroundColor: 'white'}}
           boxStyles={styles.selectList}
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
@@ -237,11 +253,10 @@ const Festival = () => {
                 />
               )}
             </View>
-            <Text>{item.value}</Text>
+            <Text>{item.value === "landmark" ? "Danh lam thắng cảnh":"Lễ hội"}</Text>
           </TouchableOpacity>
         ))}
       </View>
-
       <View style={styles.addBar}>
         {
           isReady && (
@@ -250,17 +265,16 @@ const Festival = () => {
             </TouchableOpacity>
           )}
       </View>
-
       <View style={styles.containerFlat}>
         {filteredData.length > 0 ? (
           <FlatList
             data={filteredData}
-            // keyExtractor={(item) => item.id}
+            keyExtractor={(item:any) => item.id}
             renderItem={renderPointsItem}
             contentContainerStyle={styles.containerFlatList}
           />
         ) : (
-          <Text style={styles.noAccountsText}>No data</Text>
+          <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
         )}
       </View>
 
@@ -275,7 +289,8 @@ const styles = StyleSheet.create({
     padding: 10,
   }, containerFlat: {
     marginVertical: 20,
-    height: "75%",
+    // height: "75%",
+    flex:1,
     borderColor: "red",
     borderWidth: 1,
     borderRadius: 30,
@@ -286,7 +301,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10, // khoảng cách trên và dưới của FlatList
     paddingHorizontal: 16, // khoảng cách hai bên của FlatList
     borderRadius: 30,
-
   },
   textArea: {
     height: 150,
@@ -310,12 +324,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     marginBottom: 15,
-    position: 'relative',
-    zIndex: 10, // Giúp hiển thị SelectList phía trên các phần tử khác
   },
   selectList: {
     width: 170,
-    zIndex: 10, // Giúp hiển thị SelectList không bị đẩy xuống dưới khi mở
+    // zIndex: 10, // Giúp hiển thị SelectList không bị đẩy xuống dưới khi mở
   }, item: {
     backgroundColor: '#fff',
     padding: 16,

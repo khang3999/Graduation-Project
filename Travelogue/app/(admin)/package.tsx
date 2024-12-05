@@ -74,11 +74,11 @@ const PackageComponent = () => {
 
     const packageUpdateRef = ref(database, `packages/${editingPackageId}`);
     Alert.alert(
-      'Save Package',
-      'Are you sure you want to save changes?',
+      'Xác nhận lưu',
+      'Bạn chắc chắn muốn lưu những thay đổi?',
       [
         {
-          text: 'Cancel',
+          text: 'Hủy',
           style: 'cancel',
           onPress: () => {
             setUpdatedDataPackage({});
@@ -106,10 +106,10 @@ const PackageComponent = () => {
   const handleRemove = (pkg: any) => {
     const packageRef = ref(database, `packages/${pkg.id}`);
     Alert.alert(
-      'Remove Package',
-      'Are you sure you want to remove this package?',
+      'Xác nhận xóa',
+      'Bạn chắc chắn muốn xóa gói hiện tại?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Hủy', style: 'cancel' },
         {
           text: 'OK',
           onPress: async () => {
@@ -140,7 +140,7 @@ const PackageComponent = () => {
           }}
         />
         <View style={styles.item}>
-          <Text style={styles.title}>Price</Text>
+          <Text style={styles.title}>Giá gói</Text>
           <TextInput
             keyboardType="numeric"
             style={styles.input}
@@ -155,7 +155,7 @@ const PackageComponent = () => {
           />
         </View>
         <View style={styles.item}>
-          <Text style={styles.title}>Accumulated</Text>
+          <Text style={styles.title}>Tích lũy tối thiểu</Text>
           <TextInput
             keyboardType="numeric"
             style={styles.input}
@@ -170,7 +170,7 @@ const PackageComponent = () => {
           />
         </View>
         <View style={styles.item}>
-          <Text style={styles.title}>Discount</Text>
+          <Text style={styles.title}>Giảm giá {"(%)"}</Text>
           <TextInput
             keyboardType="numeric"
             style={styles.input}
@@ -185,7 +185,7 @@ const PackageComponent = () => {
           />
         </View>
         <View style={styles.item}>
-          <Text style={styles.title}>Hashtag</Text>
+          <Text style={styles.title}>Số lượng hashtag</Text>
           <TextInput
             keyboardType="numeric"
             style={styles.input}
@@ -203,14 +203,14 @@ const PackageComponent = () => {
         <View style={styles.buttonContainer}>
           {editingPackageId === item.item.id && (
             <TouchableOpacity style={styles.saveBtn} onPress={handleSavePackage}>
-              <Text style={styles.buttonText}>Save</Text>
+              <Text style={styles.buttonText}>Lưu</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={styles.deleteBtn}
             onPress={() => handleRemove(item.item)}
           >
-            <Text style={styles.buttonText}>Delete</Text>
+            <Text style={styles.buttonText}>Xóa</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.line} />
@@ -220,10 +220,10 @@ const PackageComponent = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={{ marginTop: 30 }}>
+      <View>
         <View style={styles.addBar}>
           <TouchableOpacity style={styles.addBtn} onPress={handleAddPackage}>
-            <Text style={{ color: '#ffffff' }}>Add</Text>
+            <Text style={{ color: '#ffffff' }}>Thêm</Text>
           </TouchableOpacity>
         </View>
         {localDataPackage.length > 0 ? (
@@ -234,7 +234,7 @@ const PackageComponent = () => {
             removeClippedSubviews={false}
           />
         ) : (
-          <Text style={styles.noAccountsText}>No data</Text>
+          <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
         )}
       </View>
     </TouchableWithoutFeedback>
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   addBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 20,
+    margin: 20,
     marginRight: 20,
   },
   addBtn: {

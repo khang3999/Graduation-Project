@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message-custom";
 import {
   database,
   getDownloadURL,
+  onValue,
   ref,
   set,
   storage,
@@ -53,6 +54,34 @@ const NewPoint = () => {
   const route = useRoute();
   const { idCity, idCountry }: any = route.params;
   const local = 'vi-VN'
+  const [dataCountries, setDataCountries]:any = useState([])
+
+
+
+  //Countries
+  useEffect(() => {
+    const refCountries = ref(database, `countries`)
+    const unsubscribe = onValue(refCountries, (snapshot) => {
+      if (snapshot.exists()) {
+        const jsonDataCountries = snapshot.val();
+        const countriesArray: any = Object.keys(jsonDataCountries).map(key => ({
+          key,
+          value: jsonDataCountries[key].label,
+        }));
+        
+        setDataCountries(countriesArray)
+
+      } else {
+        console.log("No data available1");
+      }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    return () => {
+      unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    };
+  }, [])
 
   const handleRemoveImage = (index: number) => {
     const updatedImages = [...defaultImages];
@@ -221,13 +250,12 @@ const NewPoint = () => {
         });
     }
   };
-
   return (
     <View style={styles.container}>
-      <View style={{flexDirection:'row', justifyContent:'space-around'}}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
 
-      <Text>#{idCountry}</Text>
-      <Text>#{idCity}</Text>
+        <Text>#{dataCountries.find((country:any)=>country.key === idCountry)?.value}</Text>
+        <Text>#{idCity}</Text>
       </View>
       <ScrollView>
         <Text style={styles.label}>Tên</Text>
@@ -235,7 +263,7 @@ const NewPoint = () => {
           placeholder="Nhập tên"
           value={name}
           onChangeText={setName}
-          style={styles.input}        />
+          style={styles.input} />
 
         <Text style={styles.label}>Vĩ độ</Text>
         <TextInput
@@ -312,8 +340,8 @@ const NewPoint = () => {
                 ? timeStartDate.toLocaleDateString(local).slice(0, 10)
                 : "Chọn ngày"
               : timeStartTime
-              ? timeStartTime.toLocaleTimeString().slice(0, 4)
-              : "Chọn giờ"}{" "}
+                ? timeStartTime.toLocaleTimeString().slice(0, 4)
+                : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
 
@@ -325,8 +353,8 @@ const NewPoint = () => {
                 ? timeEndDate.toLocaleDateString(local).slice(0, 10)
                 : "Chọn ngày"
               : timeEndTime
-              ? timeEndTime.toLocaleTimeString().slice(0, 4)
-              : "Chọn giờ"}{" "}
+                ? timeEndTime.toLocaleTimeString().slice(0, 4)
+                : "Chọn giờ"}{" "}
           </Text>
         </TouchableOpacity>
 
@@ -339,7 +367,7 @@ const NewPoint = () => {
                 : timeStartTime || new Date()
             }
             onChange={onChangeStartDate}
-            
+
           />
         )}
 
