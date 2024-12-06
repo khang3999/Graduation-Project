@@ -45,6 +45,9 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         drawerContent={(props) => <CustomDrawerContent {...props} />}
+        screenOptions={{
+          headerShown: true
+        }}
       >
         <Drawer.Screen
           name="(account)"
@@ -63,7 +66,8 @@ export default function Layout() {
             title: 'Báo cáo',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="report" color={color} size={size} />
-            )
+            ),
+            
           }}
         />
         <Drawer.Screen
@@ -79,8 +83,8 @@ export default function Layout() {
         <Drawer.Screen
           name="factorA"
           options={{
-            drawerLabel: 'Factor',
-            title: 'Factor',
+            drawerLabel: 'Hệ số',
+            title: 'Hệ số',
             drawerIcon: ({ color, size }) => (
               <Octicons name="number" size={32} color={color} />
             )
@@ -121,25 +125,13 @@ export default function Layout() {
         <Drawer.Screen
           name="(information)"
           options={{
-            drawerLabel: 'Information Locations',
-            title: 'Information Locations',
+            drawerLabel: 'Thông tin địa điểm',
+            title: 'Thông tin địa điểm',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
         />
-        {/* <Drawer.Screen
-          name="testReport"
-          options={{
-            drawerLabel: 'testReport',
-            title: 'testReport',
-            drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
-            )
-          }}
-        /> */}
-       
-       
       </Drawer>
 
     </GestureHandlerRootView>

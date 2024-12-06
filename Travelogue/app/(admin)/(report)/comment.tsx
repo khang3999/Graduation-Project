@@ -71,10 +71,10 @@ export default function CommentReport() {
     const refRemove = ref(database, `reports/comment/${[commentID]}`)
     const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentID]}`)
     Alert.alert(
-      "Unlock comment",
-      "Are you sure you want to unlock this comment?",
+      "Gỡ báo cáo",
+      "Bạn chắc chắn muốn gỡ báo cáo cho bình luận này?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             // Xoa khoi bang report
@@ -95,10 +95,10 @@ export default function CommentReport() {
     const refComment = ref(database, `${type}s/${[postId]}/comments/${[commentId]}`)
     const refReport = ref(database, `reports/comment/${[commentId]}`)
     Alert.alert(
-      "Hidden comment",
-      "Are you sure you want to hidden this comment?",
+      "Ẩn bình luận",
+      "Bạn chắc chắc muốn ẩn bình luận bị vi phạm?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
           text: "OK", onPress: () => {
             //Cap nhat status cho comment thanh hidden
@@ -156,7 +156,7 @@ export default function CommentReport() {
       <TouchableOpacity style={styles.accountItem} onPress={
         () => handleNavigatePostDetail(comment.item)
       }>
-        <View>
+        <View style={{width:240}}>
 
           <Text style={styles.name}>{comment.item.comment_id}</Text>
           {Object.values(comment.item.reason).map((reason: any) => {
@@ -167,8 +167,8 @@ export default function CommentReport() {
 
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <AntDesign name="unlock" size={26} color='#3366CC' onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
-          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => hiddenComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
+          <AntDesign name="lock" size={26} color='#3366CC' onPress={() => hiddenComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
+          <Feather name="x-square" size={26} style={{ marginLeft: 25, color: 'red' }} onPress={() => unlockComment(comment.item.comment_id, comment.item.post_id, comment.item.type)} />
         </View>
 
       </TouchableOpacity>

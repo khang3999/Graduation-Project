@@ -351,7 +351,7 @@ const MenuProfileButton: React.FC<MenuPopupButtonProps> = ({ menuIcon, isDisplay
       {/* Confirmation message */}
       {showConfirmation && (
         <View style={styles.confirmationBox}>
-          <Text style={styles.confirmationText}>Your report has been submitted!</Text>
+          <Text style={styles.confirmationText}>Đơn báo cáo của bạn đã được gởi!</Text>
         </View>
       )}
     </View>

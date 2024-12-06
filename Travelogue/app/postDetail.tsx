@@ -138,7 +138,7 @@ const PostItem: React.FC<PostItemProps> = ({
     // return;
     if (replyText.trim().length > 0) {
       const parentId = parentComment ? parentComment.id : null;
-      console.log('Parent comment:', parentComment);
+      // console.log('Parent comment:', parentComment);
       if (parentComment) {
         setAuthorParentCommentId(parentComment.author.id)
       }

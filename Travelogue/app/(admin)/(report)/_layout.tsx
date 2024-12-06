@@ -8,11 +8,19 @@ export default function TabLayout() {
       height:60
     } }}>
       <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Tài khoản',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={38} name="account-outline" color={color} />,
+          headerShown:false
+        }}
+      />
+      <Tabs.Screen
         name="post"
         options={{
           title: 'Bài viết',
           tabBarIcon: ({ color }) => <Entypo size={30} name="news" color={color} />,
-          headerShown:false
+          headerShown: false
         }}
       />
       <Tabs.Screen

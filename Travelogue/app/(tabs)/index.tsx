@@ -60,7 +60,7 @@ const Home = () => {
               :
               dataModalSelected.cities.map((cityId: any) => {
                 const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
-                console.log(found);
+                // console.log(found);
                 return <Badge key={cityId} size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
               })
             }

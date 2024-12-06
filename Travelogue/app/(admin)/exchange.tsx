@@ -69,8 +69,8 @@ const Exchange = () => {
     const refAccount = ref(database, `accounts/${payment.account_id}`);
     
     Alert.alert(
-      "Approve payment",
-      "Are you sure you want to approve payment for this account?",
+      "Xác nhận nạp tiền",
+      "Bạn chắc chắn muốn hoàn tất giao dịch này?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -117,8 +117,8 @@ const Exchange = () => {
   const rejectPayment = (paymentId: any) => {
     const refExchanges = ref(database, `exchanges/${paymentId}`);
     Alert.alert(
-      "Reject payment ",
-      "Are you sure you want to reject payment for this account?",
+      "Từ chối nạp tiền",
+      "Bạn chắc chắn muốn từ chối giao dịch này?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -180,7 +180,7 @@ const Exchange = () => {
           style={styles.textInput}
           value={inputText}
           onChangeText={handleTextChange}
-          placeholder='Search by name'
+          placeholder='Tìm kiếm theo tên công ty'
         />
       </View>
       <View style={styles.container}>
@@ -191,7 +191,7 @@ const Exchange = () => {
           // keyExtractor={(item) => item.id}
           />
         ) : (
-          <Text style={styles.noAccountsText}>No data</Text>
+          <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
         )}
       </View>
     </View>
