@@ -173,7 +173,7 @@ const AddPostUser = () => {
 
   //Lay data banned words
   const bannedWords = useBannedWords();
- 
+
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -268,19 +268,19 @@ const AddPostUser = () => {
   //Cac tinh thanh duoc chon
   const handCityPress =
     (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
-    () => {
-      setCities([
-        {
-          id: city.id,
-          name: city.name,
-          id_nuoc: city.id_nuoc,
-          area_id: city.area_id,
-        },
-        ...cities,
-      ]);
-      setSearchQueryCity("");
-      setModalVisibleCity(false);
-    };
+      () => {
+        setCities([
+          {
+            id: city.id,
+            name: city.name,
+            id_nuoc: city.id_nuoc,
+            area_id: city.area_id,
+          },
+          ...cities,
+        ]);
+        setSearchQueryCity("");
+        setModalVisibleCity(false);
+      };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -786,7 +786,7 @@ const AddPostUser = () => {
   // }, [isCheckIn]);
 
   const handlePushPost = async () => {
-    
+
     setButtonPost(true);
     if (cities.length === 0) {
       setButtonPost(false);
@@ -837,8 +837,7 @@ const AddPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -867,8 +866,7 @@ const AddPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -935,12 +933,10 @@ const AddPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -967,12 +963,12 @@ const AddPostUser = () => {
     const timestamp = Date.now();
 
     try {
-    const storage = getStorage();
-    const uploadedImageUrls: {
-      [key: string]: {
-        [key: string]: { city_name: string; images_value: string[] };
-      };
-    } = {};
+      const storage = getStorage();
+      const uploadedImageUrls: {
+        [key: string]: {
+          [key: string]: { city_name: string; images_value: string[] };
+        };
+      } = {};
 
       //Tạo bảng
       const postsRef = ref(database, "posts");
@@ -1044,7 +1040,7 @@ const AddPostUser = () => {
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
-              
+
               }
             );
           }
@@ -1128,7 +1124,7 @@ const AddPostUser = () => {
             avatar: avatar,
             dayUpload: timestamp,
             name: fullname,
-            idPost : postId
+            idPost: postId
           }
         );
 
@@ -1246,8 +1242,7 @@ const AddPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
-          dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
         }.`
       );
       return;
@@ -1262,8 +1257,7 @@ const AddPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
-            day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -1329,12 +1323,10 @@ const AddPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
-              activityIndex + 1
-            } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
-              dayIndex + 1
-            }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
+              } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
+              }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1384,7 +1376,7 @@ const AddPostUser = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : -125}
     >
       <View style={styles.container}>
-        <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
+        {/* <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
           <ArrowLeft
             size="32"
             style={{ marginBottom: 15 }}
@@ -1394,23 +1386,24 @@ const AddPostUser = () => {
             color="#000"
           />
           <TextComponent
-            text="Hành trình mới"
+            text="Bài viết mới"
             size={24}
             styles={{
-              fontWeight: "800",
+              fontWeight: "600",
               margin: 5,
               marginLeft: "18%",
               marginBottom: 20,
+              // fontFamily:'FuzzyBold'
             }}
           />
-        </RowComponent>
-        <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} />
+        </RowComponent> */}
+        {/* <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} /> */}
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
             <TouchableOpacity style={styles.checkin} disabled={true}>
               <RowComponent justify="space-between">
-                <Text style={{ fontSize: 12 }}>Check in lên bản đồ</Text>
+                <Text>Check in lên bản đồ</Text>
                 {/* <Icon
                 name="checkbox-active"
                 size={14}
@@ -1449,8 +1442,8 @@ const AddPostUser = () => {
                   >
                     {selectedCountry != null
                       ? countryData.find(
-                          (country) => country.id === selectedCountry
-                        )?.label
+                        (country) => country.id === selectedCountry
+                      )?.label
                       : "Chọn quốc gia"}
                   </Text>
                   <Icon
@@ -1476,7 +1469,7 @@ const AddPostUser = () => {
                   style={{
                     color: appColors.danger,
                     padding: 10,
-                    fontWeight: "600",
+                    fontWeight: "500",
                   }}
                 >
                   Chưa chọn tỉnh thành
@@ -1535,7 +1528,7 @@ const AddPostUser = () => {
             <TextComponent
               text="Tiêu đề"
               size={16}
-              styles={{ fontWeight: "500", color: "#000", marginBottom: 5 }}
+              styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
             />
             <InputComponent
               value={title}
@@ -1557,7 +1550,7 @@ const AddPostUser = () => {
               text="Mô tả"
               size={16}
               styles={{
-                fontWeight: "500",
+                fontWeight: "bold",
                 color: "#000",
                 marginBottom: 5,
                 marginTop: -10,
@@ -1570,10 +1563,10 @@ const AddPostUser = () => {
               textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
               inputStyle={{
                 width: "100%",
-                height: 140,
-                borderRadius: 0,
+                // height: 140,
                 backgroundColor: appColors.gray3,
                 borderColor: appColors.gray,
+                borderRadius: 5,
               }}
               multiline={true}
             />
@@ -1583,7 +1576,7 @@ const AddPostUser = () => {
               <Text
                 style={{ fontWeight: "bold", fontSize: 16, marginTop: -24 }}
               >
-                Ngày hoạt động
+                Lịch trình
               </Text>
             </SectionComponent>
           )}
@@ -1616,7 +1609,7 @@ const AddPostUser = () => {
                       flex: 1,
                       height: 30,
                       marginLeft: 5,
-                      borderRadius: 0,
+                      borderRadius: 5,
                       backgroundColor: appColors.white,
                       borderColor: appColors.gray,
                     }}
@@ -1640,7 +1633,9 @@ const AddPostUser = () => {
                           style={{
                             width: 70,
                             height: "100%",
-                            borderRadius: 0,
+                            // borderRadius: 5,
+                            borderTopLeftRadius: 5,
+                            borderBottomLeftRadius: 5,
                             backgroundColor: appColors.btnaddActivity,
                             justifyContent: "center",
                             alignItems: "center",
@@ -1682,13 +1677,14 @@ const AddPostUser = () => {
                                 height: "83.4%",
                                 marginTop: 7,
                                 borderRadius: 0,
+                                borderTopRightRadius: 5,
+                                borderBottomRightRadius: 5,
                                 borderColor: appColors.btnDay,
                                 backgroundColor: appColors.white,
                               }}
                               textStyle={{ color: "#000" }}
-                              placeholder={`Địa điểm hoạt động ${
-                                activityIndex + 1
-                              }`}
+                              placeholder={`Địa điểm hoạt động ${activityIndex + 1
+                                }`}
                               multiline={true}
                               value={activity.address}
                               onChange={(text) =>
@@ -1720,14 +1716,13 @@ const AddPostUser = () => {
                         inputStyle={{
                           padding: 0,
                           margin: 0,
-                          borderRadius: 0,
+                          borderRadius: 5,
                           height: 80,
                           width: "100%",
                           borderColor: appColors.gray,
                         }}
-                        placeholder={`Nhập mô tả cho hoạt động ${
-                          activityIndex + 1
-                        }`}
+                        placeholder={`Nhập mô tả cho hoạt động ${activityIndex + 1
+                          }`}
                         value={activity.activity}
                         multiline={true}
                         onChange={(text) =>
@@ -1749,14 +1744,14 @@ const AddPostUser = () => {
                     style={[styles.addButton, { marginTop: 0 }]}
                     onPress={() => addActivity(dayIndex)}
                   >
-                    <Text style={{ fontSize: 13 }}>Thêm Hoạt Động</Text>
+                    <Text style={{ fontSize: 13 }}>Thêm hoạt động</Text>
                     <IconA name="pluscircleo" size={15} color="#000" />
                   </TouchableOpacity>
                 </SectionComponent>
 
                 <InputComponent
                   inputStyle={{
-                    borderRadius: 0,
+                    borderRadius: 5,
                     backgroundColor: appColors.inputDay,
                     height: 100,
                     borderColor: appColors.gray,
@@ -1918,39 +1913,37 @@ const AddPostUser = () => {
           >
             <TextComponent
               text="Riêng tư"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "heavy",
-                backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
-                color: !isPublic ? appColors.white : "#000",
+                fontWeight: "500",
+                backgroundColor: !isPublic ? "#ea695d" : appColors.gray3,
                 borderRadius: 50,
                 borderColor: appColors.gray,
                 borderWidth: 1,
                 padding: 5,
                 width: 100,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
             <Switch
               value={isPublic}
-              trackColor={{ true: appColors.success, false: appColors.danger }}
-              thumbColor={isPublic ? appColors.success : appColors.danger}
+              trackColor={{ true: "#1aad1a", false: appColors.danger }}
+              thumbColor={isPublic ? "#5dea60" : "#ea695d"}
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
               text="Công khai"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "light",
-                color: isPublic ? appColors.gray : "#000",
-                backgroundColor: isPublic ? appColors.success : appColors.gray3,
+                fontWeight: "500",
+                backgroundColor: isPublic ? "#5dea60" : appColors.gray3,
                 borderRadius: 50,
                 padding: 5,
                 width: 100,
                 borderColor: appColors.gray,
                 borderWidth: 1,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
@@ -2017,7 +2010,7 @@ const AddPostUser = () => {
                 }}
               >
                 <TextComponent
-                  text="Review bài viết"
+                  text="Xem trước"
                   size={14}
                   styles={{
                     fontWeight: "bold",
@@ -2643,7 +2636,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 50,
+    // paddingTop: 50,
   },
   //Modal map
   containerMap: {
@@ -2733,7 +2726,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: appColors.gray3,
     marginTop: 10,
-    borderRadius: 2,
+    borderRadius: 5
   },
   input: {
     height: 40,
@@ -2904,7 +2897,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   countryButtonText: {
-    fontSize: 12,
+    // fontSize: 12,
     color: "#000",
     marginLeft: 5,
     flexShrink: 1,

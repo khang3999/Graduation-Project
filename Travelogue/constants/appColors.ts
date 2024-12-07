@@ -11,7 +11,7 @@ export const appColors = {
     disabled: '#BDBDBD',
     success : '#00FF11',
     btncity: '#CFF6B7',
-    btnDay: '#73CFFE',
-    inputDay: '#ECE4AC',
+    btnDay: '#b9e0f7',
+    inputDay: '#f1f2d0',
     btnaddActivity: '#FF9D9F',
 };

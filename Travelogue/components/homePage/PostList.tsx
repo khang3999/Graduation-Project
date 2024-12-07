@@ -715,7 +715,7 @@ const PostList = () => {
   return (
     <View style={styles.container}>
       <View style={styles.titlePostContainer}>
-        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+        <View style={{ backgroundColor: '#009400', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
           <Text style={styles.textCategory}>Bài viết</Text>
         </View>
 
@@ -981,18 +981,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
   },
   textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
+    // color: 'white',
+    fontWeight: '500',
     textAlign: 'center',
+    fontSize: 16
   },
   buttonSearch: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#c6f2c6',
     padding: 10,
     borderRadius: 5,
     margin: 10
   },
   buttonCancel: {
-    backgroundColor: 'red',
+    backgroundColor: '#f87171',
     padding: 10,
     borderRadius: 5,
     margin: 10
@@ -1010,11 +1011,12 @@ const styles = StyleSheet.create({
   },
   refreshBtn: {
     position: 'absolute',
-    backgroundColor: '#b7f4c2',
+    backgroundColor: '#fcfc8d',
     right: 50,
     top: 0,
     padding: 4,
     borderRadius: 5,
+    elevation:4
   },
   filterBtn: {
     position: 'absolute',
@@ -1023,6 +1025,7 @@ const styles = StyleSheet.create({
     top: 0,
     padding: 4,
     borderRadius: 5,
+    elevation:4
   },
   iconPost: {
     paddingLeft: 4,
@@ -1036,14 +1039,14 @@ const styles = StyleSheet.create({
     padding: 4,
     backgroundColor: '#ffff77',
     transformOrigin: 'center',
-    elevation: 8
+    elevation: 6
   },
   titlePostContainer: {
     flexDirection: 'row'
   },
   textCategory: {
     fontSize: 14,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#E6F6E6',
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
     paddingHorizontal: 10,

@@ -11,13 +11,18 @@ const Layout = () => {
           {/* <AddPostTour/> */}
           <Stack
             screenOptions={{
-                headerShown: false,
+                headerShown: true,
+                headerTitleStyle:{
+                    fontWeight: "600",
+                    fontSize: 24
+                },
+                headerTitleAlign:'center'
             }}>
-            <Stack.Screen name="addPostTour" options={{headerShown: false}}/>
-            <Stack.Screen name="addPostUser" options={{headerShown: false}}/>
-            <Stack.Screen name="reviewPostUser" options={{headerShown: false}}/>
-            <Stack.Screen name="editPostUser" options={{headerShown: false}}/>
-            <Stack.Screen name="editPostTour" options={{headerShown: false}}/>
+            <Stack.Screen name="addPostTour" options={{title: "Tour mới"}}/>
+            <Stack.Screen name="addPostUser" options={{title: "Bài viết mới"}}/>
+            <Stack.Screen name="reviewPostUser" options={{title: "Xem trước"}}/>
+            <Stack.Screen name="editPostUser" options={{title: "Chỉnh sửa bài viết"}}/>
+            <Stack.Screen name="editPostTour" options={{title: "Chỉnh sửa tour"}}/>
             
         </Stack>
        

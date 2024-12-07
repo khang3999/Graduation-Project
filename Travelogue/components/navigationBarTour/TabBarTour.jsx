@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import TabBarTourButton from './TabBarTourButton'
 
 const { width } = Dimensions.get('window');
-const switchTabbar = 160
+const switchTabbar = 120
 
 const TabBarTour = ({ state, descriptors, navigation, isTabBarVisible = true }) => {
   // Color
