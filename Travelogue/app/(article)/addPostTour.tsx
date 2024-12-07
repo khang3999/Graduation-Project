@@ -1552,7 +1552,7 @@ const AddPostTour = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : -125}
     >
       <View style={styles.container}>
-        <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
+        {/* <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
           <ArrowLeft
             size="32"
             style={{ marginBottom: 15 }}
@@ -1562,17 +1562,17 @@ const AddPostTour = () => {
             color="#000"
           />
           <TextComponent
-            text="Tạo bài viết"
+            text="Tour mới"
             size={24}
             styles={{
-              fontWeight: "800",
+              fontWeight: "600",
               margin: 5,
               marginLeft: "25%",
               marginBottom: 20,
             }}
           />
         </RowComponent>
-        <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} />
+        <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} /> */}
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
@@ -2433,39 +2433,37 @@ const AddPostTour = () => {
           >
             <TextComponent
               text="Riêng tư"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "heavy",
-                backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
-                color: !isPublic ? appColors.white : "#000",
+                fontWeight: "500",
+                backgroundColor: !isPublic ? "#ea695d" : appColors.gray3,
                 borderRadius: 50,
                 borderColor: appColors.gray,
                 borderWidth: 1,
                 padding: 5,
                 width: 100,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
             <Switch
               value={isPublic}
-              trackColor={{ true: appColors.success, false: appColors.danger }}
-              thumbColor={isPublic ? appColors.success : appColors.danger}
+              trackColor={{ true: "#1aad1a", false: appColors.danger }}
+              thumbColor={isPublic ? "#5dea60" : "#ea695d"}
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
               text="Công khai"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "light",
-                color: isPublic ? appColors.gray : "#000",
-                backgroundColor: isPublic ? appColors.success : appColors.gray3,
+                fontWeight: "500",
+                backgroundColor: isPublic ? "#5dea60" : appColors.gray3,
                 borderRadius: 50,
                 padding: 5,
                 width: 100,
                 borderColor: appColors.gray,
                 borderWidth: 1,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
@@ -2491,7 +2489,7 @@ const AddPostTour = () => {
                 }}
               >
                 <TextComponent
-                  text="Review bài viết"
+                  text="Xem trước"
                   size={14}
                   styles={{
                     fontWeight: "bold",
@@ -3326,7 +3324,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 50,
+    // paddingTop: 50,
   },
   text: {
     color: appColors.primary,

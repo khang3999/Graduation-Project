@@ -62,32 +62,32 @@ const Gallery = () => {
   console.log(idCity, idCountry);
   return (
     <View style={styles.container}>
-       <RowComponent justify="flex-start" styles={{padding: 10, marginLeft: -100}} >
-          <ArrowLeft
-            size="32"
-            onPress={() => {
-              router.back();
-            }}
-            color="#000"
-          />
-          <TextComponent
-            text="Khám phá"
-            size={24}
-            styles={{
-              fontWeight: "800",
-              margin: 5,
-              marginLeft: "20%",
-            }}
-          />
-        </RowComponent>
-        <View style={{backgroundColor: appColors.btnDay,width: 100, height: 45, borderRadius: 30, marginBottom: 10}}>
-        <Text style={{textAlign: "center",lineHeight: 45, fontSize: 16, fontWeight: 'bold', color: appColors.white}}>
-           {dataCity.name}
-         </Text>
-        </View>
+      {/* <RowComponent justify="flex-start" styles={{ padding: 10, marginLeft: -100 }} >
+        <ArrowLeft
+          size="32"
+          onPress={() => {
+            router.back();
+          }}
+          color="#000"
+        />
+        <TextComponent
+          text="Khám phá"
+          size={24}
+          styles={{
+            fontWeight: "800",
+            margin: 5,
+            marginLeft: "20%",
+          }}
+        />
+      </RowComponent> */}
+      <View style={{ backgroundColor: appColors.btnDay, width: 100, height: 45, borderRadius: 30, marginBottom: 10 }}>
+        <Text style={{ textAlign: "center", lineHeight: 45, fontSize: 16, fontWeight: 'bold', color: appColors.white }}>
+          {dataCity.name}
+        </Text>
+      </View>
       {/* Phần trên */}
       <View style={styles.topSection}>
-        <GalleryPosts dataCity={dataCity}/>
+        <GalleryPosts dataCity={dataCity} />
       </View>
 
       {/* Phần dưới */}
@@ -151,12 +151,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: 10,
   },
   topSection: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#ccc", 
+    backgroundColor: "#ccc",
     borderRadius: 8,
     marginBottom: 20,
     padding: 10,

@@ -518,7 +518,7 @@ const CheckInMap = () => {
               }}
             />
             <TouchableOpacity
-              style={[styles.btnHeader, { backgroundColor: '#a8f7c3', borderWidth: 1, borderColor: '#d1d1d1' }]}
+              style={[styles.btnHeader, { backgroundColor: '#c6f2c6', borderColor: '#d1d1d1' }]}
               onPress={() => handleCheckIn(selectedCity, selectedCountry.value)}
             >
               <MaterialCommunityIcons
@@ -579,7 +579,7 @@ const CheckInMap = () => {
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}
-          <Text style={{ fontWeight: "bold", fontSize: 16, paddingLeft: 8 }}>
+          <Text style={{ fontWeight: "500", fontSize: 16, paddingLeft: 8 }}>
             {selectedCountry && selectedCity
               ? `${selectedCity.label}, ${selectedCountry.label}`
               : `Chưa chọn`}

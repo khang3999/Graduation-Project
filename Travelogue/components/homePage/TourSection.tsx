@@ -91,7 +91,7 @@ const TourSection = () => {
 
     return (
         <View style={styles.container}>
-            <View style={{ backgroundColor: 'red', marginVertical: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10, alignSelf: 'flex-start' }}>
+            <View style={{ backgroundColor: '#009400', marginVertical: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10, alignSelf: 'flex-start' }}>
                 <Text style={[styles.textCategory]}>Tour du lịch</Text>
             </View>
             <View style={{ backgroundColor: '#f0f0f0', marginBottom: 8}}>
@@ -122,14 +122,14 @@ const TourSection = () => {
 const styles = StyleSheet.create({
     textCategory: {
         fontSize: 14,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#E6F6E6',
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,
         paddingHorizontal: 10,
         paddingVertical: 5,
         fontWeight: '500',
         // alignSelf: 'flex-start',
-        elevation: 10
+        elevation: 10,
     },
     textLocation: {
         color: 'white'

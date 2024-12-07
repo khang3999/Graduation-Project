@@ -174,7 +174,7 @@ const ListPoints = ({
           </ScrollView>
         </View>
         <View style={styles.rightItem}>
-          <Text style={styles.itemTitle}>Địa Điểm</Text>
+          <Text style={styles.itemTitle}>Danh lam</Text>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {landmarkData ? (
               landmarkData.map((item, index) => (
