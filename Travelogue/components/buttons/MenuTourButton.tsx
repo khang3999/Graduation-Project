@@ -9,18 +9,22 @@ import {
   Alert,
   TouchableWithoutFeedback,
   FlatList,
+  Pressable,
+  Image,
 } from "react-native";
+import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
 import { appColors } from "@/constants/appColors";
 import { Button, Divider } from "react-native-paper";
 import { database, ref, get, storage, update } from "@/firebase/firebaseConfig";
-import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
+import { getDownloadURL, getStorage, ref as storageRef, uploadBytes } from "firebase/storage";
 import { child, onValue, push, remove, runTransaction } from "@firebase/database";
 import LottieView from "lottie-react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import { set } from "lodash";
+import * as ImagePicker from 'expo-image-picker';
 import { deleteFolder } from "@/services/storageService";
 interface MenuPopupButtonProps {
   isAuthor: boolean;
@@ -35,7 +39,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   const [isLoading, setIsLoading] = useState(false);
   const buttonRef = useRef<TouchableOpacity>(null); // To measure the button's position
   // Function to toggle modal visibility
-
+  const [reportImages, setReportImages] = useState<string[]>([]);
 
   //Report
   const [modalVisible, setModalVisible] = useState(false);
@@ -221,7 +225,10 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
 
 
   const handleReport = (reason: any) => {
-    setSelectedReason(reason);
+    if(!selectedReason) {
+      Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
+      return;
+    }
     setModalVisible(false);
     setShowConfirmation(true);
     setTimeout(() => {
@@ -229,6 +236,8 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
     }, 3000);
     if (typeReport === "post") {
       reportPost(reason)
+      setSelectedReason(null);
+      setReportImages([]);
     }
     else {
       reportComment(reason)
@@ -277,20 +286,45 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
 
       }
     }
+    const uploadImages = async (images: string[]) => {
+      const imageUrls = [];
+      const storage = getStorage(); // Get the Firebase Storage instance
+      for (const imageUri of images) {
+        const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+        const imageRef = storageRef(storage, `reports/${idPost}/${filename}`);
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        await uploadBytes(imageRef, blob);
+        const downloadUrl = await getDownloadURL(imageRef);
+        imageUrls.push(downloadUrl);
+      }
+      return imageUrls;
+    };
+
+    let imageUrls: string[] = [];
+    if (reportImages.length > 0) {
+      imageUrls = await uploadImages(reportImages);
+    }
     const reportRef = ref(database, `reports/post/${idPost}`);
     // Tạo key tu dong cua firebase
     const newItemKey = push(ref(database, `reports/post/${idPost}/reason/`));
+    const newImageKey = push(ref(database, `reports/post/${idPost}/images/`));
     const snapshot = await get(reportRef);
     if (snapshot.exists()) {
       item = snapshot.val();
 
     }
     const reasonKey = newItemKey.key as string;
+    const imageKey = newImageKey.key as string;
     const itemNew = {
       post_id: idPost,
       reason: {
         ...item.reason,
         [reasonKey]: reason
+      },
+      images: {
+        ...item.images,
+        [imageKey]: imageUrls,
       },
       type: "tour",
       status_id: 1
@@ -327,6 +361,22 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
     });
     setIsModalVisible(false);
   }
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedImages = result.assets.map((image) => image.uri);
+      setReportImages((prevImages) => [...prevImages, ...selectedImages]);
+    }
+  };
+
+  const removeImage = (uri: string) => {
+    setReportImages((prevImages) => prevImages.filter(imageUri => imageUri !== uri));
+  };
 
 
   if (isLoading) {
@@ -437,9 +487,9 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
               keyExtractor={(_, index) => index.toString()}
               renderItem={(item: any) => (
                 <TouchableOpacity
-                  style={styles.reasonItem}
+                  style={[styles.reasonItem, selectedReason === item.item.name ? styles.selectedReasonItem : null,]}
                   onPress={() =>
-                    handleReport(item.item.name)
+                    setSelectedReason(item.item.name)
                   }
                 >
                   <Text style={styles.reasonText}>{item.item.name}</Text>
@@ -450,6 +500,32 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
               setModalVisible(false)
             }}>
               <MaterialIcons name="cancel" size={24} color="red" />
+            </TouchableOpacity>
+            <View style={styles.imagePickerContainer}>
+              {reportImages.length == 0 && (
+                <Pressable style={styles.imagePickerButton} onPress={pickImage}>
+                  <IconMaterial name="image-plus" size={20} color="#2196F3" style={styles.imagePickerIconButton} />
+                  <Text style={styles.imagePickerTextButton}>Thêm ảnh ( Nếu có )</Text>
+                </Pressable>
+              )}
+              {reportImages.length > 0 && (
+                <View style={styles.selectedImageContainer}>
+                  {reportImages.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.selectedImage} />
+                      <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
+                        <IconMaterial name="close-circle" size={20} color="grey" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => handleReport(selectedReason)}
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Gửi</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -465,6 +541,66 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
   );
 };
 const styles = StyleSheet.create({
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "grey",
+  },
+  sendButton: {
+    backgroundColor: "#C1E1C1",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  selectedReasonItem: {
+    backgroundColor: '#d3d3d3',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 10,
+  },
+  imageWrapper: {
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  selectedImageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+  },
+  imagePickerTextButton: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
+  imagePickerIconButton: {
+    marginRight: 10,
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
