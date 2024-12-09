@@ -65,7 +65,7 @@ const Map = () => {
       }));
       // console.log(formattedDataCountry);
       setCountryData(formattedDataCountry);
-      // setSelectedCountry(formattedDataCountry[0].id)
+      setSelectedCountry(formattedDataCountry[0].id)
       // console.log("Country Data:", countryData);
     });
     // Lấy dữ liệu từ firebase (khu vực)
@@ -392,6 +392,7 @@ const Map = () => {
     if (type === "post") {
       // 2. Chuyển về home hoặc tour
       // navigation.navigate("index");
+      bottomSheetRef.current.close();
       router.replace({
         pathname: "/",
         params: { selectedCityId: location , content: content }
@@ -400,6 +401,7 @@ const Map = () => {
     if (type === "tour") {
       // 2. Chuyển về home hoặc tour
       // navigation.navigate("tour");
+      bottomSheetRef.current.close();
       router.replace({
         pathname: "/tour",
         params: { selectedCityId: location, content: content }

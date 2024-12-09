@@ -1314,7 +1314,7 @@ const EditPostUser = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : -125}
     >
       <View style={styles.container}>
-        <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
+        {/* <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
           <ArrowLeft
             size="32"
             style={{ marginBottom: 15 }}
@@ -1324,7 +1324,7 @@ const EditPostUser = () => {
             color="#000"
           />
           <TextComponent
-            text="Sửa Bài Viết"
+            text="Chỉnh sửa bài viết"
             size={24}
             styles={{
               fontWeight: "800",
@@ -1334,13 +1334,13 @@ const EditPostUser = () => {
             }}
           />
         </RowComponent>
-        <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} />
+        <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} /> */}
         <ScrollView>
           {/* Check in */}
           <RowComponent justify="space-between">
             <TouchableOpacity style={styles.checkin} disabled={true}>
               <RowComponent justify="space-between">
-                <Text style={{ fontSize: 12 }}>Check in lên bản đồ</Text>
+                <Text>Check in lên bản đồ</Text>
                 {/* <Icon
                 name="checkbox-active"
                 size={14}
@@ -1846,39 +1846,37 @@ const EditPostUser = () => {
           >
             <TextComponent
               text="Riêng tư"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "heavy",
-                backgroundColor: !isPublic ? appColors.danger : appColors.gray3,
-                color: !isPublic ? appColors.white : "#000",
+                fontWeight: "500",
+                backgroundColor: !isPublic ? "#ea695d" : appColors.gray3,
                 borderRadius: 50,
                 borderColor: appColors.gray,
                 borderWidth: 1,
                 padding: 5,
                 width: 100,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
             <Switch
               value={isPublic}
-              trackColor={{ true: appColors.success, false: appColors.danger }}
-              thumbColor={isPublic ? appColors.success : appColors.danger}
+              trackColor={{ true: "#1aad1a", false: appColors.danger }}
+              thumbColor={isPublic ? "#5dea60" : "#ea695d"}
               onValueChange={(val) => setIsPublic(val)}
             />
             <TextComponent
               text="Công khai"
-              size={12}
+              size={13}
               styles={{
-                fontWeight: "light",
-                color: isPublic ? appColors.gray : "#000",
-                backgroundColor: isPublic ? appColors.success : appColors.gray3,
+                fontWeight: "500",
+                backgroundColor: isPublic ? "#5dea60" : appColors.gray3,
                 borderRadius: 50,
                 padding: 5,
                 width: 100,
                 borderColor: appColors.gray,
                 borderWidth: 1,
-                height: 26,
+                height: 28,
                 textAlign: "center",
               }}
             />
@@ -2571,7 +2569,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingTop: 50,
+    // paddingTop: 50,
   },
   //Modal map
   containerMap: {

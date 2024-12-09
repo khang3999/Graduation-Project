@@ -112,7 +112,9 @@ const _layout = () => {
         },
         headerTitle:"Travelogue",
         headerTitleStyle:{
-          fontSize: 32
+          fontSize: 40,
+          fontFamily:'DancingScript',
+          fontWeight:'600'
         },
         headerRight: () => (
           <View style={styles.headerRight}>

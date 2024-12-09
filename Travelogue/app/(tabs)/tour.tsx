@@ -14,23 +14,23 @@ const Tour = () => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', margin: 10, gap: 6 }}>
-        <Text>Hiển thị: </Text>
+      <Text style={{fontWeight:'600'}}>Hiển thị: </Text>
         {dataModalSelected == null ?
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>Tất cả tour</Badge>
+          <Badge size={24} style={styles.badgeText}>Tất cả tour</Badge>
           :
           <>
-            {dataModalSelected.input !== '' && <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.input}</Badge>}
+            {dataModalSelected.input !== '' && <Badge size={24} style={styles.badgeText}>{dataModalSelected.input}</Badge>}
             {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
-              <Badge size={24} style={{ fontSize: 12 }}>{dataModalSelected.country}</Badge>
+              <Badge size={24} style={styles.badgeText}>{dataModalSelected.country}</Badge>
               :
               (dataModalSelected.cities).map((cityId: any) => {
                 const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
                 // console.log(found);
-                return <Badge key={cityId} size={24} style={{ fontSize: 12 }} >{found[cityId]}</Badge>
+                return <Badge key={cityId} size={24} style={styles.badgeText}>{found[cityId]}</Badge>
               })
             }
           </>}
-          <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch.current-1].value}</Badge>
+          <Badge size={24} style={{ fontSize: 13, backgroundColor: '#f4b7b7', color: 'black', paddingHorizontal: 6, fontWeight: '500' }}>{dataTypeSearch[selectedTypeSearch.current-1].value}</Badge>
 
         {/* {selectedTypeSearch.current === 1 ?
           <Badge size={24} style={{ fontSize: 12 }} theme={{ colors: { primary: 'green' } }}>{dataTypeSearch[selectedTypeSearch].value}</Badge>
@@ -58,6 +58,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white'
+  },
+  badgeText: {
+    fontSize: 13, 
+    backgroundColor: '#b9e0f7', 
+    color: 'black', 
+    paddingHorizontal: 6, 
+    fontWeight: '500'
   }
 })
 export default Tour

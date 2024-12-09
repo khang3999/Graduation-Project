@@ -8,7 +8,7 @@ import { Entypo, FontAwesome } from '@expo/vector-icons'
 import TabBar from '@/components/navigation/TabBar'
 
 const { width } = Dimensions.get('window');
-const switchTabbar = 120
+const switchTabbar = 80
 
 const MapLayout = () => {
     return (
@@ -22,9 +22,13 @@ const MapLayout = () => {
                     backgroundColor: 'white',
                     borderBottomWidth: 1,
                     // borderRadius: 20,
-                    elevation: 10
+                    elevation: 10,
                 },
                 headerTitle: 'Bản đồ',
+                headerTitleStyle: {
+                    fontFamily: 'FuzzyBold',
+                    fontSize: 22
+                }
             }}
         >
             <Tabs.Screen
@@ -62,8 +66,8 @@ const styles = StyleSheet.create({
     },
     headerTitleText: {
         marginHorizontal: 20,
-        fontSize: 20,
-        fontWeight: '500'
+        fontSize: 22,
+        fontFamily: 'FuzzyBold'
     }
 })
 
