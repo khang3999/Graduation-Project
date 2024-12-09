@@ -73,8 +73,8 @@ export default function Layout() {
         <Drawer.Screen
           name="ban"
           options={{
-            drawerLabel: 'Từ khoá',
-            title: 'Từ khoá',
+            drawerLabel: 'Từ cấm',
+            title: 'Từ cấm',
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="block" color={color} size={size} />
             )
