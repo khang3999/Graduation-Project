@@ -52,7 +52,7 @@ const TourList = () => {
   const { selectedCityId, content } = useLocalSearchParams()
   const { setSearchedAccountData }: any = useAccount();
 
-  
+
 
   const [isLongPress, setIsLongPress] = useState(false);
 
@@ -252,12 +252,12 @@ const TourList = () => {
     // // setIsSearchingMode(false)
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     if (reloadScreen) {
       fetchTours()
       setReloadScreen(false)
     }
-  },[reloadScreen])
+  }, [reloadScreen])
 
   const handleSelecteCountry = (val: any) => {
     // Fetch city tương ứng tương ứng (chính)
@@ -484,11 +484,11 @@ const TourList = () => {
         >
           {/*Author*/}
           <View style={styles.authorContent}>
-            <TouchableOpacity style={styles.avatarWrap} onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
+            <TouchableOpacity style={styles.avatarWrap} onPress={() => handleGoToProfileScreen(tour.item.author.id)}>
               <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
             </TouchableOpacity>
             <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
-              <TouchableOpacity onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
+              <TouchableOpacity onPress={() => handleGoToProfileScreen(tour.item.author.id)}>
                 <Text style={{ fontWeight: '600' }} numberOfLines={1}>
                   {tour.item.author.fullname}
                 </Text>
@@ -576,7 +576,7 @@ const TourList = () => {
       <View key={tour.item.id} style={styles.itemNewTourWrap}>
         <View style={{ flexDirection: 'row' }}>
           <View style={{}}>
-            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={()=>handleGoToProfileScreen(tour.item.author.id)}>
+            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={() => handleGoToProfileScreen(tour.item.author.id)}>
               <Image style={{ width: 25, height: 25, borderRadius: 90 }} source={{ uri: tour.item.author.avatar }} />
               <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
                 {tour.item.author.fullname}
@@ -610,7 +610,7 @@ const TourList = () => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', position: 'relative' }}>
-        <View style={{ backgroundColor: 'red', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+        <View style={{ backgroundColor: '#009400', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
           <Text style={styles.textCategory}>Tour du lịch</Text>
         </View>
         {((currentTourCount != newTourCount)) && (
@@ -756,7 +756,7 @@ const TourList = () => {
       >
         <View style={styles.modalView}>
           <View style={[styles.modalBottomView, { height: 500 }]}>
-            <Text style={styles.modalTitleText}>Bài viết mới</Text>
+            <Text style={styles.modalTitleText}>Tour mới</Text>
             <FlatList
               data={dataNewTours}
               renderItem={newTourItem}
@@ -873,19 +873,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
+  textStyle: {
+    // color: 'white',
+    fontWeight: '500',
+    textAlign: 'center',
+    fontSize: 16
+  },
   buttonSearch: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#c6f2c6',
     padding: 10,
     borderRadius: 5,
     margin: 10
   },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   buttonCancel: {
-    backgroundColor: 'red',
+    backgroundColor: '#f87171',
     padding: 10,
     borderRadius: 5,
     margin: 10
@@ -905,18 +906,19 @@ const styles = StyleSheet.create({
     width: width,
     marginBottom: 15,
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     textAlign: 'center',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20
   },
   refreshBtn: {
     position: 'absolute',
-    backgroundColor: '#b7f4c2',
+    backgroundColor: '#fcfc8d',
     right: 50,
     top: 0,
     padding: 4,
     borderRadius: 5,
+    elevation: 6
   },
   filterBtn: {
     position: 'absolute',
@@ -925,6 +927,7 @@ const styles = StyleSheet.create({
     top: 0,
     padding: 4,
     borderRadius: 5,
+    elevation: 6
   },
   loadNewTour: {
     flexDirection: 'row',
@@ -938,14 +941,14 @@ const styles = StyleSheet.create({
   },
   textCategory: {
     fontSize: 14,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#E6F6E6',
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
     fontWeight: '500',
     alignSelf: 'flex-start',
-    elevation: 10
+    elevation: 6
   },
   actionBar: {
     position: 'absolute',
