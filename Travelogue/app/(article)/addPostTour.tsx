@@ -1373,7 +1373,7 @@ const AddPostTour = () => {
   }, [packageData, account?.balance]);
 
   // *********************************************************************
-  // Xử lý review bài viết
+  // Xử lý Xem trước
   const handleReviewPost = async () => {
     if (cities.length === 0) {
       setButtonPost(false);
@@ -1839,11 +1839,12 @@ const AddPostTour = () => {
           </SectionComponent>
 
           {/* Title */}
-          <SectionComponent styles={{ marginTop: 10, marginBottom: -15 }}>
+            
+            <SectionComponent styles={{ marginTop: 10, marginBottom: -15 }}>
             <TextComponent
               text="Tiêu đề"
               size={16}
-              styles={{ fontWeight: "500", color: "#000", marginBottom: 5 }}
+              styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
             />
             <InputComponent
               value={title}
@@ -1865,7 +1866,7 @@ const AddPostTour = () => {
               text="Mô tả"
               size={16}
               styles={{
-                fontWeight: "500",
+                fontWeight: "bold",
                 color: "#000",
                 marginBottom: 5,
                 marginTop: -10,
@@ -1878,10 +1879,10 @@ const AddPostTour = () => {
               textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
               inputStyle={{
                 width: "100%",
-                height: 140,
-                borderRadius: 0,
+                // height: 140,
                 backgroundColor: appColors.gray3,
                 borderColor: appColors.gray,
+                borderRadius: 5,
               }}
               multiline={true}
             />
@@ -1970,7 +1971,7 @@ const AddPostTour = () => {
               <Text
                 style={{ fontWeight: "bold", fontSize: 16, marginTop: -24 }}
               >
-                Ngày hoạt động
+                Lịch trình
               </Text>
             </SectionComponent>
           )}
@@ -2003,7 +2004,7 @@ const AddPostTour = () => {
                       flex: 1,
                       height: 30,
                       marginLeft: 5,
-                      borderRadius: 0,
+                      borderRadius: 5,
                       backgroundColor: appColors.white,
                       borderColor: appColors.gray,
                     }}
@@ -2027,7 +2028,9 @@ const AddPostTour = () => {
                           style={{
                             width: 70,
                             height: "100%",
-                            borderRadius: 0,
+                            // borderRadius: 5,
+                            borderTopLeftRadius: 5,
+                            borderBottomLeftRadius: 5,
                             backgroundColor: appColors.btnaddActivity,
                             justifyContent: "center",
                             alignItems: "center",
@@ -2069,6 +2072,8 @@ const AddPostTour = () => {
                                 height: "83.4%",
                                 marginTop: 7,
                                 borderRadius: 0,
+                                borderTopRightRadius: 5,
+                                borderBottomRightRadius: 5,
                                 borderColor: appColors.btnDay,
                                 backgroundColor: appColors.white,
                               }}
@@ -2106,7 +2111,7 @@ const AddPostTour = () => {
                         inputStyle={{
                           padding: 0,
                           margin: 0,
-                          borderRadius: 0,
+                          borderRadius: 5,
                           height: 80,
                           width: "100%",
                           borderColor: appColors.gray,
@@ -2134,14 +2139,14 @@ const AddPostTour = () => {
                     style={[styles.addButton, { marginTop: 0 }]}
                     onPress={() => addActivity(dayIndex)}
                   >
-                    <Text style={{ fontSize: 13 }}>Thêm Hoạt Động</Text>
+                    <Text style={{ fontSize: 13 }}>Thêm hoạt động</Text>
                     <IconA name="pluscircleo" size={15} color="#000" />
                   </TouchableOpacity>
                 </SectionComponent>
 
                 <InputComponent
                   inputStyle={{
-                    borderRadius: 0,
+                    borderRadius: 5,
                     backgroundColor: appColors.inputDay,
                     height: 100,
                     borderColor: appColors.gray,
@@ -2154,6 +2159,7 @@ const AddPostTour = () => {
               </SectionComponent>
             ))}
           </View>
+
 
           {/* Nút thêm ngày */}
           <SectionComponent>
@@ -2570,7 +2576,7 @@ const AddPostTour = () => {
                 }}
               >
                 <TextComponent
-                  text="Review bài viết"
+                  text="Xem trước"
                   size={14}
                   styles={{
                     fontWeight: "bold",
