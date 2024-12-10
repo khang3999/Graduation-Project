@@ -232,6 +232,26 @@ const AddPostTour = () => {
 
     setModalVisibleCountry(false);
   };
+  const handleHistoryExchange = async (userId:any, username:any, price:any) => {
+    const exchangeRef = ref(database, "exchanges");
+    const newItemKey = push(exchangeRef);
+    const item = {
+      account_id: userId,
+      created_at: Date.now(),
+      id: newItemKey.key,
+      name: username,
+      payment: price*(-1),
+      status_id: 2,
+    };
+    await set(newItemKey.ref, item)
+      .then(() => {
+        console.log("Data added successfully");
+      })
+      .catch((error) => {
+        console.error("Error adding data: ", error);
+      });
+  };
+
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
   // *********************************************************************
@@ -1211,6 +1231,10 @@ const AddPostTour = () => {
               totalPosts: totalPosts,
               accumulate: newAccumulate,
             });
+            //Thêm lịch sử vào exchanges
+            handleHistoryExchange(userId, fullname,  (selectedPackageData.price -
+              (selectedPackageData.price * selectedPackageData.discount) /
+              100))
             //Them id bai viet vao tai khoan
             await update(userPost, {
               [postId]: true,

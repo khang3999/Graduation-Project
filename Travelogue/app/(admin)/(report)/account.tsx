@@ -132,7 +132,7 @@ export default function AccountManagementScreen() {
       <TouchableOpacity key={account.item.index} style={styles.accountItem}
       onPress={()=>handleNavigateAccountDetail(account.item)}
       >
-        <View style={{width:240}}>
+        <View style={{width:300}}>
           <Text style={styles.name}>{account.item.account_id}</Text>
           {Object.values(account.item.reason).map((reason: any, index:any) => {
             return (
