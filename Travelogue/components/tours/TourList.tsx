@@ -287,6 +287,8 @@ const TourList = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setModalNewPostVisible(false)
+      setModalVisible(false);
       if (selectedCityId) {
         console.log('have param 1111', selectedCityId);
         if (dataTours.length === 0) {

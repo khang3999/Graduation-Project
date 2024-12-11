@@ -429,6 +429,7 @@ const PostList = () => {
     useCallback(() => {
       // console.log(contentCheckIn,'ccccccsssssss');
       setModalNewPostVisible(false)
+      setModalVisible(false);
       if (selectedCityId) {
         if (dataPosts.length === 0) {
           handleTapOnSearchButton(dataNewPostList, content, null, [selectedCityId])
