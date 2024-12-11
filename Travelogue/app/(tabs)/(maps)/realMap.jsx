@@ -65,7 +65,7 @@ const Map = () => {
       }));
       // console.log(formattedDataCountry);
       setCountryData(formattedDataCountry);
-      setSelectedCountry(formattedDataCountry[0].id)
+      // setSelectedCountry(formattedDataCountry[0].id)
       // console.log("Country Data:", countryData);
     });
     // Lấy dữ liệu từ firebase (khu vực)
