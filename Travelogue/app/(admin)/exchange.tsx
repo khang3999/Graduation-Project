@@ -76,7 +76,7 @@ const Exchange = () => {
         {
           text: "OK", onPress: () => {
             // Update status exchange
-            update(refExchanges, { status_id: "2" })
+            update(refExchanges, { status_id: 2 })
               .then(() => {
                 console.log('Exchange status updated successfully!');
                 
@@ -123,7 +123,7 @@ const Exchange = () => {
         { text: "Cancel", style: "cancel" },
         {
           text: "OK", onPress: () => {
-            update(refExchanges, { status_id: "3" })
+            update(refExchanges, { status_id: 3 })
               .then(() => {
                 console.log('Data updated successfully!');
               })
@@ -139,16 +139,16 @@ const Exchange = () => {
   const renderIcon = (exchange: any) => {
     return (
       <View style={styles.iconContainer}>
-        {exchange.status_id === "1" && (
+        {exchange.status_id === 1 && (
           <>
             <Feather name="check-square" size={24} color="green" onPress={() => approvePayment(exchange)} style={{ paddingBottom: 10 }} />
             <Feather name="x-square" size={25} color="red" onPress={() => rejectPayment(exchange.id)} />
           </>
         )}
-        {exchange.status_id === "2" && (
+        {exchange.status_id === 2 && (
           <Feather name="check-square" size={24} color="gray" disabled={true} />
         )}
-        {exchange.status_id === "3" && (
+        {exchange.status_id === 3 && (
           <Feather name="x-square" size={25} color="gray" disabled={true} />
         )}
       </View>
