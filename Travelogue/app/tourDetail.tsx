@@ -280,7 +280,7 @@ const TourItem: React.FC<TourItemProps> = ({
       post_id: item.id,
       type: parentId ? "reply" : "comment",
       read: false,
-      type_post: "post"
+      type_post: "tour"
     };
     // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
     await set(newItemKey, notify)
