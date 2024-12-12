@@ -1162,8 +1162,17 @@ const AddPostUser = () => {
               totalPosts: totalPosts,
             });
             //Luu
-            await update(userPost, {
-              [postId]: true,
+            
+            get(userPost).then(snapshot => {
+              if (!snapshot.exists()) {
+                set(userPost, {
+                  [postId]: true,
+                });
+              } else {
+                update(userPost, {
+                  [postId]: true,
+                });
+              }
             });
           }
 
