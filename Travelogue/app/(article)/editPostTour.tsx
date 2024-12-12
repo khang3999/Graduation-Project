@@ -56,6 +56,7 @@ import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import Slider from "@react-native-community/slider";
 import { getDataTour } from "./getDataTour";
+import ReviewPostTour from "./reviewPostTour";
 
 const EditPostTour = () => {
   interface Country {
@@ -2833,10 +2834,12 @@ const EditPostTour = () => {
           style={styles.modalreview}
           onDismiss={() => setModalReviewPost(false)}
         >
-          <ReviewPostUser
+            <ReviewPostTour
             locs={cities}
             imgs={images}
             contents={contentReviewPost}
+            money = {money}
+            discount = {discountTour}
           />
           <SectionComponent styles={{ marginBottom: -15 }}>
             <View style={styles.separator} />
