@@ -252,7 +252,7 @@ const Payment = () => {
       id: newItemKey.key,
       name: dataAccount.fullname,
       payment: rawValue,
-      status_id: "1",
+      status_id: 1,
     };
     await set(newItemKey.ref, item)
       .then(() => {
@@ -282,9 +282,9 @@ const Payment = () => {
               styles.paymentStatus,
               {
                 color:
-                  exchange.item.status_id === "1"
+                  exchange.item.status_id === 1
                     ? "#FFD700"
-                    : exchange.item.status_id === "2"
+                    : exchange.item.status_id === 2
                       ? "green"
                       : "red",
               },
