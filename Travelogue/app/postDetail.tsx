@@ -415,7 +415,7 @@ const PostItem: React.FC<PostItemProps> = ({
           {desc.Markdown}
         </Markdown>
         <TouchableOpacity onPress={() => toggleDescription(item.id)}>
-          <Text>{isExpanded ? "Show less" : "Show more"}</Text>
+          <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} />
