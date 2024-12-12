@@ -302,20 +302,38 @@ const Map = () => {
           if (selectedCountry && point.countryId !== selectedCountry) {
             return false;
           }
+        
+          if (idCities) {
+            if (!idCities.includes(point.cityId)) {
+              return false;
+            }
+            }
+
           if (selectedCity && point.cityId !== selectedCity) {
             return false;
           }
+        
+          console.log(point);
 
-          if (idCities) {
-            if (idCities.includes(point.cityId)) {
-              return true;
-            }
-            return false;
-          }
+         
         }
+       else {
         if (point.type !== selectedFestivalType) {
           return false;
         }
+        if (selectedCountry && point.countryId !== selectedCountry) {
+          return false;
+        }
+        if (idCities) {
+          if (!idCities.includes(point.cityId)) {
+            return false;
+          }
+          }
+        if (selectedCity && point.cityId !== selectedCity) {
+          return false;
+        }
+       
+       }
       }
 
       return true;
