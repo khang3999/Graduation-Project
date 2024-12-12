@@ -56,9 +56,9 @@ const PostList = () => {
   const flatListPostRef: any = useRef(null)
   // const { selectedCityId, content } = useLocalSearchParams()
   const { setSearchedAccountData }: any = useAccount();
-  const [reloadScreen, setReloadScreen]= useState(false)
+  const [reloadScreen, setReloadScreen] = useState(false)
   const route = useRoute();
-  const {selectedCityId, content }: any = useLocalSearchParams();
+  const { selectedCityId, content }: any = useLocalSearchParams();
 
   // useEffect(() => {
   //   // if (flatListPostRef.current) {
@@ -88,7 +88,7 @@ const PostList = () => {
 
   // ĐỊNH NGHĨA CÁC HÀM 
   // Hàm search . Khi tap vào button search thì lưu giá trị các biến đã chọn qua 1 biến khác để hiển thị ở home, và set lại giá trị default cho các biến đó
-  const handleTapOnSearchButton = async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {    
+  const handleTapOnSearchButton = async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
       setLoadedTours(false) // Load skeleton tour section
       setLoadedPosts(false) // Load skeleton posts list
@@ -131,7 +131,7 @@ const PostList = () => {
               matchingContent = 1 // Điều kiện để push vào mảng
               post.match -= 1 //  Điều kiện để sắp xếp khi đã push vào mảng
             }
-            
+
 
             // Tiêu chí 2: Địa điểm (Mã thành phố)
             const listLocationIdOfPost = Object.keys(post.locations).flatMap((country) => {
@@ -428,7 +428,8 @@ const PostList = () => {
   useFocusEffect(
     useCallback(() => {
       // console.log(contentCheckIn,'ccccccsssssss');
-      
+      setModalNewPostVisible(false)
+      setModalVisible(false);
       if (selectedCityId) {
         if (dataPosts.length === 0) {
           handleTapOnSearchButton(dataNewPostList, content, null, [selectedCityId])
@@ -479,13 +480,13 @@ const PostList = () => {
     // fetchTours()
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     if (reloadScreen) {
       fetchPosts(); // Tải lại bài viết
       fetchTours()
       setReloadScreen(false)
     }
-  },[reloadScreen])
+  }, [reloadScreen])
 
   // Hàm hiển thị những bài viết mới
   const handleShowNewPost = () => {
@@ -682,7 +683,7 @@ const PostList = () => {
       <View key={post.item.id} style={styles.itemNewPostWrap}>
         <View style={{ flexDirection: 'row' }}>
           <View style={{}}>
-            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={()=>handleGoToProfileScreen(post.item.author.id)}>
+            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={() => handleGoToProfileScreen(post.item.author.id)}>
               <Image style={{ width: 25, height: 25, borderRadius: 90 }} source={{ uri: post.item.author.avatar }} />
               <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
                 {post.item.author.fullname}
@@ -690,7 +691,13 @@ const PostList = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.itemNewPostContent}>
+        <TouchableOpacity style={styles.itemNewPostContent}
+          onPress={() => {
+            router.push({
+              pathname: "/postDetail",
+              params: { postId: post.item.id },
+            })
+          }}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Image style={{ width: '100%', borderRadius: 10, aspectRatio: 1 }} source={{ uri: post.item.thumbnail }}></Image>
           </View>
@@ -1016,7 +1023,7 @@ const styles = StyleSheet.create({
     top: 0,
     padding: 4,
     borderRadius: 5,
-    elevation:4
+    elevation: 4
   },
   filterBtn: {
     position: 'absolute',
@@ -1025,7 +1032,7 @@ const styles = StyleSheet.create({
     top: 0,
     padding: 4,
     borderRadius: 5,
-    elevation:4
+    elevation: 4
   },
   iconPost: {
     paddingLeft: 4,

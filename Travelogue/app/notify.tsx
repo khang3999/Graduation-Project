@@ -13,7 +13,7 @@ const NotificationsScreen = () => {
     const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
     const { dataAccount }: any = useHomeProvider()
-  const { selectedTour, setSelectedTour }: any = useTourProvider()
+    const { selectedTour, setSelectedTour }: any = useTourProvider()
 
 
     useEffect(() => {
@@ -38,7 +38,7 @@ const NotificationsScreen = () => {
         return () => notifications();
     }, [accountId]);
     // Fetch post by postID
-    const fetchPostByPostId = async (postId: any, type_post:any) => {
+    const fetchPostByPostId = async (postId: any, type_post: any) => {
         try {
             const refCity = ref(database, `${type_post}s/${postId}`);
             const snapshot = await get(refCity);
@@ -55,28 +55,33 @@ const NotificationsScreen = () => {
     };
 
     //handle read notify
-    const handleRead = (notify: any) => {
+    const handleRead = async (notify: any) => {
         if (accountId) {
             const refNotify = ref(database, `notifications/${accountId}/${notify.id}`);
 
-            update(refNotify, { read: true })
+            await update(refNotify, { read: true })
                 .then(() => {
                     console.log('Data updated successfully!');
                 })
                 .catch((error) => {
                     console.error('Error updating data:', error);
                 });
-                // console.log('postid ',notify.post_id);
-                
-            fetchPostByPostId(notify.post_id, notify.type_post)
-            if (notify.type_post === "tour") {
-                router.push( '/tourDetail')
-              }
-              else if (notify.type_post === "post") {
-                router.push('/postDetail')
-              }
-        }
+            // console.log('postid ',notify.post_id);
 
+            // fetchPostByPostId(notify.post_id, notify.type_post)
+            if (notify.type_post === "tour") {
+                router.push({
+                    pathname: "/tourDetail",
+                    params: { tourId: notify.post_id },
+                })
+            }
+            else if (notify.type_post === "post") {
+                router.push({
+                    pathname: "/postDetail",
+                    params: { postId: notify.post_id },
+                })
+            }
+        }
     }
 
     const renderItem = (notify: any) => {
@@ -122,13 +127,13 @@ const NotificationsScreen = () => {
 
     return (
         <View style={styles.container}>
-            {notifications.length>0?(<FlatList
+            {notifications.length > 0 ? (<FlatList
                 data={notifications}
                 renderItem={renderItem}
                 // keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContainer}
-            />):(<Text style={styles.noAccountsText}>No data</Text>)}
-            
+            />) : (<Text style={styles.noAccountsText}>No data</Text>)}
+
         </View>
     );
 };
@@ -143,7 +148,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 20,
         color: '#777'
-      },
+    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
