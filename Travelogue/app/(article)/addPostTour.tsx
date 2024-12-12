@@ -40,6 +40,7 @@ import {
   getDownloadURL,
   set,
   update,
+  get,
 } from "@/firebase/firebaseConfig";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
@@ -1236,8 +1237,16 @@ const AddPostTour = () => {
               (selectedPackageData.price * selectedPackageData.discount) /
               100))
             //Them id bai viet vao tai khoan
-            await update(userPost, {
-              [postId]: true,
+            get(userPost).then(snapshot => {
+              if (!snapshot.exists()) {
+                set(userPost, {
+                  [postId]: true,
+                });
+              } else {
+                update(userPost, {
+                  [postId]: true,
+                });
+              }
             });
           }
         } else {
