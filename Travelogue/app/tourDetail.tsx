@@ -28,7 +28,7 @@ import Markdown from 'react-native-markdown-display';
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMaterial from "react-native-vector-icons/MaterialCommunityIcons";
 import { Rating } from "react-native-ratings";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
@@ -168,6 +168,8 @@ const TourItem: React.FC<TourItemProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
   const [bannedWords, setBannedWords] = useState<any[]>([])
+  const { setSearchedAccountData }: any = useAccount();
+
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -278,6 +280,7 @@ const TourItem: React.FC<TourItemProps> = ({
       post_id: item.id,
       type: parentId ? "reply" : "comment",
       read: false,
+      type_post: "tour"
     };
     // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
     await set(newItemKey, notify)
@@ -603,11 +606,33 @@ const TourItem: React.FC<TourItemProps> = ({
       : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
 
+  const handleGoToProfileScreen = async (accountId: any) => {
+    if (accountId) {
+      try {
+        const refAccount = ref(database, `accounts/${accountId}`)
+        const snapshot = await get(refAccount);
+        if (snapshot.exists()) {
+          const dataAccountJson = snapshot.val()
+          console.log(dataAccountJson, 'adsd');
+
+          await setSearchedAccountData(dataAccountJson)
+          router.push("/SearchResult");
+        } else {
+          console.log("No data account available");
+        }
+      } catch (error) {
+        console.error("Error fetching data account: ", error);
+      }
+    }
+
+  }
   return (
     <View>
       {/* Post Header */}
       <View style={styles.row}>
-        <View style={styles.row}>
+        <TouchableOpacity style={styles.row}
+        onPress={()=>handleGoToProfileScreen(item.author.id)}
+        >
           <Image
             source={{ uri: item.author.avatar }}
             style={styles.miniAvatar}
@@ -617,7 +642,7 @@ const TourItem: React.FC<TourItemProps> = ({
             <Text style={styles.username}>{item.author.fullname}</Text>
             <Text style={styles.time}>{formatDate(item.created_at)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={{ zIndex: 1000 }}>
           <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} locations={item.locations} />
         </View>
