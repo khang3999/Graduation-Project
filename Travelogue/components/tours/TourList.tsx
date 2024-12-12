@@ -6,7 +6,7 @@ import { types } from '@babel/core';
 import { Badge, Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper';
 import ActionBar from '../actionBars/ActionBar';
 import { formatDate } from '@/utils/commons';
-import { AntDesign, FontAwesome, FontAwesome6 } from '@expo/vector-icons';
+import { AntDesign, Entypo, FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtTourScreen } from '@/utils';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
@@ -536,7 +536,7 @@ const TourList = () => {
           {tour.item.discountTour !== 0 ?
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-                <Text style={styles.priceLabel}>Deal hot</Text>
+              <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                   <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>

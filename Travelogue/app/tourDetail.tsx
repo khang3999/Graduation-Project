@@ -96,7 +96,7 @@ const RatingButton: React.FC<RatingButtonProps> = ({
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <Text style={styles.ratingLabel}>Rating: </Text>
+      <Text style={styles.ratingLabel}>Đánh giá: </Text>
       <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
         <Icon name="smile-o" size={40} color="black" />
         <Text style={styles.ratingValue}>{averageRating.toFixed(1)}/5.0</Text>
@@ -719,7 +719,7 @@ const TourItem: React.FC<TourItemProps> = ({
           {desc.Markdown}
         </Markdown>
         <TouchableOpacity onPress={() => toggleDescription(item.id)}>
-          <Text>{isExpanded ? "Show less" : "Show more"}</Text>
+          <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
         </TouchableOpacity>
       </View>
       <Divider style={styles.divider} />
