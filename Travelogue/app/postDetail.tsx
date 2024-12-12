@@ -330,6 +330,7 @@ const PostItem: React.FC<PostItemProps> = ({
       ? item.content.replace(/<br>/g, '\n')
       : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
+  
 
   const handleGoToProfileScreen = async (accountId: any) => {
     if (accountId) {

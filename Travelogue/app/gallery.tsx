@@ -17,7 +17,8 @@ const Gallery = () => {
   const cities = {
     id_city: idCity,
     id_country: idCountry,
-  };
+  };  
+  console.log(cities);
   const [dataCity, setDataCity] = useState<any>([]);
 
 
