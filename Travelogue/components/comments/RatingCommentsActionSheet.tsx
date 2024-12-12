@@ -392,7 +392,7 @@ export default function RatingCommentsActionSheet(props: RatingCommentsActionShe
                                             onPress={() => handleReplyButtonPress(item)}
                                         >
                                             <IconMaterial name="message-reply-text-outline" size={20} color="#5a5a5a" />
-                                            <Text style={styles.replyButtonText}>Reply</Text>
+                                            <Text style={styles.replyButtonText}>Trả lời</Text>
                                         </Pressable>
                                     )}
                                 </Pressable>

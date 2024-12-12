@@ -44,6 +44,7 @@ import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
 import ImageModal from "react-native-image-modal";
+import { Entypo } from "@expo/vector-icons";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -74,6 +75,8 @@ type Tour = {
   reports: number;
   view_mode: boolean;
   thumbnail: string;
+  discountTour: number;
+  money: number;
 };
 
 type TourItemProps = {
@@ -150,7 +153,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
-  
+
 
   const { dataAccount }: any = useHomeProvider();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
@@ -169,7 +172,8 @@ const TourItem: React.FC<TourItemProps> = ({
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
   const [bannedWords, setBannedWords] = useState<any[]>([])
   const { setSearchedAccountData }: any = useAccount();
-
+  const originalPrice = item.money
+  const promotionalPrice = item.money * (100 - item.discountTour) / 100
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
     if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
@@ -205,7 +209,7 @@ const TourItem: React.FC<TourItemProps> = ({
           setComments((prevComments) => {
             if (parentId) {
               // Add as a reply with the correct `parentId`
-              if (authorParentCommentId != dataAccount.id && authorParentCommentId!='') {
+              if (authorParentCommentId != dataAccount.id && authorParentCommentId != '') {
                 handleAddNotify(newCommentRef.key, authorParentCommentId, parentId)
               }
               return addReplyToComment(prevComments, parentId, newCommentWithId);
@@ -214,7 +218,7 @@ const TourItem: React.FC<TourItemProps> = ({
               return [newCommentWithId, ...prevComments];
             }
           });
-          
+
         }
         if (dataAccount.id != item.author.id) {
           handleAddNotify(newCommentRef.key, item.author.id, parentId)
@@ -506,7 +510,7 @@ const TourItem: React.FC<TourItemProps> = ({
       console.error('Error adding rating and image:', error);
     } finally {
       setIsLoading(false);
-    ;
+      ;
     }
   };
   const handleOpenRatingComments = async () => {
@@ -543,7 +547,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const pickRatingImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
-      
+
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
@@ -631,7 +635,7 @@ const TourItem: React.FC<TourItemProps> = ({
       {/* Post Header */}
       <View style={styles.row}>
         <TouchableOpacity style={styles.row}
-        onPress={()=>handleGoToProfileScreen(item.author.id)}
+          onPress={() => handleGoToProfileScreen(item.author.id)}
         >
           <Image
             source={{ uri: item.author.avatar }}
@@ -685,6 +689,27 @@ const TourItem: React.FC<TourItemProps> = ({
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
           <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
+          {item.discountTour !== 0 ?
+            <View style={styles.priceBackground}>
+              <View style={styles.priceWrap}>
+              <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <View style={{ paddingRight: 10 }}>
+                  <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                  <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                </View>
+              </View>
+            </View>
+            :
+            <View style={styles.priceBackground}>
+              <View style={styles.priceWrap}>
+                <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <View style={{ paddingRight: 10 }}>
+                  <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                </View>
+              </View>
+            </View>
+          }
+
         </View>
       </View>
       <CheckedInChip items={Object.values(flattenedLocationsArray)} />
@@ -877,6 +902,30 @@ export default function ToursScreen() {
   );
 }
 const styles = StyleSheet.create({
+  priceLabel: {
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 50,
+    paddingHorizontal: 10    
+  },
+  priceWrap: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 50, 
+    width: 150,
+  },  
+  priceBackground: {
+    position: 'absolute',    
+    backgroundColor: 'red',
+    paddingLeft: 6,
+    borderRadius: 10,
+    bottom: 0,
+    left: 220,
+  },
   // rating comment styles
   replyInputContainer: {
     flexDirection: 'row',
