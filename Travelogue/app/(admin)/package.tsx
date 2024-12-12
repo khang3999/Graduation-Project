@@ -127,7 +127,7 @@ const PackageComponent = () => {
 
   const renderPackage = (item: any) => {
     return (
-      <View key={item.item.id}>
+      <View key={item.item.id} style={{paddingVertical:30}}>
         <TextInput
           style={styles.category}
           defaultValue={item.item.name}
