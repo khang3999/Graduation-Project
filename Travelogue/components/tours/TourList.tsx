@@ -546,7 +546,7 @@ const TourList = () => {
             :
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-                <Text style={styles.priceLabel}>Deal hot</Text>
+                <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                 </View>
@@ -590,7 +590,7 @@ const TourList = () => {
           onPress={() => {
             router.push({
               pathname: "/tourDetail",
-              params: { postId: tour.item.id },
+              params: { tourId: tour.item.id },
             })
           }}
         >
