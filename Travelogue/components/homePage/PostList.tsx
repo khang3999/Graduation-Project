@@ -511,6 +511,7 @@ const PostList = () => {
     // Có thể reload trang nếu cần lại nếu cần
     setDataPosts(dataNewPostList)
     setCurrentPostCount(dataNewPostList.length)
+    setLoadedPosts(true)
     // Clear state của button
     // Đóng modal
     setModalNewPostVisible(false)

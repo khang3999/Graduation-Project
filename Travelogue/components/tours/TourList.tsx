@@ -287,7 +287,7 @@ const TourList = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setModalNewPostVisible(false)
+      setModalNewToursVisible(false)
       setModalVisible(false);
       if (selectedCityId) {
         console.log('have param 1111', selectedCityId);
@@ -536,7 +536,7 @@ const TourList = () => {
           {tour.item.discountTour !== 0 ?
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-              <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                   <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
@@ -586,7 +586,14 @@ const TourList = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.itemNewTourContent}>
+        <TouchableOpacity style={styles.itemNewTourContent}
+          onPress={() => {
+            router.push({
+              pathname: "/tourDetail",
+              params: { postId: tour.item.id },
+            })
+          }}
+        >
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Image style={{ width: '100%', borderRadius: 10, aspectRatio: 1 }} source={{ uri: tour.item.thumbnail }}></Image>
           </View>
@@ -752,7 +759,7 @@ const TourList = () => {
         visible={modalNewToursVisible}
         onRequestClose={() => {
           Alert.alert('Modal has been closed.');
-          setModalNewPostVisible(!modalNewToursVisible);
+          setModalNewToursVisible(!modalNewToursVisible);
         }}
         style={{ maxHeight: 400 }}
       >

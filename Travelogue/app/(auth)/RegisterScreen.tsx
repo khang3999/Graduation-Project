@@ -177,6 +177,8 @@ const RegisterScreen = ({ navigation }: any) => {
           });
           console.log(newUser);
 
+          await uploadImage(avatar,`accounts/${user.uid}/papers/avatar.jpg`)
+          
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
             id: user.uid,
@@ -305,6 +307,9 @@ const RegisterScreen = ({ navigation }: any) => {
               `accounts/${user.uid}/papers/businessLicense.jpg`
             );
           }
+
+          await uploadImage(avatar, `accounts/${user.uid}/papers/avatar.jpg`)
+
           Alert.alert(
             "Xác nhận email",
             "Một email xác nhận đã được gửi đến địa chỉ của bạn. Vui lòng kiểm tra hộp thư đến và xác nhận."
@@ -367,9 +372,9 @@ const RegisterScreen = ({ navigation }: any) => {
               margin: 5,
               fontSize: 28,
               color: appColors.danger,
-              textShadowColor: "#000", 
+              textShadowColor: "#000",
               textShadowOffset: { width: -2, height: 1 },
-              textShadowRadius: 1, 
+              textShadowRadius: 1,
             }}
           >
             Đăng Ký
@@ -598,7 +603,7 @@ const RegisterScreen = ({ navigation }: any) => {
             type="primary"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
             onPress={onRegisterUser}
-            // disabled={isLoading}
+          // disabled={isLoading}
           />
         ) : (
           <ButtonComponent
@@ -607,7 +612,7 @@ const RegisterScreen = ({ navigation }: any) => {
             type="primary"
             textStyles={{ fontWeight: "bold", fontSize: 20 }}
             onPress={onRegisterUser}
-            // disabled={isLoading}
+          // disabled={isLoading}
           />
         )}
         <SectionComponent>
@@ -624,20 +629,20 @@ const RegisterScreen = ({ navigation }: any) => {
         {isLoading && (
           <Modal transparent={true} animationType="none" visible={isLoading}>
             <View style={styles.loadingOverlay}>
-            <LottieView
-            source={require("../../assets/images/register.json")}
-            autoPlay
-            loop
-            style={{
-              position: "absolute",
-              top: 200,
-              // top: -190,
-              // left: 32,
-              zIndex: -10,
-              width: 300,
-              height: 320,
-            }}
-          />
+              <LottieView
+                source={require("../../assets/images/register.json")}
+                autoPlay
+                loop
+                style={{
+                  position: "absolute",
+                  top: 200,
+                  // top: -190,
+                  // left: 32,
+                  zIndex: -10,
+                  width: 300,
+                  height: 320,
+                }}
+              />
             </View>
           </Modal>
         )}
