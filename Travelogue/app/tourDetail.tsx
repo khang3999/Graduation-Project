@@ -143,7 +143,14 @@ const flattenImages = (images: Record<string, Record<string, { city_name: string
   return flattenedArray;
 };
 
-
+const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
+  if (!(totalRatingCounter && totalRatingValue)) {
+    return 0;
+  }
+  const average = totalRatingValue / totalRatingCounter;
+  const roundedAverage = Math.ceil(average * 2) / 2;
+  return roundedAverage;
+};
 const TourItem: React.FC<TourItemProps> = ({
   item,
   setIsScrollEnabled,
@@ -153,7 +160,7 @@ const TourItem: React.FC<TourItemProps> = ({
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
-
+  const [averageRatingValue, setAverageRatingValue] = useState(averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter));
 
   const { dataAccount }: any = useHomeProvider();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
@@ -411,13 +418,26 @@ const TourItem: React.FC<TourItemProps> = ({
 
               addCommentAndRepliesToDelete(comment.id);
 
+              //remove rating summary in Realtime Database
+              const summaryRef = ref(database, `tours/${item.id}/ratingSummary`);
+              const summaryUpdate = {
+                totalRatingCounter: increment(-1),
+                totalRatingValue: increment(-comment.rating),
+              };
+              //update rating value when rating comments change
+              setAverageRatingValue(averageRating(item.ratingSummary.totalRatingValue - comment.rating, item.ratingSummary.totalRatingCounter - 1));
 
+              await update(summaryRef, summaryUpdate);
               await update(ref(database), pathsToDelete);
+
+              
 
 
               setRatingComments((prevComments) =>
                 prevComments.filter((c) => !Object.keys(pathsToDelete).includes(`tours/${item.id}/ratings/${c.id}`))
               );
+
+
 
               // console.log('Comment deleted successfully.', comments);
 
@@ -501,6 +521,8 @@ const TourItem: React.FC<TourItemProps> = ({
       setRatingComments((prevComments) => {
         return [rating, ...prevComments];
       });
+      // Step 7: update rating value when rating comments change
+      setAverageRatingValue(averageRating(item.ratingSummary.totalRatingValue + ratingValue, item.ratingSummary.totalRatingCounter + 1));
 
       console.log('Rating and image successfully added');
       setIsRatingModalOpen(false);
@@ -536,14 +558,7 @@ const TourItem: React.FC<TourItemProps> = ({
     //Otherwise, open the rating modal
     setIsRatingModalOpen(true);
   }
-  const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
-    if (!(totalRatingCounter && totalRatingValue)) {
-      return 0;
-    }
-    const average = totalRatingValue / totalRatingCounter;
-    const roundedAverage = Math.ceil(average * 2) / 2;
-    return roundedAverage;
-  };
+
   const pickRatingImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -592,6 +607,8 @@ const TourItem: React.FC<TourItemProps> = ({
 
     return () => bannedWords();
   }, []);
+
+
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: string]: boolean }>({})
 
@@ -688,11 +705,11 @@ const TourItem: React.FC<TourItemProps> = ({
         </View>
         {/* Rating Button */}
         <View style={styles.ratingButtonContainer}>
-          <RatingButton averageRating={averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter)} onPress={handleOpenRatingComments} />
+          <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
           {item.discountTour !== 0 ?
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-              <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                   <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
@@ -702,7 +719,7 @@ const TourItem: React.FC<TourItemProps> = ({
             :
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-                <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                 </View>
@@ -907,7 +924,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 50,
-    paddingHorizontal: 10    
+    paddingHorizontal: 10
   },
   priceWrap: {
     flexDirection: 'row',
@@ -915,11 +932,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    height: 50, 
+    height: 50,
     width: 150,
-  },  
+  },
   priceBackground: {
-    position: 'absolute',    
+    position: 'absolute',
     backgroundColor: 'red',
     paddingLeft: 6,
     borderRadius: 10,
