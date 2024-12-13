@@ -53,7 +53,7 @@ const CheckInMap = () => {
   // const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
-
+  const [reload, setReload] = useState(false)
   const [userId, setUserId] = useState(null);
   const { dataAccount, setDataAccount } = useHomeProvider();
   const {
@@ -108,7 +108,7 @@ const CheckInMap = () => {
     if (dataAccount) {
       fetchCheckinList(dataAccount.id);
     }
-  }, [dataAccount]);
+  }, [dataAccount,reload]);
 
   // useEffect(() => {
   //   setHasFetched(false)
@@ -119,6 +119,9 @@ const CheckInMap = () => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
       if (dataAccount) {
         console.log("map checkin focus");
+        setSelectedArea(null);
+        setSelectedCityId(null);
+        setSelectedCity(null);
         fetchCheckinList(dataAccount.id);
       }
       return () => {
@@ -261,6 +264,7 @@ const CheckInMap = () => {
             onPress: () => {
               // Check in lên firebase
               updateCityToFirebase(selectedCity, selectedCountryId);
+              setReload(!reload)
             },
           },
         ]
@@ -296,6 +300,7 @@ const CheckInMap = () => {
         );
         // Xóa thành phố khỏi danh sách
         setCityIdRemoved(selectedCity); // Lưu lại thành phố vừa bị xóa để tô màu lại
+        setReload(!reload)
         await remove(cityRef);
         // Toast thông báo
         Toast.show({
@@ -403,12 +408,12 @@ const CheckInMap = () => {
       if (tabscreen === 'index') {
         router.replace({
           pathname: "/",
-          params: { selectedCityId: selectedCity.value, content:'' }
+          params: { selectedCityId: selectedCity.value, content: '' }
         })
       } else if (tabscreen === 'tour') {
         router.replace({
           pathname: "/tour",
-          params: { selectedCityId: selectedCity.value, content:'' }
+          params: { selectedCityId: selectedCity.value, content: '' }
         })
       }
     } else {
@@ -603,22 +608,22 @@ const CheckInMap = () => {
             <VietNamMap></VietNamMap>
           </ReactNativeZoomableView>
         ) : (
-          <View style={{flex:1}}>
-          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 40 }}>Tạm thời chưa có dữ liệu</Text>
-          <LottieView
-            autoPlay
-            style={{
-              position: "absolute",
-              left: 0,
-              width: width,
-              height: 520,
-            }}
-            source={require('@/assets/images/worldMap.json')}
-          />
-        </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 40 }}>Tạm thời chưa có dữ liệu</Text>
+            <LottieView
+              autoPlay
+              style={{
+                position: "absolute",
+                left: 0,
+                width: width,
+                height: 520,
+              }}
+              source={require('@/assets/images/worldMap.json')}
+            />
+          </View>
         )
       ) : (
-        <View style={{flex:1}}>
+        <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 40 }}>Đang tải dữ liệu bản đồ</Text>
           <LottieView
             autoPlay
@@ -708,7 +713,7 @@ const styles = StyleSheet.create({
   },
   hearder: {
     // flex:1
-    backgroundColor:'white',
+    backgroundColor: 'white',
     paddingTop: 10,
   },
   container: {
