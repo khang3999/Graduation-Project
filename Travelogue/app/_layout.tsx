@@ -1,32 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Stack } from "expo-router/stack";
-import { createStackNavigator, Header } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppProvider from "../contexts/AppProvider";
 import Toast from "react-native-toast-message-custom";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import * as Font from 'expo-font';
+import { useFonts, NotoSans_300Light_Italic, NotoSans_400Regular_Italic, NotoSans_400Regular, NotoSans_500Medium, NotoSans_600SemiBold, NotoSans_700Bold } from '@expo-google-fonts/noto-sans';
+import { DancingScript_400Regular, DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
+import { SplashScreen } from "expo-router";
+
+// Giữ màn hình Splash hiển thị cho đến khi tài nguyên được tải xong
+SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
   const colorScheme = useColorScheme();
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  let [fontsLoaded] = useFonts({
+    NotoSans_300Light_Italic,
+    NotoSans_400Regular,
+    NotoSans_400Regular_Italic,
+    NotoSans_500Medium,
+    NotoSans_600SemiBold,
+    NotoSans_700Bold,
+    DancingScript_400Regular,
+    DancingScript_700Bold,
+  });
 
-  useEffect(() => {
-    const loadFonts = async () => {
-      await Font.loadAsync({
-        'DancingScript': require('@/assets/fonts/DancingScript.ttf'),
-        'FuzzyBold': require('@/assets/fonts/FuzzyBubbles-Bold.ttf'),
-        'Fuzzy': require('@/assets/fonts/FuzzyBubbles-Regular.ttf'),
-        'Mali': require('@/assets/fonts/Mali-Regular.ttf'),
-      });
-      setFontsLoaded(true);
-    };
-    loadFonts();
-  }, []);
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      // Ẩn màn hình Splash khi font đã được tải
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null; // Chờ cho font tải xong
+  }
+
   return (
     <AppProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
         <Stack
           screenOptions={{
             headerShown: false,

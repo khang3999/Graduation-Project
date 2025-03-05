@@ -39,7 +39,7 @@ import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import * as ImagePicker from 'expo-image-picker';
 import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
 import { CommentType, Comment, RatingComment } from '@/types/CommentTypes';
-import { formatDate } from "@/utils/commons"
+import { averageRating, formatDate } from "@/utils/commons"
 import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
@@ -143,14 +143,14 @@ const flattenImages = (images: Record<string, Record<string, { city_name: string
   return flattenedArray;
 };
 
-const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
-  if (!(totalRatingCounter && totalRatingValue)) {
-    return 0;
-  }
-  const average = totalRatingValue / totalRatingCounter;
-  const roundedAverage = Math.ceil(average * 2) / 2;
-  return roundedAverage;
-};
+// const averageRating = (totalRatingValue: number, totalRatingCounter: number) => {
+//   if (!(totalRatingCounter && totalRatingValue)) {
+//     return 0;
+//   }
+//   const average = totalRatingValue / totalRatingCounter;
+//   const roundedAverage = Math.ceil(average * 2) / 2;
+//   return roundedAverage;
+// };
 const TourItem: React.FC<TourItemProps> = ({
   item,
   setIsScrollEnabled,

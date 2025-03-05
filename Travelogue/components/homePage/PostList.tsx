@@ -1,20 +1,15 @@
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions, RefreshControl } from 'react-native'
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Badge, Divider, IconButton, MD3Colors, Menu, PaperProvider } from 'react-native-paper'
 import { database, ref } from '@/firebase/firebaseConfig'
 import { equalTo, get, orderByChild, query, update } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
-import SkeletonPost from '@/components/skeletons/SkeletonPost'
 import { formatDate } from '@/utils/commons'
 import { AntDesign, FontAwesome6 } from '@expo/vector-icons'
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtHomeScreen } from '@/utils'
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import ActionBar from '../actionBars/ActionBar'
-import Toast from 'react-native-toast-message-custom'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
-import { usePost } from '@/contexts/PostProvider'
-import { debounce, isBuffer, set } from 'lodash'
 import LottieView from 'lottie-react-native'
 import { useNavigationState, useRoute } from '@react-navigation/native'
 import { useAccount } from '@/contexts/AccountProvider'
@@ -33,14 +28,15 @@ const PostList = () => {
     loadedPosts, setLoadedPosts,
     loadedTours, setLoadedTours,
     dataCountries, setDataCountries,
-    isSearchingMode, setIsSearchingMode,
     dataModalSelected, setDataModalSelected,
     dataAccount,
     selectedTypeSearch,
     dataNewPostList, setDataNewPostList,
     dataTours, setDataTours,
     dataToursSorted, setDataToursSorted,
-    dataTypeSearch
+    dataTypeSearch,
+    modalVisible, setModalVisible,
+    modalNewPostVisible, setModalNewPostVisible,
   }: any = useHomeProvider();
 
 
@@ -49,8 +45,8 @@ const PostList = () => {
   const [selectedCountry, setSelectedCountry] = useState(null); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [selectedCities, setSelectedCities] = useState([]); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [dataInput, setDataInput] = useState('') // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
+  // const [modalVisible, setModalVisible] = useState(false);
+  // const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
   const [dataNewPosts, setDataNewPosts] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [allLocationIdFromPost, setAllLocationIdFromPost] = useState([])
   const flatListPostRef: any = useRef(null)
@@ -242,7 +238,7 @@ const PostList = () => {
       setSelectedCountry(null)
       setSelectedCities([])
       setDataCities([])
-      fetchPosts()
+      fetchPosts(dataNewPostList)
     }
     // Đóng modal search
     setModalVisible(false)
@@ -301,7 +297,7 @@ const PostList = () => {
   }
 
   // Hàm lấy các bài viết khi có tương tác
-  const fetchPosts = async () => {
+  const fetchPosts = async (dataNewPostList: any) => {
     setLoadedPosts(false)
     try {
       if (dataNewPostList.length > 0) {
@@ -446,7 +442,7 @@ const PostList = () => {
           setSelectedCities([])
           setDataCities([])
           selectedTypeSearch.current = 1
-          fetchPosts(); // Gọi fetchPosts
+          fetchPosts(dataNewPostList); // Gọi fetchPosts
           fetchTours(); //
         }
       }
@@ -482,7 +478,7 @@ const PostList = () => {
 
   useEffect(() => {
     if (reloadScreen) {
-      fetchPosts(); // Tải lại bài viết
+      fetchPosts(dataNewPostList); // Tải lại bài viết
       fetchTours()
       setReloadScreen(false)
     }
@@ -605,7 +601,7 @@ const PostList = () => {
     );
 
     return (
-      <View key={post.item.id}>
+      <View key={post.item.id} style={styles.itemWrap}>
         < PaperProvider >
           <TouchableOpacity style={styles.item} onPress={() => {
             router.push({
@@ -621,32 +617,32 @@ const PostList = () => {
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
                 <TouchableOpacity>
-                  <Text style={{ fontWeight: '600' }} numberOfLines={1}>
+                  <Text style={{ fontWeight: '600', fontFamily: 'NotoSans_600SemiBold' }} numberOfLines={1}>
                     {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
-                <Text style={{ fontStyle: 'italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
+                <Text style={{ fontFamily: 'NotoSans_400Regular_Italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
               </View>
             </View>
             {/* Location */}
             <View style={styles.flagBtn}>
               {/* <Provider > */}
               <Menu
-                // statusBarHeight={0}
                 style={styles.listLocations}
                 visible={indexVisibleMenu === post.index} // Thay the 1 bang index của post trong mang
                 onDismiss={closeMenu}
                 theme={''}
                 anchor={
                   <IconButton
-                    style={{ backgroundColor: 'white', width: 50, height: 32 }}
+                    style={{ backgroundColor: 'white', width: 50, height: 32, position: 'relative' }}
                     icon="flag-variant-outline"
                     iconColor={MD3Colors.error10}
                     size={26}
                     onPress={() => openMenu(post.index)}
                     accessibilityLabel="Menu button"
                   />
-                }>
+                }
+                contentStyle={{ backgroundColor: 'red', top: 0, }}>
                 {allLocations.map((location: any) => {
                   return (
                     <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
@@ -659,7 +655,7 @@ const PostList = () => {
               </Menu>
               {/* </Provider> */}
             </View>
-            <View style={styles.imagePost}>
+            <View style={styles.imagePostWrap}>
               <Image style={styles.imagePost} source={{ uri: post.item.thumbnail }}></Image>
             </View>
 
@@ -722,12 +718,7 @@ const PostList = () => {
   // VIEW
   return (
     <View style={styles.container}>
-      <View style={styles.titlePostContainer}>
-        <View style={{ backgroundColor: '#009400', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
-          <Text style={styles.textCategory}>Bài viết</Text>
-        </View>
-
-        {/* {((currentPostCount !== newPostCount) && (isSearchingMode === false)) && ( */}
+      <View>
         {((currentPostCount !== newPostCount)) && (
           <TouchableOpacity style={styles.loadNewPost} onPress={() => handleShowNewPost()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
@@ -744,23 +735,52 @@ const PostList = () => {
           <AntDesign name="reload1" size={22} color="black" />
         </TouchableOpacity>
       </View>
-      {dataPosts.length !== 0 ?
-        loadedPosts ?
-          <FlatList
-            // ref={flatListPostRef}
-            showsVerticalScrollIndicator={false}
-            data={dataPosts}
-            extraData={dataPosts}
-            renderItem={postItem}
-            keyExtractor={(post: any) => post.id}
-            // ItemSeparatorComponent={() => <View style={{ height: 20 }} />} // Space between item
-            pagingEnabled //Scroll to next item
-            onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
-            viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
-          />
+
+
+      <View style={{ height: 460 }}>
+        {dataPosts.length !== 0 ?
+          loadedPosts ?
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              horizontal={true}
+              // ref={flatListPostRef}
+              nestedScrollEnabled={true}
+              // scrollEnabled={false}
+              showsVerticalScrollIndicator={true}
+              data={dataPosts}
+              extraData={dataPosts}
+              renderItem={postItem}
+              keyExtractor={(post: any) => post.id}
+              contentContainerStyle={{ paddingVertical: 20, paddingHorizontal: 20 }}
+              ItemSeparatorComponent={() => <View style={{ width: 40 }} />} // Space between item
+              pagingEnabled //Scroll to next item
+              onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
+              viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
+              // Refresh control tích hợp
+              refreshControl={
+                <RefreshControl refreshing={false} onRefresh={() => console.log('refreshed')} />
+              }
+            />
+            :
+            <View>
+              <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu bài viết</Text>
+              <LottieView
+                autoPlay
+                style={{
+                  position: "absolute",
+                  top: 80,
+                  left: 0,
+                  width: width,
+                  height: 320,
+                }}
+                source={require('@/assets/images/loadingPost.json')}
+              />
+            </View>
+
+          // <SkeletonPost></SkeletonPost>
           :
           <View>
-            <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu bài viết</Text>
+            <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Không có bài viết phù hợp</Text>
             <LottieView
               autoPlay
               style={{
@@ -770,29 +790,12 @@ const PostList = () => {
                 width: width,
                 height: 320,
               }}
-              source={require('@/assets/images/loadingPost.json')}
+              source={require('@/assets/images/noDataGif.json')}
             />
           </View>
 
-        // <SkeletonPost></SkeletonPost>
-        :
-        <View>
-          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Không có bài viết phù hợp</Text>
-          <LottieView
-            autoPlay
-            style={{
-              position: "absolute",
-              top: 80,
-              left: 0,
-              width: width,
-              height: 320,
-            }}
-            source={require('@/assets/images/noDataGif.json')}
-          />
-        </View>
-
-      }
-
+        }
+      </View>
       <Modal
         animationType="slide"
         transparent={true}
@@ -1027,7 +1030,7 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   filterBtn: {
-    position: 'absolute',
+    position: 'relative',
     backgroundColor: '#b9e0f7',
     right: 10,
     top: 0,
@@ -1049,9 +1052,6 @@ const styles = StyleSheet.create({
     transformOrigin: 'center',
     elevation: 6
   },
-  titlePostContainer: {
-    flexDirection: 'row'
-  },
   textCategory: {
     fontSize: 14,
     backgroundColor: '#E6F6E6',
@@ -1064,9 +1064,15 @@ const styles = StyleSheet.create({
     elevation: 6
   },
   imagePost: {
-    height: 410,
+    // height: 400,
+    height: '100%',
+    width: width - 40,
     // backgroundColor: 'red',
     borderRadius: 30,
+  },
+  imagePostWrap: {
+    height: '80%',
+    elevation: 4
   },
   itemLocation: {
     padding: 0,
@@ -1074,15 +1080,16 @@ const styles = StyleSheet.create({
     left: -11,
     width: 80,
     // backgroundColor: 'green',
-    textAlign: 'center'
+    textAlign: 'center',
+    fontFamily: 'NotoSans_400Regular'
   },
   listLocations: {
-    width: 90,
-    left: 284,
+    width: 'auto',
+    // // left: 284,
+    right: 0,
     top: 42,
     position: 'absolute',
-    paddingVertical: 0,
-    borderRadius: 30
+    // borderRadius: 30
   },
   flagBtn: {
     position: 'absolute',
@@ -1114,12 +1121,17 @@ const styles = StyleSheet.create({
     zIndex: 3
   },
   item: {
-    height: 410,
+    // height: 400,
     position: "relative",
-    marginHorizontal: 10,
-    marginBottom: 10,
+    // marginHorizontal: 10,
+    // marginBottom: 10,
     borderRadius: 30,
-    elevation: 6
+  },
+  itemWrap: {
+    backgroundColor: 'white',
+    height: 420,
+    elevation: 6,
+    borderRadius: 30
   },
   actionBar: {
     position: 'absolute',
@@ -1130,8 +1142,6 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'relative',
-    height: 458,
-    marginTop: 4,
   }
 })
 export default PostList

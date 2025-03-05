@@ -36,17 +36,18 @@ const HomeProvider = ({ children }) => {
     const [accountBehavior, setAccountBehavior] = useState({})
     const [userId, setUserId] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
-    const [isSearchingMode, setIsSearchingMode] = useState(false)
+    // const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [dataModalSelected, setDataModalSelected] = useState(null)
     const [dataNewPostList, setDataNewPostList] = useState([])
     const [dataToursSorted, setDataToursSorted] = useState([])
+    const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
     const selectedTypeSearch = useRef(1)
     const dataTypeSearch = [
         { key: 1, value: 'Mặc định' },
         { key: 2, value: 'Thích nhiều nhất' }
     ]
 
-    const {setAccountData } = useAccount();
+    const { setAccountData } = useAccount();
 
     // Login state
     const fetchUserId = async () => {
@@ -244,7 +245,7 @@ const HomeProvider = ({ children }) => {
                 loadedTours, setLoadedTours,
                 modalVisible, setModalVisible,
                 dataCountries, setDataCountries,
-                isSearchingMode, setIsSearchingMode,
+                // isSearchingMode, setIsSearchingMode,
                 dataModalSelected, setDataModalSelected,
                 dataAllCities, setDataAllCities,
                 dataAccount, setDataAccount,
@@ -255,7 +256,8 @@ const HomeProvider = ({ children }) => {
                 setAllLocationNameFromPost,
                 dataToursSorted, setDataToursSorted,
                 dataAccount,
-                dataTypeSearch
+                dataTypeSearch,
+                modalNewPostVisible, setModalNewPostVisible,
             }}
 
         >

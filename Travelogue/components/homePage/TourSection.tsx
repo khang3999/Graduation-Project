@@ -7,6 +7,11 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
 import { router } from 'expo-router';
 import { useTourProvider } from '@/contexts/TourProvider';
+import { IconButton, MD3Colors } from 'react-native-paper';
+import { Feather, FontAwesome, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Marquee } from '@animatereactnative/marquee';
+import { averageRating } from "@/utils/commons"
+
 
 const { width } = Dimensions.get('window');
 const TourSection = () => {
@@ -49,126 +54,213 @@ const TourSection = () => {
                 country
             }))
         );
+
+        const originalPrice = tour.item.money
+        const promotionalPrice = tour.item.money * (100 - tour.item.discountTour) / 100
         return (
-            <Pressable style={styles.tourItem} key={tour.item.id}
+            // <View style={styles.tourItemContainer}>
+            <TouchableOpacity style={styles.tourItem} key={tour.item.id}
                 onPress={() => {
                     router.push({
                         pathname: "/tourDetail",
                         params: { tourId: tour.item.id },
                     });
                 }}>
-                <View style={styles.imageWrap}>
-                    <View style={styles.locationWrap}>
-                        <Carousel
-                            loop
-                            width={(width - 40) / 3}
-                            height={30}
-                            autoPlay={true}
-                            data={allLocations}
-                            autoPlayInterval={0}
-                            scrollAnimationDuration={3000}
-                            style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
-                            // onSnapToItem={(index) => console.log('current index:', index)}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity key={item.id} style={{ flex: 1, justifyContent: 'center' }} onPress={() => handleTapOnLocationInMenu(item.id, item.country)}>
-                                    <View style={{ backgroundColor: 'grey', opacity: 0.6, width: '100%', height: 30, position: 'absolute' }}></View>
-                                    <Text style={{ textAlign: 'center', fontSize: 14, color: 'white' }}>
-                                        {item.name + ""}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                    </View>
+                <View style={styles.tourItemImageSection}>
                     <Image
                         style={styles.image}
                         source={{ uri: tour.item.thumbnail }}
                     />
                 </View>
-                <View style={styles.overPlay}></View>
-            </Pressable>
+                <View style={styles.tourItemContentSection}>
+                    <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                        <Text style={styles.tourItemTitle} numberOfLines={1} ellipsizeMode='tail'>{tour.item.title}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View>
+                                <FontAwesome name="star" size={24} color="#FFD700" />
+                            </View>
+                            <View style={{ marginHorizontal: 10, alignItems: 'center' }}>
+                                <Text style={{ color: '#a1a1a1', fontFamily: 'NotoSans_400Regular' }}>Đánh giá</Text>
+                                <Text style={{ fontSize: 18, fontFamily: 'NotoSans_400Regular', height: 24, lineHeight: 24 }}>{averageRating(tour.item.ratingSummary.totalRatingValue, tour.item.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
+                            </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <View>
+                                <FontAwesome6 name="money-check-dollar" size={24} color="black" />
+                            </View>
+                            {tour.item.discountTour !== 0 ?
+                                <View style={styles.tourPriceContainer}>
+                                    <Text style={styles.tourOriginalPrice}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                                    <Text style={styles.tourDiscountedPrice}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                                </View>
+                                :
+                                <View style={[styles.tourPriceContainer, { justifyContent: 'flex-end' }]}>
+                                    <Text style={styles.tourDiscountedPrice}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                                </View>
+                            }
+                        </View>
+
+                    </View>
+                    <View style={[styles.dotCustom, { left: -10 }]}></View>
+                    <View style={[styles.dotCustom, { right: -10 }]}></View>
+                </View>
+                <View style={styles.tourFooterSection}>
+                    {/* <Feather name="phone-call" size={24} color="black" />
+                    <Text style={{ color: 'black', fontSize: 18, fontWeight: '500', fontStyle: 'italic' }}>Liên hệ</Text> */}
+                    <View style={styles.locationWrap}>
+                        {/* <View style={{ height: '100%', paddingHorizontal: 16, marginRight: 10, backgroundColor: 'white', borderColor: '#ff0000', justifyContent: 'center', borderRightWidth: 5 }} >
+                            <MaterialCommunityIcons name="flag-variant-outline" size={24} color="black" />
+                        </View> */}
+                        <Marquee style={{ flex: 1 }} spacing={0} speed={1} >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+                                {allLocations.map((location: any) => (
+                                    <TouchableOpacity
+                                        key={location.id}
+                                        style={{ paddingHorizontal: 10 }}
+                                        onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
+                                        <Text style={{ fontFamily: 'NotoSans_400Regular' }}>{location.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </Marquee>
+                        <View>
+                            {/* <Carousel
+                                loop
+                                width={(width * 2 / 3) - 120}
+                                height={28}
+                                autoPlay={true}
+                                data={allLocations}
+                                autoPlayInterval={0}
+                                scrollAnimationDuration={3000}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity key={item.id} style={{ flex: 1, justifyContent: 'center' }} onPress={() => handleTapOnLocationInMenu(item.id, item.country)}>
+                                        <Text style={{ textAlign: 'center', fontSize: 15 }}>
+                                            {item.name + ""}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            /> */}
+                        </View>
+                    </View>
+                </View>
+            </TouchableOpacity>
+            // </View>
+
         )
     }
 
     return (
-        <View style={styles.container}>
-            <View style={{ backgroundColor: '#009400', marginVertical: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10, alignSelf: 'flex-start' }}>
-                <Text style={[styles.textCategory]}>Tour du lịch</Text>
-            </View>
-            <View style={{ backgroundColor: '#f0f0f0', marginBottom: 8}}>
-                {loadedTours ?
-                    <FlatList
-                        // ref={flatListTourRef}
-                        horizontal={true}
-                        // scrollToOffset={ }
-                        data={dataToursSorted}
-                        renderItem={tourItem}
-                        keyExtractor={(tour: any) => tour.id}
-                        contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10}}
-                        ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                    // pagingEnabled
-                    >
-                    </FlatList>
-                    :
-                    <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
-                        <SkeletonTourHome />
-                        <SkeletonTourHome />
-                        <SkeletonTourHome />
-                    </View>
-                }
-            </View>
+        <View style={{}}>
+            {loadedTours ?
+                <FlatList
+                    // ref={flatListTourRef}
+                    horizontal={true}
+                    // scrollToOffset={ }
+                    data={dataToursSorted}
+                    renderItem={tourItem}
+                    keyExtractor={(tour: any) => tour.id}
+                    contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+                    ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
+                // pagingEnabled
+                >
+                </FlatList>
+                :
+                <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
+                    <SkeletonTourHome />
+                    <SkeletonTourHome />
+                    <SkeletonTourHome />
+                </View>
+            }
         </View >
     )
 }
 const styles = StyleSheet.create({
-    textCategory: {
-        fontSize: 14,
-        backgroundColor: '#E6F6E6',
-        borderTopRightRadius: 10,
-        borderBottomRightRadius: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        fontWeight: '500',
-        // alignSelf: 'flex-start',
-        elevation: 10,
+    tourDiscountedPrice: {
+        fontSize: 18,
+        fontFamily: 'NotoSans_600SemiBold',
     },
-    textLocation: {
-        color: 'white'
+    tourOriginalPrice: {
+        textDecorationLine: 'line-through',
+        fontFamily: 'NotoSans_500Medium',
+        color: '#c1c1c1'
     },
-    overPlay: {
-        backgroundColor: 'black',
+    tourPriceContainer: {
+        flex: 1,
+        // paddingVertical: 8,
+        marginLeft: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        // backgroundColor:'red'
+    },
+    dotCustom: {
         position: 'absolute',
-        width: "100%",
-        height: "100%",
-        // zIndex: 3,
-        opacity: 0.4,
-        borderRadius: 10,
+        width: 20,
+        height: 20,
+        borderRadius: 50,
+        backgroundColor: '#EAEAEA',
+        top: -10,
     },
     locationWrap: {
-        position: 'absolute',
-        zIndex: 4,
-        height: 30,
-        top: 0
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'white',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderTopWidth: 3,
+        borderStyle: 'dotted',
+        borderColor: '#d3d3d3',
+    },
+    tourItemTitle: {
+        fontSize: 18,
+        fontFamily: 'NotoSans_600SemiBold',
+        // fontWeight: 'bold',
+        marginBottom: 0
     },
     image: {
-        width: (width - 40) / 3,
-        height: "100%",
-        borderRadius: 10,
+        flex: 1,
+        borderRadius: 20,
+        // overlayColor: 'white'
     },
-    imageWrap: {
-        position: 'relative',
+    tourFooterSection: {
+        flexDirection: 'row',
+        backgroundColor: '#f96161',
+        // backgroundColor: 'blue',
+        height: '12%',
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        overflow: 'hidden',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    tourItemContentSection: {
+        width: '100%',
+        height: '33%',
+        // padding: 10,
+        borderTopWidth: 3,
+        borderStyle: 'dashed',
+        borderColor: '#d3d3d3',
+        justifyContent: 'space-around',
+    },
+    tourItemImageSection: {
+        width: '100%',
+        height: '55%',
+        padding: 14,
+        // paddingBottom: 20,
+        borderRadius: 20,
     },
     tourItem: {
-        position: 'relative',
-        // backgroundColor: 'green',
+        backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
-        height: 90,
-        elevation: 6
-    },
-    container: {
-        flexDirection: 'column',
-        justifyContent: 'center',
+        borderRadius: 20,
+        height: 400,
+        width: width * 2 / 3,
+        // overflow: 'hidden',
+        elevation: 4
     }
 })
 export default TourSection
