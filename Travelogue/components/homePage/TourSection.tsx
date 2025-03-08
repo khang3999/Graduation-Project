@@ -8,9 +8,10 @@ import SkeletonTourHome from '../skeletons/SkeletonTourHome';
 import { router } from 'expo-router';
 import { useTourProvider } from '@/contexts/TourProvider';
 import { IconButton, MD3Colors } from 'react-native-paper';
-import { Feather, FontAwesome, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather, FontAwesome, FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Marquee } from '@animatereactnative/marquee';
 import { averageRating } from "@/utils/commons"
+import SaveButton from '../buttons/SaveButton';
 
 
 const { width } = Dimensions.get('window');
@@ -66,24 +67,42 @@ const TourSection = () => {
                         params: { tourId: tour.item.id },
                     });
                 }}>
+                <View style={styles.tourItemHeader}>
+                    <Image source={{ uri: tour.item.author.avatar }} style={{ width: 'auto', height: '100%', borderRadius: 20, aspectRatio: 1 }}>
+                    </Image>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <FontAwesome name="bookmark-o" size={30} color="black" />
+                    </View>
+                </View>
                 <View style={styles.tourItemImageSection}>
-                    <Image
-                        style={styles.image}
-                        source={{ uri: tour.item.thumbnail }}
-                    />
+                    <View style={{ backgroundColor: 'white', borderRadius: 20, flex: 1, elevation: 6, }}>
+                        <Image
+                            style={styles.image}
+                            source={{ uri: tour.item.thumbnail }}
+                        />
+                    </View>
                 </View>
                 <View style={styles.tourItemContentSection}>
                     <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
                         <Text style={styles.tourItemTitle} numberOfLines={1} ellipsizeMode='tail'>{tour.item.title}</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <View>
-                                <FontAwesome name="star" size={24} color="#FFD700" />
+
+                        {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}> */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10, justifyContent: 'space-between' }}>
+                            {/* Time */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Ionicons name="calendar" size={22} color="black" />
+                                <Text style={{ fontSize: 18, paddingLeft: 10 }}>4 ngày</Text>
                             </View>
-                            <View style={{ marginHorizontal: 10, alignItems: 'center' }}>
-                                <Text style={{ color: '#a1a1a1', fontFamily: 'NotoSans_400Regular' }}>Đánh giá</Text>
-                                <Text style={{ fontSize: 18, fontFamily: 'NotoSans_400Regular', height: 24, lineHeight: 24 }}>{averageRating(tour.item.ratingSummary.totalRatingValue, tour.item.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
+                            {/* Rating */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <FontAwesome6 name="ranking-star" size={22} color="black" />
+                                <Text style={{ fontSize: 18, paddingRight: 4, paddingLeft: 10 }}>{averageRating(tour.item.ratingSummary.totalRatingValue, tour.item.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
+                                <View style={{ alignItems: 'center', justifyContent: 'center' }} >
+                                    <FontAwesome name="star" size={18} color="#FFD700" />
+                                </View>
                             </View>
                         </View>
+                        {/* </View> */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <View>
                                 <FontAwesome6 name="money-check-dollar" size={24} color="black" />
@@ -98,6 +117,10 @@ const TourSection = () => {
                                     <Text style={styles.tourDiscountedPrice}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                                 </View>
                             }
+                            {/* <Text style={{fontSize: 18, color:'#c1c1c1'}}> <Text style={{fontSize:22}}>|</Text>|1</Text> */}
+                            <View style={{ width: 2, height: 26, backgroundColor: '#c1c1c1', marginHorizontal: 6 }}></View>
+                            <Text style={{ fontSize: 18, color: "#c1c1c1" }}>1</Text>
+                            <Ionicons name="people" size={20} color="#c1c1c1" />
                         </View>
 
                     </View>
@@ -118,7 +141,7 @@ const TourSection = () => {
                                         key={location.id}
                                         style={{ paddingHorizontal: 10 }}
                                         onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
-                                        <Text style={{ fontFamily: 'NotoSans_400Regular' }}>{location.name}</Text>
+                                        <Text style={{}}>{location.name}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -177,17 +200,17 @@ const TourSection = () => {
 const styles = StyleSheet.create({
     tourDiscountedPrice: {
         fontSize: 18,
-        fontFamily: 'NotoSans_600SemiBold',
+        // fontFamily: 'NotoSans_600SemiBold',
     },
     tourOriginalPrice: {
         textDecorationLine: 'line-through',
-        fontFamily: 'NotoSans_500Medium',
+        // fontFamily: 'NotoSans_500Medium',
         color: '#c1c1c1'
     },
     tourPriceContainer: {
         flex: 1,
         // paddingVertical: 8,
-        marginLeft: 20,
+        marginLeft: 10,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -214,14 +237,15 @@ const styles = StyleSheet.create({
         borderColor: '#d3d3d3',
     },
     tourItemTitle: {
-        fontSize: 18,
-        fontFamily: 'NotoSans_600SemiBold',
-        // fontWeight: 'bold',
+        fontSize: 20,
+        // fontFamily: 'NotoSans_600SemiBold',
+        fontWeight: '500',
         marginBottom: 0
     },
     image: {
         flex: 1,
         borderRadius: 20,
+        elevation: 10,
         // overlayColor: 'white'
     },
     tourFooterSection: {
@@ -238,7 +262,7 @@ const styles = StyleSheet.create({
     },
     tourItemContentSection: {
         width: '100%',
-        height: '33%',
+        height: '28%',
         // padding: 10,
         borderTopWidth: 3,
         borderStyle: 'dashed',
@@ -247,17 +271,28 @@ const styles = StyleSheet.create({
     },
     tourItemImageSection: {
         width: '100%',
-        height: '55%',
+        height: '50%',
         padding: 14,
         // paddingBottom: 20,
         borderRadius: 20,
+    },
+    tourItemHeader: {
+        width: '100%',
+        height: '10%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        // backgroundColor: 'red',
+        paddingHorizontal: 14,
+        paddingTop: 10,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
     tourItem: {
         backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 20,
-        height: 400,
+        height: 460,
         width: width * 2 / 3,
         // overflow: 'hidden',
         elevation: 4

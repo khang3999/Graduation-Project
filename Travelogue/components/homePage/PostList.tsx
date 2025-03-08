@@ -617,11 +617,11 @@ const PostList = () => {
               </TouchableOpacity>
               <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
                 <TouchableOpacity>
-                  <Text style={{ fontWeight: '600', fontFamily: 'NotoSans_600SemiBold' }} numberOfLines={1}>
+                  <Text style={{ fontWeight: '600', }} numberOfLines={1}>
                     {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
-                <Text style={{ fontFamily: 'NotoSans_400Regular_Italic', fontSize: 12 }}>{formatDate(post.item.created_at)}</Text>
+                <Text style={{ fontSize: 12, fontStyle:'italic' }}>{formatDate(post.item.created_at)}</Text>
               </View>
             </View>
             {/* Location */}
@@ -1081,7 +1081,7 @@ const styles = StyleSheet.create({
     width: 80,
     // backgroundColor: 'green',
     textAlign: 'center',
-    fontFamily: 'NotoSans_400Regular'
+    // fontFamily: 'NotoSans_400Regular'
   },
   listLocations: {
     width: 'auto',

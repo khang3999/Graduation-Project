@@ -5,40 +5,58 @@ import AppProvider from "../contexts/AppProvider";
 import Toast from "react-native-toast-message-custom";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { useFonts, NotoSans_300Light_Italic, NotoSans_400Regular_Italic, NotoSans_400Regular, NotoSans_500Medium, NotoSans_600SemiBold, NotoSans_700Bold } from '@expo-google-fonts/noto-sans';
-import { DancingScript_400Regular, DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
-import { SplashScreen } from "expo-router";
+// import { useFonts, NotoSans_300Light_Italic, NotoSans_400Regular_Italic, NotoSans_400Regular, NotoSans_500Medium, NotoSans_600SemiBold, NotoSans_700Bold } from '@expo-google-fonts/noto-sans';
+// import { DancingScript_400Regular, DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
+// import { SplashScreen } from "expo-router";
+import * as Font from 'expo-font';
 
 // Giữ màn hình Splash hiển thị cho đến khi tài nguyên được tải xong
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
   const colorScheme = useColorScheme();
-  let [fontsLoaded] = useFonts({
-    NotoSans_300Light_Italic,
-    NotoSans_400Regular,
-    NotoSans_400Regular_Italic,
-    NotoSans_500Medium,
-    NotoSans_600SemiBold,
-    NotoSans_700Bold,
-    DancingScript_400Regular,
-    DancingScript_700Bold,
-  });
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  useEffect(() => {
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        'DancingScript': require('@/assets/fonts/DancingScript.ttf'),
+        'FuzzyBold': require('@/assets/fonts/FuzzyBubbles-Bold.ttf'),
+        'Fuzzy': require('@/assets/fonts/FuzzyBubbles-Regular.ttf'),
+        'Mali': require('@/assets/fonts/Mali-Regular.ttf'),
+        'DancingScript-Bold': require('@/assets/fonts/DancingScript-Bold.ttf'),
+        'NotoSans': require('@/assets/fonts/NotoSans-Regular.ttf'),
+      });
+      setFontsLoaded(true);
+    };
+    loadFonts();
+  }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      // Ẩn màn hình Splash khi font đã được tải
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+  // let [fontsLoaded] = useFonts({
+  //   NotoSans_300Light_Italic,
+  //   NotoSans_400Regular,
+  //   NotoSans_400Regular_Italic,
+  //   NotoSans_500Medium,
+  //   NotoSans_600SemiBold,
+  //   NotoSans_700Bold,
+  //   DancingScript_400Regular,
+  //   DancingScript_700Bold,
+  // });
 
-  if (!fontsLoaded) {
-    return null; // Chờ cho font tải xong
-  }
+  // const onLayoutRootView = useCallback(async () => {
+  //   if (fontsLoaded) {
+  //     // Ẩn màn hình Splash khi font đã được tải
+  //     await SplashScreen.hideAsync();
+  //   }
+  // }, [fontsLoaded]);
+
+  // if (!fontsLoaded) {
+  //   return null; // Chờ cho font tải xong
+  // }
 
   return (
     <AppProvider>
-      <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack
           screenOptions={{
             headerShown: false,

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 40,
-    fontFamily: 'DancingScript_700Bold',
+    fontFamily: 'DancingScript-Bold',
   },
   header: {
     // height: 70,

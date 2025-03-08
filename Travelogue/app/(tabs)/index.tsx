@@ -202,12 +202,11 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     marginHorizontal: 20,
     fontSize: 20,
-    fontFamily: 'NotoSans_600SemiBold',
   },
 
   textTitle: {
     fontSize: 34,
-    fontFamily: 'NotoSans_600SemiBold',
+    fontWeight:'500',
     paddingHorizontal: 20,
   },
 
