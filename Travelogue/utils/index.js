@@ -2,14 +2,19 @@
 
 // Hàm làm tròn lượt like
 export const formatNumberLike = (value) => {
+    let formattedValue;
     if (value >= 1_000_000_000) {
-        return (value / 1_000_000_000).toFixed(2) + 'B';
+        formattedValue = (value / 1_000_000_000).toFixed(2) + 'B';
     } else if (value >= 1_000_000) {
-        return (value / 1_000_000).toFixed(2) + 'M';
+        formattedValue = (value / 1_000_000).toFixed(2) + 'M';
     } else if (value >= 1_000) {
-        return (value / 1_000).toFixed(2) + 'K';
+        formattedValue = (value / 1_000).toFixed(2) + 'K';
+    } else {
+        return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
     }
-    return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
+
+    // Loại bỏ .00 nếu có
+    return formattedValue.replace(/\.00/, '');
 }
 // Hàm trộn mảng tour và bài viết theo tỉ lệ bất kì truyền vào
 export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {

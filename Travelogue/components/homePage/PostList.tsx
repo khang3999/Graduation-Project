@@ -5,7 +5,7 @@ import { database, ref } from '@/firebase/firebaseConfig'
 import { equalTo, get, orderByChild, query, update } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { formatDate } from '@/utils/commons'
-import { AntDesign, FontAwesome6 } from '@expo/vector-icons'
+import { AntDesign, Entypo, FontAwesome6 } from '@expo/vector-icons'
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtHomeScreen } from '@/utils'
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
 import ActionBar from '../actionBars/ActionBar'
@@ -13,6 +13,8 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import LottieView from 'lottie-react-native'
 import { useNavigationState, useRoute } from '@react-navigation/native'
 import { useAccount } from '@/contexts/AccountProvider'
+import HeartButton from '../buttons/HeartButton'
+import SaveButton from '../buttons/SaveButton'
 
 const { width } = Dimensions.get('window')
 
@@ -553,7 +555,7 @@ const PostList = () => {
 
   // Cài đặt để FlatList xác định các mục hiển thị
   const viewabilityConfig = {
-    itemVisiblePercentThreshold: 50, // Chỉ định rằng item phải hiển thị ít nhất 50% để được coi là visible
+    itemVisiblePercentThreshold: 80, // Chỉ định rằng item phải hiển thị ít nhất 80% để được coi là visible
   };
 
   // Sử dụng một trạng thái để quản lý ID của menu đang mở
@@ -610,6 +612,9 @@ const PostList = () => {
             });
             // setSelectedPost([post.item])
           }}>
+            {/* Label */}
+            <View style={{ borderRadius: 30, position: 'absolute', backgroundColor: 'rgba(100,100,100,0.1)', zIndex: 1, width: '100%', height: '100%' }}></View>
+
             {/*Author*/}
             <View style={styles.authorContent}>
               <TouchableOpacity style={styles.avatarWrap} onPress={() => handleGoToProfileScreen(authorId)}>
@@ -621,28 +626,36 @@ const PostList = () => {
                     {post.item.author.fullname}
                   </Text>
                 </TouchableOpacity>
-                <Text style={{ fontSize: 12, fontStyle:'italic' }}>{formatDate(post.item.created_at)}</Text>
+                <Text style={{ fontSize: 12, fontStyle: 'italic' }}>{formatDate(post.item.created_at)}</Text>
               </View>
             </View>
             {/* Location */}
-            <View style={styles.flagBtn}>
+            <View
+              style={styles.flagBtn}
+            >
               {/* <Provider > */}
               <Menu
                 style={styles.listLocations}
                 visible={indexVisibleMenu === post.index} // Thay the 1 bang index của post trong mang
                 onDismiss={closeMenu}
                 theme={''}
+                elevation={4}
+                // statusBarHeight={0}
+                anchorPosition='bottom'
+                contentStyle={{ backgroundColor: 'white', right: 26, }}
                 anchor={
-                  <IconButton
-                    style={{ backgroundColor: 'white', width: 50, height: 32, position: 'relative' }}
-                    icon="flag-variant-outline"
-                    iconColor={MD3Colors.error10}
-                    size={26}
-                    onPress={() => openMenu(post.index)}
-                    accessibilityLabel="Menu button"
-                  />
+                  <View style={{ alignItems: "center" }}>
+                    <IconButton
+                      style={{ backgroundColor: 'white', width: 50, height: 40 }}
+                      icon="map-marker-radius"
+                      iconColor={MD3Colors.error10}
+                      size={26}
+                      onPress={() => openMenu(post.index)}
+                      accessibilityLabel="Menu button"
+                    />
+                  </View>
                 }
-                contentStyle={{ backgroundColor: 'red', top: 0, }}>
+              >
                 {allLocations.map((location: any) => {
                   return (
                     <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
@@ -660,7 +673,22 @@ const PostList = () => {
             </View>
 
             {/* Button like, comment, save */}
-            <ActionBar style={styles.actionBar} data={post.item} type={TYPE}></ActionBar>
+            {/* <ActionBar style={styles.actionBar} data={post.item} type={TYPE}></ActionBar> */}
+            {/* Action button */}
+            <View style={styles.actionBar}>
+              <View style={[styles.btn, {
+                marginRight: 10, paddingHorizontal: 10,
+              }]}>
+                <HeartButton data={post.item} type={TYPE}></HeartButton>
+              </View>
+              <View style={[styles.btn, { marginRight: 30, width: 50, }]}>
+                <SaveButton data={post.item} type={TYPE}></SaveButton>
+              </View>
+            </View>
+            {/* Topic */}
+            <View style={styles.topicContainer}>
+              <Text numberOfLines={2} ellipsizeMode='tail' textBreakStrategy='balanced' style={styles.topicText}>{post.item.title}</Text>
+            </View>
           </TouchableOpacity>
         </PaperProvider>
       </View>
@@ -742,7 +770,7 @@ const PostList = () => {
           loadedPosts ?
             <FlatList
               keyboardShouldPersistTaps="handled"
-              horizontal={true}
+              // horizontal={true}
               // ref={flatListPostRef}
               nestedScrollEnabled={true}
               // scrollEnabled={false}
@@ -752,8 +780,8 @@ const PostList = () => {
               renderItem={postItem}
               keyExtractor={(post: any) => post.id}
               contentContainerStyle={{ paddingVertical: 20, paddingHorizontal: 20 }}
-              ItemSeparatorComponent={() => <View style={{ width: 40 }} />} // Space between item
-              pagingEnabled //Scroll to next item
+              ItemSeparatorComponent={() => <View style={{ height: 40 }} />} // Space between item
+              // pagingEnabled //Scroll to next item
               onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
               viewabilityConfig={viewabilityConfig} // Cấu hình cách xác định các mục hiển thị
               // Refresh control tích hợp
@@ -904,6 +932,25 @@ const PostList = () => {
   )
 }
 const styles = StyleSheet.create({
+  topicText:{
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'left',
+    marginBottom: 4,
+    color:'white',
+  },
+  topicContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '60%',
+    height: 80,
+    right: 0,
+    justifyContent:'center',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    margin: 10,
+    borderRadius: 30,
+    padding: 10, 
+  },
   textTitle: {
     flex: 1,
     paddingHorizontal: 4,
@@ -1071,29 +1118,26 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   imagePostWrap: {
-    height: '80%',
+    height: '100%',
     elevation: 4
   },
   itemLocation: {
     padding: 0,
     fontSize: 14,
-    left: -11,
-    width: 80,
+    // left: -11,
+    width: 'auto',
     // backgroundColor: 'green',
     textAlign: 'center',
     // fontFamily: 'NotoSans_400Regular'
   },
   listLocations: {
     width: 'auto',
-    // // left: 284,
-    right: 0,
-    top: 42,
     position: 'absolute',
-    // borderRadius: 30
+    top: 60,
   },
   flagBtn: {
     position: 'absolute',
-    right: 20,
+    right: 4,
     top: 4,
     zIndex: 3
   },
@@ -1118,7 +1162,8 @@ const styles = StyleSheet.create({
     maxWidth: 200,
     padding: 6,
     borderRadius: 90,
-    zIndex: 3
+    zIndex: 3,
+    elevation: 4
   },
   item: {
     // height: 400,
@@ -1133,8 +1178,18 @@ const styles = StyleSheet.create({
     elevation: 6,
     borderRadius: 30
   },
+  btn: {
+    // backgroundColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: 'white',
+    height: 40,
+    borderRadius: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
   actionBar: {
     position: 'absolute',
+    flexDirection: 'row',
     // width: 220,
     bottom: 10,
     left: 10,

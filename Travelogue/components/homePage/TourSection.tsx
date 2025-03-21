@@ -95,7 +95,7 @@ const TourSection = () => {
                             </View>
                             {/* Rating */}
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <FontAwesome6 name="ranking-star" size={22} color="black" />
+                                <FontAwesome6 name="ranking-star" size={20} color="black" />
                                 <Text style={{ fontSize: 18, paddingRight: 4, paddingLeft: 10 }}>{averageRating(tour.item.ratingSummary.totalRatingValue, tour.item.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
                                 <View style={{ alignItems: 'center', justifyContent: 'center' }} >
                                     <FontAwesome name="star" size={18} color="#FFD700" />

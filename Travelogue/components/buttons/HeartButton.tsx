@@ -150,20 +150,28 @@ const HeartButton = (props: any) => {
 
     }
     return (
-        <>
+        <View style={styles.container}>
             <TouchableOpacity disabled={disabled} delayPressOut={50} onPress={() => handleLike(data.id, userID)} {...props}>
                 <AntDesign
                     name={liked ? 'heart' : 'hearto'}
                     size={24}
                     color={liked ? likedColor : unlikedColor} />
             </TouchableOpacity>
-            <Text style={{ fontWeight: '500' }}>{formatNumberLike(likeNum)}</Text>
-        </>
+            <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(likeNum)}</Text>
+            {/* <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(100110)}</Text> */}
+        </View>
 
     )
 }
 
 // Style
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
+})
 const likedColor = "red";
 const unlikedColor = "black";
 export default HeartButton;
