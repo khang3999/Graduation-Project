@@ -3,6 +3,7 @@ import { AntDesign, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import { push } from "@firebase/database";
 import React, { useEffect, useState, useRef } from "react";
 import { TouchableWithoutFeedback, Keyboard } from 'react-native';
+
 import {
   View,
   Image,
@@ -48,6 +49,7 @@ const Payment = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [statusOptions, setStatusOptions] = useState([]);
+
 
   useEffect(() => {
     // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
@@ -404,230 +406,275 @@ const Payment = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Số dư:</Text>
-          <Text style={styles.balanceAmount}>
-            {balance.toLocaleString("vi-VN")}
-          </Text>
-        </View>
-        <View style={styles.addBar}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={handleTextChange}
-            keyboardType="numeric"
-            maxLength={15}
-            placeholder="Nhập số tiền cần nạp"
+    // <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    //   <View style={styles.container}>
+    //     <View style={styles.balanceContainer}>
+    //       <Text style={styles.balanceLabel}>Số dư:</Text>
+    //       <Text style={styles.balanceAmount}>
+    //         {balance.toLocaleString("vi-VN")}
+    //       </Text>
+    //     </View>
+    //     <View style={styles.addBar}>
+    //       <TextInput
+    //         style={styles.textInput}
+    //         value={inputText}
+    //         onChangeText={handleTextChange}
+    //         keyboardType="numeric"
+    //         maxLength={15}
+    //         placeholder="Nhập số tiền cần nạp"
+    //       />
+    //       <TouchableOpacity
+    //         style={[styles.addBtn, isDisabled && styles.disabledBtn]}
+    //         onPress={handleRequest}
+    //         disabled={isDisabled}
+    //       >
+    //         {loadingQR ? (
+    //           <ActivityIndicator color="white" />
+    //         ) : (
+    //           <Text style={styles.addBtnText}>Yêu cầu</Text>
+    //         )}
+    //       </TouchableOpacity>
+    //     </View>
+    //     <Modal
+    //       visible={isVisible}
+    //       transparent={true}
+    //       animationType="slide"
+    //       onRequestClose={closeDialog}
+    //     >
+    //       <View style={styles.modalOverlay}>
+    //         <View style={styles.dialogContainer}>
+    //           <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
+    //             <MaterialIcons name="cancel" size={24} color="red" />
+    //           </TouchableOpacity>
+    //           <Text style={styles.dialogTitle}>Quét mã QR</Text>
+    //           {qrDataURL ? (
+    //             <Image source={{ uri: qrDataURL }} style={styles.image} />
+    //           ) : (
+    //             <Text>Không có mã QR</Text>
+    //           )}
+    //           <Text style={styles.dialogText}>
+    //             Mã QR chỉ có giá trị một lần
+    //           </Text>
+    //         </View>
+    //       </View>
+    //     </Modal>
+    //     <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+    //       {/* Refresh */}
+    //       <TouchableOpacity onPress={handleRefreshData}>
+    //         {loadingRefresh ? (
+    //           <ActivityIndicator
+    //             color="red"
+    //             size={24}
+    //             style={{ paddingRight: 10 }}
+    //           />
+    //         ) : (
+    //           <SimpleLineIcons
+    //             name="refresh"
+    //             size={24}
+    //             color="black"
+    //             style={{ paddingRight: 10 }}
+    //           />
+    //         )}
+    //       </TouchableOpacity>
+    //       {/* Filter */}
+    //       <TouchableOpacity onPress={openDialogFilter}>
+    //         <AntDesign
+    //           name="filter"
+    //           size={24}
+    //           color={timeEnd != null ? "red" : "black"}
+    //         />
+    //       </TouchableOpacity>
+    //       <Modal
+    //         visible={isVisibleFilter}
+    //         transparent={true}
+    //         animationType="slide"
+    //         onRequestClose={closeDialog}
+    //       >
+    //         <View style={styles.modalOverlay}>
+    //           {loadingFilter ? (
+    //             <ActivityIndicator color="white" size={100} />
+    //           ) : (
+    //             <View style={styles.dialogContainer}>
+    //               <TouchableOpacity
+    //                 style={styles.closeButton}
+    //                 onPress={closeDialog}
+    //               >
+    //                 <MaterialIcons name="cancel" size={24} color="red" />
+    //               </TouchableOpacity>
+    //               <View style={{ padding: 5, width: "100%" }}>
+    //                 <Text style={{ fontSize: 20, marginBottom: 10 }}>
+    //                   Bộ lọc
+    //                 </Text>
+
+    //                 {/* Date pickers for time */}
+    //                 <Text style={{ fontWeight: "bold" }}>Ngày bắt đầu</Text>
+    //                 <Button
+    //                   mode="outlined"
+    //                   onPress={() => setShowStartPicker(true)}
+    //                 >
+    //                   {timeStart
+    //                     ? timeStart.toLocaleDateString()
+    //                     : "Chọn ngày bắt đầu"}
+    //                 </Button>
+    //                 {showStartPicker && (
+    //                   <DateTimePicker
+    //                     value={timeStart || new Date()}
+    //                     mode="date"
+    //                     display={Platform.OS === "ios" ? "spinner" : "default"}
+    //                     onChange={onChangeStartDate}
+    //                   />
+    //                 )}
+
+    //                 <Text style={{ fontWeight: "bold", marginTop: 10 }}>
+    //                   Ngày kết thúc
+    //                 </Text>
+    //                 <Button
+    //                   mode="outlined"
+    //                   onPress={() => setShowEndPicker(true)}
+    //                 >
+    //                   {timeEnd ? timeEnd.toLocaleDateString() : "Chọn ngày kết thúc"}
+    //                 </Button>
+    //                 {showEndPicker && (
+    //                   <DateTimePicker
+    //                     value={timeEnd || new Date()}
+    //                     mode="date"
+    //                     display={Platform.OS === "ios" ? "spinner" : "default"}
+    //                     onChange={onChangeEndDate}
+    //                   />
+    //                 )}
+
+    //                 <Divider style={{ marginVertical: 10 }} />
+
+    //                 {/* Transaction Status */}
+    //                 <Text style={{ fontWeight: "bold" }}>Trạng thái giao dịch</Text>
+    //                 {statusOptions.map((option: any) => (
+    //                   <View
+    //                     key={option.id}
+    //                     style={{ flexDirection: "row", alignItems: "center" }}
+    //                   >
+    //                     <Checkbox
+    //                       status={
+    //                         selectedStatus.includes(option.id)
+    //                           ? "checked"
+    //                           : "unchecked"
+    //                       }
+    //                       onPress={() =>
+    //                         handleSelect(
+    //                           option.id,
+    //                           selectedStatus,
+    //                           setSelectedStatus
+    //                         )
+    //                       }
+    //                     />
+    //                     <Text>{option.value}</Text>
+    //                   </View>
+    //                 ))}
+
+    //                 <Divider style={{ marginVertical: 10 }} />
+
+    //                 {/* Transaction Type */}
+    //                 <Text style={{ fontWeight: "bold" }}>Kiểu giao dịch</Text>
+    //                 {typeOptions.map((option, index) => (
+    //                   <View
+    //                     key={index}
+    //                     style={{ flexDirection: "row", alignItems: "center" }}
+    //                   >
+    //                     <Checkbox
+    //                       status={
+    //                         selectedType.includes(option)
+    //                           ? "checked"
+    //                           : "unchecked"
+    //                       }
+    //                       onPress={() =>
+    //                         handleSelect(option, selectedType, setSelectedType)
+    //                       }
+    //                     />
+    //                     <Text>{option}</Text>
+    //                   </View>
+    //                 ))}
+
+    //                 <Button
+    //                   mode="contained"
+    //                   style={{ marginTop: 20 }}
+    //                   onPress={handleFilter}
+    //                 >
+    //                   <Text>Áp dụng</Text>
+    //                 </Button>
+    //               </View>
+    //             </View>
+    //           )}
+    //         </View>
+    //       </Modal>
+    //     </View>
+    //     <View style={styles.divider} />
+
+    //     <View style={styles.exchangeList}>
+    //       {dataExchangesFilter.length > 0 ? (
+    //         <FlatList
+    //           data={dataExchangesFilter}
+    //           renderItem={renderExchange}
+    //         // keyExtractor={(item) => item.id}
+    //         />
+    //       ) : (
+    //         <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
+    //       )}
+    //     </View>
+    //   </View>
+    // </TouchableWithoutFeedback>
+    <View style={styles.container}>
+      {/* Avatar */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <Image
+            source={{ uri: dataAccount.avatar }}
+            style={styles.miniAvatar}
           />
-          <TouchableOpacity
-            style={[styles.addBtn, isDisabled && styles.disabledBtn]}
-            onPress={handleRequest}
-            disabled={isDisabled}
-          >
-            {loadingQR ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.addBtnText}>Yêu cầu</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-        <Modal
-          visible={isVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeDialog}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.dialogContainer}>
-              <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
-                <MaterialIcons name="cancel" size={24} color="red" />
-              </TouchableOpacity>
-              <Text style={styles.dialogTitle}>Quét mã QR</Text>
-              {qrDataURL ? (
-                <Image source={{ uri: qrDataURL }} style={styles.image} />
-              ) : (
-                <Text>Không có mã QR</Text>
-              )}
-              <Text style={styles.dialogText}>
-                Mã QR chỉ có giá trị một lần
-              </Text>
-            </View>
+          <View style={styles.column}>
+            <Text style={styles.username}>{dataAccount.fullname}</Text>
+            <Text style={styles.time}>Welcome back</Text>
           </View>
-        </Modal>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-          {/* Refresh */}
-          <TouchableOpacity onPress={handleRefreshData}>
-            {loadingRefresh ? (
-              <ActivityIndicator
-                color="red"
-                size={24}
-                style={{ paddingRight: 10 }}
-              />
-            ) : (
-              <SimpleLineIcons
-                name="refresh"
-                size={24}
-                color="black"
-                style={{ paddingRight: 10 }}
-              />
-            )}
-          </TouchableOpacity>
-          {/* Filter */}
-          <TouchableOpacity onPress={openDialogFilter}>
-            <AntDesign
-              name="filter"
-              size={24}
-              color={timeEnd != null ? "red" : "black"}
-            />
-          </TouchableOpacity>
-          <Modal
-            visible={isVisibleFilter}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={closeDialog}
-          >
-            <View style={styles.modalOverlay}>
-              {loadingFilter ? (
-                <ActivityIndicator color="white" size={100} />
-              ) : (
-                <View style={styles.dialogContainer}>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={closeDialog}
-                  >
-                    <MaterialIcons name="cancel" size={24} color="red" />
-                  </TouchableOpacity>
-                  <View style={{ padding: 5, width: "100%" }}>
-                    <Text style={{ fontSize: 20, marginBottom: 10 }}>
-                      Bộ lọc
-                    </Text>
-
-                    {/* Date pickers for time */}
-                    <Text style={{ fontWeight: "bold" }}>Ngày bắt đầu</Text>
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowStartPicker(true)}
-                    >
-                      {timeStart
-                        ? timeStart.toLocaleDateString()
-                        : "Chọn ngày bắt đầu"}
-                    </Button>
-                    {showStartPicker && (
-                      <DateTimePicker
-                        value={timeStart || new Date()}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={onChangeStartDate}
-                      />
-                    )}
-
-                    <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-                      Ngày kết thúc
-                    </Text>
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowEndPicker(true)}
-                    >
-                      {timeEnd ? timeEnd.toLocaleDateString() : "Chọn ngày kết thúc"}
-                    </Button>
-                    {showEndPicker && (
-                      <DateTimePicker
-                        value={timeEnd || new Date()}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={onChangeEndDate}
-                      />
-                    )}
-
-                    <Divider style={{ marginVertical: 10 }} />
-
-                    {/* Transaction Status */}
-                    <Text style={{ fontWeight: "bold" }}>Trạng thái giao dịch</Text>
-                    {statusOptions.map((option: any) => (
-                      <View
-                        key={option.id}
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Checkbox
-                          status={
-                            selectedStatus.includes(option.id)
-                              ? "checked"
-                              : "unchecked"
-                          }
-                          onPress={() =>
-                            handleSelect(
-                              option.id,
-                              selectedStatus,
-                              setSelectedStatus
-                            )
-                          }
-                        />
-                        <Text>{option.value}</Text>
-                      </View>
-                    ))}
-
-                    <Divider style={{ marginVertical: 10 }} />
-
-                    {/* Transaction Type */}
-                    <Text style={{ fontWeight: "bold" }}>Kiểu giao dịch</Text>
-                    {typeOptions.map((option, index) => (
-                      <View
-                        key={index}
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Checkbox
-                          status={
-                            selectedType.includes(option)
-                              ? "checked"
-                              : "unchecked"
-                          }
-                          onPress={() =>
-                            handleSelect(option, selectedType, setSelectedType)
-                          }
-                        />
-                        <Text>{option}</Text>
-                      </View>
-                    ))}
-
-                    <Button
-                      mode="contained"
-                      style={{ marginTop: 20 }}
-                      onPress={handleFilter}
-                    >
-                      <Text>Áp dụng</Text>
-                    </Button>
-                  </View>
-                </View>
-              )}
-            </View>
-          </Modal>
         </View>
-        <View style={styles.divider} />
-
-        <View style={styles.exchangeList}>
-          {dataExchangesFilter.length > 0 ? (
-            <FlatList
-              data={dataExchangesFilter}
-              renderItem={renderExchange}
-            // keyExtractor={(item) => item.id}
-            />
-          ) : (
-            <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
-          )}
-        </View>
+        <TouchableOpacity style={styles.row}>
+          <Image source={require('../../assets/images/add-payment.png')} style={styles.iconAddPayment} />
+        </TouchableOpacity>
       </View>
-    </TouchableWithoutFeedback>
+      {/* balance */}
+      <View>
+        <Text style={styles.balanceAmount}> {balance.toLocaleString("vi-VN")} <Text style={{ fontSize: 15 }}>VND</Text></Text>
+      </View>
+      {/* Option */}
+      <View style={[styles.row,{padding:20}]}>
+        <TouchableOpacity style={styles.iconOptionCircle}>
+          <Image
+            source={require('../../assets/images/increase.png')}
+            style={styles.iconOption}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconOptionCircle}>
+          <Image
+            source={require('../../assets/images/decrease.png')}
+            style={styles.iconOption}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconOptionCircle}>
+          <Image
+            source={require('../../assets/images/refresh.png')}
+            style={styles.iconOption}
+          />
+        </TouchableOpacity>
 
+        
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f2f2f2",
+    paddingHorizontal: 10,
+    paddingVertical: 40,
+    backgroundColor: "white",
   },
   balanceContainer: {
     flexDirection: "row",
@@ -647,9 +694,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   balanceAmount: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#5E8C31",
+    fontSize: 50,
+    fontWeight: "500",
+    color: 'black',
+    textAlign: 'center',
+    paddingVertical: 30
   },
   addBar: {
     flexDirection: "row",
@@ -767,6 +816,50 @@ const styles = StyleSheet.create({
   noAccountsText: {
     textAlign: "center",
     color: "#888",
+  },
+  miniAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+  },
+  iconAddPayment: {
+    width: 40,
+    height: 40,
+    marginRight: 15,
+  },
+  iconOption: {
+    width: 40,
+    height: 40,
+
+  },
+  iconOptionCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    backgroundColor: '#74d65f',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  username: {
+    fontSize: 20,
+    marginLeft: 10,
+    fontWeight: "bold",
+  },
+  column: {
+    flexDirection: "column",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    
+  },
+  time: {
+    marginLeft: 10,
+    color: "grey",
   },
 });
 

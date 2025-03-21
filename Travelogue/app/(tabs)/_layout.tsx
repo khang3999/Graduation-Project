@@ -164,7 +164,7 @@ const _layout = () => {
         name="payment"
         options={{
           title: 'Payment',
-          // headerShown: false,
+          headerShown: false,
         }} />
       <Tabs.Screen
         key={5}
