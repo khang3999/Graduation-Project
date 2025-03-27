@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAccount } from "@/contexts/AccountProvider";
 import { off } from "firebase/database";
 import HeaderIndex from "@/components/header/HeaderIndex";
+import Featured from "@/components/homePage/Featured ";
 
 
 const height = Dimensions.get('window').height;
@@ -133,6 +134,7 @@ const height = Dimensions.get('window').height;
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
+             <Featured></Featured>
           </View>
           {/* Tour section */}
           <View>
@@ -202,6 +204,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     marginHorizontal: 20,
     fontSize: 20,
+    fontWeight: '600',
   },
 
   textTitle: {
