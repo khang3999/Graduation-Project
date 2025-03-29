@@ -1,5 +1,5 @@
 import { RowComponent } from "@/components";
-import useRankingTrendData from "@/components/homePage/RankingTrendData";
+import { useRanking } from '@/contexts/RankingContext';
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
 import React, { useEffect, useRef, useState } from "react";
@@ -42,8 +42,7 @@ const rankingPosts = [
 ];
 
 const RankingTrend = () => {
-  const { citiesData, hasNewUpdates, isRefreshing, refreshData } =
-    useRankingTrendData();
+  const { citiesData, hasNewUpdates, isRefreshing, refreshData } = useRanking();
   const animationRef = useRef<LottieView>(null);
   const [activeTab, setActiveTab] = useState("Địa điểm");
   const rankingData = activeTab === "Địa điểm" ? citiesData : rankingPosts;
@@ -63,7 +62,7 @@ const RankingTrend = () => {
         type: "success",
         text1: "Có dữ liệu mới!",
         text2: "Nhấn nút cập nhật để xem.",
-        visibilityTime: 3000,
+        visibilityTime: 2000,
         autoHide: true,
       });
     }
@@ -82,19 +81,19 @@ const RankingTrend = () => {
           alignItems: "center",
         }}
       >
-        {/* Icon trái */}
+        {/* exit */}
         <View style={{ width: 26, alignItems: "flex-start" }}>
           <TouchableOpacity onPress={() => router.back()}>
             <Icon name="arrow-back" size={26} color="black" />
           </TouchableOpacity>
         </View>
 
-        {/* Tiêu đề chính giữa */}
+        {/* tiêu đề */}
         <Text style={{ fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
           Bảng xếp hạng
         </Text>
 
-        {/* Icon phải (refresh) */}
+        {/* refresh */}
         <View style={{ width: 26, alignItems: "flex-end" }}>
           <TouchableOpacity
             onPress={handleRefresh}
@@ -113,7 +112,7 @@ const RankingTrend = () => {
         </View>
       </RowComponent>
 
-      {/* Nội dung bảng xếp hạng */}
+      {/* content */}
       <View>
         <Text
           style={{
@@ -126,7 +125,7 @@ const RankingTrend = () => {
         **Bảng xếp hạng tự động cập nhật từng giờ.**"
         </Text>
       </View>
-      {/* Tabs */}
+      {/* "Địa điểm", "Bài Viết" */}
       <View style={styles.tabContainer}>
         {["Địa điểm", "Bài Viết"].map((tab) => (
           <TouchableOpacity
@@ -144,9 +143,9 @@ const RankingTrend = () => {
         ))}
       </View>
 
-      {/* TOP 3 */}
+      {/* 3 top */}
       <View style={styles.topRanking}>
-        {/* Top 2 (bên trái) */}
+        {/* top 2 */}
         <TouchableOpacity
           style={styles.rankContainer}
           onPress={() => console.log("Bạn đã nhấn vào:", rankingData[1]?.name)}
@@ -182,7 +181,7 @@ const RankingTrend = () => {
           )}
         </TouchableOpacity>
 
-        {/* Top 1 (ở giữa) */}
+        {/* top 1 */}
         <TouchableOpacity
           style={[styles.rankContainer, { marginHorizontal: 16 }]}
           onPress={() => console.log("Bạn đã nhấn vào:", rankingData[0]?.name)}
@@ -230,7 +229,7 @@ const RankingTrend = () => {
           )}
         </TouchableOpacity>
 
-        {/* Top 3 (bên phải) */}
+        {/* top 3 */}
         <TouchableOpacity
           style={styles.rankContainer}
           onPress={() => console.log("Bạn đã nhấn vào:", rankingData[2]?.name)}
@@ -293,7 +292,7 @@ const RankingTrend = () => {
   );
 };
 
-/** ============ STYLES ============ */
+// styles
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f8f8f8" },
   title: { fontSize: 28, fontWeight: "bold", color: "#333" },
@@ -318,7 +317,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  /** TOP 3 CONTAINER */
+  /** contan 3 top */
   topRanking: {
     flexDirection: "row",
     justifyContent: "center",
@@ -329,7 +328,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /** Vòng tròn hiển thị rank - Container cha không clip để cho vòng nhỏ đè ra ngoài */
+  /** vòng tròn hiển thị rank   */
   rankCircle: {
     width: 80,
     height: 80,
@@ -339,7 +338,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 8,
     position: "relative",
-    // Không dùng overflow hidden ở đây
   },
   rankCircleBig: {
     width: 100,
@@ -352,7 +350,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-  /** Container con để clip ảnh */
+  /**  ảnh rank */
   rankImageContainer: {
     width: "100%",
     height: "100%",
@@ -366,7 +364,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  /** Ảnh fill trọn vòng tròn */
+  /** ảnh full */
   rankImageFill: {
     width: "100%",
     height: "100%",
@@ -378,7 +376,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
 
-  /** Vòng tròn nhỏ hiển thị số (Top 2, Top 3) */
+  /** vòng tròn nhỏ top 2, top 3 */
   rankNumberCircle: {
     position: "absolute",
     top: "82%",
@@ -393,7 +391,7 @@ const styles = StyleSheet.create({
     borderColor: "#f8f8f8",
     zIndex: 2,
   },
-  /** Vòng tròn nhỏ cho Top 1 */
+  /** vòng tròn nhỏ Top 1 */
   rankNumberCircleBig: {
     position: "absolute",
     top: "80%",
@@ -414,7 +412,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /** Tên và Level (Score) */
+  /** tên và score */
   nameText: {
     fontSize: 14,
     fontWeight: "bold",
@@ -426,7 +424,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
 
-  /** Danh sách các hạng còn lại */
+  /** danh sách các hạng còn lại */
   listItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -468,6 +466,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "15deg" }],
     zIndex: 3,
   },
+  /** nút refresh */
   refreshButton: {
     padding: 5,
     borderRadius: 13,

@@ -1,8 +1,8 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { View, Image, Text, FlatList, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import useRankingTrendData from "./RankingTrendData";
+import { useRanking } from "@/contexts/RankingContext"; 
 
 interface StoryItemProps {
   item: {
@@ -43,12 +43,10 @@ const StoryItem = ({ item }: StoryItemProps) => (
 );
 
 const Featured = () => {
-  const { citiesData, hasNewUpdates, isRefreshing, refreshData } = useRankingTrendData();
-  // console.log("🚀 ~ rankingPlaces:", rankingPlaces);
+  const { citiesData } = useRanking(); 
+
   return (
-    <View
-      style={{ position: "relative", padding: 10, backgroundColor: "#000022" }}
-    >
+    <View style={{ position: "relative", padding: 10, backgroundColor: "#000022" }}>
       <FlatList
         data={citiesData.slice(0, 4)}
         horizontal
@@ -76,9 +74,7 @@ const Featured = () => {
         }}
         activeOpacity={0.7}
       >
-        <TouchableOpacity>
-          <Icon name="chevron-forward" size={24} color="#fff" />
-        </TouchableOpacity>
+        <Icon name="chevron-forward" size={24} color="#fff" />
       </TouchableOpacity>
     </View>
   );
