@@ -1,5 +1,5 @@
 import { RowComponent } from "@/components";
-import { useRanking } from '@/contexts/RankingContext';
+import { useRanking } from "@/contexts/RankingContext";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
 import React, { useEffect, useRef, useState } from "react";
@@ -89,7 +89,7 @@ const RankingTrend = () => {
         </View>
 
         {/* tiêu đề */}
-        <Text style={{ fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
+        <Text style={{ fontSize: 25, fontWeight: "bold", textAlign: "center" }}>
           Bảng xếp hạng
         </Text>
 
@@ -104,8 +104,9 @@ const RankingTrend = () => {
             ]}
           >
             <Icon
-              name="reload"
+              name="refresh"
               size={26}
+              style={{ width: 26, height: 26 }}
               color={hasNewUpdates && !isRefreshing ? "#4CAF50" : "black"}
             />
           </TouchableOpacity>
@@ -116,13 +117,13 @@ const RankingTrend = () => {
       <View>
         <Text
           style={{
-        textAlign: "center",
-        fontSize: 12,
-        color: hasNewUpdates ? "#4CAF50" : "#FF0066",
-        marginBottom: 10,
+            textAlign: "center",
+            fontSize: 12,
+            color: hasNewUpdates ? "#4CAF50" : "#FF0066",
+            marginBottom: 10,
           }}
-        >       
-        **Bảng xếp hạng tự động cập nhật từng giờ.**"
+        >
+          **Bảng xếp hạng tự động cập nhật từng giờ.**"
         </Text>
       </View>
       {/* "Địa điểm", "Bài Viết" */}
@@ -148,12 +149,27 @@ const RankingTrend = () => {
         {/* top 2 */}
         <TouchableOpacity
           style={styles.rankContainer}
-          onPress={() => console.log("Bạn đã nhấn vào:", rankingData[1]?.name)}
+          onPress={() => 
+            router.push({
+                   pathname: "/gallery",
+                   params: { idCity: rankingData[1]?.id, idCountry: rankingData[1]?.id_nuoc },
+                 })
+         }
           disabled={!rankingData[1]}
         >
           {rankingData[1] && (
             <>
-              <View style={[styles.rankCircle, { borderColor: "#AAAAAA" }]}>
+              <View
+                style={[
+                  styles.rankCircle,
+                  {
+                    borderColor: "#AAAAAA",
+                    width: 90,
+                    height: 90,
+                    borderRadius: 50,
+                  },
+                ]}
+              >
                 <View style={styles.rankImageContainer}>
                   <Image
                     source={{
@@ -172,10 +188,28 @@ const RankingTrend = () => {
                 >
                   <Text style={styles.rankNumberText}>2</Text>
                 </View>
+                <View>
+                  {/* <Image
+                    source={require("@/assets/images/Crown.png")}
+                    style={styles.crownImage}
+                  /> */}
+                  <LottieView
+                    source={require("../assets/images/sliver_crown.json")}
+                    loop
+                    autoPlay
+                    style={styles.crownImageTop2}
+                  />
+                </View>
               </View>
-              <Text style={styles.nameText}>{rankingData[1].name}</Text>
-              <Text style={styles.levelText}>
-                Score: {rankingData[1].score}
+              <Text
+                style={[styles.nameText, { color: "#AAAAAA", fontSize: 15 }]}
+              >
+                {rankingData[1].name}
+              </Text>
+              <Text
+                style={[styles.levelText, { color: "#AAAAAA", fontSize: 15 }]}
+              >
+                {rankingData[1].score}
               </Text>
             </>
           )}
@@ -184,7 +218,12 @@ const RankingTrend = () => {
         {/* top 1 */}
         <TouchableOpacity
           style={[styles.rankContainer, { marginHorizontal: 16 }]}
-          onPress={() => console.log("Bạn đã nhấn vào:", rankingData[0]?.name)}
+          onPress={() => 
+            router.push({
+                   pathname: "/gallery",
+                   params: { idCity: rankingData[0]?.id, idCountry: rankingData[0]?.id_nuoc },
+                 })
+         }
           disabled={!rankingData[0]}
         >
           {rankingData[0] && (
@@ -217,13 +256,19 @@ const RankingTrend = () => {
                     ref={animationRef}
                     source={require("../assets/images/crown.json")}
                     loop
-                    style={styles.crownImage}
+                    style={styles.crownImageTop1}
                   />
                 </View>
               </View>
-              <Text style={styles.nameText}>{rankingData[0].name}</Text>
-              <Text style={styles.levelText}>
-                Score: {rankingData[0].score}
+              <Text
+                style={[styles.nameText, { color: "#FFCA28", fontSize: 16 }]}
+              >
+                {rankingData[0].name}
+              </Text>
+              <Text
+                style={[styles.levelText, { color: "#FFCA28", fontSize: 16 }]}
+              >
+                {rankingData[0].score}
               </Text>
             </>
           )}
@@ -232,7 +277,12 @@ const RankingTrend = () => {
         {/* top 3 */}
         <TouchableOpacity
           style={styles.rankContainer}
-          onPress={() => console.log("Bạn đã nhấn vào:", rankingData[2]?.name)}
+          onPress={() => 
+            router.push({
+                   pathname: "/gallery",
+                   params: { idCity: rankingData[2]?.id, idCountry: rankingData[2]?.id_nuoc },
+                 })
+         }
           disabled={!rankingData[2]}
         >
           {rankingData[2] && (
@@ -256,26 +306,46 @@ const RankingTrend = () => {
                 >
                   <Text style={styles.rankNumberText}>3</Text>
                 </View>
+                <LottieView
+                    source={require("../assets/images/bronze_crown.json")}
+                    loop
+                    autoPlay
+                    speed={0}
+                    style={styles.crownImageTop3}
+                  />
               </View>
-              <Text style={styles.nameText}>{rankingData[2].name}</Text>
-              <Text style={styles.levelText}>
-                Score: {rankingData[2].score}
+              <Text
+                style={[styles.nameText, { color: "#FF8228", fontSize: 14 }]}
+              >
+                {rankingData[2].name}
+              </Text>
+              <Text
+                style={[styles.levelText, { color: "#FF8228", fontSize: 14 }]}
+              >
+                {rankingData[2].score}
               </Text>
             </>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Danh sách các hạng còn lại */}
+      {/* danh sách các hạng còn lại */}
       <FlatList
         data={rankingData.slice(3)}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.listItem}
-            onPress={() => console.log("Bạn đã nhấn vào:", item.name)}
+            onPress={() => 
+               router.push({
+                      pathname: "/gallery",
+                      params: { idCity: item.id, idCountry: item.id_nuoc },
+                    })
+            }
           >
-            <Text style={styles.rankNumber}>{index + 4}</Text>
+            <Text style={styles.rankNumber}>
+              {(index + 4).toString().padStart(2, "0")}
+            </Text>
             <Image
               source={{
                 uri:
@@ -416,12 +486,16 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 2,
+    textShadowColor: "#222222",
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
   },
   levelText: {
-    fontSize: 12,
-    color: "#666",
+    fontSize: 15,
+    textShadowColor: "#222222",
+    textShadowOffset: { width: 0.2, height: 0.2 },
+    textShadowRadius: 1,
   },
 
   /** danh sách các hạng còn lại */
@@ -442,7 +516,7 @@ const styles = StyleSheet.create({
   rankNumber: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "black",
+    color: "#333333",
     marginRight: 20,
   },
   rankImageSmall: {
@@ -455,15 +529,38 @@ const styles = StyleSheet.create({
   },
   rankName: { fontSize: 14, fontWeight: "bold", color: "black", flex: 1 },
   rankScore: { fontSize: 14, color: "#555" },
-  crownImage: {
+  /** ảnh crown */
+  crownImageTop1: {
     position: "absolute",
-    top: -150,
-    left: "-30%",
+    top: -152,
+    left: "-50%",
     width: 90,
     height: 90,
     resizeMode: "contain",
     rotation: 0,
-    transform: [{ rotate: "15deg" }],
+    transform: [{ rotate: "0deg" }],
+    zIndex: 3,
+  },
+  crownImageTop2: {
+    position: "absolute",
+    top: -123,
+    left: -66,
+    width: 72,
+    height: 72,
+    resizeMode: "contain",
+    rotation: 0,
+    transform: [{ rotate: "-30deg" }],
+    zIndex: 3,
+  },
+  crownImageTop3: {
+    position: "absolute",
+    top: -35,
+    left: 30,
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
+    rotation: 0,
+    transform: [{ rotate: "28deg" }],
     zIndex: 3,
   },
   /** nút refresh */
