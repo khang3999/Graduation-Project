@@ -35,7 +35,7 @@ const HomeProvider = ({ children }) => {
     // const [searching, setSearching] = useState(false)
     const [accountBehavior, setAccountBehavior] = useState({})
     const [userId, setUserId] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [modalSearchVisible, setModalSearchVisible] = useState(false);
     // const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [dataModalSelected, setDataModalSelected] = useState(null)
     const [dataNewPostList, setDataNewPostList] = useState([])
@@ -46,6 +46,7 @@ const HomeProvider = ({ children }) => {
         { key: 1, value: 'Mặc định' },
         { key: 2, value: 'Thích nhiều nhất' }
     ]
+    const [reload, setReload] = useState(false);
 
     const { setAccountData } = useAccount();
 
@@ -243,7 +244,7 @@ const HomeProvider = ({ children }) => {
                 loadedDataAccount, setLoadedDataAccount,
                 loadedPosts, setLoadedPosts,
                 loadedTours, setLoadedTours,
-                modalVisible, setModalVisible,
+                modalSearchVisible, setModalSearchVisible,
                 dataCountries, setDataCountries,
                 // isSearchingMode, setIsSearchingMode,
                 dataModalSelected, setDataModalSelected,
@@ -258,6 +259,7 @@ const HomeProvider = ({ children }) => {
                 dataAccount,
                 dataTypeSearch,
                 modalNewPostVisible, setModalNewPostVisible,
+                reload, setReload
             }}
 
         >

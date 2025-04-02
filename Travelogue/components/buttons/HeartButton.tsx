@@ -157,8 +157,8 @@ const HeartButton = (props: any) => {
                     size={24}
                     color={liked ? likedColor : unlikedColor} />
             </TouchableOpacity>
-            <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(likeNum)}</Text>
-            {/* <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(100110)}</Text> */}
+            {/* <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(likeNum)}</Text> */}
+            <Text style={{ marginLeft: 6, fontWeight: '500' }}>{formatNumberLike(100110999)}</Text>
         </View>
 
     )
