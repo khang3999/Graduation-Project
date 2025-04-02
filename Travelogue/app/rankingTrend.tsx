@@ -14,38 +14,39 @@ import {
 import Toast from "react-native-toast-message-custom";
 import Icon from "react-native-vector-icons/Ionicons";
 
-const rankingPosts = [
-  {
-    id: "1",
-    name: "Bài viết A",
-    score: 9999,
-    image: "",
-  },
-  {
-    id: "2",
-    name: "Bài viết B",
-    score: 8888,
-    image: "",
-  },
-  {
-    id: "3",
-    name: "Bài viết C",
-    score: 7777,
-    image: "",
-  },
-  {
-    id: "4",
-    name: "Bài viết D",
-    score: 6666,
-    image: "",
-  },
-];
+// Types
+interface City {
+  id: string;
+  name: string;
+  id_nuoc: string;
+  area_id: string;
+  image: string | null;
+  score: number;
+}
+
+interface Post {
+  title: string;
+  id: string;
+  created_at: number;
+  author: {
+    name: string;
+    avatar?: string;
+  };
+  image: string[];
+  scores: number;
+}
+
+type RankingItem = City | Post;
 
 const RankingTrend = () => {
-  const { citiesData, hasNewUpdates, isRefreshing, refreshData } = useRanking();
+  const { citiesData, postsData, hasNewUpdates, isRefreshing, refreshData } = useRanking();
   const animationRef = useRef<LottieView>(null);
   const [activeTab, setActiveTab] = useState("Địa điểm");
-  const rankingData = activeTab === "Địa điểm" ? citiesData : rankingPosts;
+  const rankingData = activeTab === "Địa điểm" ? (citiesData as City[]) : (postsData as Post[]);
+
+  const isCity = (item: RankingItem): item is City => {
+    return 'id_nuoc' in item;
+  };
 
   useEffect(() => {
     animationRef.current?.play(50, 160);
@@ -56,6 +57,7 @@ const RankingTrend = () => {
       await refreshData();
     }
   };
+
   useEffect(() => {
     if (hasNewUpdates) {
       Toast.show({
@@ -67,6 +69,15 @@ const RankingTrend = () => {
       });
     }
   }, [hasNewUpdates]);
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -123,9 +134,10 @@ const RankingTrend = () => {
             marginBottom: 10,
           }}
         >
-          **Bảng xếp hạng tự động cập nhật từng giờ.**"
+          **Bảng xếp hạng tự động cập nhật từng giờ.**
         </Text>
       </View>
+
       {/* "Địa điểm", "Bài Viết" */}
       <View style={styles.tabContainer}>
         {["Địa điểm", "Bài Viết"].map((tab) => (
@@ -150,11 +162,13 @@ const RankingTrend = () => {
         <TouchableOpacity
           style={styles.rankContainer}
           onPress={() => 
-            router.push({
-                   pathname: "/gallery",
-                   params: { idCity: rankingData[1]?.id, idCountry: rankingData[1]?.id_nuoc },
-                 })
-         }
+            activeTab === "Địa điểm" 
+              ? router.push({
+                  pathname: "/gallery",
+                  params: { idCity: rankingData[1]?.id, idCountry: (rankingData[1] as City)?.id_nuoc },
+                })
+              : router.push(`/(article)/post/${rankingData[1]?.id}` as any)
+          }
           disabled={!rankingData[1]}
         >
           {rankingData[1] && (
@@ -174,7 +188,9 @@ const RankingTrend = () => {
                   <Image
                     source={{
                       uri:
-                        rankingData[1].image ||
+                        (activeTab === "Địa điểm" 
+                          ? (rankingData[1] as City).image
+                          : (rankingData[1] as Post).image[0]) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFill}
@@ -189,10 +205,6 @@ const RankingTrend = () => {
                   <Text style={styles.rankNumberText}>2</Text>
                 </View>
                 <View>
-                  {/* <Image
-                    source={require("@/assets/images/Crown.png")}
-                    style={styles.crownImage}
-                  /> */}
                   <LottieView
                     source={require("../assets/images/sliver_crown.json")}
                     loop
@@ -204,13 +216,22 @@ const RankingTrend = () => {
               <Text
                 style={[styles.nameText, { color: "#AAAAAA", fontSize: 15 }]}
               >
-                {rankingData[1].name}
+                {activeTab === "Địa điểm" 
+                  ? (rankingData[1] as City).name
+                  : (rankingData[1] as Post).title}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#AAAAAA", fontSize: 15 }]}
               >
-                {rankingData[1].score}
+                {activeTab === "Địa điểm"
+                  ? (rankingData[1] as City).score
+                  : (rankingData[1] as Post).scores}
               </Text>
+              {activeTab === "Bài Viết" && (
+                <Text style={[styles.dateText, { color: "#AAAAAA" }]}>
+                  {formatDate((rankingData[1] as Post).created_at)}
+                </Text>
+              )}
             </>
           )}
         </TouchableOpacity>
@@ -219,11 +240,13 @@ const RankingTrend = () => {
         <TouchableOpacity
           style={[styles.rankContainer, { marginHorizontal: 16 }]}
           onPress={() => 
-            router.push({
-                   pathname: "/gallery",
-                   params: { idCity: rankingData[0]?.id, idCountry: rankingData[0]?.id_nuoc },
-                 })
-         }
+            activeTab === "Địa điểm"
+              ? router.push({
+                  pathname: "/gallery",
+                  params: { idCity: rankingData[0]?.id, idCountry: (rankingData[0] as City)?.id_nuoc },
+                })
+              : router.push(`/(article)/post/${rankingData[0]?.id}` as any)
+          }
           disabled={!rankingData[0]}
         >
           {rankingData[0] && (
@@ -233,7 +256,9 @@ const RankingTrend = () => {
                   <Image
                     source={{
                       uri:
-                        rankingData[0].image ||
+                        (activeTab === "Địa điểm"
+                          ? (rankingData[0] as City).image
+                          : (rankingData[0] as Post).image[0]) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFillBig}
@@ -248,10 +273,6 @@ const RankingTrend = () => {
                   <Text style={styles.rankNumberText}>1</Text>
                 </View>
                 <View>
-                  {/* <Image
-                    source={require("@/assets/images/Crown.png")}
-                    style={styles.crownImage}
-                  /> */}
                   <LottieView
                     ref={animationRef}
                     source={require("../assets/images/crown.json")}
@@ -263,13 +284,22 @@ const RankingTrend = () => {
               <Text
                 style={[styles.nameText, { color: "#FFCA28", fontSize: 16 }]}
               >
-                {rankingData[0].name}
+                {activeTab === "Địa điểm"
+                  ? (rankingData[0] as City).name
+                  : (rankingData[0] as Post).title}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#FFCA28", fontSize: 16 }]}
               >
-                {rankingData[0].score}
+                {activeTab === "Địa điểm"
+                  ? (rankingData[0] as City).score
+                  : (rankingData[0] as Post).scores}
               </Text>
+              {activeTab === "Bài Viết" && (
+                <Text style={[styles.dateText, { color: "#FFCA28" }]}>
+                  {formatDate((rankingData[0] as Post).created_at)}
+                </Text>
+              )}
             </>
           )}
         </TouchableOpacity>
@@ -278,11 +308,13 @@ const RankingTrend = () => {
         <TouchableOpacity
           style={styles.rankContainer}
           onPress={() => 
-            router.push({
-                   pathname: "/gallery",
-                   params: { idCity: rankingData[2]?.id, idCountry: rankingData[2]?.id_nuoc },
-                 })
-         }
+            activeTab === "Địa điểm"
+              ? router.push({
+                  pathname: "/gallery",
+                  params: { idCity: rankingData[2]?.id, idCountry: (rankingData[2] as City)?.id_nuoc },
+                })
+              : router.push(`/(article)/post/${rankingData[2]?.id}` as any)
+          }
           disabled={!rankingData[2]}
         >
           {rankingData[2] && (
@@ -292,7 +324,9 @@ const RankingTrend = () => {
                   <Image
                     source={{
                       uri:
-                        rankingData[2].image ||
+                        (activeTab === "Địa điểm"
+                          ? (rankingData[2] as City).image
+                          : (rankingData[2] as Post).image[0]) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFill}
@@ -307,40 +341,51 @@ const RankingTrend = () => {
                   <Text style={styles.rankNumberText}>3</Text>
                 </View>
                 <LottieView
-                    source={require("../assets/images/bronze_crown.json")}
-                    loop
-                    autoPlay
-                    speed={0}
-                    style={styles.crownImageTop3}
-                  />
+                  source={require("../assets/images/bronze_crown.json")}
+                  loop
+                  autoPlay
+                  speed={0}
+                  style={styles.crownImageTop3}
+                />
               </View>
               <Text
                 style={[styles.nameText, { color: "#FF8228", fontSize: 14 }]}
               >
-                {rankingData[2].name}
+                {activeTab === "Địa điểm"
+                  ? (rankingData[2] as City).name
+                  : (rankingData[2] as Post).title}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#FF8228", fontSize: 14 }]}
               >
-                {rankingData[2].score}
+                {activeTab === "Địa điểm"
+                  ? (rankingData[2] as City).score
+                  : (rankingData[2] as Post).scores}
               </Text>
+              {activeTab === "Bài Viết" && (
+                <Text style={[styles.dateText, { color: "#FF8228" }]}>
+                  {formatDate((rankingData[2] as Post).created_at)}
+                </Text>
+              )}
             </>
           )}
         </TouchableOpacity>
       </View>
 
       {/* danh sách các hạng còn lại */}
-      <FlatList
+      <FlatList<RankingItem>
         data={rankingData.slice(3)}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.listItem}
             onPress={() => 
-               router.push({
-                      pathname: "/gallery",
-                      params: { idCity: item.id, idCountry: item.id_nuoc },
-                    })
+              isCity(item)
+                ? router.push({
+                    pathname: "/gallery",
+                    params: { idCity: item.id, idCountry: item.id_nuoc },
+                  })
+                : router.push(`/(article)/post/${item.id}` as any)
             }
           >
             <Text style={styles.rankNumber}>
@@ -349,12 +394,26 @@ const RankingTrend = () => {
             <Image
               source={{
                 uri:
-                  item.image || "https://mediatech.vn/assets/images/imgstd.jpg",
+                  (isCity(item)
+                    ? item.image
+                    : item.image[0]) ||
+                  "https://mediatech.vn/assets/images/imgstd.jpg",
               }}
               style={styles.rankImageSmall}
             />
-            <Text style={styles.rankName}>{item.name}</Text>
-            <Text style={styles.rankScore}>{item.score}</Text>
+            <View style={styles.infoContainer}>
+              <Text style={styles.rankName}>
+                {isCity(item) ? item.name : item.title}
+              </Text>
+              {!isCity(item) && (
+                <Text style={styles.dateText}>
+                  {formatDate(item.created_at)}
+                </Text>
+              )}
+            </View>
+            <Text style={styles.rankScore}>
+              {isCity(item) ? item.score : item.scores}
+            </Text>
           </TouchableOpacity>
         )}
       />
@@ -527,8 +586,16 @@ const styles = StyleSheet.create({
     borderColor: "#444444",
     marginRight: 10,
   },
-  rankName: { fontSize: 14, fontWeight: "bold", color: "black", flex: 1 },
-  rankScore: { fontSize: 14, color: "#555" },
+  rankName: { 
+    fontSize: 14, 
+    fontWeight: "bold", 
+    color: "black"
+  },
+  rankScore: { 
+    fontSize: 14, 
+    color: "#555",
+    marginLeft: 10
+  },
   /** ảnh crown */
   crownImageTop1: {
     position: "absolute",
@@ -571,6 +638,16 @@ const styles = StyleSheet.create({
   },
   refreshButtonActive: {
     backgroundColor: "#E8F5E9",
+  },
+  /** info container */
+  infoContainer: {
+    flex: 1,
+  },
+  /** date text */
+  dateText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
   },
 });
 
