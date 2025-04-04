@@ -12,6 +12,7 @@ import { Feather, FontAwesome, FontAwesome6, Ionicons, MaterialCommunityIcons } 
 import { Marquee } from '@animatereactnative/marquee';
 import { averageRating } from "@/utils/commons"
 import SaveButton from '../buttons/SaveButton';
+import { backgroundColors, iconColors } from '@/assets/colors';
 
 
 const { width } = Dimensions.get('window');
@@ -71,7 +72,7 @@ const TourSection = () => {
                     <Image source={{ uri: tour.item.author.avatar }} style={{ width: 'auto', height: '100%', borderRadius: 20, aspectRatio: 1 }}>
                     </Image>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <FontAwesome name="bookmark-o" size={30} color="black" />
+                        <FontAwesome name="bookmark-o" size={30} color='black' />
                     </View>
                 </View>
                 <View style={styles.tourItemImageSection}>
@@ -90,22 +91,22 @@ const TourSection = () => {
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10, justifyContent: 'space-between' }}>
                             {/* Time */}
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="calendar" size={22} color="black" />
+                                <Ionicons name="calendar" size={22} color={iconColors.green1} />
                                 <Text style={{ fontSize: 18, paddingLeft: 10 }}>4 ngày</Text>
                             </View>
                             {/* Rating */}
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <FontAwesome6 name="ranking-star" size={20} color="black" />
+                                <FontAwesome6 name="ranking-star" size={20} color={iconColors.green1} />
                                 <Text style={{ fontSize: 18, paddingRight: 4, paddingLeft: 10 }}>{averageRating(tour.item.ratingSummary.totalRatingValue, tour.item.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
                                 <View style={{ alignItems: 'center', justifyContent: 'center' }} >
-                                    <FontAwesome name="star" size={18} color="#FFD700" />
+                                    <FontAwesome name="star" size={18} color={iconColors.starRating} />
                                 </View>
                             </View>
                         </View>
                         {/* </View> */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <View>
-                                <FontAwesome6 name="money-check-dollar" size={24} color="black" />
+                                <FontAwesome6 name="money-check-dollar" size={24} color={iconColors.green1} />
                             </View>
                             {tour.item.discountTour !== 0 ?
                                 <View style={styles.tourPriceContainer}>
@@ -118,9 +119,9 @@ const TourSection = () => {
                                 </View>
                             }
                             {/* <Text style={{fontSize: 18, color:'#c1c1c1'}}> <Text style={{fontSize:22}}>|</Text>|1</Text> */}
-                            <View style={{ width: 2, height: 26, backgroundColor: '#c1c1c1', marginHorizontal: 6 }}></View>
-                            <Text style={{ fontSize: 18, color: "#c1c1c1" }}>1</Text>
-                            <Ionicons name="people" size={20} color="#c1c1c1" />
+                            <View style={{ width: 2, height: 26, backgroundColor: iconColors.green1, marginHorizontal: 6 }}></View>
+                            <Text style={{ fontSize: 18}}>1</Text>
+                            <Ionicons name="people" size={20} color={iconColors.green1} />
                         </View>
 
                     </View>
@@ -128,12 +129,7 @@ const TourSection = () => {
                     <View style={[styles.dotCustom, { right: -10 }]}></View>
                 </View>
                 <View style={styles.tourFooterSection}>
-                    {/* <Feather name="phone-call" size={24} color="black" />
-                    <Text style={{ color: 'black', fontSize: 18, fontWeight: '500', fontStyle: 'italic' }}>Liên hệ</Text> */}
                     <View style={styles.locationWrap}>
-                        {/* <View style={{ height: '100%', paddingHorizontal: 16, marginRight: 10, backgroundColor: 'white', borderColor: '#ff0000', justifyContent: 'center', borderRightWidth: 5 }} >
-                            <MaterialCommunityIcons name="flag-variant-outline" size={24} color="black" />
-                        </View> */}
                         <Marquee style={{ flex: 1 }} spacing={0} speed={1} >
                             <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
                                 {allLocations.map((location: any) => (
@@ -146,24 +142,6 @@ const TourSection = () => {
                                 ))}
                             </View>
                         </Marquee>
-                        <View>
-                            {/* <Carousel
-                                loop
-                                width={(width * 2 / 3) - 120}
-                                height={28}
-                                autoPlay={true}
-                                data={allLocations}
-                                autoPlayInterval={0}
-                                scrollAnimationDuration={3000}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity key={item.id} style={{ flex: 1, justifyContent: 'center' }} onPress={() => handleTapOnLocationInMenu(item.id, item.country)}>
-                                        <Text style={{ textAlign: 'center', fontSize: 15 }}>
-                                            {item.name + ""}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            /> */}
-                        </View>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -250,7 +228,7 @@ const styles = StyleSheet.create({
     },
     tourFooterSection: {
         flexDirection: 'row',
-        backgroundColor: '#f96161',
+        backgroundColor: iconColors.green3,
         // backgroundColor: 'blue',
         height: '12%',
         width: '100%',

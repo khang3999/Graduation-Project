@@ -1,35 +1,29 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, Pressable, Dimensions, TextInput, Image, ScrollView, Animated, useAnimatedValue } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import { signOut } from "firebase/auth";
-import { auth, database, onValue, ref } from "@/firebase/firebaseConfig";
-import SearchBar from '@/components/homePage/SearchBar'
 import PostList from '@/components/homePage/PostList'
 import TourSection from "@/components/homePage/TourSection";
 import HomeProvider, { useHomeProvider } from "@/contexts/HomeProvider";
-import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Badge } from "react-native-paper";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAccount } from "@/contexts/AccountProvider";
-import { off } from "firebase/database";
 import HeaderIndex from "@/components/header/HeaderIndex";
+import { backgroundColors, iconColors } from "@/assets/colors";
 import Featured from "@/components/homePage/Featured ";
 
 
 const height = Dimensions.get('window').height;
-  const Home = () => {
-
+const Home = () => {
   const {
     dataModalSelected,
     setDataModalSelected,
     dataAllCities,
     setDataAllCities,
     isFocus, setIsFocus, dataAccount,
-    selectedTypeSearch, dataTypeSearch }: any = useHomeProvider();
+    selectedTypeSearch, dataTypeSearch,
+    modalSearchVisible, setModalSearchVisible,
+    reload, setReload
+  }: any = useHomeProvider();
   const { selectedCityId } = useLocalSearchParams()
-
 
   // useFocusEffect(
   //   useCallback(() => {
@@ -117,9 +111,9 @@ const height = Dimensions.get('window').height;
         <Animated.ScrollView
           // style={[
           //   { height: 400, position: 'relative'},
-            
+
           // ]}
-          contentContainerStyle={{ borderRadius: 20, overflow: 'hidden' }}
+          contentContainerStyle={{ borderRadius: 20, overflow: 'hidden', backgroundColor: backgroundColors.background1 }}
           nestedScrollEnabled={true}
           // BỎ COMMENT DÒNG DƯỚI ĐỂ SỬ DỤNG ANIMATION
           onScroll={handleScroll}
@@ -148,24 +142,47 @@ const height = Dimensions.get('window').height;
           <View>
             <Text style={styles.textCategory}>Bài viết</Text>
             {/* Đang hiển thị */}
-            <View style={{ flexDirection: 'row', marginHorizontal: 20, gap: 10 }}>
-              {/* <Text style={{ fontWeight: '600' }}>Hiển thị: </Text> */}
-              {dataModalSelected == null ?
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                :
-                <>
-                  {dataModalSelected.input !== '' && <Badge size={24} style={styles.badge}>{dataModalSelected.input}</Badge>}
-                  {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
-                    <Badge size={24} style={styles.badge}>{dataModalSelected.country}</Badge>
-                    :
-                    dataModalSelected.cities.map((cityId: any) => {
-                      const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
-                      return <Badge key={cityId} size={24} style={styles.badge}>{found[cityId]}</Badge>
-                    })
-                  }
-                </>}
+            <View style={{ flexDirection: 'row', alignItems:'center', marginBottom: 10 }}>
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingLeft: 20,paddingVertical: 10, gap: 10 }}
+              >
+                {/* <Text style={{ fontWeight: '600' }}>Hiển thị: </Text> */}
+                {dataModalSelected == null ?
+                  <Badge size={24} style={styles.badge}>Tất cả</Badge>
+                  :
+                  <>
+                    {dataModalSelected.input !== '' && <Badge size={24} style={styles.badge}>{dataModalSelected.input}</Badge>}
+                    {dataModalSelected.cities.length <= 0 && dataModalSelected.country !== '' ?
+                      <Badge size={24} style={styles.badge}>{dataModalSelected.country}</Badge>
+                      :
+                      dataModalSelected.cities.map((cityId: any) => {
+                        const found = dataAllCities.find((obj: any) => obj[cityId] !== undefined);
+                        return <Badge key={cityId} size={24} style={styles.badge}>{found[cityId]}</Badge>
+                      })
+                    }
+                  </>}
 
-              <Badge size={24} style={[styles.badge, styles.bagdeType]} >{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
+                <Badge size={24} style={[styles.badge, styles.bagdeType]} >{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
+
+                <Badge size={24} style={styles.badge}>Tất cả</Badge>
+                <Badge size={24} style={styles.badge}>Tất cả</Badge>
+                <Badge size={24} style={styles.badge}>Tất cả</Badge>
+                <Badge size={24} style={styles.badge}>Tất cả</Badge>
+              </ScrollView>
+              {/* Button search and reload */}
+              <View style={styles.containerButton}>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => setModalSearchVisible(true)}>
+                  <MaterialCommunityIcons name="tune-variant" size={24} color={iconColors.green1} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.btn} onPress={() => setReload(!reload)}>
+                  <AntDesign name="reload1" size={22} color={iconColors.green1} />
+                </TouchableOpacity>
+              </View>
             </View>
             {/* Danh sach bài viết */}
             <PostList ></PostList>
@@ -183,7 +200,7 @@ const height = Dimensions.get('window').height;
   )
 }
 
-const changePercentToPixel = (a:number,percent: number) => {
+const changePercentToPixel = (a: number, percent: number) => {
   return a * percent / 100;
 }
 const styles = StyleSheet.create({
@@ -209,7 +226,7 @@ const styles = StyleSheet.create({
 
   textTitle: {
     fontSize: 34,
-    fontWeight:'500',
+    fontWeight: '500',
     paddingHorizontal: 20,
   },
 
@@ -217,7 +234,7 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     paddingBottom: 60,
     position: 'absolute',
-    backgroundColor: '#EAEAEA',
+    backgroundColor: backgroundColors.background1,
     // backgroundColor: 'red',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -231,18 +248,35 @@ const styles = StyleSheet.create({
   container: {
     height: '100%',
   },
+  btn: {
+    // backgroundColor: '#C3F9C2',
+    backgroundColor: 'white',
+    marginHorizontal: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
+  containerButton: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginHorizontal: 15,
+  },
   bagdeType: {
-    backgroundColor: 'grey',
-    color: 'white',
+    backgroundColor: iconColors.green3,
   },
   badge: {
     fontSize: 16,
-    backgroundColor: '#b9e0f7',
+    // backgroundColor: '#b9e0f7',
+    backgroundColor: iconColors.green2,
     color: 'black',
     paddingHorizontal: 6,
     fontWeight: '500',
     height: 44,
-    borderRadius: 10
+    borderRadius: 10,
+    elevation: 4,
   }
 })
 
