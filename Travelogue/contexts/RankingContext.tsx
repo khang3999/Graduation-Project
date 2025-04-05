@@ -1,39 +1,43 @@
 import { database, get, ref, onValue, set } from "@/firebase/firebaseConfig";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-
 interface RankingContextType {
   citiesData: any[];
   postsData: any[];
-  hasNewUpdates: boolean;
+  hasNewCitiesUpdates: boolean;
+  hasNewPostsUpdates: boolean;
   isRefreshing: boolean;
   lastUpdateTime: Date | null;
-  refreshData: () => Promise<void>;
+  refreshCitiesData: () => Promise<void>;
+  refreshPostsData: () => Promise<void>;
 }
 
 // Global states
 let globalCitiesData: any[] = [];
 let globalPostsData: any[] = [];
 let globalLastUpdateTime: Date | null = null;
-let globalHasNewUpdates: boolean = false;
-let globalLastDataSnapshot: string | null = null;
+let globalHasNewCitiesUpdates: boolean = false;
+let globalHasNewPostsUpdates: boolean = false;
+let globalLastCitiesSnapshot: string | null = null;
+let globalLastPostsSnapshot: string | null = null;
 
 const RankingContext = createContext<RankingContextType | null>(null);
 
-export const RankingProvider = ({ children }: { children: React.ReactNode }) => {
+export const RankingProvider = ({ children }: any) => {
   const [citiesData, setCitiesData] = useState<any[]>(globalCitiesData);
   const [postsData, setPostsData] = useState<any[]>(globalPostsData);
-  const [hasNewUpdates, setHasNewUpdates] = useState(globalHasNewUpdates);
+  const [hasNewCitiesUpdates, setHasNewCitiesUpdates] = useState(globalHasNewCitiesUpdates);
+  const [hasNewPostsUpdates, setHasNewPostsUpdates] = useState(globalHasNewPostsUpdates);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(globalLastUpdateTime);
-  const [lastDataSnapshot, setLastDataSnapshot] = useState<string | null>(globalLastDataSnapshot);
+  const [lastCitiesSnapshot, setLastCitiesSnapshot] = useState<string | null>(globalLastCitiesSnapshot);
+  const [lastPostsSnapshot, setLastPostsSnapshot] = useState<string | null>(globalLastPostsSnapshot);
 
-  const fetchData = async () => {
+  const refreshCitiesData = async () => {
     if (isRefreshing) return;
     
     setIsRefreshing(true);
     try {
-      // Fetch cities data (giữ nguyên phần này)
       const cityRef = ref(database, "cities");
       const citySnapshot = await get(cityRef);
       const cityData = citySnapshot.val() || {};
@@ -54,7 +58,31 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
         )
       );
 
-      // Fetch posts data
+      const sortedCityData = formattedCityData
+        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+        .slice(0, 50);
+
+      globalCitiesData = sortedCityData;
+      setCitiesData(sortedCityData);
+      setHasNewCitiesUpdates(false);
+
+      // Save current cities snapshot
+      const currentSnapshot = JSON.stringify(sortedCityData);
+      globalLastCitiesSnapshot = currentSnapshot;
+      setLastCitiesSnapshot(currentSnapshot);
+
+    } catch (error) {
+      console.error("Error fetching cities data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const refreshPostsData = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
       const postsRef = ref(database, "posts");
       const postsSnapshot = await get(postsRef);
       const postsData = postsSnapshot.val() || {};
@@ -66,33 +94,25 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
           author: post.author || {},
           image: post.thumbnail || [],
           scores: post.scores || 0,
-          title : post.title || "",
-
+          title: post.title || "",
         };
       });
 
-      // Sort posts by likes
       const sortedPostsData = formattedPostsData
         .sort((a, b) => b.scores - a.scores)
         .slice(0, 50);
 
-      const sortedCityData = formattedCityData
-        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
-        .slice(0, 50);
-
-      // Update states
-      globalCitiesData = sortedCityData;
       globalPostsData = sortedPostsData;
-      globalLastUpdateTime = new Date();
-      globalHasNewUpdates = false;
-      
-      setCitiesData(sortedCityData);
       setPostsData(sortedPostsData);
-      setLastUpdateTime(globalLastUpdateTime);
-      setHasNewUpdates(false);
+      setHasNewPostsUpdates(false);
+
+      // Save current posts snapshot
+      const currentSnapshot = JSON.stringify(sortedPostsData);
+      globalLastPostsSnapshot = currentSnapshot;
+      setLastPostsSnapshot(currentSnapshot);
 
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching posts data:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -103,12 +123,17 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
     setCitiesData(globalCitiesData);
     setPostsData(globalPostsData);
     setLastUpdateTime(globalLastUpdateTime);
-    setHasNewUpdates(globalHasNewUpdates);
-    setLastDataSnapshot(globalLastDataSnapshot);
+    setHasNewCitiesUpdates(globalHasNewCitiesUpdates);
+    setHasNewPostsUpdates(globalHasNewPostsUpdates);
+    setLastCitiesSnapshot(globalLastCitiesSnapshot);
+    setLastPostsSnapshot(globalLastPostsSnapshot);
 
     // Initial fetch only if no global data
     if (globalCitiesData.length === 0) {
-      fetchData();
+      refreshCitiesData();
+    }
+    if (globalPostsData.length === 0) {
+      refreshPostsData();
     }
 
     // Listen for changes in both cities and posts
@@ -116,18 +141,19 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
     const postsRef = ref(database, "posts");
 
     const unsubscribeCities = onValue(cityRef, (snapshot) => {
-      checkForUpdates(snapshot.val(), "cities");
+      checkForCitiesUpdates(snapshot.val());
     });
 
     const unsubscribePosts = onValue(postsRef, (snapshot) => {
-      checkForUpdates(snapshot.val(), "posts");
+      checkForPostsUpdates(snapshot.val());
     });
 
     // Hourly refresh
     const interval = setInterval(() => {
       console.log("⏳ Cập nhật dữ liệu sau 1 tiếng...");
-      fetchData();
-    }, 60 * 60 * 1000);
+      refreshCitiesData();
+      refreshPostsData();
+    }, 60 * 60 * 1000); 
 
     return () => {
       clearInterval(interval);
@@ -136,15 +162,27 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
     };
   }, []);
 
-  const checkForUpdates = (newData: any, type: 'cities' | 'posts') => {
-    if (!globalLastDataSnapshot) return;
+  const checkForCitiesUpdates = (newData: any) => {
+    if (!globalLastCitiesSnapshot) return;
     
-    const currentData = JSON.parse(globalLastDataSnapshot);
-    const hasChanged = JSON.stringify(currentData[type]) !== JSON.stringify(newData);
+    const currentData = JSON.parse(globalLastCitiesSnapshot);
+    const hasChanged = JSON.stringify(currentData) !== JSON.stringify(newData);
     
     if (hasChanged) {
-      globalHasNewUpdates = true;
-      setHasNewUpdates(true);
+      globalHasNewCitiesUpdates = true;
+      setHasNewCitiesUpdates(true);
+    }
+  };
+
+  const checkForPostsUpdates = (newData: any) => {
+    if (!globalLastPostsSnapshot) return;
+    
+    const currentData = JSON.parse(globalLastPostsSnapshot);
+    const hasChanged = JSON.stringify(currentData) !== JSON.stringify(newData);
+    
+    if (hasChanged) {
+      globalHasNewPostsUpdates = true;
+      setHasNewPostsUpdates(true);
     }
   };
 
@@ -153,10 +191,12 @@ export const RankingProvider = ({ children }: { children: React.ReactNode }) => 
       value={{
         citiesData,
         postsData,
-        hasNewUpdates,
+        hasNewCitiesUpdates,
+        hasNewPostsUpdates,
         isRefreshing,
         lastUpdateTime,
-        refreshData: fetchData
+        refreshCitiesData,
+        refreshPostsData
       }}
     >
       {children}

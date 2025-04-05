@@ -2,20 +2,29 @@ import { router } from "expo-router";
 import React from "react";
 import { View, Image, Text, FlatList, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useRanking } from "@/contexts/RankingContext"; 
+import { useRanking } from "@/contexts/RankingContext";
 
 interface StoryItemProps {
   item: {
     id: string;
     name: string;
     image: string;
+    id_nuoc: string;
   };
 }
 
 const StoryItem = ({ item }: StoryItemProps) => (
   <TouchableOpacity
     style={{ alignItems: "center", marginHorizontal: 8 }}
-    onPress={() => console.log(item.id)}
+    onPress={() => {
+      router.push({
+        pathname: "/gallery",
+        params: {
+          idCity: item.id,
+          idCountry: item?.id_nuoc,
+        },
+      });
+    }}
   >
     <View
       style={{
@@ -43,10 +52,12 @@ const StoryItem = ({ item }: StoryItemProps) => (
 );
 
 const Featured = () => {
-  const { citiesData } = useRanking(); 
+  const { citiesData } = useRanking();
 
   return (
-    <View style={{ position: "relative", padding: 10, backgroundColor: "#000022" }}>
+    <View
+      style={{ position: "relative", padding: 10, backgroundColor: "#000022" }}
+    >
       <FlatList
         data={citiesData.slice(0, 4)}
         horizontal

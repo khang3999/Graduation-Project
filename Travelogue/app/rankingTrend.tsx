@@ -32,14 +32,31 @@ interface Post {
     name: string;
     avatar?: string;
   };
-  image: string[];
+  image: string;
   scores: number;
 }
+
+const abbreviateTitle = (title: string): string => {
+  if (title.length <= 8) return title;
+  
+  const words = title.split(' ');
+  const abbreviated = words.map(word => word.charAt(0)).join('');
+  
+  return abbreviated;
+};
 
 type RankingItem = City | Post;
 
 const RankingTrend = () => {
-  const { citiesData, postsData, hasNewUpdates, isRefreshing, refreshData } = useRanking();
+  const { 
+    citiesData, 
+    postsData, 
+    hasNewCitiesUpdates, 
+    hasNewPostsUpdates, 
+    isRefreshing, 
+    refreshCitiesData,
+    refreshPostsData 
+  } = useRanking();
   const animationRef = useRef<LottieView>(null);
   const [activeTab, setActiveTab] = useState("Địa điểm");
   const rankingData = activeTab === "Địa điểm" ? (citiesData as City[]) : (postsData as Post[]);
@@ -53,13 +70,18 @@ const RankingTrend = () => {
   });
 
   const handleRefresh = async () => {
-    if (!isRefreshing && hasNewUpdates) {
-      await refreshData();
+    if (!isRefreshing) {
+      if (activeTab === "Địa điểm" && hasNewCitiesUpdates) {
+        await refreshCitiesData();
+      } else if (activeTab === "Bài Viết" && hasNewPostsUpdates) {
+        await refreshPostsData();
+      }
     }
   };
 
   useEffect(() => {
-    if (hasNewUpdates) {
+    if ((activeTab === "Địa điểm" && hasNewCitiesUpdates) || 
+        (activeTab === "Bài Viết" && hasNewPostsUpdates)) {
       Toast.show({
         type: "success",
         text1: "Có dữ liệu mới!",
@@ -68,7 +90,7 @@ const RankingTrend = () => {
         autoHide: true,
       });
     }
-  }, [hasNewUpdates]);
+  }, [hasNewCitiesUpdates, hasNewPostsUpdates, activeTab]);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -108,17 +130,21 @@ const RankingTrend = () => {
         <View style={{ width: 26, alignItems: "flex-end" }}>
           <TouchableOpacity
             onPress={handleRefresh}
-            disabled={isRefreshing || !hasNewUpdates}
+            disabled={isRefreshing || (activeTab === "Địa điểm" ? !hasNewCitiesUpdates : !hasNewPostsUpdates)}
             style={[
               styles.refreshButton,
-              hasNewUpdates && !isRefreshing && styles.refreshButtonActive,
+              ((activeTab === "Địa điểm" && hasNewCitiesUpdates) || 
+               (activeTab === "Bài Viết" && hasNewPostsUpdates)) && 
+              !isRefreshing && styles.refreshButtonActive,
             ]}
           >
             <Icon
               name="refresh"
               size={26}
               style={{ width: 26, height: 26 }}
-              color={hasNewUpdates && !isRefreshing ? "#4CAF50" : "black"}
+              color={((activeTab === "Địa điểm" && hasNewCitiesUpdates) || 
+                      (activeTab === "Bài Viết" && hasNewPostsUpdates)) && 
+                      !isRefreshing ? "#4CAF50" : "#FF0066"}
             />
           </TouchableOpacity>
         </View>
@@ -130,7 +156,9 @@ const RankingTrend = () => {
           style={{
             textAlign: "center",
             fontSize: 12,
-            color: hasNewUpdates ? "#4CAF50" : "#FF0066",
+            color: ((activeTab === "Địa điểm" && hasNewCitiesUpdates) || 
+                    (activeTab === "Bài Viết" && hasNewPostsUpdates)) ? 
+                    "#4CAF50" : "#FF0066",
             marginBottom: 10,
           }}
         >
@@ -167,7 +195,10 @@ const RankingTrend = () => {
                   pathname: "/gallery",
                   params: { idCity: rankingData[1]?.id, idCountry: (rankingData[1] as City)?.id_nuoc },
                 })
-              : router.push(`/(article)/post/${rankingData[1]?.id}` as any)
+              :  router.push({
+                pathname: "/postDetail",
+                params: { postId: rankingData[1].id },
+              })
           }
           disabled={!rankingData[1]}
         >
@@ -190,7 +221,7 @@ const RankingTrend = () => {
                       uri:
                         (activeTab === "Địa điểm" 
                           ? (rankingData[1] as City).image
-                          : (rankingData[1] as Post).image[0]) ||
+                          : (rankingData[1] as Post).image) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFill}
@@ -218,7 +249,7 @@ const RankingTrend = () => {
               >
                 {activeTab === "Địa điểm" 
                   ? (rankingData[1] as City).name
-                  : (rankingData[1] as Post).title}
+                  : abbreviateTitle((rankingData[1] as Post).title)}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#AAAAAA", fontSize: 15 }]}
@@ -245,7 +276,10 @@ const RankingTrend = () => {
                   pathname: "/gallery",
                   params: { idCity: rankingData[0]?.id, idCountry: (rankingData[0] as City)?.id_nuoc },
                 })
-              : router.push(`/(article)/post/${rankingData[0]?.id}` as any)
+              :  router.push({
+                pathname: "/postDetail",
+                params: { postId: rankingData[0].id },
+              })
           }
           disabled={!rankingData[0]}
         >
@@ -258,7 +292,7 @@ const RankingTrend = () => {
                       uri:
                         (activeTab === "Địa điểm"
                           ? (rankingData[0] as City).image
-                          : (rankingData[0] as Post).image[0]) ||
+                          : (rankingData[0] as Post).image) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFillBig}
@@ -286,7 +320,7 @@ const RankingTrend = () => {
               >
                 {activeTab === "Địa điểm"
                   ? (rankingData[0] as City).name
-                  : (rankingData[0] as Post).title}
+                  : abbreviateTitle((rankingData[0] as Post).title)}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#FFCA28", fontSize: 16 }]}
@@ -313,7 +347,10 @@ const RankingTrend = () => {
                   pathname: "/gallery",
                   params: { idCity: rankingData[2]?.id, idCountry: (rankingData[2] as City)?.id_nuoc },
                 })
-              : router.push(`/(article)/post/${rankingData[2]?.id}` as any)
+              : router.push({
+                pathname: "/postDetail",
+                params: { postId: rankingData[2].id },
+              })
           }
           disabled={!rankingData[2]}
         >
@@ -326,7 +363,7 @@ const RankingTrend = () => {
                       uri:
                         (activeTab === "Địa điểm"
                           ? (rankingData[2] as City).image
-                          : (rankingData[2] as Post).image[0]) ||
+                          : (rankingData[2] as Post).image) ||
                         "https://mediatech.vn/assets/images/imgstd.jpg",
                     }}
                     style={styles.rankImageFill}
@@ -353,7 +390,7 @@ const RankingTrend = () => {
               >
                 {activeTab === "Địa điểm"
                   ? (rankingData[2] as City).name
-                  : (rankingData[2] as Post).title}
+                  : abbreviateTitle((rankingData[2] as Post).title)}
               </Text>
               <Text
                 style={[styles.levelText, { color: "#FF8228", fontSize: 14 }]}
@@ -385,7 +422,10 @@ const RankingTrend = () => {
                     pathname: "/gallery",
                     params: { idCity: item.id, idCountry: item.id_nuoc },
                   })
-                : router.push(`/(article)/post/${item.id}` as any)
+                :  router.push({
+                              pathname: "/postDetail",
+                              params: { postId: item.id },
+                            })
             }
           >
             <Text style={styles.rankNumber}>
@@ -396,14 +436,14 @@ const RankingTrend = () => {
                 uri:
                   (isCity(item)
                     ? item.image
-                    : item.image[0]) ||
+                    : item.image) ||
                   "https://mediatech.vn/assets/images/imgstd.jpg",
               }}
               style={styles.rankImageSmall}
             />
             <View style={styles.infoContainer}>
               <Text style={styles.rankName}>
-                {isCity(item) ? item.name : item.title}
+                {isCity(item) ? item.name : (item.title.length > 25 ? `${item.title.slice(0, 25)}...` : item.title)}
               </Text>
               {!isCity(item) && (
                 <Text style={styles.dateText}>
