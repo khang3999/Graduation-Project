@@ -85,70 +85,158 @@ const HeartButton = (props: any) => {
 
     // Hàm set like
     const handleLike = async (dataID: any, userID: any) => {
-        setDisabled(true)
-        // Cập nhật list like của account
-        // Phan loại
-        const refColumn = type === 0 ? 'likedPostsList' : 'likedToursList'
-        const refTable = type === 0 ? 'posts' : 'tours'
-        // Các ref
+        setDisabled(true);
+    
+        const refColumn = type === 0 ? 'likedPostsList' : 'likedToursList';
+        const refTable = type === 0 ? 'posts' : 'tours';
+    
         const refLikedList = ref(database, `accounts/${userID}/${refColumn}/`);
-        const refItemInLikedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`)
-        const snapshot = await get(refItemInLikedList); // Kiểm tra xem postID đã tồn tại chưa
-        const refLikesOfTable = ref(database, `${refTable}/${dataID}/likes`)
-
+        const refItemInLikedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`);
+        const snapshot = await get(refItemInLikedList);
+    
+        const refLikesOfTable = ref(database, `${refTable}/${dataID}/likes`);
+        const refScoresOfTable = ref(database, `${refTable}/${dataID}/scores`);
+    
+        // Lấy danh sách các tỉnh thành từ `locations`
+        const locations = data.locations; // Đảm bảo `data.locations` chứa thông tin các tỉnh thành
+        console.log("Locations:", locations);
+    
         try {
-            if (snapshot.exists()) { // Đã like post/tour 
-                // Nếu đã tồn tại, xóa postID khỏi likedList
+            if (snapshot.exists()) {
+                // UNLIKE: đã tồn tại -> xóa khỏi danh sách
                 await remove(refItemInLikedList);
-                // Cập nhật like của bài viết
-                runTransaction(refLikesOfTable, (currentValue) => {
-                    return currentValue - 1; // Cập nhật dựa trên giá trị hiện tại
-                }).then(() => {
-                    setLikeNum(likeNum - 1)
-                    if (type === 0) {
-                        setDataPosts([...updateArray(dataPosts, dataID, likeNum - 1)])
-                    } else {
-                        setDataTours([...updateArray(dataTours, dataID, likeNum - 1)])
-                    }
-                    console.log("Update like successfully committed!");
-                }).catch((error) => {
-                    console.error("Transaction failed: ", error);
+    
+                // Giảm 1 lượt thích
+                await runTransaction(refLikesOfTable, (currentValue) => {
+                    return (currentValue || 0) - 1;
                 });
+    
+                // Giảm 2 điểm
+                await runTransaction(refScoresOfTable, (currentValue) => {
+                    return (currentValue || 0) - 2;
+                });
+    
+                // Giảm 2 điểm cho từng tỉnh thành
+                if (locations) {
+                    for (const countryKey in locations) {
+                        const provinces = locations[countryKey];
+                        for (const provinceID in provinces) {
+                            console.log("Tìm provinceID:", provinceID);
+    
+                            // Dò vào bảng cities để tìm tỉnh thành
+                            const citiesRef = ref(database, `cities/${countryKey}`);
+                            const citiesSnapshot = await get(citiesRef);
+    
+                            if (citiesSnapshot.exists()) {
+                                const citiesData = citiesSnapshot.val();
+                                let found = false;
+    
+                                for (const regionKey in citiesData) {
+                                    if (citiesData[regionKey][provinceID]) {
+                                        console.log("Tìm thấy provinceID:", provinceID);
+                                        console.log("countryKey:", countryKey);
+                                        console.log("regionKey:", regionKey);
+    
+                                        // Cập nhật scores cho tỉnh thành
+                                        const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
+                                        await runTransaction(refProvinceScores, (currentValue) => {
+                                            return (currentValue || 0) - 2; // Giảm 2 điểm
+                                        });
+    
+                                        found = true;
+                                        break;
+                                    }
+                                }
+    
+                                if (!found) {
+                                    console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
+                                }
+                            }
+                        }
+                    }
+                }
+    
+                setLikeNum(likeNum - 1);
+                if (type === 0) {
+                    setDataPosts([...updateArray(dataPosts, dataID, likeNum - 1)]);
+                } else {
+                    setDataTours([...updateArray(dataTours, dataID, likeNum - 1)]);
+                }
+    
                 console.log('Đã bỏ thích ' + dataID);
-
             } else {
-                // Nếu không tồn tại, thêm vào savedList
+                // LIKE: chưa tồn tại -> thêm vào danh sách
                 await update(refLikedList, {
-                    [dataID]: true, // Thêm postID vào savedList
+                    [dataID]: true,
                 });
-
-                // Cập nhật like của bài viết
-                runTransaction(refLikesOfTable, (currentValue) => {
-                    return currentValue + 1; // Cập nhật dựa trên giá trị hiện tại
-                }).then(() => {
-                    setLikeNum(likeNum + 1)
-                    if (type === 0) {
-                        setDataPosts([...updateArray(dataPosts, dataID, likeNum + 1)])
-                    } else {
-                        setDataTours([...updateArray(dataTours, dataID, likeNum + 1)])
+    
+                // Tăng 1 lượt thích
+                await runTransaction(refLikesOfTable, (currentValue) => {
+                    return (currentValue || 0) + 1;
+                });
+    
+                // Tăng 2 điểm
+                await runTransaction(refScoresOfTable, (currentValue) => {
+                    return (currentValue || 0) + 2;
+                });
+    
+                // Tăng 2 điểm cho từng tỉnh thành
+                if (locations) {
+                    for (const countryKey in locations) {
+                        const provinces = locations[countryKey];
+                        for (const provinceID in provinces) {
+                            console.log("Tìm provinceID:", provinceID);
+    
+                            // Dò vào bảng cities để tìm tỉnh thành
+                            const citiesRef = ref(database, `cities/${countryKey}`);
+                            const citiesSnapshot = await get(citiesRef);
+    
+                            if (citiesSnapshot.exists()) {
+                                const citiesData = citiesSnapshot.val();
+                                let found = false;
+    
+                                for (const regionKey in citiesData) {
+                                    if (citiesData[regionKey][provinceID]) {
+                                        console.log("Tìm thấy provinceID:", provinceID);
+                                        console.log("countryKey:", countryKey);
+                                        console.log("regionKey:", regionKey);
+    
+                                        // Cập nhật scores cho tỉnh thành
+                                        const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
+                                        await runTransaction(refProvinceScores, (currentValue) => {
+                                            return (currentValue || 0) + 2; // Tăng 2 điểm
+                                        });
+    
+                                        found = true;
+                                        break;
+                                    }
+                                }
+    
+                                if (!found) {
+                                    console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
+                                }
+                            }
+                        }
                     }
-                    console.log("Update like successfully committed!");
-                }).catch((error) => {
-                    console.error("Transaction failed: ", error);
-                });
+                }
+    
+                setLikeNum(likeNum + 1);
+                if (type === 0) {
+                    setDataPosts([...updateArray(dataPosts, dataID, likeNum + 1)]);
+                } else {
+                    setDataTours([...updateArray(dataTours, dataID, likeNum + 1)]);
+                }
+    
                 console.log(`Đã thêm ${dataID} vào likedList`);
-
-
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật likedList:', error);
-        }
-        finally { // Đổi state
-            setDisabled(false)
+        } finally {
+            setDisabled(false);
             setLiked(!liked);
         }
-
-    }
+    };
+    
     return (
         <View style={styles.container}>
             <TouchableOpacity disabled={disabled} delayPressOut={50} onPress={() => handleLike(data.id, userID)} {...props}>

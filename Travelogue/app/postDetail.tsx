@@ -48,7 +48,6 @@ const windowHeight = Dimensions.get("window").height;
 
 
 
-
 type Post = {
   id: string;
   author: {

@@ -612,13 +612,13 @@ const PostList = () => {
     return (
       <View key={post.item.id} style={styles.itemWrap}>
         < PaperProvider >
-          <TouchableOpacity style={styles.item} onPress={() => {
+            <TouchableOpacity style={styles.item} onPress={async () => {
+            
             router.push({
               pathname: "/postDetail",
               params: { postId: post.item.id },
             });
-            // setSelectedPost([post.item])
-          }}>
+            }}>
             {/* Label */}
             <View style={{ borderRadius: 30, position: 'absolute', backgroundColor: 'rgba(100,100,100,0.1)', zIndex: 1, width: '100%', height: '100%' }}></View>
 
