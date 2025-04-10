@@ -5,7 +5,7 @@ import { database, ref } from '@/firebase/firebaseConfig'
 import { equalTo, get, orderByChild, query, update } from '@firebase/database'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { formatDate } from '@/utils/commons'
-import { AntDesign, Entypo, FontAwesome6 } from '@expo/vector-icons'
+import { AntDesign, Entypo, FontAwesome, FontAwesome5, FontAwesome6, Foundation, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtHomeScreen } from '@/utils'
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list'
 import ActionBar from '../actionBars/ActionBar'
@@ -16,13 +16,13 @@ import { useAccount } from '@/contexts/AccountProvider'
 import HeartButton from '../buttons/HeartButton'
 import SaveButton from '../buttons/SaveButton'
 import LiveModeButton from '../buttons/LiveModeButton'
-import {iconColors} from '@/assets/colors'
+import { backgroundColors, bagdeColors, iconColors } from '@/assets/colors'
 
 const { width } = Dimensions.get('window')
 
 
 const PostList = () => {
-  const TYPE = 0;
+  const TYPE = { post: 0, tour: 1 };
   const {
     dataPosts, setDataPosts,
     currentPostCount, setCurrentPostCount,
@@ -481,7 +481,7 @@ const PostList = () => {
       // fetchTours()
     };
     handleReloadHomeScreen()
-  },[reload])
+  }, [reload])
 
 
 
@@ -493,10 +493,10 @@ const PostList = () => {
     }
   }, [reloadScreen])
 
-  // Hàm hiển thị những bài viết mới
+  // Hàm hiển thị những bài viết mới *** không xài nữa ***
   const handleShowNewPost = () => {
     // Mở modal chứa các bài viết mới
-    setModalNewPostVisible(true)
+    // setModalNewPostVisible(true)
     // Load dữ liệu các bài viết mới vào modal
     const result = dataNewPostList.filter((postObj1: any) =>
       !dataPosts.some((postObj2: any) => postObj1.id === postObj2.id)
@@ -506,12 +506,24 @@ const PostList = () => {
     })
     setDataNewPosts(result)
   };
-  // Hàm button 'Đóng' modal những bài viết mới
+  // Run to load new post list but don't merge with old post list
+  useEffect(() => {
+    if (modalNewPostVisible) {
+      const result = dataNewPostList.filter((postObj1: any) =>
+        !dataPosts.some((postObj2: any) => postObj1.id === postObj2.id)
+      );
+      result.sort((postA: any, postB: any) => {
+        return postB.created_at - postA.created_at
+      })
+      setDataNewPosts(result)
+    }
+  }, [modalNewPostVisible])
+  // Hàm button 'Đóng' modal những bài viết mới ***không xài nữa**
   const handleCloseModalNewPost = () => {
     // Đóng modal
     setModalNewPostVisible(false)
   }
-  // Hàm button 'Đóng' và reload những bài viết mới
+  // Hàm button 'Làm mới' và merge những bài viết mới vào danh sách
   const handleCloseAndReLoadModalNewPost = () => {
     // Có thể reload trang nếu cần lại nếu cần
     setDataPosts(dataNewPostList)
@@ -690,10 +702,10 @@ const PostList = () => {
                 <View style={[styles.btn, {
                   paddingHorizontal: 10,
                 }]}>
-                  <HeartButton data={post.item} type={TYPE}></HeartButton>
+                  <HeartButton data={post.item} type={TYPE.post}></HeartButton>
                 </View>
                 <View style={[styles.btn, { width: 50, marginLeft: 0 }]}>
-                  <SaveButton data={post.item} type={TYPE}></SaveButton>
+                  <SaveButton data={post.item} type={TYPE.post}></SaveButton>
                 </View>
               </View>
               {/* Topic */}
@@ -719,16 +731,12 @@ const PostList = () => {
     );
     return (
       <View key={post.item.id} style={styles.itemNewPostWrap}>
-        <View style={{ flexDirection: 'row' }}>
-          <View style={{}}>
-            <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 90, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 2, marginBottom: 4, alignSelf: 'flex-start' }} onPress={() => handleGoToProfileScreen(post.item.author.id)}>
-              <Image style={{ width: 25, height: 25, borderRadius: 90 }} source={{ uri: post.item.author.avatar }} />
-              <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
-                {post.item.author.fullname}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <TouchableOpacity style={styles.authorNewPost} onPress={() => handleGoToProfileScreen(post.item.author.id)}>
+          <Image style={{ width: 30, height: 30, borderRadius: 90 }} source={{ uri: post.item.author.avatar }} />
+          <Text style={{ fontWeight: '500', paddingHorizontal: 4 }} numberOfLines={1}>
+            {post.item.author.fullname}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.itemNewPostContent}
           onPress={() => {
             router.push({
@@ -736,18 +744,18 @@ const PostList = () => {
               params: { postId: post.item.id },
             })
           }}>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', elevation: 4, borderRadius: 10,}}>
             <Image style={{ width: '100%', borderRadius: 10, aspectRatio: 1 }} source={{ uri: post.item.thumbnail }}></Image>
           </View>
           <View style={{ flex: 1.5, paddingLeft: 10 }}>
             <View style={{ flexDirection: 'row' }}>
               <Text style={styles.textTitle}> {post.item.title}</Text>
             </View>
-            <View style={{ flexDirection: 'row', flex: 1, alignItems: 'flex-start', flexWrap: 'wrap', padding: 4 }}>
-              <Text style={{ fontWeight: '500', textAlign: 'center', paddingVertical: 1 }}>Địa điểm: </Text>
+            <View style={{ flexDirection: 'row', flex: 1, alignItems: 'flex-start', flexWrap: 'wrap', padding: 2 }}>
+              <Text style={{ fontWeight: '500', textAlign: 'center'}}>Địa điểm: </Text>
               {allLocations.map((location) => {
-                return (<Badge key={location.id} style
-                  ={{ margin: 1 }}>{location.name}</Badge>)
+                return (<Badge size={22} key={location.id} style
+                  ={{ marginHorizontal: 2, paddingHorizontal: 8}}>{location.name}</Badge>)
               })}
             </View>
             <Text style={{ fontStyle: 'italic', fontSize: 12, alignSelf: 'flex-end' }}>{formatDate(post.item.created_at)}</Text>
@@ -760,12 +768,12 @@ const PostList = () => {
   return (
     <View style={styles.container}>
       <View>
-        {((currentPostCount !== newPostCount)) && (
-          <TouchableOpacity style={styles.loadNewPost} onPress={() => handleShowNewPost()}>
+        {/* {((currentPostCount !== newPostCount)) && ( */}
+        {/* <TouchableOpacity style={styles.loadNewPost} onPress={() => handleShowNewPost()}>
             <FontAwesome6 name="newspaper" size={20} color="black" />
             <Text style={styles.iconPost}>Bài viết mới</Text>
-          </TouchableOpacity>
-        )}
+          </TouchableOpacity> */}
+        {/* )} */}
         {/* <TouchableOpacity
           style={styles.filterBtn}
           onPress={() => setModalSearchVisible(true)}>
@@ -776,9 +784,8 @@ const PostList = () => {
           <AntDesign name="reload1" size={22} color="black" />
         </TouchableOpacity> */}
       </View>
-
-
       {/* <View style={{ height: 460 }}> */}
+      {/* Post list */}
       <View style={{ height: 580 }}>
         {dataPosts.length !== 0 ?
           loadedPosts ?
@@ -793,7 +800,7 @@ const PostList = () => {
               extraData={dataPosts}
               renderItem={postItem}
               keyExtractor={(post: any) => post.id}
-              contentContainerStyle={{ paddingVertical: 20, paddingHorizontal: 20, backgroundColor: iconColors.green2 }}
+              contentContainerStyle={{ paddingVertical: 30, paddingHorizontal: 20, backgroundColor: iconColors.green2 }}
               ItemSeparatorComponent={() => <View style={{ height: 40 }} />} // Space between item
               // pagingEnabled //Scroll to next item
               onViewableItemsChanged={onViewableItemsChanged} // Theo dõi các mục hiển thị
@@ -838,46 +845,67 @@ const PostList = () => {
 
         }
       </View>
+      {/* Tìm kiếm */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalSearchVisible}
+        statusBarTranslucent={true}
         onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
+          // Alert.alert('Modal has been closed.');
           setModalSearchVisible(!modalSearchVisible);
         }}>
         <View style={styles.modalView}>
           <View style={styles.modalBottomView}>
-            <Text style={styles.modalTitleText}>Tìm kiếm</Text>
+            <View style={styles.modalTitleWrap}>
+              <Text style={styles.modalTitleText}>Bộ lọc</Text>
+              <Ionicons name="filter" size={24} color={iconColors.green1} />
+            </View>
             <View style={{ width: 350 }}>
+              <View style={styles.wrapLabelModalFilter}>
+                <Text style={styles.textLabelModalFilter}>Nội dung</Text>
+                <FontAwesome5 name="signature" size={18} color={iconColors.green1} />
+              </View>
               <TextInput
                 style={{ borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, height: 48 }}
-                placeholder="Tìm kiếm với nội dung"
+                placeholder="Nhập nội dung tìm kiếm"
                 // onChangeText={(str) => setDataInput(str)} 
                 onChangeText={(str) => setDataInput(str)}
               />
-              <Text style={{ marginVertical: 8, fontWeight: '500' }}>Quốc gia:</Text>
+              <View style={styles.wrapLabelModalFilter}>
+                <Text style={styles.textLabelModalFilter}>Quốc gia</Text>
+                <FontAwesome name="globe" size={20} color={iconColors.green1} />
+              </View>
               <SelectList
                 setSelected={(val: any) => handleSelecteCountry(val)}
                 data={dataCountries}
                 maxHeight={120}
                 save="key"
                 placeholder='Chọn quốc gia'
+                searchPlaceholder='Nhập tên quốc gia'
+                notFoundText='Không tìm thấy quốc gia'
               // onSelect={(val: any)=>{console.log(val)}}
               // defaultOption={selectedCountry}
               />
-              <Text style={{ marginVertical: 8, fontWeight: '500' }}>Tỉnh/Thành phố:</Text>
+              <View style={styles.wrapLabelModalFilter}>
+                <Text style={styles.textLabelModalFilter}>Tỉnh/Thành phố</Text>
+                <FontAwesome6 name="tree-city" size={18} color={iconColors.green1} />
+              </View>
               <MultipleSelectList
                 setSelected={(val: any) => handleSelecteCities(val)}
                 data={dataCities}
                 save="key"
                 // onSelect={() => alert(selectedMultiList)}
                 label="Categories"
-                notFoundText="No data"
                 placeholder='Chọn tỉnh/thành phố'
+                searchPlaceholder='Nhập tên tỉnh/thành phố'
+                notFoundText='Không tìm thấy tỉnh/thành phố'
                 maxHeight={230}
               />
-              <Text style={{ marginVertical: 8, fontWeight: '500' }}>Kiểu sắp xếp:</Text>
+              <View style={styles.wrapLabelModalFilter}>
+                <Text style={styles.textLabelModalFilter}>Kiểu sắp xếp</Text>
+                <FontAwesome6 name="filter" size={18} color={iconColors.green1} />
+              </View>
               <SelectList
                 search={false}
                 setSelected={(val: any) => selectedTypeSearch.current = val}
@@ -889,16 +917,16 @@ const PostList = () => {
               // defaultOption={selectedCountry}
               />
             </View>
-            <View style={{ flexDirection: 'row' }}>
+            <View style={styles.modalFooter}>
               <Pressable
-                style={styles.buttonSearch}
+                style={[styles.buttonModal, styles.buttonSearch]}
                 onPress={() => handleTapOnSearchButton(dataNewPostList, dataInput, selectedCountry, selectedCities)}>
-                <Text style={styles.textStyle}>Tìm kiếm</Text>
+                <Text style={[styles.textStyle, { color: 'white' }]}>Áp dụng</Text>
               </Pressable>
               <Pressable
-                style={styles.buttonCancel}
+                style={[styles.buttonModal, styles.buttonCancel]}
                 onPress={() => handleCloseModalSearch()}>
-                <Text style={styles.textStyle}>Đóng</Text>
+                <Text style={styles.textStyle}>Hủy</Text>
               </Pressable>
             </View>
           </View>
@@ -906,38 +934,49 @@ const PostList = () => {
         </View>
       </Modal>
 
+      {/* Bài viết mới */}
       <Modal
         animationType='slide'
         transparent={true}
+        statusBarTranslucent={true}
         visible={modalNewPostVisible}
+        // visible={true}
         onRequestClose={() => {
           Alert.alert('Modal has been closed.');
-          setModalNewPostVisible(!modalNewPostVisible);
+          setModalNewPostVisible(false);
         }}
-        style={{ maxHeight: 400 }}
       >
         <View style={styles.modalView}>
-          <View style={[styles.modalBottomView, { height: 500 }]}>
-            <Text style={styles.modalTitleText}>Bài viết mới</Text>
+          <View style={[styles.modalBottomView, { height: '75%' }]}>
+            <View style={styles.modalTitleWrap}>
+              <Text style={styles.modalTitleText}>Bài viết mới</Text>
+              <View style={{ position: 'relative' }}>
+                <Ionicons name="newspaper" size={24} color={iconColors.green1} />
+                <View style={{ position: 'absolute', right: -12, top: -12 }}>
+                  <Foundation name="burst-new" size={26} color="red" />
+                </View>
+              </View>
+            </View>
             <FlatList
               data={dataNewPosts}
+              // data={[...dataPosts]}
               renderItem={newPostItem}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
+              contentContainerStyle={{ paddingVertical: 20 }}
             />
-            <View style={{ flexDirection: 'row' }}>
+            <View style={styles.modalFooter}>
               <TouchableOpacity
-                style={styles.buttonSearch}
+                style={[styles.buttonModal, styles.buttonSearch]}
                 onPress={() => handleCloseAndReLoadModalNewPost()}>
-                <Text style={styles.textStyle}>Làm mới</Text>
+                <Text style={[styles.textStyle, { color: 'white' }]}>Làm mới</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => handleCloseModalNewPost()}
-                style={styles.buttonCancel}
+                onPress={() => setModalNewPostVisible(false)}
+                style={[styles.buttonModal, styles.buttonCancel]}
               >
                 <Text style={styles.textStyle}>Đóng</Text>
               </TouchableOpacity>
             </View>
-
           </View>
           <View style={styles.overPlay}></View>
         </View>
@@ -946,8 +985,15 @@ const PostList = () => {
   )
 }
 const styles = StyleSheet.create({
+  modalFooter: {
+    flexDirection: 'row',
+    width: '100%',
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   topicText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '500',
     textAlign: 'left',
     marginBottom: 4,
@@ -957,7 +1003,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     backgroundColor: "rgba(10, 10, 10, 0.6)",
-    borderRadius: 30,
+    borderRadius: 20,
     padding: 10,
     marginBottom: 10,
     marginRight: 10
@@ -977,16 +1023,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     elevation: 4,
     shadowRadius: 12,
-    marginVertical: 8
+    marginVertical: 8,
   },
+  authorNewPost:{
+    flexDirection: 'row', 
+    borderRadius: 90, 
+    backgroundColor: 'white', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 4, 
+    alignSelf: 'flex-start', 
+    elevation: 4,
+  },
+
   itemNewPostWrap: {
     borderRadius: 10,
     width: width - 30,
-    padding: 8,
+    padding: 10,
     backgroundColor: '#eeeeee',
     elevation: 4,
     shadowRadius: 12,
-    marginBottom: 15,
+    // marginBottom: 15,
     marginHorizontal: 8
   },
   // Modal new posts
@@ -999,18 +1056,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 10,
     width: width,
     alignItems: 'center',
     zIndex: 4,
     borderBottomWidth: 1,
-    elevation: 5,
   },
-  // Modal
+  // Modal filter
+  wrapLabelModalFilter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 6
+  },
+  textLabelModalFilter: {
+    fontWeight: '500',
+    marginVertical: 8,
+    marginRight: 4,
+    // backgroundColor:'green'
+  },
   overPlay: {
     backgroundColor: 'black',
-    top: 0,
-    height: '100%',
+    // top: -40,
+    height: Dimensions.get('window').height,
     width: '100%',
     position: 'absolute',
     opacity: 0.4,
@@ -1043,12 +1109,6 @@ const styles = StyleSheet.create({
     elevation: 10,
     padding: 10,
   },
-  buttonOpen: {
-    backgroundColor: '#F194FF',
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
   textStyle: {
     // color: 'white',
     fontWeight: '500',
@@ -1056,27 +1116,36 @@ const styles = StyleSheet.create({
     fontSize: 16
   },
   buttonSearch: {
-    backgroundColor: '#c6f2c6',
-    padding: 10,
-    borderRadius: 5,
-    margin: 10
+    backgroundColor: iconColors.green1,
   },
   buttonCancel: {
-    backgroundColor: '#f87171',
+    backgroundColor: backgroundColors.background1,
+    borderWidth: 1,
+    borderColor: iconColors.green1
+  },
+  buttonModal: {
     padding: 10,
     borderRadius: 5,
-    margin: 10
+    margin: 10,
+    width: 100,
+    elevation: 4
   },
   modalTitleText: {
-    backgroundColor: '#ffd7bf',
-    paddingVertical: 10,
-    width: width,
-    marginBottom: 15,
     fontSize: 24,
     fontWeight: '600',
-    textAlign: 'center',
+    marginRight: 10,
+  },
+  modalTitleWrap: {
+    backgroundColor: iconColors.green2,
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
     borderTopLeftRadius: 20,
-    borderTopRightRadius: 20
+    borderTopRightRadius: 20,
+    // borderBottomWidth: 1,
+    // borderColor: iconColors.green1,
   },
   refreshBtn: {
     position: 'absolute',
@@ -1108,7 +1177,8 @@ const styles = StyleSheet.create({
     padding: 4,
     backgroundColor: '#ffff77',
     transformOrigin: 'center',
-    elevation: 6
+    elevation: 6,
+    zIndex: 5,
   },
   textCategory: {
     fontSize: 14,
@@ -1168,10 +1238,7 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   item: {
-    // height: 400,
     position: "relative",
-    // marginHorizontal: 10,
-    // marginBottom: 10,
     borderRadius: 30,
   },
   itemWrap: {
@@ -1204,9 +1271,6 @@ const styles = StyleSheet.create({
     // padding: 10,
   },
   liveModeWrap: {
-    // position: 'relative',
-    // top: 0,
-    // width: 80,
   },
   header: {
     // backgroundColor: 'red',

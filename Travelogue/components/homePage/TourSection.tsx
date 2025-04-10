@@ -16,6 +16,7 @@ import { backgroundColors, iconColors } from '@/assets/colors';
 
 
 const { width } = Dimensions.get('window');
+const TYPE = 1
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
     const { dataTours, loadedTours,
@@ -69,10 +70,13 @@ const TourSection = () => {
                     });
                 }}>
                 <View style={styles.tourItemHeader}>
-                    <Image source={{ uri: tour.item.author.avatar }} style={{ width: 'auto', height: '100%', borderRadius: 20, aspectRatio: 1 }}>
-                    </Image>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <FontAwesome name="bookmark-o" size={30} color='black' />
+                        <Image source={{ uri: tour.item.author.avatar }} style={{ width: 'auto', height: '100%', borderRadius: 20, aspectRatio: 1 }}>
+                        </Image>
+                        <Text style={{ marginLeft: 6, fontWeight: '500' }}>{tour.item.author.fullname}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <SaveButton data={tour.item} type={TYPE}></SaveButton>
                     </View>
                 </View>
                 <View style={styles.tourItemImageSection}>
@@ -120,12 +124,12 @@ const TourSection = () => {
                             }
                             {/* <Text style={{fontSize: 18, color:'#c1c1c1'}}> <Text style={{fontSize:22}}>|</Text>|1</Text> */}
                             <View style={{ width: 2, height: 26, backgroundColor: iconColors.green1, marginHorizontal: 6 }}></View>
-                            <Text style={{ fontSize: 18}}>1</Text>
+                            <Text style={{ fontSize: 18 }}>1</Text>
                             <Ionicons name="people" size={20} color={iconColors.green1} />
                         </View>
 
                     </View>
-                    <View style={[styles.dotCustom, { left: -10 }]}></View>
+                    <View style={[styles.dotCustom, { left: -10, borderLeftWidth:0,}]}></View>
                     <View style={[styles.dotCustom, { right: -10 }]}></View>
                 </View>
                 <View style={styles.tourFooterSection}>
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         borderRadius: 50,
-        backgroundColor: '#EAEAEA',
+        backgroundColor: backgroundColors.background1,
         top: -10,
     },
     locationWrap: {
@@ -228,8 +232,8 @@ const styles = StyleSheet.create({
     },
     tourFooterSection: {
         flexDirection: 'row',
-        backgroundColor: iconColors.green3,
-        // backgroundColor: 'blue',
+        backgroundColor: iconColors.green5,
+        // backgroundColor: '#7B9A6D',
         height: '12%',
         width: '100%',
         justifyContent: 'center',

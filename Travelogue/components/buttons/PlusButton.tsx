@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
-import Icon  from 'react-native-vector-icons/AntDesign'
+import Icon from 'react-native-vector-icons/AntDesign'
+import { backgroundColors, bagdeColors, iconColors } from '@/assets/colors'
 
 
 const PlusButton = (props: any) => {
@@ -10,18 +11,27 @@ const PlusButton = (props: any) => {
 
   }
   return (
-    <TouchableOpacity delayPressOut={50} onPress={handleComment} {...props}>
-      <Icon name="plus" size={24} color="black" style={styles.container} />
+    <TouchableOpacity delayPressOut={50} onPress={handleComment} {...props} style={styles.container}>
+      <Icon name="plus" size={24} color='black' />
     </TouchableOpacity>
   )
 }
 
 // Style
-const likedColor = 'red'
-const unlikedColor = 'black'
 const styles = StyleSheet.create({
   container: {
-    bottom: 1
+    // bottom: 1
+    backgroundColor: iconColors.green2,
+    // backgroundColor: backgroundColors.background1,
+    // padding: 8,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: iconColors.green2,
   }
 })
 export default PlusButton
