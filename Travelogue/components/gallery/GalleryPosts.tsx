@@ -28,7 +28,8 @@ const NUM_COLUMNS = 3;
 const COLUMN_GAP = 8;
 const GALLERY_WIDTH = SCREEN_WIDTH - GALLERY_PADDING * 10;
 // Tính lại chiều rộng mỗi cột
-const COLUMN_WIDTH = (GALLERY_WIDTH - COLUMN_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+const COLUMN_WIDTH =
+  (GALLERY_WIDTH - COLUMN_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 // Sử dụng kích thước cố định cho mỗi hình ảnh (ví dụ: hình vuông 150x150)
 const IMAGE_SIZE = 160;
 
@@ -113,70 +114,70 @@ export default function GalleryPosts({ dataCity }: any) {
   return (
     <>
       <ScrollView contentContainerStyle={styles.galleryContainer}>
-        {images.length > 0 ? (
-          <View style={styles.columnsWrapper}>
-            {columns.map((column, columnIndex) => (
-              <View style={styles.column} key={columnIndex}>
-                {column.map((image) => (
-                  <View
-                    key={image.id}
-                    style={[styles.imageContainer, { height: image.height, width: COLUMN_WIDTH }]}
-                  >
-                    <TouchableOpacity
-                      onPress={() => {
-                        if (image.isDefault) {
-                          openModal(image.uri);
-                        } else if (image.isTour) {
-                          router.push({
-                            pathname: "/tourDetail",
-                            params: { tourId: image.id },
-                          });
-                        } else {
-                          router.push({
-                            pathname: "/postDetail",
-                            params: { postId: image.id },
-                          });
-                        }
-                      }}
-                    >
-                      {!image.isDefault ? (
-                        <View style={styles.imageWrapper}>
-                          <Image source={{ uri: image.uri }} style={styles.image} />
-                          <View style={styles.overlay}>
-                            <Image source={{ uri: image.avatar }} style={styles.avatar} />
-                            <Text style={styles.imageText}>{image.name}</Text>
-                          </View>
-                        </View>
-                      ) : 
-                         (
-                          <View>
-                          <Text
-                            style={{
-                              fontSize: 15,
-                              fontStyle: "italic",
-                              color: "red",
-                              width: 500,
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Chưa có bài viết liên quan đến tỉnh (thành) này.
-                          </Text>
-                        </View>
-                         )
+        <View style={styles.columnsWrapper}>
+          {columns.map((column, columnIndex) => (
+            <View style={styles.column} key={columnIndex}>
+              {column.map((image) => (
+                <View
+                  key={image.id}
+                  style={[
+                    styles.imageContainer,
+                    { height: image.height, width: COLUMN_WIDTH },
+                  ]}
+                >
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (image.isDefault) {
+                        openModal(image.uri);
+                      } else if (image.isTour) {
+                        router.push({
+                          pathname: "/tourDetail",
+                          params: { tourId: image.id },
+                        });
+                      } else {
+                        router.push({
+                          pathname: "/postDetail",
+                          params: { postId: image.id },
+                        });
                       }
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.noPostContainer}>
-            <Text style={styles.noPostText}>
-              Chưa có bài viết liên quan đến tỉnh (thành) này.
-            </Text>
-          </View>
-        )}
+                    }}
+                  >
+                    {!image.isDefault && (
+                      <View style={styles.imageWrapper}>
+                        <Image
+                          source={{ uri: image.uri }}
+                          style={styles.image}
+                        />
+                        <View style={styles.overlay}>
+                          <Image
+                            source={{ uri: image.avatar }}
+                            style={styles.avatar}
+                          />
+                          <Text style={styles.imageText}>{image.name}</Text>
+                        </View>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ))}
+          {!dataCity.postImages && (
+            <View>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontStyle: "italic",
+                  color: "red",
+                  width: 500,
+                  fontWeight: "bold",
+                }}
+              >
+                Chưa có bài viết liên quan đến tỉnh (thành) này.
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       {/* Modal hiển thị ảnh mặc định */}
