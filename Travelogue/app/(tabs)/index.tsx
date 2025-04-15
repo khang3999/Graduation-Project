@@ -125,6 +125,8 @@ const Home = () => {
             {/* <Text style={[styles.textTitle, { marginBottom: 10 }]}></Text> */}
           </View>
 
+        
+
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>

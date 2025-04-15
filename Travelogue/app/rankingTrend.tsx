@@ -192,7 +192,7 @@ const RankingTrend = () => {
           onPress={() => 
             activeTab === "Địa điểm" 
               ? router.push({
-                  pathname: "/gallery",
+                  pathname: "/galleryCities",
                   params: { idCity: rankingData[1]?.id, idCountry: (rankingData[1] as City)?.id_nuoc },
                 })
               :  router.push({
@@ -273,7 +273,7 @@ const RankingTrend = () => {
           onPress={() => 
             activeTab === "Địa điểm"
               ? router.push({
-                  pathname: "/gallery",
+                  pathname: "/galleryCities",
                   params: { idCity: rankingData[0]?.id, idCountry: (rankingData[0] as City)?.id_nuoc },
                 })
               :  router.push({
@@ -344,7 +344,7 @@ const RankingTrend = () => {
           onPress={() => 
             activeTab === "Địa điểm"
               ? router.push({
-                  pathname: "/gallery",
+                  pathname: "/galleryCities",
                   params: { idCity: rankingData[2]?.id, idCountry: (rankingData[2] as City)?.id_nuoc },
                 })
               : router.push({
@@ -419,7 +419,7 @@ const RankingTrend = () => {
             onPress={() => 
               isCity(item)
                 ? router.push({
-                    pathname: "/gallery",
+                    pathname: "/galleryCities",
                     params: { idCity: item.id, idCountry: item.id_nuoc },
                   })
                 :  router.push({

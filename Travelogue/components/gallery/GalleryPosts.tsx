@@ -1,31 +1,37 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal } from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
-
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+} from "react-native";
+import Icon from "react-native-vector-icons/AntDesign";
 
 interface ImageItem {
   id: string;
   uri: string;
-  isTour?: boolean; // Flag to indicate if the image is from
-  height: number; // Randomized height for the image
+  isTour?: boolean;
+  height: number;
   isDefault?: boolean;
   name: string;
   avatar: string;
 }
 
-// Screen or parent container width
-const GALLERY_WIDTH = 346.7;
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const GALLERY_PADDING = 5;
 const NUM_COLUMNS = 3;
+const COLUMN_GAP = 8;
+const GALLERY_WIDTH = SCREEN_WIDTH - GALLERY_PADDING * 10;
+// Tính lại chiều rộng mỗi cột
+const COLUMN_WIDTH = (GALLERY_WIDTH - COLUMN_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+// Sử dụng kích thước cố định cho mỗi hình ảnh (ví dụ: hình vuông 150x150)
+const IMAGE_SIZE = 160;
 
-// Calculate the width of each column
-const COLUMN_WIDTH = GALLERY_WIDTH / NUM_COLUMNS - 8;
-
-
-const FIXED_HEIGHTS = [150, 200, 250];
-
-
-// Split images into columns
 const splitImagesIntoColumns = (data: ImageItem[], numColumns: number) => {
   const columns: ImageItem[][] = Array.from({ length: numColumns }, () => []);
   data.forEach((item: ImageItem, index: number) => {
@@ -34,77 +40,64 @@ const splitImagesIntoColumns = (data: ImageItem[], numColumns: number) => {
   return columns;
 };
 
-// Function to extract image data in the required format
 const extractImagesData = (postImages: any, defaultImages: string[]) => {
-  const images: any[] = [];
-  let heightIndex = 0;
-  // Check if postImages exists
-  if (postImages) {
+  const images: ImageItem[] = [];
+  // Sử dụng kích thước cố định cho height
+  let height = IMAGE_SIZE;
 
-    // // Extract images from tours
+  if (postImages) {
     if (postImages.tours) {
       Object.values(postImages.tours).forEach((tour: any) => {
         if (tour.images && tour.images.length > 0) {
-          const image = tour.images[0];
           images.push({
             id: tour.idPost,
             name: tour.name,
             avatar: tour.avatar,
-            uri: image,
-            height: FIXED_HEIGHTS[heightIndex % FIXED_HEIGHTS.length],
+            uri: tour.images[0],
+            height,
+            isTour: true,
           });
-          heightIndex++;
-
         }
       });
     }
-    // Extract images from posts
     if (postImages.posts) {
       Object.values(postImages.posts).forEach((post: any) => {
         if (post.images && post.images.length > 0) {
-          const image = post.images[0];
           images.push({
             id: post.idPost,
             name: post.name,
             avatar: post.avatar,
-            uri: image,
-            height: FIXED_HEIGHTS[heightIndex % FIXED_HEIGHTS.length],
+            uri: post.images[0],
+            height,
           });
-          heightIndex++;
         }
       });
     }
-
   }
 
-  // If no postImages exist, fallback to defaultImages
   if (images.length === 0) {
     defaultImages.forEach((uri, index) => {
       images.push({
         id: `default-${index}`,
         uri,
-        height: FIXED_HEIGHTS[heightIndex % FIXED_HEIGHTS.length],
+        height,
         isDefault: true,
+        name: "",
+        avatar: "",
       });
-      heightIndex++;
     });
   }
-
   return images;
 };
 
-
 export default function GalleryPosts({ dataCity }: any) {
-
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   let images: ImageItem[] = [];
-
   if (dataCity.postImages || dataCity.defaultImages) {
     images = extractImagesData(dataCity.postImages, dataCity.defaultImages);
   }
-  // Distribute images across columns
   const columns = splitImagesIntoColumns(images, NUM_COLUMNS);
 
   const openModal = (imageUri: string) => {
@@ -113,84 +106,84 @@ export default function GalleryPosts({ dataCity }: any) {
   };
 
   const closeModal = () => {
-    setModalVisible(false);
     setSelectedImage(null);
+    setModalVisible(false);
   };
 
-
-
-
-  // Render a FlatList to handle scrolling and rendering
   return (
     <>
-      <FlatList
-        data={columns}
-        keyExtractor={(_, index) => `column-${index}`}
-        contentContainerStyle={styles.galleryContainer}
-        horizontal={false}
-        renderItem={({ item: column, index: columnIndex }) => (
-          <View style={styles.column} key={columnIndex}>
-            {column.map((image) => (
-              <View
-                key={image.id}
-                style={[styles.imageContainer, { height: image.height }]}
-              >
-                <TouchableOpacity
-                  key={image.id}
-                  onPress={() => {
-                    const isTour = image.isTour ? true : false;
-                    const isDefault = image.isDefault ? true : false;
-                    if (isDefault) {
-                      openModal(image.uri)
-                      return;
-                    }
-
-                    if (isTour) {
-                      router.push({
-                        pathname: "/tourDetail",
-                        params: { tourId: image.id },
-                      });
-                      console.log('id', image.id);
-                    } else {
-                      router.push({
-                        pathname: "/postDetail",
-                        params: { postId: image.id },
-                      });
-                      console.log('id', image.id);
-                      console.log('avatar', image.avatar);
-                    }
-
-                  }}
-                >
-                  {!image.isDefault ? (
-                    <View style={styles.imageWrapper}>
-                      <Image source={{ uri: image.uri }} style={styles.image} />
-                      <View style={styles.overlay}>
-                        <Image
-                          source={{
-                            uri: image.avatar,
-                          }}
-                          style={styles.avatar}
-                        />
-                        <Text style={styles.imageText}>{image.name}</Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.imageWrapper}>
-                      <Image source={{ uri: image.uri }} style={styles.image} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.galleryContainer}>
+        {images.length > 0 ? (
+          <View style={styles.columnsWrapper}>
+            {columns.map((column, columnIndex) => (
+              <View style={styles.column} key={columnIndex}>
+                {column.map((image) => (
+                  <View
+                    key={image.id}
+                    style={[styles.imageContainer, { height: image.height, width: COLUMN_WIDTH }]}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (image.isDefault) {
+                          openModal(image.uri);
+                        } else if (image.isTour) {
+                          router.push({
+                            pathname: "/tourDetail",
+                            params: { tourId: image.id },
+                          });
+                        } else {
+                          router.push({
+                            pathname: "/postDetail",
+                            params: { postId: image.id },
+                          });
+                        }
+                      }}
+                    >
+                      {!image.isDefault ? (
+                        <View style={styles.imageWrapper}>
+                          <Image source={{ uri: image.uri }} style={styles.image} />
+                          <View style={styles.overlay}>
+                            <Image source={{ uri: image.avatar }} style={styles.avatar} />
+                            <Text style={styles.imageText}>{image.name}</Text>
+                          </View>
+                        </View>
+                      ) : 
+                         (
+                          <View>
+                          <Text
+                            style={{
+                              fontSize: 15,
+                              fontStyle: "italic",
+                              color: "red",
+                              width: 500,
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Chưa có bài viết liên quan đến tỉnh (thành) này.
+                          </Text>
+                        </View>
+                         )
+                      }
+                    </TouchableOpacity>
+                  </View>
+                ))}
               </View>
             ))}
           </View>
+        ) : (
+          <View style={styles.noPostContainer}>
+            <Text style={styles.noPostText}>
+              Chưa có bài viết liên quan đến tỉnh (thành) này.
+            </Text>
+          </View>
         )}
-      />
-      {/* Image Viewer Modal */}
+      </ScrollView>
+
+      {/* Modal hiển thị ảnh mặc định */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-            <Icon name="closecircleo" size={25} ></Icon>
+            <Icon name="closecircleo" size={25} />
           </TouchableOpacity>
           {selectedImage && (
             <Image source={{ uri: selectedImage }} style={styles.fullImage} />
@@ -199,9 +192,71 @@ export default function GalleryPosts({ dataCity }: any) {
       </Modal>
     </>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  galleryContainer: {
+    paddingHorizontal: GALLERY_PADDING,
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  columnsWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  column: {
+    flex: 1,
+    marginRight: COLUMN_GAP,
+  },
+  imageContainer: {
+    marginBottom: 8,
+  },
+  imageWrapper: {
+    position: "relative",
+    borderRadius: 8,
+    overflow: "hidden",
+    width: "100%",
+    height: "100%",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  overlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 5,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  imageText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
+    flexWrap: "wrap",
+    flex: 1,
+  },
+  noPostContainer: {
+    alignItems: "center",
+    paddingTop: 40,
+  },
+  noPostText: {
+    fontSize: 15,
+    fontStyle: "italic",
+    color: "red",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: "#fff",
@@ -218,53 +273,5 @@ const styles = StyleSheet.create({
     top: 40,
     left: 20,
     zIndex: 1,
-  },
-  closeText: {
-    color: 'rgba(0, 0, 0, 0.9)',
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  galleryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  column: {
-    width: COLUMN_WIDTH,
-  },
-  imageContainer: {
-    width: '100%',
-    marginBottom: 8,
-  }, imageWrapper: {
-    position: 'relative',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10,
-  },
-  imageText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    flexWrap: 'wrap',
-    flex: 1,
   },
 });
