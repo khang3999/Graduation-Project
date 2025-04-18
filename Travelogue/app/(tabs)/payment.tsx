@@ -30,9 +30,6 @@ const Payment = () => {
   const defaultStyles = useDefaultStyles();
   const [startDate, setStartDate] = useState<DateType>();
   const [endDate, setEndDate] = useState<DateType>();
-
-
-  //Payment
   const [qrDataURL, setQrDataURL] = useState(null);
   const [inputText, setInputText] = useState("");
   const [loadingRefresh, setLoadingRefresh] = useState(false);
@@ -50,36 +47,6 @@ const Payment = () => {
   const [startFilterDeposit, setStartFilterDeposit] = useState(false)
   const [startFilterWithdraw, setStartFilterWithdraw] = useState(false)
   const [placeholderText, setPlaceholderText] = useState('Nhập số tiền cần nạp');
-
-
-  // useEffect(() => {
-  //   // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-  //   const refStatuspayment = ref(database, 'status/payment')
-  //   const unsubscribe = onValue(refStatuspayment, (snapshot) => {
-  //     if (snapshot.exists()) {
-  //       const dataArray = snapshot.val()
-  //       const result = dataArray
-  //         .filter((value: any) => value !== undefined) // Loại bỏ giá trị undefined
-  //         .map((value: any, index: any) => ({
-  //           id: index + 1, // Tạo id bắt đầu từ 1
-  //           value: value   // Giá trị từ mảng gốc
-  //         }));
-  //       // setStatusOptions(result)
-  //       console.log(result);
-
-  //     } else {
-  //       console.log("No data available");
-  //     }
-  //     // setLoadingPost(false)
-  //   }, (error) => {
-  //     console.error("Error fetching data:", error);
-  //     // setLoadingPost(false)
-  //   });
-  //   return () => {
-  //     unsubscribe(); // Sử dụng unsubscribe để hủy listener
-  //   };
-  // }, [])
-  const today = new Date();
 
   useEffect(() => {
     setAccountId(dataAccount.id)
@@ -101,7 +68,6 @@ const Payment = () => {
         console.error("Error fetching data:", error);
       }
     );
-
     return () => statusContentListener();
   }, []);
 
@@ -250,6 +216,7 @@ const Payment = () => {
   }, 1500);
   };
 
+  // Them yeu cau nap tien vao bang Exchange
   const handleAddRequest = async () => {
     const exchangeRef = ref(database, "exchanges");
     const newItemKey = push(exchangeRef);
@@ -271,6 +238,7 @@ const Payment = () => {
       });
   };
 
+  //Render du lieu
   const renderExchange = (exchange: any) => {
     const timestamp = exchange.item.created_at;
     const timeCreatedAt = new Date(timestamp);
@@ -344,26 +312,7 @@ const Payment = () => {
       setLoadingFilter(false);
     }, 1000);
   };
-
-  // const handleFilter = () => {
-  //   setLoadingFilter(true); // Bắt đầu hiệu ứng loading
-  //   setTimeout(() => {
-  //     const filteredData = dataExchanges.filter((item: any) => {
-  //       console.log(item.payment > 0);
-  //       if (startFilterDeposit) {
-
-  //         return item.payment > 0;
-  //       }
-  //       return item.payment < 0;
-  //     });
-  //     console.log(filteredData);
-
-  //     //Set lai data cho filter
-  //     setDataExchangesFilter(filteredData);
-  //     setLoadingFilter(false);
-  //   }, 1000);
-  // };
-
+  //Refresh button
   const handleRefreshData = () => {
     setLoadingRefresh(true); // Bắt đầu hiệu ứng loading
     setTimeout(() => {
@@ -375,221 +324,6 @@ const Payment = () => {
   };
 
   return (
-    // <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    //   <View style={styles.container}>
-    //     <View style={styles.balanceContainer}>
-    //       <Text style={styles.balanceLabel}>Số dư:</Text>
-    //       <Text style={styles.balanceAmount}>
-    //         {balance.toLocaleString("vi-VN")}
-    //       </Text>
-    //     </View>
-    //     <View style={styles.addBar}>
-    //       <TextInput
-    //         style={styles.textInput}
-    //         value={inputText}
-    //         onChangeText={handleTextChange}
-    //         keyboardType="numeric"
-    //         maxLength={15}
-    //         placeholder="Nhập số tiền cần nạp"
-    //       />
-    //       <TouchableOpacity
-    //         style={[styles.addBtn, isDisabled && styles.disabledBtn]}
-    //         onPress={handleRequest}
-    //         disabled={isDisabled}
-    //       >
-    //         {loadingQR ? (
-    //           <ActivityIndicator color="white" />
-    //         ) : (
-    //           <Text style={styles.addBtnText}>Yêu cầu</Text>
-    //         )}
-    //       </TouchableOpacity>
-    //     </View>
-    //     <Modal
-    //       visible={isVisible}
-    //       transparent={true}
-    //       animationType="slide"
-    //       onRequestClose={closeDialog}
-    //     >
-    //       <View style={styles.modalOverlay}>
-    //         <View style={styles.dialogContainer}>
-    //           <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
-    //             <MaterialIcons name="cancel" size={24} color="red" />
-    //           </TouchableOpacity>
-    //           <Text style={styles.dialogTitle}>Quét mã QR</Text>
-    //           {qrDataURL ? (
-    //             <Image source={{ uri: qrDataURL }} style={styles.image} />
-    //           ) : (
-    //             <Text>Không có mã QR</Text>
-    //           )}
-    //           <Text style={styles.dialogText}>
-    //             Mã QR chỉ có giá trị một lần
-    //           </Text>
-    //         </View>
-    //       </View>
-    //     </Modal>
-    //     <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-    //       {/* Refresh */}
-    //       <TouchableOpacity onPress={handleRefreshData}>
-    //         {loadingRefresh ? (
-    //           <ActivityIndicator
-    //             color="red"
-    //             size={24}
-    //             style={{ paddingRight: 10 }}
-    //           />
-    //         ) : (
-    //           <SimpleLineIcons
-    //             name="refresh"
-    //             size={24}
-    //             color="black"
-    //             style={{ paddingRight: 10 }}
-    //           />
-    //         )}
-    //       </TouchableOpacity>
-    //       {/* Filter */}
-    //       <TouchableOpacity onPress={openDialogFilter}>
-    //         <AntDesign
-    //           name="filter"
-    //           size={24}
-    //           color={timeEnd != null ? "red" : "black"}
-    //         />
-    //       </TouchableOpacity>
-    //       <Modal
-    //         visible={isVisibleFilter}
-    //         transparent={true}
-    //         animationType="slide"
-    //         onRequestClose={closeDialog}
-    //       >
-    //         <View style={styles.modalOverlay}>
-    //           {loadingFilter ? (
-    //             <ActivityIndicator color="white" size={100} />
-    //           ) : (
-    //             <View style={styles.dialogContainer}>
-    //               <TouchableOpacity
-    //                 style={styles.closeButton}
-    //                 onPress={closeDialog}
-    //               >
-    //                 <MaterialIcons name="cancel" size={24} color="red" />
-    //               </TouchableOpacity>
-    //               <View style={{ padding: 5, width: "100%" }}>
-    //                 <Text style={{ fontSize: 20, marginBottom: 10 }}>
-    //                   Bộ lọc
-    //                 </Text>
-
-    //                 {/* Date pickers for time */}
-    //                 <Text style={{ fontWeight: "bold" }}>Ngày bắt đầu</Text>
-    //                 <Button
-    //                   mode="outlined"
-    //                   onPress={() => setShowStartPicker(true)}
-    //                 >
-    //                   {timeStart
-    //                     ? timeStart.toLocaleDateString()
-    //                     : "Chọn ngày bắt đầu"}
-    //                 </Button>
-    //                 {showStartPicker && (
-    //                   <DateTimePicker
-    //                     value={timeStart || new Date()}
-    //                     mode="date"
-    //                     display={Platform.OS === "ios" ? "spinner" : "default"}
-    //                     onChange={onChangeStartDate}
-    //                   />
-    //                 )}
-
-    //                 <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-    //                   Ngày kết thúc
-    //                 </Text>
-    //                 <Button
-    //                   mode="outlined"
-    //                   onPress={() => setShowEndPicker(true)}
-    //                 >
-    //                   {timeEnd ? timeEnd.toLocaleDateString() : "Chọn ngày kết thúc"}
-    //                 </Button>
-    //                 {showEndPicker && (
-    //                   <DateTimePicker
-    //                     value={timeEnd || new Date()}
-    //                     mode="date"
-    //                     display={Platform.OS === "ios" ? "spinner" : "default"}
-    //                     onChange={onChangeEndDate}
-    //                   />
-    //                 )}
-
-    //                 <Divider style={{ marginVertical: 10 }} />
-
-    //                 {/* Transaction Status */}
-    //                 <Text style={{ fontWeight: "bold" }}>Trạng thái giao dịch</Text>
-    //                 {statusOptions.map((option: any) => (
-    //                   <View
-    //                     key={option.id}
-    //                     style={{ flexDirection: "row", alignItems: "center" }}
-    //                   >
-    //                     <Checkbox
-    //                       status={
-    //                         selectedStatus.includes(option.id)
-    //                           ? "checked"
-    //                           : "unchecked"
-    //                       }
-    //                       onPress={() =>
-    //                         handleSelect(
-    //                           option.id,
-    //                           selectedStatus,
-    //                           setSelectedStatus
-    //                         )
-    //                       }
-    //                     />
-    //                     <Text>{option.value}</Text>
-    //                   </View>
-    //                 ))}
-
-    //                 <Divider style={{ marginVertical: 10 }} />
-
-    //                 {/* Transaction Type */}
-    //                 <Text style={{ fontWeight: "bold" }}>Kiểu giao dịch</Text>
-    //                 {typeOptions.map((option, index) => (
-    //                   <View
-    //                     key={index}
-    //                     style={{ flexDirection: "row", alignItems: "center" }}
-    //                   >
-    //                     <Checkbox
-    //                       status={
-    //                         selectedType.includes(option)
-    //                           ? "checked"
-    //                           : "unchecked"
-    //                       }
-    //                       onPress={() =>
-    //                         handleSelect(option, selectedType, setSelectedType)
-    //                       }
-    //                     />
-    //                     <Text>{option}</Text>
-    //                   </View>
-    //                 ))}
-
-    //                 <Button
-    //                   mode="contained"
-    //                   style={{ marginTop: 20 }}
-    //                   onPress={handleFilter}
-    //                 >
-    //                   <Text>Áp dụng</Text>
-    //                 </Button>
-    //               </View>
-    //             </View>
-    //           )}
-    //         </View>
-    //       </Modal>
-    //     </View>
-    //     <View style={styles.divider} />
-
-    //     <View style={styles.exchangeList}>
-    //       {dataExchangesFilter.length > 0 ? (
-    //         <FlatList
-    //           data={dataaExchangesFilter}
-    //           renderItem={renderExchange}
-    //         // keyExtractor={(item) => item.id}
-    //         />
-    //       ) : (
-    //         <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
-    //       )}
-    //     </View>
-    //   </View>
-    // </TouchableWithoutFeedback>
     <View style={styles.container}>
       {/* Avatar */}
       <View style={styles.row}>
