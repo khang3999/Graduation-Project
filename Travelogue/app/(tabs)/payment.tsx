@@ -1,8 +1,9 @@
 import { auth, database, onValue, ref, set } from "@/firebase/firebaseConfig";
 import { AntDesign, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
-import { push } from "@firebase/database";
+import { endBefore, push } from "@firebase/database";
 import React, { useEffect, useState, useRef } from "react";
 import { TouchableWithoutFeedback, Keyboard } from 'react-native';
+import dayjs from 'dayjs';
 
 import {
   View,
@@ -18,13 +19,18 @@ import {
   Platform,
 } from "react-native";
 import { Button, Checkbox, Divider } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
+// import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useHomeProvider } from "@/contexts/HomeProvider";
+import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
 
 const Payment = () => {
   const [accountId, setAccountId] = useState("");
-  const { dataAccount }: any = useHomeProvider()
+  const { dataAccount }: any = useHomeProvider();
+  const defaultStyles = useDefaultStyles();
+  const [startDate, setStartDate] = useState<DateType>();
+  const [endDate, setEndDate] = useState<DateType>();
+
 
   //Payment
   const [qrDataURL, setQrDataURL] = useState(null);
@@ -35,49 +41,44 @@ const Payment = () => {
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isVisibleQR, setIsVisibleQR] = useState(false);
   const [isVisibleFilter, setIsVisibleFilter] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [statusContent, setStatusContent] = useState([]);
   const [dataExchanges, setDataExchanges] = useState([]);
   let [dataExchangesFilter, setDataExchangesFilter] = useState([]);
-  //Modal filter
-  const [timeStart, setTimeStart] = useState<any>(null);
-  const [timeEnd, setTimeEnd] = useState<any>(null);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [statusOptions, setStatusOptions] = useState([]);
+  const [startFilterDeposit, setStartFilterDeposit] = useState(false)
+  const [startFilterWithdraw, setStartFilterWithdraw] = useState(false)
+  const [placeholderText, setPlaceholderText] = useState('Nhập số tiền cần nạp');
 
 
-  useEffect(() => {
-    // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-    const refStatuspayment = ref(database, 'status/payment')
-    const unsubscribe = onValue(refStatuspayment, (snapshot) => {
-      if (snapshot.exists()) {
-        const dataArray = snapshot.val()
-        const result = dataArray
-          .filter((value: any) => value !== undefined) // Loại bỏ giá trị undefined
-          .map((value: any, index: any) => ({
-            id: index + 1, // Tạo id bắt đầu từ 1
-            value: value   // Giá trị từ mảng gốc
-          }));
-        setStatusOptions(result)
-      } else {
-        console.log("No data available");
-      }
-      // setLoadingPost(false)
-    }, (error) => {
-      console.error("Error fetching data:", error);
-      // setLoadingPost(false)
-    });
-    return () => {
-      unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    };
-  }, [])
+  // useEffect(() => {
+  //   // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
+  //   const refStatuspayment = ref(database, 'status/payment')
+  //   const unsubscribe = onValue(refStatuspayment, (snapshot) => {
+  //     if (snapshot.exists()) {
+  //       const dataArray = snapshot.val()
+  //       const result = dataArray
+  //         .filter((value: any) => value !== undefined) // Loại bỏ giá trị undefined
+  //         .map((value: any, index: any) => ({
+  //           id: index + 1, // Tạo id bắt đầu từ 1
+  //           value: value   // Giá trị từ mảng gốc
+  //         }));
+  //       // setStatusOptions(result)
+  //       console.log(result);
 
-  const typeOptions = ["Tiền ra", "Tiền vào"];
+  //     } else {
+  //       console.log("No data available");
+  //     }
+  //     // setLoadingPost(false)
+  //   }, (error) => {
+  //     console.error("Error fetching data:", error);
+  //     // setLoadingPost(false)
+  //   });
+  //   return () => {
+  //     unsubscribe(); // Sử dụng unsubscribe để hủy listener
+  //   };
+  // }, [])
   const today = new Date();
 
   useEffect(() => {
@@ -124,6 +125,7 @@ const Payment = () => {
                 return a.status_id - b.status_id;
               });
             setDataExchanges(data);
+            setDataExchangesFilter(data)
           } else {
             console.log("No data available");
           }
@@ -139,21 +141,15 @@ const Payment = () => {
     }
   }, [accountId]);
 
-  //Exchange data filter realtime
-  useEffect(() => {
-    if (timeEnd == null) {
-      setDataExchangesFilter(dataExchanges);
-    } else {
-      handleFilter();
-    }
-  }, [dataExchanges]);
-
   const closeDialog = () => {
     setIsVisible(false);
+    setIsVisibleQR(false);
     setIsVisibleFilter(false);
     setQrDataURL(null);
     setIsDisabled(true);
     setInputText("");
+    handleFilter(dataExchanges, 3);
+    setPlaceholderText("Nhập số tiền cần nạp");
   };
 
   //Fetch QR
@@ -242,6 +238,16 @@ const Payment = () => {
     if (!isDisabled) {
       fetchQRCode();
     }
+    // Lưu giá trị cũ vào placeholder và clear input
+  setPlaceholderText(inputText);
+  setInputText('');
+  setIsDisabled(true); // disable lại button
+
+  // Giả lập delay xử lý
+  setTimeout(() => {
+    setLoadingQR(false);
+    // Optional: bạn có thể re-enable sau khi xử lý xong
+  }, 1500);
   };
 
   const handleAddRequest = async () => {
@@ -301,106 +307,69 @@ const Payment = () => {
 
   //Modal
 
-  const handleSelect = (option: any, list: any, setList: any) => {
-    // console.log(option);
-
-    setList((prev: any) =>
-      prev.includes(option)
-        ? prev.filter((item: any) => item !== option)
-        : [...prev, option]
-    );
-  };
-
-  const onChangeStartDate = (event: any, selectedDate: any) => {
-    setShowStartPicker(false);
-    if (selectedDate) {
-      // Check if start date is greater than today
-      if (selectedDate > today) {
-        Alert.alert("Error", "The end date cannot be greater than today.");
-      }
-      // Check if start date is greater than end date
-      else if (timeEnd && selectedDate > timeEnd) {
-        Alert.alert(
-          "Error",
-          "The start date cannot be later than the end date."
-        );
-      } else {
-        setTimeStart(selectedDate);
-      }
-    }
-  };
-
-  const onChangeEndDate = (event: any, selectedDate: any) => {
-    setShowEndPicker(false);
-
-    if (selectedDate) {
-      // Check if end date is greater than today
-      if (selectedDate > today) {
-        Alert.alert("Error", "The end date cannot be greater than today.");
-      }
-      // Check if end date is earlier than start date
-      else if (timeStart && selectedDate < timeStart) {
-        Alert.alert(
-          "Error",
-          "The end date cannot be earlier than the start date."
-        );
-      } else {
-        setTimeEnd(selectedDate);
-      }
-    }
-  };
-
   const closeDialogFilter = () => {
     setIsVisibleFilter(false);
   };
   const openDialogFilter = () => {
     setIsVisibleFilter(true);
   };
+  const openDialogQR = () => {
+    setIsVisibleQR(true);
+  };
+  const onPressFilterDeposit = () => {
+    console.log("Deposit on - Withdraw off");
+    handleFilter(dataExchanges, 1)
+  }
+  const onPressFilterWithdraw = () => {
+    console.log("Withdraw on - Deposit off");
+    handleFilter(dataExchanges, 2)
+  }
+  const filterLogic = (item: any, typeFilter: number) => {
+    // dayjs(startDate).startOf('day').valueOf() dua ve timestamp 00:00:00 dd/mm/yyyy
+    if (item.created_at >= dayjs(startDate).startOf('day').valueOf() && item.created_at <= dayjs(endDate).endOf('day').valueOf()) {
+      switch (typeFilter) {
+        case 1: return item.payment > 0
+        case 2: return item.payment < 0
+        case 3: return item
+      }
 
-  const handleFilter = () => {
-    if (timeStart && timeEnd) {
-      setLoadingFilter(true); // Bắt đầu hiệu ứng loading
-      setTimeout(() => {
-        const filteredData = dataExchanges.filter((item: any) => {
-          //Neu ngay ket thuc la ngay hom nay thi lay tai thoi diem filter, neu la ngay trc do thi lay cuoi ngay
-          const timeEndDate =
-            timeEnd.setHours(23, 59, 59, 999) == today.setHours(23, 59, 59, 999)
-              ? new Date(today).setHours(23, 59, 59, 999)
-              : new Date(timeEnd).setHours(23, 59, 59, 999);
-          // Bat dau tu 0:0:0 cua ngay bat dau
-          const timeStartDate = new Date(timeStart).setHours(0, 0, 0, 0);
-          // Kiểm tra điều kiện thời gian, loại giao dịch và trạng thái giao dịch
-          const isWithinTimeRange =
-            item.created_at >= timeStartDate && item.created_at <= timeEndDate;
-          const isStatusMatch =
-            selectedStatus.length === 0 ||
-            selectedStatus.includes(item.status_id);
-          // Kiểm tra loại giao dịch
-          const isTypeMatch =
-            selectedType.length === 0 ||
-            (selectedType.includes("Deduction") && item.payment < 0) || // Số âm cho Deduction
-            (selectedType.includes("Recharge") && item.payment > 0); // Số dương cho Recharge
-
-          return isWithinTimeRange && isStatusMatch && isTypeMatch;
-        });
-        //Set lai data cho filter
-        setDataExchangesFilter(filteredData);
-        closeDialogFilter();
-        setLoadingFilter(false);
-      }, 1000);
-    } else {
-      Alert.alert("Lỗi", "Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.");
     }
   };
+  const handleFilter = (dataExchanges: any, typeFilter: number) => {
+    setTimeout(() => {
+      const filteredData = dataExchanges.filter((item: any) => filterLogic(item, typeFilter));
+      console.log(filteredData, " aaa");
+
+      setDataExchangesFilter(filteredData);
+      setLoadingFilter(false);
+    }, 1000);
+  };
+
+  // const handleFilter = () => {
+  //   setLoadingFilter(true); // Bắt đầu hiệu ứng loading
+  //   setTimeout(() => {
+  //     const filteredData = dataExchanges.filter((item: any) => {
+  //       console.log(item.payment > 0);
+  //       if (startFilterDeposit) {
+
+  //         return item.payment > 0;
+  //       }
+  //       return item.payment < 0;
+  //     });
+  //     console.log(filteredData);
+
+  //     //Set lai data cho filter
+  //     setDataExchangesFilter(filteredData);
+  //     setLoadingFilter(false);
+  //   }, 1000);
+  // };
 
   const handleRefreshData = () => {
     setLoadingRefresh(true); // Bắt đầu hiệu ứng loading
     setTimeout(() => {
       setDataExchangesFilter(dataExchanges);
-      setSelectedStatus("");
-      setSelectedType("");
-      setTimeEnd(null);
-      setTimeStart(null);
+      setEndDate(new Date())
+      setStartDate(new Date())
       setLoadingRefresh(false);
     }, 1000);
   };
@@ -611,7 +580,7 @@ const Payment = () => {
     //     <View style={styles.exchangeList}>
     //       {dataExchangesFilter.length > 0 ? (
     //         <FlatList
-    //           data={dataExchangesFilter}
+    //           data={dataaExchangesFilter}
     //           renderItem={renderExchange}
     //         // keyExtractor={(item) => item.id}
     //         />
@@ -634,38 +603,179 @@ const Payment = () => {
             <Text style={styles.time}>Welcome back</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity style={styles.row} onPress={openDialogQR}>
           <Image source={require('../../assets/images/add-payment.png')} style={styles.iconAddPayment} />
         </TouchableOpacity>
+        <Modal
+          visible={isVisibleQR}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={closeDialog}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.dialogContainer}>
+              <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
+                <MaterialIcons name="cancel" size={24} color="red" />
+              </TouchableOpacity>
+              <Text style={styles.dialogTitle}>Quét mã QR</Text>
+              <View style={styles.addBar}>
+                <TextInput
+                  style={styles.textInput}
+                  value={inputText}
+                  onChangeText={handleTextChange}
+                  keyboardType="numeric"
+                  maxLength={15}
+                  placeholder= {placeholderText}
+                />
+                <TouchableOpacity
+                  style={[styles.addBtn, isDisabled && styles.disabledBtn]}
+                  onPress={handleRequest}
+                  disabled={isDisabled}
+                >
+                  {loadingQR ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.addBtnText}>Yêu cầu</Text>
+                  )}
+                </TouchableOpacity>
+                
+              </View>
+              {qrDataURL ? (
+                <Image source={{ uri: qrDataURL }} style={styles.image} />
+              ) : (
+                <Image source={require('../../assets/images/qrdefault.png')} style={styles.image} />
+              )}
+              <Text style={styles.dialogText}>
+                Mã QR chỉ có giá trị một lần
+              </Text>
+            </View>
+          </View>
+        </Modal>
       </View>
       {/* balance */}
       <View>
         <Text style={styles.balanceAmount}> {balance.toLocaleString("vi-VN")} <Text style={{ fontSize: 15 }}>VND</Text></Text>
       </View>
       {/* Option */}
-      <View style={[styles.row,{padding:20}]}>
-        <TouchableOpacity style={styles.iconOptionCircle}>
-          <Image
-            source={require('../../assets/images/increase.png')}
-            style={styles.iconOption}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconOptionCircle}>
-          <Image
-            source={require('../../assets/images/decrease.png')}
-            style={styles.iconOption}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconOptionCircle}>
-          <Image
-            source={require('../../assets/images/refresh.png')}
-            style={styles.iconOption}
-          />
-        </TouchableOpacity>
+      <View style={[styles.row, { padding: 10 }]}>
+        {/* Deposit */}
+        <View style={[styles.column]}>
+          <TouchableOpacity style={styles.iconOptionCircle} onPress={onPressFilterDeposit}>
+            <Image
+              source={require('../../assets/images/increase.png')}
+              style={styles.iconOption}
+            />
+          </TouchableOpacity>
+          <Text style={styles.titleOptionCircle}>
+            Deposit
+          </Text>
+        </View>
 
-        
+        {/* Withdraw */}
+        <View style={[styles.column]}>
+          <TouchableOpacity style={styles.iconOptionCircle} onPress={onPressFilterWithdraw}>
+            <Image
+              source={require('../../assets/images/decrease.png')}
+              style={styles.iconOption}
+            />
+          </TouchableOpacity>
+          <Text style={styles.titleOptionCircle}>
+            Withdraw
+          </Text>
+        </View>
+
+        {/* Refresh */}
+        <View style={[styles.column]}>
+          <TouchableOpacity onPress={handleRefreshData} style={styles.iconOptionCircle}>
+            {loadingRefresh ? (
+              <ActivityIndicator
+                color="red"
+                size={40}
+              />
+            ) : (
+              <SimpleLineIcons
+                name="refresh"
+                size={40}
+                color="black"
+              // style={{ paddingRight: 10 }}
+              />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.titleOptionCircle}>
+            Refresh
+          </Text>
+        </View>
       </View>
-    </View>
+
+
+      {/* Datepicker */}
+      <TouchableOpacity onPress={openDialogFilter} style={[styles.touchableDatePicker]}>
+        <Text style={{ fontSize: 20 }}>
+          {(startDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN")) + " - " + (endDate ? ((new Date(endDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN"))}
+        </Text>
+      </TouchableOpacity>
+      <Modal
+        visible={isVisibleFilter}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={closeDialog}
+      >
+        <View style={styles.modalOverlay}>
+          {loadingFilter ? (
+            <ActivityIndicator color="white" size={100} />
+          ) : (
+            <View style={styles.dialogContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeDialog}
+              >
+                <MaterialIcons name="cancel" size={24} color="red" />
+              </TouchableOpacity>
+              <View style={{ marginTop: 40 }}>
+                <DateTimePicker
+                  mode="range"
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={({ startDate, endDate }) => {
+                    setStartDate(startDate), setEndDate(endDate), console.log(endDate?.toLocaleString("vi-VN"));
+                  }}
+                  styles={{
+                    ...defaultStyles,
+                    today: { borderColor: 'blue', borderWidth: 1 }, // Add a border to today's date
+                    selected: { backgroundColor: 'blue' }, // Highlight the selected day
+                    selected_label: { color: 'white' }, // Highlight the selected day label
+                  }}
+                  disabledDates={(date: any) => date > new Date()}
+                  showOutsideDays={true}
+                  weekdaysFormat={"short"}
+                  // timeZone="UTC"
+                  firstDayOfWeek={1}
+                  min={1}
+                  max={31}
+
+                />
+
+              </View>
+
+
+            </View>
+          )}
+        </View>
+      </Modal>
+      {/* <View style={styles.divider} /> */}
+
+      <View style={styles.exchangeList}>
+        {dataExchangesFilter.length > 0 ? (
+          <FlatList
+            data={dataExchangesFilter}
+            renderItem={renderExchange}
+          // keyExtractor={(item) => item.id}
+          />
+        ) : (
+          <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
+        )}
+      </View>
+    </View >
   );
 };
 
@@ -674,7 +784,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 40,
-    backgroundColor: "white",
+    backgroundColor: "#eaf7ec",
   },
   balanceContainer: {
     flexDirection: "row",
@@ -765,7 +875,7 @@ const styles = StyleSheet.create({
   image: {
     width: 300,
     height: 300,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   dialogText: {
     marginBottom: 20,
@@ -791,7 +901,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
-    marginBottom: 50,
+    marginBottom: 40,
+    marginTop: 20,
   },
   exchangeItem: {
     flexDirection: "row",
@@ -843,6 +954,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  titleOptionCircle: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    fontWeight: "500",
+    padding: 10
+  },
+  touchableDatePicker: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: '#74d65f',
+    borderStyle: "solid",
+    padding: 20,
+  }
+  ,
   username: {
     fontSize: 20,
     marginLeft: 10,
@@ -855,7 +984,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    
+
   },
   time: {
     marginLeft: 10,
