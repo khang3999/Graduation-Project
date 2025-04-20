@@ -51,6 +51,8 @@ import LottieView from "lottie-react-native";
 import ReviewPostUser from "./reviewPostUser";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
+import Geolocation from "@react-native-community/geolocation"; // Import Geolocation
+import * as Location from "expo-location"; // Import expo-location
 
 const AddPostUser = () => {
   interface Country {
@@ -59,9 +61,11 @@ const AddPostUser = () => {
   }
 
   const [countryData, setCountryData] = useState<Country[]>([]);
-  const [isCheckIn, setIsCheckIn] = useState(false);
+  const [isCheckIn, setIsCheckIn] = useState(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [titleLive, setTitleLive] = useState("");
+  const [contentLive, setContentLive] = useState("");
   const [contentReviewPost, setcontentReviewPost] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchQueryCity, setSearchQueryCity] = useState("");
@@ -98,6 +102,13 @@ const AddPostUser = () => {
   const [modalVisibleTimePicker, setModalVisibleTimePicker] = useState(false);
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalReviewPost, setModalReviewPost] = useState(false);
+  const [liveModalVisible, setLiveModalVisible] = useState(false);
+  const [selectedLiveCityImages, setSelectedLiveCityImages] = useState<
+    string[]
+  >([]);
+  const [selectedLiveCityName, setSelectedLiveCityName] = useState<
+    string | null
+  >(null);
 
   //Chon quoc gia
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -173,6 +184,218 @@ const AddPostUser = () => {
 
   //Lay data banned words
   const bannedWords = useBannedWords();
+
+  const [activeTab, setActiveTab] = useState<"form" | "live">("form"); // Quản lý tab hiện tại
+
+  const [liveDays, setLiveDays] = useState<
+    {
+      title: string;
+      date: string;
+      description: string;
+      activities: { time: string; address: string; activity: string }[];
+    }[]
+  >([]);
+
+  const [liveImages, setLiveImages] = useState<
+  {
+    city: {
+      id: string;
+      name: string;
+      id_nuoc: string;
+      area_id: string;
+    } | null;
+    images: string[];
+  }[]
+>([]);
+
+  useEffect(() => {
+    if (activeTab === "live" && liveDays.length === 0) {
+      addLiveDay();
+    }
+  }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === "live") {
+      const cityRef = ref(database, "cities");
+      onValue(cityRef, (snapshot) => {
+        const data = snapshot.val() || {};
+
+        // Duyệt qua tất cả các quốc gia và khu vực
+        const formattedCities = Object.keys(data).flatMap((countryKey) =>
+          Object.keys(data[countryKey]).flatMap((areaKey) =>
+            Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
+              id: cityKey,
+              name: data[countryKey][areaKey][cityKey].name,
+              id_nuoc: countryKey,
+              area_id: areaKey,
+            }))
+          )
+        );
+
+        setCitiesData(formattedCities);
+      });
+    }
+  }, [activeTab]);
+
+  const addLiveDay = async () => {
+    try {
+      const location = await getCurrentLocation();
+      const currentTime = new Date();
+      const formattedTime = `${currentTime
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${currentTime
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+
+      const formattedDate = `${currentTime
+        .getDate()
+        .toString()
+        .padStart(2, "0")}/${(currentTime.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}/${currentTime.getFullYear()}`;
+
+      setLiveDays((prevLiveDays) => [
+        ...prevLiveDays,
+        {
+          title: "",
+          date: formattedDate,
+          description: "",
+          activities: [
+            {
+              time: formattedTime,
+              address: location?.address ?? "Unknown address",
+              activity: "",
+            },
+          ],
+        },
+      ]);
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
+    }
+  };
+  //
+  const getCityInfo = async (
+    provinceName: string
+  ): Promise<{ id?: string; name?: string } | null> => {
+    try {
+      const cityRef = ref(database, "cities");
+      return new Promise((resolve, reject) => {
+        onValue(cityRef, (snapshot) => {
+          const data = snapshot.val() || {};
+
+          // Duyệt qua tất cả các quốc gia và khu vực
+          const cities = Object.keys(data).flatMap((countryKey) =>
+            Object.keys(data[countryKey]).flatMap((areaKey) =>
+              Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
+                id: cityKey,
+                name: data[countryKey][areaKey][cityKey].name,
+                id_nuoc: countryKey,
+                area_id: areaKey,
+              }))
+            )
+          );
+
+          // Tìm tỉnh/thành phố khớp với provinceName
+          const matchedCity = cities.find((city) => city.name === provinceName);
+
+          if (matchedCity) {
+            resolve(matchedCity);
+          } else {
+            console.warn("Không tìm thấy tỉnh/thành phố:", provinceName);
+            resolve(null);
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu thành phố:", error);
+      throw error;
+    }
+  };
+  // Lấy vị trí hiện tại
+  const getCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Lỗi", "Quyền truy cập vị trí bị từ chối.");
+        return null;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+      );
+      const data = await response.json();
+
+      if (!data || !data.address) {
+        Alert.alert("Lỗi", "Không thể lấy thông tin địa chỉ.");
+        return null;
+      }
+
+      // Loại bỏ mã bưu điện khỏi `display_name`
+      const cleanedAddress = data.display_name
+        .replace(/\d{5}(, )?/g, "")
+        .trim();
+
+      // Tách chuỗi địa chỉ thành mảng
+      const addressParts = cleanedAddress.split(",");
+
+      // Lấy phần thứ hai từ cuối lên
+      let provinceName =
+        addressParts.length >= 2
+          ? addressParts[addressParts.length - 2].trim()
+          : "Không xác định";
+
+      // Loại bỏ từ "Thành phố" hoặc "Tỉnh" khỏi `provinceName`
+      provinceName = provinceName.replace(/^(Thành phố|Tỉnh)\s+/i, "").trim();
+
+      console.log("Địa chỉ đầy đủ (đã loại bỏ mã bưu điện):", cleanedAddress);
+      console.log("Tên tỉnh/thành phố (đã loại bỏ tiền tố):", provinceName);
+
+      return { latitude, longitude, address: cleanedAddress, provinceName };
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
+      console.error(error);
+      return null;
+    }
+  };
+
+  // Cập nhật hoạt động cho Live
+  const updateLiveActivity = (
+    dayIndex: number,
+    activityIndex: number,
+    key: "activity" | "description" | "title", // Thêm "title"
+    value: string
+  ) => {
+    const newLiveDays = [...liveDays];
+    if (key === "activity") {
+      newLiveDays[dayIndex].activities[activityIndex].activity = value;
+    } else if (key === "description") {
+      newLiveDays[dayIndex].description = value;
+    } else if (key === "title") {
+      newLiveDays[dayIndex].title = value; // Cập nhật tiêu đề
+    }
+    setLiveDays(newLiveDays);
+  };
+
+  const handleRemoveLiveImage = (index: number) => {
+    const updatedImages = [...selectedLiveCityImages];
+    updatedImages.splice(index, 1);
+    setSelectedLiveCityImages(updatedImages);
+
+    setLiveImages((prevImages) =>
+      prevImages.map((city) =>
+        city.city?.name === selectedLiveCityName
+          ? { ...city, images: updatedImages }
+          : city
+      )
+    );
+    if (updatedImages.length === 0) {
+      setLiveModalVisible(false);
+    }
+  };
 
   // *********************************************************************
   // Xử lý Chọn Quốc Gia CHo Bài Viết
@@ -268,19 +491,19 @@ const AddPostUser = () => {
   //Cac tinh thanh duoc chon
   const handCityPress =
     (city: { id: string; name: string; id_nuoc: string; area_id: string }) =>
-      () => {
-        setCities([
-          {
-            id: city.id,
-            name: city.name,
-            id_nuoc: city.id_nuoc,
-            area_id: city.area_id,
-          },
-          ...cities,
-        ]);
-        setSearchQueryCity("");
-        setModalVisibleCity(false);
-      };
+    () => {
+      setCities([
+        {
+          id: city.id,
+          name: city.name,
+          id_nuoc: city.id_nuoc,
+          area_id: city.area_id,
+        },
+        ...cities,
+      ]);
+      setSearchQueryCity("");
+      setModalVisibleCity(false);
+    };
 
   //Remove tinh thanh de chon
   const removeCity = (cityId: string) => {
@@ -735,20 +958,56 @@ const AddPostUser = () => {
       );
       return;
     }
-    setImages([
-      { city: selectedCityForImages, images: selectedImages },
-      ...images,
-    ]);
+
+    // Cập nhật danh sách `images`
+    setImages((prevImages) => {
+      const existingCity = prevImages.find(
+        (item) => item.city?.id === selectedCityForImages.id
+      );
+
+      if (existingCity) {
+        // Nếu thành phố đã tồn tại, thêm ảnh mới vào danh sách `images`
+        return prevImages.map((item) =>
+          item.city?.id === selectedCityForImages.id
+            ? { ...item, images: [...item.images, ...selectedImages] }
+            : item
+        );
+      } else {
+        // Nếu thành phố chưa tồn tại, thêm mục mới
+        return [
+          ...prevImages,
+          {
+            city: selectedCityForImages,
+            images: selectedImages,
+          },
+        ];
+      }
+    });
+
+    // Reset state sau khi lưu
     setSelectedImages([]);
     setSelectedCityForImages(null);
     setModalVisibleImage(false);
   };
   //Xử lý xóa ảnh và xóa city của ảnh
-  const handleRemoveImagesAndCity = (index: number) => {
-    const updatedImages = [...images];
+  const handleRemoveImagesAndCityLive = (index: number) => {
+    // Xóa toàn bộ mục tại vị trí `index`
+    const updatedImages = [...liveImages];
     updatedImages.splice(index, 1);
+    setLiveImages(updatedImages);
+
+    // Đặt lại các state liên quan nếu cần
+    setSelectedLiveCityImages([]);
+    setSelectedLiveCityName(null);
+  };
+  const handleRemoveImagesAndCity = (index: number) => {
+    // Xóa toàn bộ mục tại vị trí `index` trong `images`
+    const updatedImages = [...images];
+    const removedCity = updatedImages.splice(index, 1); // Lấy thành phố bị xóa
     setImages(updatedImages);
   };
+
+  console.log("Selected Images:", liveImages);
   // console.log("Images:", images);
   //Xử lý chọn ảnh để chỉnh sửa thông tin
   const handleChangleInfoImage = (index: number) => () => {
@@ -786,7 +1045,6 @@ const AddPostUser = () => {
   // }, [isCheckIn]);
 
   const handlePushPost = async () => {
-
     setButtonPost(true);
     if (cities.length === 0) {
       setButtonPost(false);
@@ -837,7 +1095,8 @@ const AddPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
         }.`
       );
       return;
@@ -866,7 +1125,8 @@ const AddPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
+            day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -933,10 +1193,12 @@ const AddPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
-              } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
-              }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1036,11 +1298,10 @@ const AddPostUser = () => {
             await set(
               ref(
                 database,
-                `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+                `cities/${city?.id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
-
               }
             );
           }
@@ -1107,6 +1368,7 @@ const AddPostUser = () => {
           reports,
           match,
           isCheckIn,
+          mode : 1,
           title,
           status_id: status,
           thumbnail,
@@ -1124,7 +1386,7 @@ const AddPostUser = () => {
             avatar: avatar,
             dayUpload: timestamp,
             name: fullname,
-            idPost: postId
+            idPost: postId,
           }
         );
 
@@ -1162,8 +1424,8 @@ const AddPostUser = () => {
               totalPosts: totalPosts,
             });
             //Luu
-            
-            get(userPost).then(snapshot => {
+
+            get(userPost).then((snapshot) => {
               if (!snapshot.exists()) {
                 set(userPost, {
                   [postId]: true,
@@ -1251,7 +1513,8 @@ const AddPostUser = () => {
       setButtonPost(false);
       Alert.alert(
         "Thông báo",
-        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${dayIndex + 1
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
         }.`
       );
       return;
@@ -1266,7 +1529,8 @@ const AddPostUser = () => {
     const contents = `# ${title}<br><br>${content}<br><br>${days
       .map(
         (day, index) =>
-          `## **Ngày ${index + 1}:** ${day.title}<br><br>${day.description
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>${
+            day.description
           }<br><br>${day.activities
             .map(
               (activity) =>
@@ -1332,10 +1596,12 @@ const AddPostUser = () => {
           setButtonPost(false);
           Toast.show({
             type: "error",
-            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${activityIndex + 1
-              } chứa từ cấm`,
-            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${dayIndex + 1
-              }.`,
+            text1: `Ngày ${dayIndex + 1}: Hoạt động thứ ${
+              activityIndex + 1
+            } chứa từ cấm`,
+            text2: `Vui lòng sửa lại hoạt động ${activityIndex + 1} ngày ${
+              dayIndex + 1
+            }.`,
             text1Style: { fontSize: 14 },
             text2Style: { fontSize: 12 },
             position: "top",
@@ -1378,6 +1644,445 @@ const AddPostUser = () => {
     // });
   };
 
+  //Camera
+  const openCamera = async () => {
+    try {
+      const pickerResult = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+  
+      if (!pickerResult.canceled) {
+        const newImageUri = pickerResult.assets[0].uri;
+  
+        // Lấy thông tin vị trí hiện tại
+        const location = await getCurrentLocation();
+        if (!location) {
+          Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
+          return;
+        }
+  
+        // So sánh `provinceName` với dữ liệu `citiesData` đã tải
+        const cityInfo = citiesData.find(
+          (city) => city.name === location.provinceName
+        );
+  
+        if (!cityInfo) {
+          Alert.alert("Lỗi", "Không tìm thấy thông tin tỉnh/thành phố.");
+          return;
+        }
+  
+        // Cập nhật danh sách `liveImages`
+        setLiveImages((prevImages) => {
+          const existingCity = prevImages.find(
+            (item) => item.city && item.city.id === cityInfo.id
+          );
+  
+          if (existingCity) {
+            // Nếu thành phố đã tồn tại, thêm ảnh mới vào danh sách `images`
+            return prevImages.map((item) =>
+              item.city && item.city.id === cityInfo.id
+                ? { ...item, images: [...item.images, newImageUri] }
+                : item
+            );
+          } else {
+            // Nếu thành phố chưa tồn tại, thêm mục mới
+            return [
+              ...prevImages,
+              {
+                city: {
+                  id: cityInfo.id || "unknown",
+                  id_nuoc: cityInfo.id_nuoc || "unknown", 
+                  name: cityInfo.name || "Không xác định",
+                  area_id: cityInfo.area_id || "unknown", 
+                },
+                images: [newImageUri],
+              },
+            ];
+          }
+        });
+  
+        console.log("Ảnh đã lưu:", newImageUri);
+        console.log("Thông tin tỉnh/thành phố:", cityInfo);
+      } else {
+        console.log("Chụp ảnh đã bị hủy.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi chụp ảnh:", error);
+      Alert.alert("Lỗi", "Không thể chụp ảnh. Vui lòng thử lại.");
+    }
+  };
+  const groupedLiveImages = liveImages.reduce<
+    { city: { id: string; name: string }; images: string[] }[]
+  >((acc, imageCity) => {
+    const existingCity = acc.find((item) => imageCity.city && item.city.id === imageCity.city.id);
+    if (existingCity) {
+      existingCity.images = [...existingCity.images, ...imageCity.images];
+    } else {
+      if (imageCity.city) {
+        acc.push({ city: { id: imageCity.city.id, name: imageCity.city.name }, images: [...imageCity.images] });
+      }
+    }
+    return acc;
+  }, []);
+
+  // live 
+  const handlePushLivePost = async () => {
+    setButtonPost(true);
+    // Kiểm tra dữ liệu
+    if (titleLive.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (contentLive.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung bài viết.");
+      return;
+    }
+ 
+    const existingDay = liveDays.find(
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
+    );
+    if (existingDay) {
+      const dayIndex = liveDays.findIndex((day) => day === existingDay);
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+  
+    const existingActivity = liveDays.find((day) =>
+      day.activities.find(
+        (act) => act.time === "" || act.address === "" || act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = liveDays.findIndex((day) =>
+        day.activities.includes(existingActivity.activities[0])
+      );
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
+      );
+      return;
+    }
+ 
+    if (liveImages.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết Live.");
+      return;
+    }
+ 
+    //Tạo dữ liệu mardown
+    const contents = `# ${titleLive}<br><br>${contentLive}<br><br>${liveDays
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>( ${
+            day.date ? day.date : "()"
+          } )<br><br>${day.description}<br><br>${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
+            )
+            .join("<br><br>")}`
+      )
+      .join("<br><br>")}`;
+    console.log("Contents:", contents);
+
+
+    //Kiem tra tu cam thong tin bai viet
+    if (bannedWordsChecker(titleLive, bannedWords)) {
+      console.log("Title:", title);
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(contentLive, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    for (let dayIndex = 0; dayIndex < liveDays.length; dayIndex++) {
+      const day = liveDays[dayIndex];
+
+      // Kiểm tra Tiêu đề ngày
+      if (bannedWordsChecker(day.title, bannedWords)) {
+        setButtonPost(false);
+        Toast.show({
+          type: "error",
+          text1: `Ngày ${dayIndex + 1}: Tiêu đề chứa từ cấm`,
+          text2: `Vui lòng sửa lại tiêu đề ngày ${dayIndex + 1}.`,
+          text1Style: { fontSize: 14 },
+          text2Style: { fontSize: 12 },
+          position: "top",
+        });
+        return;
+      }
+  
+    const timestamp = Date.now();
+  
+    try {
+      const storage = getStorage();
+      const uploadedImageUrls: {
+        [key: string]: {
+          [key: string]: { city_name: string; images_value: string[] };
+        };
+      } = {};
+  
+      // Tạo bảng
+      const postsRef = ref(database, "posts");
+      const newPostRef = push(postsRef);
+      const postId = newPostRef.key;
+  
+      // Xử lý ảnh và lưu ảnh
+      for (const image of liveImages) {
+        // console.log("Image:", image);
+        //Lấy thông tin ảnh và thành phố
+        const { city, images: imageUris } = image;
+        const {
+          id_nuoc,
+          id,
+          name: cityName,
+          area_id: id_khuvucimages,
+        } = city || {};
+
+        //lấy ảnh từ mảng ảnh
+        for (const uri of imageUris) {
+          //lấy phần tử cuối để đặc tên ảnh
+          const name = uri.split("/").pop();
+          // console.log("Name", name);
+
+          if (id_nuoc && id) {
+            const imageRef = storageRef(
+              storage,
+              `posts/${postId}/images/${name}`
+            );
+            //gửi yêu cầu HTTP để tải ảnh từ uri
+            const response = await fetch(uri);
+            //chuyển đổi dữ liệu thành Blob trc khi tải lên
+            const blob = await response.blob();
+
+            // Tải ảnh lên Storage
+            await uploadBytes(imageRef, blob);
+            //lấy url ảnh từ storage
+            const downloadURL = await getDownloadURL(imageRef);
+            // console.log("URL Down:", downloadURL);
+
+            //Anh post
+            // URL ảnh theo tỉnh thành
+            // tạo id nuoc
+            // console.log("id_nuoc1:", uploadedImageUrls[id_nuoc]);
+            if (!uploadedImageUrls[id_nuoc]) {
+              uploadedImageUrls[id_nuoc] = {};
+            }
+            // console.log("id_nuoc2:", uploadedImageUrls);
+            if (!uploadedImageUrls[id_nuoc][id]) {
+              uploadedImageUrls[id_nuoc][id] = {
+                city_name: cityName || "",
+                images_value: [],
+              };
+            }
+            // console.log("id:", uploadedImageUrls[id_nuoc][id]);
+            uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
+            // console.log("URL:", uploadedImageUrls);
+            //lƯU ẢNH ĐẦU TIÊN
+            //Anh cho city
+            // URL ảnh theo tỉnh thành
+            // console.log ("id_nuoc:",id_nuoc,"id_khuvuc:",id_khuvucimages,"id:",id,"postId:",postId);
+            await set(
+              ref(
+                database,
+                `cities/${city?.id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+              ),
+              {
+                images: uploadedImageUrls[id_nuoc][id].images_value,
+              }
+            );
+          }
+        }
+  
+      //Lay avatar fullname id user
+      const userId = await AsyncStorage.getItem("userToken");
+      // console.log("userId:", userId);
+      const userRef = ref(database, `accounts/${userId}`);
+
+      let avatar = "";
+      let fullname = "";
+      let totalPosts;
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          avatar = data.avatar;
+          fullname = data.fullname;
+          if (data.totalPosts) {
+            totalPosts = data.totalPosts + 1;
+          } else {
+            totalPosts = 1;
+          }
+        }
+      });
+
+      const likes = 0;
+      const reports = 0;
+      const match = 0;
+      const saves = 0;
+      let status;
+      if (isPublic) {
+        status = 1;
+      } else {
+        status = 2;
+      }
+      //lấy 1 ảnh đầu tiên để làm thumbnail           // nuoc                                 //cIty
+      const thumbnail =
+        uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+          Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+        ]?.images_value?.[0] || "";
+
+      // Cấu trúc dữ liệu bài viết với URL ảnh
+      const postData = {
+        locations: liveImages.reduce(
+          (acc: { [key: string]: { [key: string]: string } }, image) => {
+            const { city } = image;
+            const { id_nuoc, id, name } = city || {};
+        
+            if (id_nuoc && id) {
+              if (!acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
+              acc[id_nuoc][id] = name || "Không xác định";
+            }
+        
+            return acc;
+          },
+          {}
+        ),
+        content: contents,
+        author: { id: userId, avatar: avatar, fullname: fullname },
+        images: uploadedImageUrls,
+        likes,
+        id: postId,
+        reports,
+        match,
+        isCheckIn,
+        title: titleLive,
+        mode : 2,
+        status_id: status,
+        thumbnail,
+        created_at: timestamp,
+        saves,
+      };
+
+      //Them du leu other cho data
+      await update(
+        ref(
+          database,
+          `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+        ),
+        {
+          avatar: avatar,
+          dayUpload: timestamp,
+          name: fullname,
+          idPost: postId,
+        }
+      );
+
+      // Lưu bài viết vào Realtime Database
+      if (postId) {
+        if (userId && isCheckIn) {
+          const userRef = ref(database, `accounts/${userId}/checkInList`);
+          const userPost = ref(database, `accounts/${userId}/createdPosts`);
+          // Lấy dữ liệu hiện tại từ Firebase
+          const snapshot = await get(userRef);
+          const currentData = snapshot.exists() ? snapshot.val() : {};
+
+          // Tạo dữ liệu cập nhật mới từ cities
+          const updatedUserData = cities.reduce(
+            (acc: { [key: string]: { [key: string]: string } }, city) => {
+              const { id_nuoc, id, name } = city;
+
+              // Nếu id_nuoc chưa tồn tại, khởi tạo nó là một object rỗng
+              if (!acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
+
+              // Thêm city vào danh sách của id_nuoc
+              acc[id_nuoc][id] = name;
+
+              return acc;
+            },
+            { ...currentData }
+          );
+          // Cập nhật dữ liệu
+          await update(userRef, updatedUserData);
+
+          const userTotalPost = ref(database, `accounts/${userId}`);
+          await update(userTotalPost, {
+            totalPosts: totalPosts,
+          });
+          //Luu
+
+          get(userPost).then((snapshot) => {
+            if (!snapshot.exists()) {
+              set(userPost, {
+                [postId]: true,
+              });
+            } else {
+              update(userPost, {
+                [postId]: true,
+              });
+            }
+          });
+        }
+
+        await set(newPostRef, postData);
+      } else {
+        setButtonPost(false);
+        throw new Error("Failed");
+      }
+      setButtonPost(false);
+      // Alert.alert("Thông báo", "Thêm bài viết thành công");
+      Toast.show({
+        type: "success",
+        text1: "Thông báo",
+        text2: "Thêm bài viết thành công",
+        visibilityTime: 2000,
+      });
+      router.back();
+    }
+  }
+  catch (error) {
+    setButtonPost(false);
+    console.error("Error:", error);
+    Alert.alert("Lỗi", "Không thể thêm bài viết.");
+  }
+};
+  }
+  
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -1385,222 +2090,604 @@ const AddPostUser = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : -125}
     >
       <View style={styles.container}>
-        {/* <RowComponent justify="flex-start" styles={{ marginHorizontal: 20 }}>
-          <ArrowLeft
-            size="32"
-            style={{ marginBottom: 15 }}
-            onPress={() => {
-              router.back();
-            }}
-            color="#000"
-          />
-          <TextComponent
-            text="Bài viết mới"
-            size={24}
-            styles={{
-              fontWeight: "600",
-              margin: 5,
-              marginLeft: "18%",
-              marginBottom: 20,
-              // fontFamily:'FuzzyBold'
-            }}
-          />
-        </RowComponent> */}
-        {/* <View style={[styles.separator, { marginTop: -10, marginBottom: 0 }]} /> */}
-        <ScrollView>
-          {/* Check in */}
-          <RowComponent justify="space-between">
-            <TouchableOpacity style={styles.checkin} disabled={true}>
-              <RowComponent justify="space-between">
-                <Text>Check in lên bản đồ</Text>
-                {/* <Icon
-                name="checkbox-active"
-                size={14}
-                style={{ marginLeft: 10 }}
-                color={appColors.success}
-              /> */}
-                <Checkbox
-                  color="green"
-                  status={isCheckIn ? "checked" : "unchecked"}
-                  onPress={() => setIsCheckIn(!isCheckIn)}
-                />
-              </RowComponent>
-            </TouchableOpacity>
-
-            {/* Quốc gia */}
-            <SectionComponent>
-              <View style={styles.countrySelector}>
-                <TouchableOpacity
-                  onPress={() => setModalVisibleCountry(true)}
-                  style={styles.countryButton}
-                >
-                  {selectedCountry != null && (
-                    <Image
-                      source={{
-                        uri: countryData.find(
-                          (country) => country.id === selectedCountry
-                        )?.image,
-                      }}
-                      style={styles.countryFlag}
-                    />
-                  )}
-                  <Text
-                    style={styles.countryButtonText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {selectedCountry != null
-                      ? countryData.find(
-                        (country) => country.id === selectedCountry
-                      )?.label
-                      : "Chọn quốc gia"}
-                  </Text>
-                  <Icon
-                    name="angle-down"
-                    size={12}
-                    style={{ padding: 8 }}
-                    color="#000"
-                  />
-                </TouchableOpacity>
-              </View>
-            </SectionComponent>
-          </RowComponent>
-
-          {/* Cities */}
-          <SectionComponent styles={styles.cities}>
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.leftButtons}
+        {/* Tabs */}
+        <RowComponent justify="space-around" styles={styles.tabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "form" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("form")}
+          >
+            <Text
+              style={
+                activeTab === "form" ? styles.activeTabText : styles.tabText
+              }
             >
-              {cities.length === 0 ? (
-                <Text
-                  style={{
-                    color: appColors.danger,
-                    padding: 10,
-                    fontWeight: "500",
-                  }}
-                >
-                  Chưa chọn tỉnh thành
-                </Text>
-              ) : (
-                cities.map((city) => (
-                  <TouchableOpacity
-                    disabled={true}
-                    key={city.id}
-                    style={styles.buttoncities}
-                  >
-                    <Text style={styles.textbtncities}>{city.name}</Text>
-                    <TouchableOpacity
-                      style={styles.iconMUL}
-                      onPress={() => removeCity(city.id)}
-                    >
-                      <IconA name="minuscircleo" color="red" />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
+              Đăng bài
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "live" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("live")}
+          >
+            <Text
+              style={
+                activeTab === "live" ? styles.activeTabText : styles.tabText
+              }
+            >
+              Live
+            </Text>
+          </TouchableOpacity>
+        </RowComponent>
 
-            {cities.length === 0 ? (
-              <TouchableOpacity
-                style={[styles.fixedRightButton]}
-                onPress={() => setModalVisibleCity(true)}
+        {/* Nội dung tab */}
+        {activeTab === "form" ? (
+          <ScrollView>
+            {/* Check in */}
+            <RowComponent justify="space-between">
+              {/* <TouchableOpacity style={styles.checkin} disabled={true}>
+                <RowComponent justify="space-between">
+                  <Text>Check in lên bản đồ</Text>
+                 
+                  <Checkbox
+                    color="green"
+                    status={isCheckIn ? "checked" : "unchecked"}
+                    onPress={() => setIsCheckIn(!isCheckIn)}
+                  />
+                </RowComponent>
+              </TouchableOpacity> */}
+
+              {/* Quốc gia */}
+              <SectionComponent>
+                <View style={styles.countrySelector}>
+                  <TouchableOpacity
+                    onPress={() => setModalVisibleCountry(true)}
+                    style={styles.countryButton}
+                  >
+                    {selectedCountry != null && (
+                      <Image
+                        source={{
+                          uri: countryData.find(
+                            (country) => country.id === selectedCountry
+                          )?.image,
+                        }}
+                        style={styles.countryFlag}
+                      />
+                    )}
+                    <Text
+                      style={styles.countryButtonText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedCountry != null
+                        ? countryData.find(
+                            (country) => country.id === selectedCountry
+                          )?.label
+                        : "Chọn quốc gia"}
+                    </Text>
+                    <Icon
+                      name="angle-down"
+                      size={12}
+                      style={{ padding: 8 }}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </SectionComponent>
+            </RowComponent>
+
+            {/* Cities */}
+            <SectionComponent styles={styles.cities}>
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.leftButtons}
               >
-                <Text>
-                  Chọn tỉnh <IconA name="pluscircleo" size={15} color="#000" />
+                {cities.length === 0 ? (
+                  <Text
+                    style={{
+                      color: appColors.danger,
+                      padding: 10,
+                      fontWeight: "500",
+                    }}
+                  >
+                    Chưa chọn tỉnh thành
+                  </Text>
+                ) : (
+                  cities.map((city) => (
+                    <TouchableOpacity
+                      disabled={true}
+                      key={city.id}
+                      style={styles.buttoncities}
+                    >
+                      <Text style={styles.textbtncities}>{city.name}</Text>
+                      <TouchableOpacity
+                        style={styles.iconMUL}
+                        onPress={() => removeCity(city.id)}
+                      >
+                        <IconA name="minuscircleo" color="red" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+
+              {cities.length === 0 ? (
+                <TouchableOpacity
+                  style={[styles.fixedRightButton]}
+                  onPress={() => setModalVisibleCity(true)}
+                >
+                  <Text>
+                    Chọn tỉnh{" "}
+                    <IconA name="pluscircleo" size={15} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.fixedRightButton,
+                    {
+                      width: 40,
+                      paddingLeft: 10,
+                      paddingBottom: 6,
+                      paddingRight: 1,
+                      marginLeft: 10,
+                    },
+                  ]}
+                  onPress={() => setModalVisibleCity(true)}
+                >
+                  <Text>
+                    <IconA name="pluscircleo" size={20} color="#000" />
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </SectionComponent>
+
+            {/* Title */}
+            <SectionComponent styles={{ marginTop: -135, marginBottom: -15 }}>
+              <TextComponent
+                text="Tiêu đề"
+                size={16}
+                styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
+              />
+              <InputComponent
+                value={title}
+                placeholder="Nhập tiêu đề bài viết"
+                onChange={(val) => setTitle(val)}
+                textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+                inputStyle={{
+                  borderColor: appColors.gray,
+                  height: 40,
+                  backgroundColor: appColors.gray3,
+                  borderRadius: 5,
+                }}
+              />
+            </SectionComponent>
+
+            {/* Content */}
+            <SectionComponent>
+              <TextComponent
+                text="Mô tả"
+                size={16}
+                styles={{
+                  fontWeight: "bold",
+                  color: "#000",
+                  marginBottom: 5,
+                  marginTop: -10,
+                }}
+              />
+              <InputComponent
+                value={content}
+                placeholder="Mô tả chung cho bài viết"
+                onChange={(val) => setContent(val)}
+                textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+                inputStyle={{
+                  width: "100%",
+                  // height: 140,
+                  backgroundColor: appColors.gray3,
+                  borderColor: appColors.gray,
+                  borderRadius: 5,
+                }}
+                multiline={true}
+              />
+            </SectionComponent>
+            {days.length > 0 && (
+              <SectionComponent>
+                <Text
+                  style={{ fontWeight: "bold", fontSize: 16, marginTop: -24 }}
+                >
+                  Lịch trình
                 </Text>
-              </TouchableOpacity>
-            ) : (
+              </SectionComponent>
+            )}
+            {/*  ngày đã thêm */}
+            <View style={{ marginTop: -10 }}>
+              {days.map((day, dayIndex) => (
+                <SectionComponent key={dayIndex} styles={styles.dayContainer}>
+                  <TouchableOpacity onPress={() => deleteDay(dayIndex)}>
+                    <IconA
+                      name="minuscircle"
+                      size={20}
+                      style={{ position: "absolute", top: -20, right: -20 }}
+                      color={appColors.danger}
+                    />
+                  </TouchableOpacity>
+                  <RowComponent
+                    styles={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        marginTop: -20,
+                        fontSize: 15,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Ngày {dayIndex + 1}
+                    </Text>
+                    <InputComponent
+                      inputStyle={{
+                        flex: 1,
+                        height: 30,
+                        marginLeft: 5,
+                        borderRadius: 5,
+                        backgroundColor: appColors.white,
+                        borderColor: appColors.gray,
+                      }}
+                      textStyle={{ color: "#000" }}
+                      placeholder={`Mô tả tiêu đề ngày ${dayIndex + 1}`}
+                      value={day.title}
+                      onChange={(text) => updateDay(dayIndex, "title", text)}
+                    />
+                  </RowComponent>
+
+                  {/* Activities */}
+                  <View style={{ marginTop: 10 }}>
+                    {/* Danh sach hoat dong cua ngay do */}
+                    {day.activities.map((activity, activityIndex) => (
+                      <View key={activityIndex}>
+                        <RowComponent
+                          justify="center"
+                          styles={{ maxHeight: 70, marginBottom: 20 }}
+                        >
+                          <TouchableOpacity
+                            style={{
+                              width: 70,
+                              height: "100%",
+                              // borderRadius: 5,
+                              borderTopLeftRadius: 5,
+                              borderBottomLeftRadius: 5,
+                              backgroundColor: appColors.btnaddActivity,
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                            //Chon gio
+                            onPress={() =>
+                              showTimePicker(
+                                dayIndex,
+                                activityIndex,
+                                activity.time
+                              )
+                            }
+                          >
+                            <Text style={{ color: "#000" }}>
+                              {activity.time || "Chọn giờ"}
+                            </Text>
+                          </TouchableOpacity>
+
+                          {/* hoat dong */}
+                          <View style={{ flex: 1 }}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                // console.log(activity);
+                                if (activity.address) {
+                                  handleOpenMapEdit(
+                                    dayIndex,
+                                    activityIndex,
+                                    activity.address
+                                  );
+                                } else {
+                                  handleOpenMap(dayIndex, activityIndex);
+                                }
+                              }}
+                            >
+                              <InputComponent
+                                disabled={true}
+                                inputStyle={{
+                                  width: "100%",
+                                  height: "83.4%",
+                                  marginTop: 7,
+                                  borderRadius: 0,
+                                  borderTopRightRadius: 5,
+                                  borderBottomRightRadius: 5,
+                                  borderColor: appColors.btnDay,
+                                  backgroundColor: appColors.white,
+                                }}
+                                textStyle={{ color: "#000" }}
+                                placeholder={`Địa điểm hoạt động ${
+                                  activityIndex + 1
+                                }`}
+                                multiline={true}
+                                value={activity.address}
+                                onChange={(text) =>
+                                  updateActivity(
+                                    dayIndex,
+                                    activityIndex,
+                                    "address",
+                                    text
+                                  )
+                                }
+                              />
+                            </TouchableOpacity>
+                          </View>
+                          <TouchableOpacity
+                            style={{ marginTop: 0, marginLeft: 5 }}
+                            onPress={() =>
+                              deleteActivity(dayIndex, activityIndex)
+                            }
+                          >
+                            <IconA
+                              name="minuscircle"
+                              size={20}
+                              color={appColors.danger}
+                            />
+                          </TouchableOpacity>
+                        </RowComponent>
+                        {/* Mô tả hoat dong */}
+                        <InputComponent
+                          inputStyle={{
+                            padding: 0,
+                            margin: 0,
+                            borderRadius: 5,
+                            height: 80,
+                            width: "100%",
+                            borderColor: appColors.gray,
+                          }}
+                          placeholder={`Nhập mô tả cho hoạt động ${
+                            activityIndex + 1
+                          }`}
+                          value={activity.activity}
+                          multiline={true}
+                          onChange={(text) =>
+                            updateActivity(
+                              dayIndex,
+                              activityIndex,
+                              "activity",
+                              text
+                            )
+                          }
+                        />
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Nut them hoat dong */}
+                  <SectionComponent>
+                    <TouchableOpacity
+                      style={[styles.addButton, { marginTop: 0 }]}
+                      onPress={() => addActivity(dayIndex)}
+                    >
+                      <Text style={{ fontSize: 13 }}>Thêm hoạt động</Text>
+                      <IconA name="pluscircleo" size={15} color="#000" />
+                    </TouchableOpacity>
+                  </SectionComponent>
+
+                  <InputComponent
+                    inputStyle={{
+                      borderRadius: 5,
+                      backgroundColor: appColors.inputDay,
+                      height: 100,
+                      borderColor: appColors.gray,
+                    }}
+                    placeholder="Nhập mô tả cho ngày"
+                    value={day.description}
+                    multiline={true}
+                    onChange={(text) =>
+                      updateDay(dayIndex, "description", text)
+                    }
+                  />
+                </SectionComponent>
+              ))}
+            </View>
+
+            {/* Nút thêm ngày */}
+            <SectionComponent>
               <TouchableOpacity
                 style={[
-                  styles.fixedRightButton,
-                  {
-                    width: 40,
-                    paddingLeft: 10,
-                    paddingBottom: 6,
-                    paddingRight: 1,
-                    marginLeft: 10,
-                  },
+                  styles.addButton,
+                  { backgroundColor: appColors.btnaddActivity, marginTop: 0 },
                 ]}
-                onPress={() => setModalVisibleCity(true)}
+                onPress={addDay}
               >
-                <Text>
-                  <IconA name="pluscircleo" size={20} color="#000" />
-                </Text>
+                <Text style={{ fontSize: 16 }}>Thêm ngày</Text>
+                <IconA name="pluscircleo" size={15} color="#000" />
               </TouchableOpacity>
-            )}
-          </SectionComponent>
-
-          {/* Title */}
-          <SectionComponent styles={{ marginTop: -135, marginBottom: -15 }}>
-            <TextComponent
-              text="Tiêu đề"
-              size={16}
-              styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
-            />
-            <InputComponent
-              value={title}
-              placeholder="Nhập tiêu đề bài viết"
-              onChange={(val) => setTitle(val)}
-              textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
-              inputStyle={{
-                borderColor: appColors.gray,
-                height: 40,
-                backgroundColor: appColors.gray3,
-                borderRadius: 5,
-              }}
-            />
-          </SectionComponent>
-
-          {/* Content */}
-          <SectionComponent>
-            <TextComponent
-              text="Mô tả"
-              size={16}
-              styles={{
-                fontWeight: "bold",
-                color: "#000",
-                marginBottom: 5,
-                marginTop: -10,
-              }}
-            />
-            <InputComponent
-              value={content}
-              placeholder="Mô tả chung cho bài viết"
-              onChange={(val) => setContent(val)}
-              textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
-              inputStyle={{
-                width: "100%",
-                // height: 140,
-                backgroundColor: appColors.gray3,
-                borderColor: appColors.gray,
-                borderRadius: 5,
-              }}
-              multiline={true}
-            />
-          </SectionComponent>
-          {days.length > 0 && (
-            <SectionComponent>
-              <Text
-                style={{ fontWeight: "bold", fontSize: 16, marginTop: -24 }}
-              >
-                Lịch trình
-              </Text>
             </SectionComponent>
-          )}
-          {/*  ngày đã thêm */}
-          <View style={{ marginTop: -10 }}>
-            {days.map((day, dayIndex) => (
-              <SectionComponent key={dayIndex} styles={styles.dayContainer}>
-                <TouchableOpacity onPress={() => deleteDay(dayIndex)}>
-                  <IconA
-                    name="minuscircle"
-                    size={20}
-                    style={{ position: "absolute", top: -20, right: -20 }}
-                    color={appColors.danger}
+
+            {/* Hình ảnh */}
+            <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
+              {images.length > 0 ? (
+                <View>
+                  <TouchableOpacity
+                    style={{ height: 160, width: 160 }}
+                    onPress={() => setModalVisibleImage(true)}
+                  >
+                    <Image
+                      source={require("../../assets/images/addImage.png")}
+                      style={[styles.festivalImage, { height: 90, width: 90 }]}
+                    />
+                  </TouchableOpacity>
+                  <ScrollView
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    style={{ maxHeight: 100, marginTop: -50 }}
+                  >
+                    {images.map((imageCity, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={{ marginRight: 10 }}
+                        onPress={handleChangleInfoImage(index)}
+                      >
+                        <Image
+                          source={{ uri: imageCity.images[0] }}
+                          style={[
+                            styles.festivalImage,
+                            { maxWidth: 100, maxHeight: 100 },
+                          ]}
+                        />
+
+                        <View
+                          style={{
+                            backgroundColor: "rgba(0,0,0,0.5)",
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            width: 100,
+                            height: 30,
+                            borderBottomEndRadius: 10,
+                            borderBottomStartRadius: 10,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              textAlign: "center",
+                              marginTop: 5,
+                              fontSize: 16,
+                              color: "rgba(255,255,255,0.8)",
+                            }}
+                          >
+                            {imageCity.city?.name}
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            position: "absolute",
+                            left: 5,
+                            width: 30,
+                            height: 30,
+                            backgroundColor: "rgba(0,0,0,0.2)",
+                            borderRadius: 50,
+                            marginTop: 2.7,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              fontWeight: "bold",
+                              textAlign: "center",
+                              fontSize: 20,
+                            }}
+                          >
+                            {imageCity.images.length}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.removeImageButton}
+                          onPress={() => handleRemoveImagesAndCity(index)}
+                        >
+                          <IconA name="close" size={20} color="white" />
+                        </TouchableOpacity>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.festivalImage}
+                  onPress={() => setModalVisibleImage(true)}
+                >
+                  <Image
+                    source={require("../../assets/images/addImage.png")}
+                    style={styles.festivalImage}
                   />
                 </TouchableOpacity>
+              )}
+            </SectionComponent>
+
+            {/* Chọn giờ */}
+            <DateTimePickerModal
+              isVisible={modalVisibleTimePicker}
+              mode="time"
+              date={selectedTime || new Date()}
+              onConfirm={handleConfirm}
+              onCancel={hideTimePicker}
+            />
+          </ScrollView>
+        ) : (
+          liveDays.length === 0 || citiesData.length === 0 ? (
+            <View style={styles.loadingContainer}>
+             <LottieView
+                source={require("../../assets/images/load.json")}
+                autoPlay
+                loop
+                style={{ width: 250, height: 250 }}
+              />
+              
+            <Text style={{ marginTop: 10, fontSize: 16, color: appColors.gray }}>
+              Đang cập nhật vị trí của bạn...
+            </Text>
+          </View>
+          
+        ) : (
+          <ScrollView>
+              {/* Title */}
+              <SectionComponent styles={{ marginTop: 35, marginBottom: -15 }}>
+              <TextComponent
+                text="Tiêu đề"
+                size={16}
+                styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
+              />
+              <InputComponent
+                value={titleLive}
+                placeholder="Nhập tiêu đề bài viết"
+                onChange={(val) => setTitleLive(val)}
+                textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+                inputStyle={{
+                  borderColor: appColors.gray,
+                  height: 40,
+                  backgroundColor: appColors.gray3,
+                  borderRadius: 5,
+                }}
+              />
+            </SectionComponent>
+
+            {/* Content */}
+            <SectionComponent>
+              <TextComponent
+                text="Mô tả"
+                size={16}
+                styles={{
+                  fontWeight: "bold",
+                  color: "#000",
+                  marginBottom: 5,
+                  marginTop: -10,
+                }}
+              />
+              <InputComponent
+                value={contentLive}
+                placeholder="Mô tả chung cho bài viết"
+                onChange={(val) => setContentLive(val)}
+                textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+                inputStyle={{
+                  width: "100%",
+                  // height: 140,
+                  backgroundColor: appColors.gray3,
+                  borderColor: appColors.gray,
+                  borderRadius: 5,
+                }}
+                multiline={true}
+              />
+            </SectionComponent>
+
+            {liveDays.map((day, dayIndex) => (
+              <SectionComponent key={dayIndex} styles={styles.dayContainer}>
                 <RowComponent
                   styles={{
                     flexDirection: "row",
@@ -1608,11 +2695,36 @@ const AddPostUser = () => {
                     alignItems: "center",
                   }}
                 >
-                  <Text
-                    style={{ marginTop: -20, fontSize: 15, fontWeight: "bold" }}
+                  <View
+                    style={{
+                      width: 120,
+                      height: 30,
+                      marginTop: 0,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
                   >
-                    Ngày {dayIndex + 1}
-                  </Text>
+                    <Text
+                      style={{
+                        marginTop: -20,
+                        fontSize: 15,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Ngày {dayIndex + 1}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: appColors.gray,
+                        marginTop: 5,
+                        marginBottom: -10,
+                      }}
+                    >
+                      ({day.date})
+                    </Text>
+                  </View>
+
                   <InputComponent
                     inputStyle={{
                       flex: 1,
@@ -1623,104 +2735,56 @@ const AddPostUser = () => {
                       borderColor: appColors.gray,
                     }}
                     textStyle={{ color: "#000" }}
-                    placeholder={`Mô tả tiêu đề ngày ${dayIndex + 1}`}
+                    placeholder={`Nhập tiêu đề cho ngày ${dayIndex + 1}`}
                     value={day.title}
-                    onChange={(text) => updateDay(dayIndex, "title", text)}
+                    onChange={(text) =>
+                      updateLiveActivity(dayIndex, 0, "title", text)
+                    }
                   />
                 </RowComponent>
 
                 {/* Activities */}
                 <View style={{ marginTop: 10 }}>
-                  {/* Danh sach hoat dong cua ngay do */}
                   {day.activities.map((activity, activityIndex) => (
                     <View key={activityIndex}>
                       <RowComponent
                         justify="center"
                         styles={{ maxHeight: 70, marginBottom: 20 }}
                       >
-                        <TouchableOpacity
+                        <View
                           style={{
                             width: 70,
                             height: "100%",
-                            // borderRadius: 5,
-                            borderTopLeftRadius: 5,
-                            borderBottomLeftRadius: 5,
-                            backgroundColor: appColors.btnaddActivity,
                             justifyContent: "center",
                             alignItems: "center",
+                            backgroundColor: appColors.btnaddActivity,
+                            borderTopLeftRadius: 5,
+                            borderBottomLeftRadius: 5,
                           }}
-                          //Chon gio
-                          onPress={() =>
-                            showTimePicker(
-                              dayIndex,
-                              activityIndex,
-                              activity.time
-                            )
-                          }
                         >
-                          <Text style={{ color: "#000" }}>
-                            {activity.time || "Chọn giờ"}
-                          </Text>
-                        </TouchableOpacity>
-
-                        {/* hoat dong */}
-                        <View style={{ flex: 1 }}>
-                          <TouchableOpacity
-                            onPress={() => {
-                              // console.log(activity);
-                              if (activity.address) {
-                                handleOpenMapEdit(
-                                  dayIndex,
-                                  activityIndex,
-                                  activity.address
-                                );
-                              } else {
-                                handleOpenMap(dayIndex, activityIndex);
-                              }
-                            }}
-                          >
-                            <InputComponent
-                              disabled={true}
-                              inputStyle={{
-                                width: "100%",
-                                height: "83.4%",
-                                marginTop: 7,
-                                borderRadius: 0,
-                                borderTopRightRadius: 5,
-                                borderBottomRightRadius: 5,
-                                borderColor: appColors.btnDay,
-                                backgroundColor: appColors.white,
-                              }}
-                              textStyle={{ color: "#000" }}
-                              placeholder={`Địa điểm hoạt động ${activityIndex + 1
-                                }`}
-                              multiline={true}
-                              value={activity.address}
-                              onChange={(text) =>
-                                updateActivity(
-                                  dayIndex,
-                                  activityIndex,
-                                  "address",
-                                  text
-                                )
-                              }
-                            />
-                          </TouchableOpacity>
+                          <Text style={{ color: "#000" }}>{activity.time}</Text>
                         </View>
-                        <TouchableOpacity
-                          style={{ marginTop: 0, marginLeft: 5 }}
-                          onPress={() =>
-                            deleteActivity(dayIndex, activityIndex)
-                          }
-                        >
-                          <IconA
-                            name="minuscircle"
-                            size={20}
-                            color={appColors.danger}
+                        <View style={{ flex: 1 }}>
+                          <InputComponent
+                            disabled={true}
+                            inputStyle={{
+                              width: "100%",
+                              height: "100%",
+                              marginTop: 20,
+                              borderRadius: 0,
+                              borderTopRightRadius: 5,
+                              borderBottomRightRadius: 5,
+                              borderColor: appColors.btnDay,
+                              backgroundColor: appColors.white,
+                            }}
+                            textStyle={{ color: "#000" }}
+                            value={activity.address}
+                            onChange={() => {}}
+                            multiline
+                            scrollEnabled
                           />
-                        </TouchableOpacity>
+                        </View>
                       </RowComponent>
-                      {/* Mô tả hoat dong */}
                       <InputComponent
                         inputStyle={{
                           padding: 0,
@@ -1730,12 +2794,11 @@ const AddPostUser = () => {
                           width: "100%",
                           borderColor: appColors.gray,
                         }}
-                        placeholder={`Nhập mô tả cho hoạt động ${activityIndex + 1
-                          }`}
+                        placeholder="Nhập mô tả cho hoạt động"
                         value={activity.activity}
                         multiline={true}
                         onChange={(text) =>
-                          updateActivity(
+                          updateLiveActivity(
                             dayIndex,
                             activityIndex,
                             "activity",
@@ -1747,17 +2810,6 @@ const AddPostUser = () => {
                   ))}
                 </View>
 
-                {/* Nut them hoat dong */}
-                <SectionComponent>
-                  <TouchableOpacity
-                    style={[styles.addButton, { marginTop: 0 }]}
-                    onPress={() => addActivity(dayIndex)}
-                  >
-                    <Text style={{ fontSize: 13 }}>Thêm hoạt động</Text>
-                    <IconA name="pluscircleo" size={15} color="#000" />
-                  </TouchableOpacity>
-                </SectionComponent>
-
                 <InputComponent
                   inputStyle={{
                     borderRadius: 5,
@@ -1768,135 +2820,120 @@ const AddPostUser = () => {
                   placeholder="Nhập mô tả cho ngày"
                   value={day.description}
                   multiline={true}
-                  onChange={(text) => updateDay(dayIndex, "description", text)}
+                  onChange={(text) =>
+                    updateLiveActivity(dayIndex, 0, "description", text)
+                  }
                 />
               </SectionComponent>
             ))}
-          </View>
 
-          {/* Nút thêm ngày */}
-          <SectionComponent>
-            <TouchableOpacity
-              style={[
-                styles.addButton,
-                { backgroundColor: appColors.btnaddActivity, marginTop: 0 },
-              ]}
-              onPress={addDay}
-            >
-              <Text style={{ fontSize: 16 }}>Thêm ngày</Text>
-              <IconA name="pluscircleo" size={15} color="#000" />
-            </TouchableOpacity>
-          </SectionComponent>
-
-          {/* Hình ảnh */}
-          <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
-            {images.length > 0 ? (
-              <View>
-                <TouchableOpacity
-                  style={{ height: 160, width: 160 }}
-                  onPress={() => setModalVisibleImage(true)}
-                >
-                  <Image
-                    source={require("../../assets/images/addImage.png")}
-                    style={[styles.festivalImage, { height: 90, width: 90 }]}
-                  />
-                </TouchableOpacity>
-                <ScrollView
-                  horizontal={true}
-                  showsHorizontalScrollIndicator={false}
-                  style={{ maxHeight: 100, marginTop: -50 }}
-                >
-                  {images.map((imageCity, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={{ marginRight: 10 }}
-                      onPress={handleChangleInfoImage(index)}
-                    >
-                      <Image
-                        source={{ uri: imageCity.images[0] }}
-                        style={[
-                          styles.festivalImage,
-                          { maxWidth: 100, maxHeight: 100 },
-                        ]}
-                      />
-
-                      <View
-                        style={{
-                          backgroundColor: "rgba(0,0,0,0.5)",
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          width: 100,
-                          height: 30,
-                          borderBottomEndRadius: 10,
-                          borderBottomStartRadius: 10,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            textAlign: "center",
-                            marginTop: 5,
-                            fontSize: 16,
-                            color: "rgba(255,255,255,0.8)",
-                          }}
-                        >
-                          {imageCity.city?.name}
-                        </Text>
-                      </View>
-                      <View
-                        style={{
-                          position: "absolute",
-                          left: 5,
-                          width: 30,
-                          height: 30,
-                          backgroundColor: "rgba(0,0,0,0.2)",
-                          borderRadius: 50,
-                          marginTop: 2.7,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontWeight: "bold",
-                            textAlign: "center",
-                            fontSize: 20,
-                          }}
-                        >
-                          {imageCity.images.length}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.removeImageButton}
-                        onPress={() => handleRemoveImagesAndCity(index)}
-                      >
-                        <IconA name="close" size={20} color="white" />
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.festivalImage}
-                onPress={() => setModalVisibleImage(true)}
+            {/* Ảnh */}
+            <SectionComponent styles={{ marginTop: 10, marginBottom: 35 }}>
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
               >
+                {groupedLiveImages.map(
+                  (imageCity, index) =>
+                    imageCity.images.length > 0 && (
+                      <View
+                        key={index}
+                        style={{ marginRight: 10, position: "relative" }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedLiveCityImages(imageCity.images || []);
+                            setSelectedLiveCityName(
+                              imageCity.city?.name || "Không xác định"
+                            );
+                            setLiveModalVisible(true);
+                          }}
+                        >
+                          <Image
+                            source={{ uri: imageCity.images[0] }}
+                            style={[
+                              styles.festivalImage,
+                              { width: 100, height: 100 },
+                            ]}
+                          />
+                          <View
+                            style={{
+                              backgroundColor: "rgba(0,0,0,0.5)",
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              width: 100,
+                              height: 30,
+                              borderBottomEndRadius: 10,
+                              borderBottomStartRadius: 10,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                textAlign: "center",
+                                marginTop: 5,
+                                fontSize: 14,
+                                color: "rgba(255,255,255,0.8)",
+                              }}
+                            >
+                              {imageCity.city?.name}
+                            </Text>
+                          </View>
+                          <View
+                            style={{
+                              position: "absolute",
+                              left: 5,
+                              width: 30,
+                              height: 30,
+                              backgroundColor: "rgba(0,0,0,0.5)",
+                              borderRadius: 50,
+                              marginTop: 2.7,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "white",
+                                fontWeight: "bold",
+                                textAlign: "center",
+                                fontSize: 16,
+                              }}
+                            >
+                              {imageCity.images.length}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Nút xóa toàn bộ ảnh */}
+                        <TouchableOpacity
+                          style={{
+                            position: "absolute",
+                            top: 5,
+                            right: 5,
+                            backgroundColor: "rgba(0, 0, 0, 0.5)",
+                            borderRadius: 50,
+                            padding: 5,
+                          }}
+                          onPress={() => handleRemoveImagesAndCityLive(index)}
+                        >
+                          <IconA name="close" size={20} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    )
+                )}
+              </ScrollView>
+            </SectionComponent>
+
+            {liveDays.length > 0 && (
+              <TouchableOpacity style={styles.camera} onPress={openCamera}>
                 <Image
-                  source={require("../../assets/images/addImage.png")}
-                  style={styles.festivalImage}
+                  source={require("../../assets/images/camera.png")}
+                  style={[{ height: 100, width: 100, margin: 10 }]}
                 />
               </TouchableOpacity>
             )}
-          </SectionComponent>
-
-          {/* Chọn giờ */}
-          <DateTimePickerModal
-            isVisible={modalVisibleTimePicker}
-            mode="time"
-            date={selectedTime || new Date()}
-            onConfirm={handleConfirm}
-            onCancel={hideTimePicker}
-          />
-        </ScrollView>
+          </ScrollView>
+        )
+        )}
 
         {/* Public */}
         <View style={[styles.separator, { marginTop: 0, marginBottom: 0 }]} />
@@ -1961,88 +2998,106 @@ const AddPostUser = () => {
 
         {/* Nút chia sẻ */}
         <SectionComponent>
-          {buttonPost ? (
-            <RowComponent styles={{ marginHorizontal: 10 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  handleReviewPost();
-                }}
-                style={{
-                  backgroundColor: appColors.btncity,
-                  width: "20%",
-                  height: "100%",
-                  borderRadius: 10,
-                  marginRight: 10,
-                  borderColor: "green",
-                  borderWidth: 1,
-                }}
-              >
-                <TextComponent
-                  text="Review bài viết"
-                  size={14}
-                  styles={{
-                    fontWeight: "bold",
-                    color: "green",
-                    textAlign: "center",
-                    justifyContent: "center",
-                    marginTop: 3,
-                    padding: 5,
+          {activeTab === "form" ? (
+            // Nút cho tab "Đăng bài"
+            buttonPost ? (
+              <RowComponent styles={{ marginHorizontal: 10 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleReviewPost();
                   }}
+                  style={{
+                    backgroundColor: appColors.btncity,
+                    width: "20%",
+                    height: "100%",
+                    borderRadius: 10,
+                    marginRight: 10,
+                    borderColor: "green",
+                    borderWidth: 1,
+                  }}
+                >
+                  <TextComponent
+                    text="Xem trước"
+                    size={14}
+                    styles={{
+                      fontWeight: "bold",
+                      color: "green",
+                      textAlign: "center",
+                      justifyContent: "center",
+                      marginTop: 3,
+                      padding: 5,
+                    }}
+                  />
+                </TouchableOpacity>
+                <ButtonComponent
+                  text="Đang Đăng Bài...."
+                  textStyles={{
+                    width: "75%",
+                    fontWeight: "bold",
+                    fontSize: 30,
+                    textAlign: "center",
+                  }}
+                  color={appColors.primary}
+                  onPress={handlePushPost}
                 />
-              </TouchableOpacity>
-              <ButtonComponent
-                text="Đang Đăng Bài...."
-                textStyles={{
-                  width: "75%",
-                  fontWeight: "bold",
-                  fontSize: 30,
-                  textAlign: "center",
-                }}
-                color={appColors.primary}
-                onPress={handlePushPost}
-              />
-            </RowComponent>
+              </RowComponent>
+            ) : (
+              <RowComponent styles={{ marginHorizontal: 10 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleReviewPost();
+                  }}
+                  style={{
+                    backgroundColor: appColors.btncity,
+                    width: "20%",
+                    height: "100%",
+                    borderRadius: 10,
+                    marginRight: 10,
+                    borderColor: "green",
+                    borderWidth: 1,
+                  }}
+                >
+                  <TextComponent
+                    text="Xem trước"
+                    size={14}
+                    styles={{
+                      fontWeight: "bold",
+                      color: "green",
+                      textAlign: "center",
+                      justifyContent: "center",
+                      marginTop: 3,
+                      padding: 5,
+                    }}
+                  />
+                </TouchableOpacity>
+                <ButtonComponent
+                  text="Đăng bài"
+                  textStyles={{
+                    width: "75%",
+                    fontWeight: "bold",
+                    fontSize: 30,
+                    textAlign: "center",
+                  }}
+                  color={appColors.primary}
+                  onPress={handlePushPost}
+                />
+              </RowComponent>
+            )
           ) : (
+            // Nút cho tab "Live"
             <RowComponent styles={{ marginHorizontal: 10 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  handleReviewPost();
-                }}
-                style={{
-                  backgroundColor: appColors.btncity,
-                  width: "20%",
-                  height: "100%",
-                  borderRadius: 10,
-                  marginRight: 10,
-                  borderColor: "green",
-                  borderWidth: 1,
-                }}
-              >
-                <TextComponent
-                  text="Xem trước"
-                  size={14}
-                  styles={{
-                    fontWeight: "bold",
-                    color: "green",
-                    textAlign: "center",
-                    justifyContent: "center",
-                    marginTop: 3,
-                    padding: 5,
-                  }}
-                />
-              </TouchableOpacity>
-              <ButtonComponent
-                text="Đăng bài"
-                textStyles={{
-                  width: "75%",
-                  fontWeight: "bold",
-                  fontSize: 30,
-                  textAlign: "center",
-                }}
-                color={appColors.primary}
-                onPress={handlePushPost}
-              />
-            </RowComponent>
+            <ButtonComponent
+              text="Đăng bài Live"
+              textStyles={{
+                width: "100%",
+                fontWeight: "bold",
+                fontSize: 30,
+                textAlign: "center",
+              }}
+              color={appColors.primary}
+              onPress={handlePushLivePost}
+            />
+          </RowComponent>
           )}
         </SectionComponent>
         {/* Chọn nước cho bài viết */}
@@ -2635,6 +3690,47 @@ const AddPostUser = () => {
             </View>
           </Modal>
         ) : null}
+
+        {/* Modal live images */}
+        <Modal
+          visible={liveModalVisible}
+          onDismiss={() => setLiveModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={[styles.modalTitle, { fontSize: 35 }]}>
+              {selectedLiveCityName}
+            </Text>
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+            >
+              {selectedLiveCityImages.map((imageUri, index) => (
+                <View key={index} style={{ marginRight: 10 }}>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={[styles.festivalImage, { width: 300, height: 300 }]}
+                  />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => handleRemoveLiveImage(index)}
+                  >
+                    <IconA name="close" size={30} color="white" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[
+                styles.closeButton,
+                { marginTop: 20, width: 140, height: 45 },
+              ]}
+              onPress={() => setLiveModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -2735,7 +3831,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: appColors.gray3,
     marginTop: 10,
-    borderRadius: 5
+    borderRadius: 5,
   },
   input: {
     height: 40,
@@ -2812,6 +3908,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: 160,
     height: 160,
+  },
+  camera: {
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 12,
+    margin: 10,
+    width: 120,
+    height: 120,
   },
   closeButton: {
     width: 100,
@@ -2925,7 +4029,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
     padding: 5,
-    borderRadius: 5
+    borderRadius: 5,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginVertical: 10,
+    backgroundColor: appColors.gray3,
+    borderRadius: 10,
+    padding: 5,
+  },
+  tabButton: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  activeTabButton: {
+    backgroundColor: appColors.primary,
+  },
+  tabText: {
+    fontSize: 16,
+    color: appColors.gray,
+  },
+  activeTabText: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  liveContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  liveText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: appColors.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

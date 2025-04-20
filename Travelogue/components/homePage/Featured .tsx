@@ -18,7 +18,7 @@ const StoryItem = ({ item }: StoryItemProps) => (
     style={{ alignItems: "center", marginHorizontal: 8 }}
     onPress={() => {
       router.push({
-        pathname: "/gallery",
+        pathname: "/galleryCities",
         params: {
           idCity: item.id,
           idCountry: item?.id_nuoc,

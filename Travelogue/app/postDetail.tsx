@@ -64,6 +64,7 @@ type Post = {
   locations: Record<string, Record<string, string>>;
   post_status: string;
   reports: number;
+  mode: number;
   view_mode: boolean;
   thumbnail: any
 }
@@ -369,7 +370,7 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </TouchableOpacity>
         <View style={{ zIndex: 1000 }}>
-          <MenuItem locations={item.locations} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+          <MenuItem locations={item.locations} mode={item.mode} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
         </View>
       </View>
 
