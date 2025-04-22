@@ -12,15 +12,25 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { ref, onValue, update } from "firebase/database";
 import * as ImagePicker from "expo-image-picker";
-import { database } from "@/firebase/firebaseConfig";
+import {
+  database,
+  get,
+  getDownloadURL,
+  push,
+  set,
+  storageRef,
+  uploadBytes,
+} from "@/firebase/firebaseConfig";
 import IconA from "react-native-vector-icons/AntDesign";
 import { router, useLocalSearchParams } from "expo-router";
 import { getDataPost } from "./getDataPost";
 import LottieView from "lottie-react-native";
 import {
+  ButtonComponent,
   InputComponent,
   RowComponent,
   SectionComponent,
@@ -28,6 +38,11 @@ import {
 } from "@/components";
 import { appColors } from "@/constants/appColors";
 import * as Location from "expo-location";
+import Toast from "react-native-toast-message-custom";
+import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
+import { useBannedWords } from "@/components/wordPosts/BannedWordData";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getStorage } from "firebase/storage";
 
 const EditPostLive = () => {
   const [title, setTitle] = useState("");
@@ -69,8 +84,14 @@ const EditPostLive = () => {
   >([]);
   const [isActivityHandled, setIsActivityHandled] = useState(false);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
-
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [buttonPost, setButtonPost] = useState(false);
+  const [cities, setCities] = useState<
+    { id: string; name: string; id_nuoc: string; area_id: string }[]
+  >([]);
   const { postId } = useLocalSearchParams();
+  const bannedWords = useBannedWords();
   useEffect(() => {
     const cityRef = ref(database, "cities");
     onValue(cityRef, (snapshot) => {
@@ -92,7 +113,6 @@ const EditPostLive = () => {
     });
   }, [postId]);
 
-  
   // console.log("ID Post:", postId);
   useEffect(() => {
     if (typeof postId === "string") {
@@ -112,40 +132,37 @@ const EditPostLive = () => {
   }, [postId]);
 
   useEffect(() => {
-    if (liveDays.length > 0 && !isActivityHandled) {
-      console.log("liveDays đã được cập nhật:", liveDays);
-      handleAddDayOrActivity();
-    }
-  }, [liveDays]);
+    setShowStartModal(true);
+  }, []);
 
   // console.log(liveDays);
   const handleAddDayOrActivity = async () => {
-  setIsAddingActivity(true); // Bắt đầu trạng thái loading
-  const currentTime = new Date();
-  const formattedDate = `${currentTime
-    .getDate()
-    .toString()
-    .padStart(2, "0")}/${(currentTime.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}/${currentTime.getFullYear()}`;
+    setIsAddingActivity(true); // Bắt đầu trạng thái loading
+    const currentTime = new Date();
+    const formattedDate = `${currentTime
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${(currentTime.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}/${currentTime.getFullYear()}`;
 
-  console.log("Ngày hiện tại:", formattedDate);
+    console.log("Ngày hiện tại:", formattedDate);
 
-  try {
-    if (!liveDays || liveDays.length === 0) {
-      console.log("liveDays trống, thêm ngày mới");
-      await addLiveDay();
-    } else if (liveDays[liveDays.length - 1]?.date !== formattedDate) {
-      console.log("Thêm ngày mới");
-      await addLiveDay();
-    } else {
-      console.log("Thêm hoạt động mới vào ngày hiện tại");
-      await addActivityToCurrentDay();
+    try {
+      if (!liveDays || liveDays.length === 0) {
+        console.log("liveDays trống, thêm ngày mới");
+        await addLiveDay();
+      } else if (liveDays[liveDays.length - 1]?.date !== formattedDate) {
+        console.log("Thêm ngày mới");
+        await addLiveDay();
+      } else {
+        console.log("Thêm hoạt động mới vào ngày hiện tại");
+        await addActivityToCurrentDay();
+      }
+    } finally {
+      setIsAddingActivity(false);
     }
-  } finally {
-    setIsAddingActivity(false); 
-  }
-};
+  };
   // Thêm ngày mới vào danh sách
   const addLiveDay = async () => {
     try {
@@ -170,7 +187,7 @@ const EditPostLive = () => {
       setLiveDays((prevLiveDays) => [
         ...prevLiveDays,
         {
-          title: `Ngày ${prevLiveDays.length + 1}`,
+          title: "",
           date: formattedDate,
           description: "",
           activities: [
@@ -182,7 +199,7 @@ const EditPostLive = () => {
           ],
         },
       ]);
-      setIsAddingActivity(false); 
+      setIsAddingActivity(false);
       console.log("Sau khi thêm ngày mới:", liveDays);
     } catch (error) {
       Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
@@ -215,7 +232,7 @@ const EditPostLive = () => {
 
         return updatedDays;
       });
-      setIsAddingActivity(false); 
+      setIsAddingActivity(false);
       console.log("Sau khi thêm hoạt động:", liveDays);
     } catch (error) {
       Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
@@ -377,30 +394,24 @@ const EditPostLive = () => {
       Alert.alert("Lỗi", "Không thể chụp ảnh. Vui lòng thử lại.");
     }
   };
-  // Hàm xử lý lưu bài viết
-  const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
-      Alert.alert("Lỗi", "Tiêu đề và nội dung không được để trống.");
-      return;
-    }
 
+  // Hàm kết thúc live
+  const handleEndLive = async () => {
+    // chỉ đổi trang thái mode trong firebase thành 3
     const postRef = ref(database, `posts/${postId}`);
-    const updatedData = {
-      title,
-      content,
-      liveDays,
-      images: liveImages,
-    };
-
-    try {
-      await update(postRef, updatedData);
-      Alert.alert("Thành công", "Bài viết đã được cập nhật.");
-      router.back();
-    } catch (error) {
-      console.error("Lỗi khi cập nhật bài viết:", error);
-      Alert.alert("Lỗi", "Không thể cập nhật bài viết. Vui lòng thử lại.");
-    }
+    await update(postRef, {
+      mode: 3,
+    });
+    Toast.show({
+      type: "success",
+      text1: "Kết thúc live",
+      text2: "Live đã kết thúc thành công",
+    });
+    router.back();
+    router.back();
   };
+
+  // Nhóm ảnh theo thành phố
   const groupedLiveImages = liveImages.reduce<
     { city: { id: string; name: string }; images: string[] }[]
   >((acc, imageCity) => {
@@ -431,7 +442,445 @@ const EditPostLive = () => {
     setSelectedLiveCityName("");
   };
 
-  return  isAddingActivity ? (
+  // lưu hông live nữa
+  const endLiveSave = async () => {
+    setButtonPost(true);
+
+    // Kiểm tra dữ liệu
+    if (title.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (content.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung bài viết.");
+      return;
+    }
+
+    const existingDay = liveDays.find(
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
+    );
+    if (existingDay) {
+      const dayIndex = liveDays.findIndex((day) => day === existingDay);
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+
+    const existingActivity = liveDays.find((day) =>
+      day.activities.find(
+        (act) => act.time === "" || act.address === "" || act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = liveDays.findIndex((day) =>
+        day.activities.includes(existingActivity.activities[0])
+      );
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
+      );
+      return;
+    }
+
+    if (liveImages.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết Live.");
+      return;
+    }
+
+    // Tạo dữ liệu markdown
+    const contents = `# ${title}<br><br>${content}<br><br>${liveDays
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>( ${
+            day.date ? day.date : "()"
+          } )<br><br>${day.description}<br><br>${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
+            )
+            .join("<br><br>")}`
+      )
+      .join("<br><br>")}`;
+    console.log("Contents:", contents);
+
+    // Kiểm tra từ cấm
+    if (bannedWordsChecker(title, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+
+    try {
+      const timestamp = Date.now();
+      const storage = getStorage();
+      const uploadedImageUrls: {
+        [key: string]: {
+          [key: string]: { city_name: string; images_value: string[] };
+        };
+      } = {};
+
+      // Xử lý ảnh và lưu ảnh
+      for (const image of liveImages) {
+        const { city, images: imageUris } = image;
+        const {
+          id_nuoc,
+          id,
+          name: cityName,
+          area_id: id_khuvucimages,
+        } = city || {};
+
+        for (const uri of imageUris) {
+          const name = uri.split("/").pop();
+          if (id_nuoc && id) {
+            const imageRef = storageRef(
+              storage,
+              `posts/${postId}/images/${name}`
+            );
+            const response = await fetch(uri);
+            const blob = await response.blob();
+
+            // Tải ảnh lên Storage
+            await uploadBytes(imageRef, blob);
+            const downloadURL = await getDownloadURL(imageRef);
+
+            if (!uploadedImageUrls[id_nuoc]) {
+              uploadedImageUrls[id_nuoc] = {};
+            }
+            if (!uploadedImageUrls[id_nuoc][id]) {
+              uploadedImageUrls[id_nuoc][id] = {
+                city_name: cityName || "",
+                images_value: [],
+              };
+            }
+            uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
+          }
+        }
+      }
+
+      // Lấy thông tin người dùng
+      const userId = await AsyncStorage.getItem("userToken");
+      const userRef = ref(database, `accounts/${userId}`);
+      let avatar = "";
+      let fullname = "";
+      let totalPosts;
+
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          avatar = data.avatar;
+          fullname = data.fullname;
+          totalPosts = data.totalPosts || 0;
+        }
+      });
+
+      const thumbnail =
+        uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+          Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+        ]?.images_value?.[0] || "";
+
+      // Cấu trúc dữ liệu bài viết
+      const postData = {
+        locations: liveImages.reduce(
+          (acc: { [key: string]: { [key: string]: string } }, image) => {
+            const { city } = image;
+            const { id_nuoc, id, name } = city || {};
+            if (id_nuoc && id) {
+              if (!acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
+              acc[id_nuoc][id] = name || "Không xác định";
+            }
+            return acc;
+          },
+          {}
+        ),
+        content: contents,
+        author: { id: userId, avatar, fullname },
+        images: uploadedImageUrls,
+        likes: 0,
+        id: postId,
+        reports: 0,
+        match: 0,
+        isCheckIn,
+        title,
+        mode: 3,
+        status_id: isPublic ? 1 : 2,
+        thumbnail,
+        created_at: timestamp,
+        saves: 0,
+      };
+
+      // Cập nhật bài viết
+      const postRef = ref(database, `posts/${postId}`);
+      await update(postRef, postData);
+
+      setButtonPost(false);
+      Toast.show({
+        type: "success",
+        text1: "Thông báo",
+        text2: "Cập nhật bài viết thành công",
+        visibilityTime: 2000,
+      });
+      router.back();
+      router.back();
+    } catch (error) {
+      setButtonPost(false);
+      console.error("Error:", error);
+      Alert.alert("Lỗi", "Không thể cập nhật bài viết.");
+    }
+  };
+  const endCoutinueLive = async () => {
+    setButtonPost(true);
+
+    // Kiểm tra dữ liệu
+    if (title.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề bài viết.");
+      return;
+    }
+    if (content.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng nhập nội dung bài viết.");
+      return;
+    }
+
+    const existingDay = liveDays.find(
+      (day) =>
+        day.title === "" ||
+        day.description === "" ||
+        day.activities.length === 0
+    );
+    if (existingDay) {
+      const dayIndex = liveDays.findIndex((day) => day === existingDay);
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho ngày thứ ${dayIndex + 1}.`
+      );
+      return;
+    }
+
+    const existingActivity = liveDays.find((day) =>
+      day.activities.find(
+        (act) => act.time === "" || act.address === "" || act.activity === ""
+      )
+    );
+    if (existingActivity) {
+      const dayIndex = liveDays.findIndex((day) =>
+        day.activities.includes(existingActivity.activities[0])
+      );
+      setButtonPost(false);
+      Alert.alert(
+        "Thông báo",
+        `Vui lòng hoàn thành thông tin đầy đủ cho các hoạt động của ngày thứ ${
+          dayIndex + 1
+        }.`
+      );
+      return;
+    }
+
+    if (liveImages.length === 0) {
+      setButtonPost(false);
+      Alert.alert("Thông báo", "Vui lòng thêm ảnh cho bài viết Live.");
+      return;
+    }
+
+    // Tạo dữ liệu markdown
+    const contents = `# ${title}<br><br>${content}<br><br>${liveDays
+      .map(
+        (day, index) =>
+          `## **Ngày ${index + 1}:** ${day.title}<br><br>( ${
+            day.date ? day.date : "()"
+          } )<br><br>${day.description}<br><br>${day.activities
+            .map(
+              (activity) =>
+                `### ${activity.time} - ${activity.activity}<br><br>**Địa điểm:** ${activity.address}`
+            )
+            .join("<br><br>")}`
+      )
+      .join("<br><br>")}`;
+    console.log("Contents:", contents);
+
+    // Kiểm tra từ cấm
+    if (bannedWordsChecker(title, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Tiêu đề chứa từ cấm",
+        text2: "Vui lòng sửa lại tiêu đề bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+    if (bannedWordsChecker(content, bannedWords)) {
+      setButtonPost(false);
+      Toast.show({
+        type: "error",
+        text1: "Nội dung chứa từ cấm",
+        text2: "Vui lòng sửa lại mô tả bài viết.",
+        text1Style: { fontSize: 14 },
+        text2Style: { fontSize: 12 },
+        position: "top",
+      });
+      return;
+    }
+
+    try {
+      const timestamp = Date.now();
+      const storage = getStorage();
+      const uploadedImageUrls: {
+        [key: string]: {
+          [key: string]: { city_name: string; images_value: string[] };
+        };
+      } = {};
+
+      // Xử lý ảnh và lưu ảnh
+      for (const image of liveImages) {
+        const { city, images: imageUris } = image;
+        const {
+          id_nuoc,
+          id,
+          name: cityName,
+          area_id: id_khuvucimages,
+        } = city || {};
+
+        for (const uri of imageUris) {
+          const name = uri.split("/").pop();
+          if (id_nuoc && id) {
+            const imageRef = storageRef(
+              storage,
+              `posts/${postId}/images/${name}`
+            );
+            const response = await fetch(uri);
+            const blob = await response.blob();
+
+            // Tải ảnh lên Storage
+            await uploadBytes(imageRef, blob);
+            const downloadURL = await getDownloadURL(imageRef);
+
+            if (!uploadedImageUrls[id_nuoc]) {
+              uploadedImageUrls[id_nuoc] = {};
+            }
+            if (!uploadedImageUrls[id_nuoc][id]) {
+              uploadedImageUrls[id_nuoc][id] = {
+                city_name: cityName || "",
+                images_value: [],
+              };
+            }
+            uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
+          }
+        }
+      }
+
+      // Lấy thông tin người dùng
+      const userId = await AsyncStorage.getItem("userToken");
+      const userRef = ref(database, `accounts/${userId}`);
+      let avatar = "";
+      let fullname = "";
+      let totalPosts;
+
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          avatar = data.avatar;
+          fullname = data.fullname;
+          totalPosts = data.totalPosts || 0;
+        }
+      });
+
+      const thumbnail =
+        uploadedImageUrls?.[Object.keys(uploadedImageUrls)[0]]?.[
+          Object.keys(uploadedImageUrls[Object.keys(uploadedImageUrls)[0]])[0]
+        ]?.images_value?.[0] || "";
+
+      // Cấu trúc dữ liệu bài viết
+      const postData = {
+        locations: liveImages.reduce(
+          (acc: { [key: string]: { [key: string]: string } }, image) => {
+            const { city } = image;
+            const { id_nuoc, id, name } = city || {};
+            if (id_nuoc && id) {
+              if (!acc[id_nuoc]) {
+                acc[id_nuoc] = {};
+              }
+              acc[id_nuoc][id] = name || "Không xác định";
+            }
+            return acc;
+          },
+          {}
+        ),
+        content: contents,
+        author: { id: userId, avatar, fullname },
+        images: uploadedImageUrls,
+        likes: 0,
+        id: postId,
+        reports: 0,
+        match: 0,
+        isCheckIn,
+        title,
+        mode: 2,
+        status_id: isPublic ? 1 : 2,
+        thumbnail,
+        created_at: timestamp,
+        saves: 0,
+      };
+
+      // Cập nhật bài viết
+      const postRef = ref(database, `posts/${postId}`);
+      await update(postRef, postData);
+
+      setButtonPost(false);
+      Toast.show({
+        type: "success",
+        text1: "Thông báo",
+        text2: "Cập nhật bài viết thành công",
+        visibilityTime: 2000,
+      });
+      router.back();
+      router.back();
+    } catch (error) {
+      setButtonPost(false);
+      console.error("Error:", error);
+      Alert.alert("Lỗi", "Không thể cập nhật bài viết.");
+    }
+  };
+
+  // Xử lý nút chia sẻ
+
+  return isAddingActivity ? (
     <View style={styles.loadingContainer}>
       <LottieView
         source={require("../../assets/images/load.json")}
@@ -440,7 +889,7 @@ const EditPostLive = () => {
         style={{ width: 250, height: 250 }}
       />
       <Text style={{ marginTop: 10, fontSize: 16, color: appColors.gray }}>
-         Đang cập nhật vị trí của bạn...
+        Đang cập nhật vị trí của bạn...
       </Text>
     </View>
   ) : (
@@ -451,54 +900,54 @@ const EditPostLive = () => {
     >
       <ScrollView>
         {/* điều kiện để hiện */}
-          <>
-             <SectionComponent styles={{ marginTop: 35, marginBottom: -15 }}>
-          <TextComponent
-            text="Tiêu đề"
-            size={16}
-            styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
-          />
-          <InputComponent
-            value={title}
-            placeholder="Nhập tiêu đề bài viết"
-            onChange={(val) => setTitle(val)}
-            textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
-            inputStyle={{
-              borderColor: appColors.gray,
-              height: 40,
-              backgroundColor: appColors.gray3,
-              borderRadius: 5,
-            }}
-          />
-        </SectionComponent>
+        <>
+          <SectionComponent styles={{ marginTop: 35, marginBottom: -15 }}>
+            <TextComponent
+              text="Tiêu đề"
+              size={16}
+              styles={{ fontWeight: "bold", color: "#000", marginBottom: 5 }}
+            />
+            <InputComponent
+              value={title}
+              placeholder="Nhập tiêu đề bài viết"
+              onChange={(val) => setTitle(val)}
+              textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+              inputStyle={{
+                borderColor: appColors.gray,
+                height: 40,
+                backgroundColor: appColors.gray3,
+                borderRadius: 5,
+              }}
+            />
+          </SectionComponent>
 
-        <SectionComponent>
-          <TextComponent
-            text="Mô tả"
-            size={16}
-            styles={{
-              fontWeight: "bold",
-              color: "#000",
-              marginBottom: 5,
-              marginTop: -10,
-            }}
-          />
-          <InputComponent
-            value={content}
-            placeholder="Mô tả chung cho bài viết"
-            onChange={(val) => setContent(val)}
-            textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
-            inputStyle={{
-              width: "100%",
-              // height: 140,
-              backgroundColor: appColors.gray3,
-              borderColor: appColors.gray,
-              borderRadius: 5,
-            }}
-            multiline={true}
-          />
-        </SectionComponent>
-          </>
+          <SectionComponent>
+            <TextComponent
+              text="Mô tả"
+              size={16}
+              styles={{
+                fontWeight: "bold",
+                color: "#000",
+                marginBottom: 5,
+                marginTop: -10,
+              }}
+            />
+            <InputComponent
+              value={content}
+              placeholder="Mô tả chung cho bài viết"
+              onChange={(val) => setContent(val)}
+              textStyle={{ fontSize: 16, fontWeight: "400", color: "#000" }}
+              inputStyle={{
+                width: "100%",
+                // height: 140,
+                backgroundColor: appColors.gray3,
+                borderColor: appColors.gray,
+                borderRadius: 5,
+              }}
+              multiline={true}
+            />
+          </SectionComponent>
+        </>
 
         {liveDays.map((day, dayIndex) => (
           <SectionComponent key={dayIndex} styles={styles.dayContainer}>
@@ -525,7 +974,26 @@ const EditPostLive = () => {
                     fontWeight: "bold",
                   }}
                 >
-                  Ngày {dayIndex + 1}
+                  {`Ngày ${
+                    liveDays[0]?.date
+                      ? Math.floor(
+                          (new Date(
+                            parseInt((day.date ?? "").split("/")[2], 10), // Năm
+                            parseInt((day.date ?? "").split("/")[1], 10) - 1, // Tháng (0-based)
+                            parseInt(
+                              (day.date ?? "01/01/1970").split("/")[0],
+                              10
+                            ) // Ngày
+                          ).getTime() -
+                            new Date(
+                              parseInt(liveDays[0].date.split("/")[2], 10), // Năm
+                              parseInt(liveDays[0].date.split("/")[1], 10) - 1, // Tháng (0-based)
+                              parseInt(liveDays[0].date.split("/")[0], 10) // Ngày
+                            ).getTime()) /
+                            (1000 * 3600 * 24)
+                        ) + 1
+                      : dayIndex + 1
+                  }`}
                 </Text>
                 <Text
                   style={{
@@ -745,47 +1213,218 @@ const EditPostLive = () => {
           </TouchableOpacity>
         )}
       </ScrollView>
-          {/* Modal live images */}
-          <Modal
-          visible={liveModalVisible}
-          transparent={true} 
-          onDismiss={() => setLiveModalVisible(false)}
+      {/* Public */}
+      <View style={[styles.separator, { marginTop: 0, marginBottom: 0 }]} />
+      <SectionComponent
+        styles={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 10,
+        }}
+      >
+        <RowComponent
+          styles={{
+            width: "100%",
+            height: 30,
+            padding: 5,
+            marginTop: 10,
+            marginBottom: -10,
+            justifyContent: "center",
+          }}
+          justify="space-between"
         >
-          <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { fontSize: 35 }]}>
-              {selectedLiveCityName}
-            </Text>
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-            >
-              {selectedLiveCityImages.map((imageUri, index) => (
-                <View key={index} style={{ marginRight: 10 }}>
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={[styles.festivalImage, { width: 300, height: 300 }]}
-                  />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => handleRemoveLiveImage(index)}
-                  >
-                    <IconA name="close" size={30} color="white" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
+          <TextComponent
+            text="Riêng tư"
+            size={13}
+            styles={{
+              fontWeight: "500",
+              backgroundColor: !isPublic ? "#ea695d" : appColors.gray3,
+              borderRadius: 50,
+              borderColor: appColors.gray,
+              borderWidth: 1,
+              padding: 5,
+              width: 100,
+              height: 28,
+              textAlign: "center",
+            }}
+          />
+          <Switch
+            value={isPublic}
+            trackColor={{ true: "#1aad1a", false: appColors.danger }}
+            thumbColor={isPublic ? "#5dea60" : "#ea695d"}
+            onValueChange={(val) => setIsPublic(val)}
+          />
+          <TextComponent
+            text="Công khai"
+            size={13}
+            styles={{
+              fontWeight: "500",
+              backgroundColor: isPublic ? "#5dea60" : appColors.gray3,
+              borderRadius: 50,
+              padding: 5,
+              width: 100,
+              borderColor: appColors.gray,
+              borderWidth: 1,
+              height: 28,
+              textAlign: "center",
+            }}
+          />
+        </RowComponent>
+      </SectionComponent>
 
+      {/* Nút chia sẻ */}
+      <SectionComponent>
+        {/* // Nút cho tab "Đăng bài" */}
+        {buttonPost ? (
+          <RowComponent styles={{ marginHorizontal: 10 }}>
             <TouchableOpacity
-              style={[
-                styles.closeButton,
-                { marginTop: 20, width: 140, height: 45 },
-              ]}
-              onPress={() => setLiveModalVisible(false)}
+              onPress={() => {
+                endLiveSave();
+              }}
+              style={{
+                backgroundColor: appColors.btncity,
+                width: "20%",
+                height: "100%",
+                borderRadius: 10,
+                marginRight: 10,
+                borderColor: "green",
+                borderWidth: 1,
+              }}
             >
-              <Text style={styles.closeButtonText}>Đóng</Text>
+              <TextComponent
+                text="Đang Đóng Live"
+                size={14}
+                styles={{
+                  fontWeight: "bold",
+                  color: "green",
+                  textAlign: "center",
+                  justifyContent: "center",
+                  marginTop: 3,
+                  padding: 5,
+                }}
+              />
             </TouchableOpacity>
+            <ButtonComponent
+              text="Đang Cập Nhật Live...."
+              textStyles={{
+                width: "75%",
+                fontWeight: "bold",
+                fontSize: 30,
+                textAlign: "center",
+              }}
+              color={appColors.primary}
+            />
+          </RowComponent>
+        ) : (
+          <RowComponent styles={{ marginHorizontal: 10 }}>
+            <TouchableOpacity
+              onPress={() => {
+                endLiveSave();
+              }}
+              style={{
+                backgroundColor: appColors.btncity,
+                width: "20%",
+                height: "100%",
+                borderRadius: 10,
+                marginRight: 10,
+                borderColor: "green",
+                borderWidth: 1,
+              }}
+            >
+              <TextComponent
+                text="Kết thúc Live"
+                size={14}
+                styles={{
+                  fontWeight: "bold",
+                  color: "green",
+                  textAlign: "center",
+                  justifyContent: "center",
+                  marginTop: 3,
+                  padding: 5,
+                }}
+              />
+            </TouchableOpacity>
+            <ButtonComponent
+              text="Tiếp tục Live"
+              textStyles={{
+                width: "75%",
+                fontWeight: "bold",
+                fontSize: 30,
+                textAlign: "center",
+              }}
+              color={appColors.primary}
+              onPress={endCoutinueLive}
+            />
+          </RowComponent>
+        )}
+      </SectionComponent>
+
+      {/* Modal live images */}
+      <Modal
+        visible={liveModalVisible}
+        transparent={true}
+        onDismiss={() => setLiveModalVisible(false)}
+      >
+        <View style={styles.modalContent}>
+          <Text style={[styles.modalTitle, { fontSize: 35 }]}>
+            {selectedLiveCityName}
+          </Text>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+            {selectedLiveCityImages.map((imageUri, index) => (
+              <View key={index} style={{ marginRight: 10 }}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={[styles.festivalImage, { width: 300, height: 300 }]}
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => handleRemoveLiveImage(index)}
+                >
+                  <IconA name="close" size={30} color="white" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[
+              styles.closeButton,
+              { marginTop: 20, width: 140, height: 45 },
+            ]}
+            onPress={() => setLiveModalVisible(false)}
+          >
+            <Text style={styles.closeButtonText}>Đóng</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      <Modal visible={showStartModal} transparent animationType="fade">
+        <View style={styles.endModalContainer}>
+          <View style={styles.endModalContent}>
+            <Text style={styles.endModalText}>
+              Bạn có muốn tiếp tục live hay kết thúc live?
+            </Text>
+            <View style={styles.endModalButtons}>
+              <Button
+                title="Tiếp tục Live"
+                onPress={() => {
+                  setShowStartModal(false);
+                  setIsLoadingLocation(true);
+                  handleAddDayOrActivity();
+                }}
+              />
+              <Button
+                title="Kết thúc Live"
+                onPress={() => {
+                  setShowStartModal(false);
+                  handleEndLive();
+                }}
+              />
+            </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -887,6 +1526,37 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  endModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  endModalContent: {
+    width: "90%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  endModalText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  endModalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  // Dấu ngang
+  separator: {
+    height: 1,
+    width: "100%",
+    backgroundColor: "#ccc",
+    marginVertical: 10,
   },
 });
 
