@@ -801,9 +801,18 @@ const EditPostLive = () => {
               };
             }
             uploadedImageUrls[id_nuoc][id].images_value.push(downloadURL);
+             // Cập nhật thông tin ảnh trên Realtime Database
+                      const cityRef = ref(
+                        database,
+                        `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+                      );
+                      await set(cityRef, {
+                        images: uploadedImageUrls[id_nuoc][id].images_value,
+                      });
           }
+
         }
-      }
+     
 
       // Lấy thông tin người dùng
       const userId = await AsyncStorage.getItem("userToken");
@@ -845,18 +854,29 @@ const EditPostLive = () => {
         content: contents,
         author: { id: userId, avatar, fullname },
         images: uploadedImageUrls,
-        likes: 0,
         id: postId,
-        reports: 0,
-        match: 0,
         isCheckIn,
         title,
         mode: 2,
         status_id: isPublic ? 1 : 2,
         thumbnail,
         created_at: timestamp,
-        saves: 0,
       };
+
+      //Them du leu other cho data
+      await update(
+        ref(
+          database,
+          `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
+        ),
+        {
+          avatar: avatar,
+          dayUpload: timestamp,
+          name: fullname,
+          idPost: postId,
+        }
+      );
+
 
       // Cập nhật bài viết
       const postRef = ref(database, `posts/${postId}`);
@@ -869,9 +889,13 @@ const EditPostLive = () => {
         text2: "Cập nhật bài viết thành công",
         visibilityTime: 2000,
       });
+
       router.back();
       router.back();
-    } catch (error) {
+    }
+      
+    }
+     catch (error) {
       setButtonPost(false);
       console.error("Error:", error);
       Alert.alert("Lỗi", "Không thể cập nhật bài viết.");
@@ -1407,6 +1431,7 @@ const EditPostLive = () => {
             </Text>
             <View style={styles.endModalButtons}>
               <Button
+                color={appColors.primary}
                 title="Tiếp tục Live"
                 onPress={() => {
                   setShowStartModal(false);
@@ -1415,6 +1440,7 @@ const EditPostLive = () => {
                 }}
               />
               <Button
+              color={appColors.danger}
                 title="Kết thúc Live"
                 onPress={() => {
                   setShowStartModal(false);
@@ -1535,6 +1561,7 @@ const styles = StyleSheet.create({
   },
   endModalContent: {
     width: "90%",
+    height: 200,
     padding: 20,
     backgroundColor: "#fff",
     borderRadius: 10,
