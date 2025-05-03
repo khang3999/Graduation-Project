@@ -100,10 +100,10 @@ const styles = StyleSheet.create({
   header: {
     // height: 70,
     flexDirection: 'row',
-    marginVertical: 10,
+    marginTop: 15,
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 20,
     zIndex: 2
   }
 })

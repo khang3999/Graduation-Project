@@ -120,11 +120,11 @@ const PostItem: React.FC<PostItemProps> = ({
   const MAX_LENGTH = 10;
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
-  const { dataAccount }: any = useHomeProvider();
+  const { dataAccount, userId }: any = useHomeProvider();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
-  const isPostAuthor = dataAccount.id === item.author.id;
+  const isPostAuthor = userId=== item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
@@ -133,7 +133,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
-    if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
+    if (!userId.id || !dataAccount.avatar || !dataAccount.fullname) {
       console.error('Missing required author information');
       return;
     }

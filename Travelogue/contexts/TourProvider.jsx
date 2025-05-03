@@ -12,6 +12,13 @@ const TourProvider = ({ children }) => {
     const [newTourCount, setNewTourCount] = useState(0);
     const [isSearchingMode, setIsSearchingMode] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
+    const [showBanner, setShowBanner] = useState(true);
+    const [modalSearchVisible, setModalSearchVisible] = useState(false)
+    const [reload, setReload] = useState(false);
+    const [ modalNewTourVisible, setModalNewTourVisible] = useState(false);
+
+
+
     // const [selectedTypeSearch, setSelectedTypeSearch] = useState(1);
 
     const [selectedTour, setSelectedTour] = useState(undefined)
@@ -21,7 +28,6 @@ const TourProvider = ({ children }) => {
         { key: 2, value: 'Thích nhiều nhất' },
         { key: 3, value: 'Đánh giá tốt nhất' }
     ]
-
     const selectedTypeSearch = useRef(1)
 
     // Hàm lắng nghe thay khi có tour mới từ firebase để hiển thị button reload
@@ -61,7 +67,11 @@ const TourProvider = ({ children }) => {
                 // selectedTypeSearch, setSelectedTypeSearch,
                 selectedTypeSearch,
                 dataNewTourList, setDataNewTourList,
-                dataTypeSearch
+                dataTypeSearch,
+                showBanner, setShowBanner,
+                modalSearchVisible, setModalSearchVisible,
+                reload, setReload,
+                modalNewTourVisible, setModalNewTourVisible
             }}
         >
             {children}

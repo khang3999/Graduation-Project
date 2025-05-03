@@ -1,11 +1,11 @@
 import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 import { database, onValue, ref, update } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTourProvider } from '@/contexts/TourProvider';
 import { IconButton, MD3Colors } from 'react-native-paper';
 import { Feather, FontAwesome, FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,16 +20,29 @@ const TYPE = 1
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
     const { dataTours, loadedTours,
-        dataToursSorted, setDataToursSorted
+        dataToursSorted, setDataToursSorted,
+        reload,
+        isLoading,
+        setIsLoading
     }: any = useHomeProvider();
     const { setSelectedTour }: any = useTourProvider()
     const { dataAccount }: any = useHomeProvider()
     const flatListTourRef: any = useRef(null)
-    useEffect(() => {
-        if (flatListTourRef.current) {
-            flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
-        }
-    }, [dataToursSorted]);
+    // useEffect(() => {
+    //     if (flatListTourRef.current) {
+    //         flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
+    //     }
+    // }, [reload]);
+    
+    useFocusEffect(
+        useCallback(() => {
+            setIsLoading(true)
+            // Scroll to first item in list 
+            if (flatListTourRef.current) {
+                flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
+            }
+        }, [reload])
+    )
 
     const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
         // Update hành vi lên firebase
@@ -76,7 +89,7 @@ const TourSection = () => {
                         <Text style={{ marginLeft: 6, fontWeight: '500' }}>{tour.item.author.fullname}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <SaveButton data={tour.item} type={TYPE}></SaveButton>
+                        <SaveButton data={tour.item} type={TYPE}></SaveButton>
                     </View>
                 </View>
                 <View style={styles.tourItemImageSection}>
@@ -129,7 +142,7 @@ const TourSection = () => {
                         </View>
 
                     </View>
-                    <View style={[styles.dotCustom, { left: -10, borderLeftWidth:0,}]}></View>
+                    <View style={[styles.dotCustom, { left: -10, borderLeftWidth: 0, }]}></View>
                     <View style={[styles.dotCustom, { right: -10 }]}></View>
                 </View>
                 <View style={styles.tourFooterSection}>
@@ -156,15 +169,15 @@ const TourSection = () => {
 
     return (
         <View style={{}}>
-            {loadedTours ?
+            {!isLoading ?
                 <FlatList
-                    // ref={flatListTourRef}
+                    ref={flatListTourRef}
                     horizontal={true}
                     // scrollToOffset={ }
                     data={dataToursSorted}
                     renderItem={tourItem}
                     keyExtractor={(tour: any) => tour.id}
-                    contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+                    contentContainerStyle={{ padding: 20 }}
                     ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
                 // pagingEnabled
                 >

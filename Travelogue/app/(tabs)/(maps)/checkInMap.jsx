@@ -108,7 +108,7 @@ const CheckInMap = () => {
     if (dataAccount) {
       fetchCheckinList(dataAccount.id);
     }
-  }, [dataAccount,reload]);
+  }, [dataAccount, reload]);
 
   // useEffect(() => {
   //   setHasFetched(false)
@@ -580,7 +580,8 @@ const CheckInMap = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.information}>
-          <Entypo name="location" size={24} color="#ce181e" />
+          <MaterialCommunityIcons name="map-marker-radius" size={24} color="#ce181e" />
+          {/* <Entypo name="location" size={24} color="#ce181e" /> */}
           {/* <Text>{selectedCity ? selectedCity.label : 'Chưa xác định'}</Text>
           <Text>{selectedArea ? selectedArea.label : "Chưa xác định"}</Text>
           <Text>{selectedCountry ? selectedCountry.label : "Chưa xác định"}</Text> */}

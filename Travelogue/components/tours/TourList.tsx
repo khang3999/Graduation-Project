@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable, Alert, TextInput, Modal } from 'react-native'
+import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable, Alert, TextInput, Modal, Easing } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
 import { database, get, onValue, ref, update } from '@/firebase/firebaseConfig';
@@ -16,10 +16,14 @@ import { equalTo, orderByChild, query } from 'firebase/database';
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import LottieView from 'lottie-react-native';
 import { useAccount } from '@/contexts/AccountProvider';
+import { Animated } from 'react-native';
+import { backgroundColors, iconColors } from '@/assets/colors';
 
 const { width } = Dimensions.get('window');
 const ITEM_HEIGHT = 270;
 const TYPE = 1;
+
+
 const TourList = () => {
   const {
     accountBehavior, setAccountBehavior,
@@ -36,7 +40,10 @@ const TourList = () => {
     dataModalSelected, setDataModalSelected,
     selectedTour, setSelectedTour,
     selectedTypeSearch,
-    dataNewTourList, setDataNewTourList
+    dataNewTourList, setDataNewTourList,
+    modalSearchVisible, setModalSearchVisible,
+    reload, setReload,
+    modalNewTourVisible, setModalNewTourVisible
   }: any = useTourProvider();
 
   const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
@@ -44,17 +51,16 @@ const TourList = () => {
   const [dataInput, setDataInput] = useState('') // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [selectedCountry, setSelectedCountry] = useState(null); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
   const [selectedCities, setSelectedCities] = useState([]); // Dữ liệu để sort(Lưu vào behavior khi bấm sort)
-  const [modalNewToursVisible, setModalNewToursVisible] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false)
+  // const [modalNewToursVisible, setModalNewToursVisible] = useState(false)
   const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
   const [dataNewTours, setDataNewTours] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const [reloadScreen, setReloadScreen] = useState(false)
   const { selectedCityId, content } = useLocalSearchParams()
   const { setSearchedAccountData }: any = useAccount();
-
-
-
   const [isLongPress, setIsLongPress] = useState(false);
+
+  const bannerOpacity = useRef(new Animated.Value(1)).current;
+  const bannerTranslateY = useRef(new Animated.Value(0)).current;
 
   const handlePressOnItemTour = (tourId: any) => {
     if (!isLongPress) {
@@ -219,7 +225,7 @@ const TourList = () => {
       fetchTours()
     }
     // Đóng modal
-    setModalVisible(false)
+    setModalSearchVisible(false)
   }
 
   // Hàm đóng modal search
@@ -229,7 +235,7 @@ const TourList = () => {
     setSelectedCities([])
     setDataCities([])
     // Đóng modal search
-    setModalVisible(!modalVisible)
+    setModalSearchVisible(!modalSearchVisible)
   }
 
   // Cập nhật tour mới
@@ -246,18 +252,23 @@ const TourList = () => {
     setDataCities([])
     selectedTypeSearch.current = 1
     setDataModalSelected(null)
-    setReloadScreen(true)
+    // setReloadScreen(true)
 
-    // fetchTours() // Tải lại tất cả tour
+    fetchTours() // Tải lại tất cả tour
     // // setIsSearchingMode(false)
   }
 
-  useEffect(() => {
-    if (reloadScreen) {
-      fetchTours()
-      setReloadScreen(false)
-    }
-  }, [reloadScreen])
+  // useEffect(() => {
+  //   const handleRefreshTourScreen = () => {
+  //     setDataInput('')
+  //     setSelectedCountry(null)
+  //     setDataCities([])
+  //     selectedTypeSearch.current = 1
+  //     setDataModalSelected(null)
+  //     fetchTours() // Tải lại tất cả tour
+  //   }
+  //   handleRefreshTourScreen()
+  // }, [reload])
 
   const handleSelecteCountry = (val: any) => {
     // Fetch city tương ứng tương ứng (chính)
@@ -287,8 +298,8 @@ const TourList = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setModalNewToursVisible(false)
-      setModalVisible(false);
+      setModalNewTourVisible(false)
+      setModalSearchVisible(false);
       if (selectedCityId) {
         console.log('have param 1111', selectedCityId);
         if (dataTours.length === 0) {
@@ -343,15 +354,22 @@ const TourList = () => {
 
   const fetchTours = async () => {
     // Load skeleton
-    setLoadedTours(false)
+    // setLoadedTours(false)
+
     try {
-      if (dataNewTourList.length > 0) {
+      const refTours = ref(database, 'tours/')
+      const toursQuery = query(refTours, orderByChild('status_id'), equalTo(1));
+      const snapshot = await get(toursQuery);
+      if (snapshot.exists()) {
+        const dataToursJson = snapshot.val()
+        const dataToursArray = Object.values(dataToursJson)
+        // if (dataNewTourList.length > 0) {
         // Ý tưởng: chuyển mảng data thành 2 mảng con và trộn (3 bước: tạo 2 mảng con, sort, trộn)
         //Bước 1: Phân loại bài viết thành 2 mảng
         const behaviorTours: any = [];
         const nonBehaviorTours: any = [];
 
-        dataNewTourList.forEach((tour: any) => {
+        dataToursArray.forEach((tour: any) => {
           tour.match = 0 // Khởi tạo lại match
 
           // Điều kiện phân loại mảng: Bài viết có chứa nội dung hoặc có chứa địa điểm thì add vào
@@ -396,7 +414,7 @@ const TourList = () => {
         // 1. set mảng đã trộn cho dataTour
         setDataTours(mergedTours)
         // Set lại số lượng bài post đang hiển thị(Là 1 trong 2 điều kiện để không hiển thị button loadNewPosts
-        setCurrentTourCount(dataNewTourList.length)
+        setCurrentTourCount(dataToursArray.length)
         // UnLoad skeleton
         setLoadedTours(true)
       } else {
@@ -408,19 +426,32 @@ const TourList = () => {
     setDataModalSelected(null)
   }
 
-  // Hàm hiển thị các bài viết mới
-  const handleShowNewTour = () => {
-    // Mở modal chứa các bài viết mới
-    setModalNewToursVisible(true)
-    // Load dữ liệu các bài viết mới vào modal
-    const result = dataNewTourList.filter((postObj1: any) =>
-      !dataTours.some((postObj2: any) => postObj1.id === postObj2.id)
-    );
-    result.sort((postA: any, postB: any) => {
-      return postB.created_at - postA.created_at
-    })
-    setDataNewTours(result)
-  };
+  // Run to load new post list but don't merge with old post list
+  useEffect(() => {
+    if (modalNewPostVisible) {
+      const result = dataNewTourList.filter((tourObj1: any) =>
+        !dataTours.some((tourObj2: any) => tourObj1.id === tourObj2.id)
+      );
+      result.sort((tourA: any, tourB: any) => {
+        return tourB.created_at - tourA.created_at
+      })
+      setDataNewTours(result)
+    }
+  }, [modalNewPostVisible])
+
+  // Hàm hiển thị các bài viết mới ** không xai nua
+  // const handleShowNewTour = () => {
+  //   // Mở modal chứa các bài viết mới
+  //   setModalNewTourVisible(true)
+  //   // Load dữ liệu các bài viết mới vào modal
+  //   const result = dataNewTourList.filter((postObj1: any) =>
+  //     !dataTours.some((postObj2: any) => postObj1.id === postObj2.id)
+  //   );
+  //   result.sort((postA: any, postB: any) => {
+  //     return postB.created_at - postA.created_at
+  //   })
+  //   setDataNewTours(result)
+  // };
 
   // Hàm button 'Đóng' và load những bài viết mới
   const handleCloseAndReLoadModalNewTour = () => {
@@ -428,12 +459,12 @@ const TourList = () => {
     setDataTours(dataNewTourList)
     setCurrentTourCount(dataNewTourList.length)
     // Đóng modal
-    setModalNewToursVisible(false)
+    setModalNewTourVisible(false)
   }
   // Hàm button 'Đóng' modal những bài viết mới
   const handleCloseModalNewTour = () => {
     // Đóng modal
-    setModalNewToursVisible(false)
+    setModalNewTourVisible(false)
 
     // Có thể xếp lại các bài viết
   }
@@ -546,7 +577,7 @@ const TourList = () => {
             :
             <View style={styles.priceBackground}>
               <View style={styles.priceWrap}>
-                <Entypo style={{paddingHorizontal: 8}} name="price-tag" size={24} color="#824b24" />
+                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
                 <View style={{ paddingRight: 10 }}>
                   <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
                 </View>
@@ -618,7 +649,7 @@ const TourList = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: 'row', position: 'relative' }}>
+      {/* <View style={{ flexDirection: 'row', position: 'relative' }}>
         <View style={{ backgroundColor: '#009400', marginBottom: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
           <Text style={styles.textCategory}>Tour du lịch</Text>
         </View>
@@ -638,17 +669,20 @@ const TourList = () => {
         >
           <AntDesign name="filter" size={22} color="black" />
         </TouchableOpacity>
-      </View>
+      </View> */}
       {dataTours.length !== 0 ? (
         loadedTours ? (
           <FlatList
             style={{ maxHeight: 580 }}
+            nestedScrollEnabled={true}
             data={dataTours}
             extraData={dataTours}
             renderItem={tourItem}
             keyExtractor={(tour: any) => tour.id}
+            contentContainerStyle={{ paddingVertical: 30, paddingHorizontal: 20, backgroundColor: backgroundColors.background2 }}
           // ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
-          // pagingEnabled
+          // pagingEnabled\
+          // onScroll={handleScrollTourList}
           />
         ) : (
           <View>
@@ -688,10 +722,10 @@ const TourList = () => {
       <Modal
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
+        visible={modalSearchVisible}
         onRequestClose={() => {
           Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
+          setModalSearchVisible(!modalSearchVisible);
         }}>
         <View style={styles.modalView}>
           <View style={styles.modalBottomView}>
@@ -756,10 +790,10 @@ const TourList = () => {
       <Modal
         animationType='slide'
         transparent={true}
-        visible={modalNewToursVisible}
+        visible={modalNewTourVisible}
         onRequestClose={() => {
           Alert.alert('Modal has been closed.');
-          setModalNewToursVisible(!modalNewToursVisible);
+          setModalNewTourVisible(!modalNewTourVisible);
         }}
         style={{ maxHeight: 400 }}
       >
@@ -779,7 +813,7 @@ const TourList = () => {
                 <Text style={styles.textStyle}>Làm mới</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => handleCloseModalNewTour()}
+                onPress={() => setModalNewTourVisible(false)}
                 style={styles.buttonCancel}
               >
                 <Text style={styles.textStyle}>Đóng</Text>
@@ -1024,7 +1058,7 @@ const styles = StyleSheet.create({
     elevation: 6
   },
   container: {
-    position: 'relative',
+    // position: 'absolute',
   }
 })
 export default TourList

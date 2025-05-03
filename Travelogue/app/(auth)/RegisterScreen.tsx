@@ -145,7 +145,10 @@ const RegisterScreen = ({ navigation }: any) => {
         );
         if (user) {
           // Tạo đối tượng User mới
-          const behavior = "";
+          const behavior = {
+            content: "",
+            location: []
+          };
           const avatar = await getDownloadURL(
             storageRef(storage, "defaultAvatar/avatar.png")
           ); // Set default avatar URL
@@ -177,8 +180,8 @@ const RegisterScreen = ({ navigation }: any) => {
           });
           console.log(newUser);
 
-          await uploadImage(avatar,`accounts/${user.uid}/papers/avatar.jpg`)
-          
+          await uploadImage(avatar, `accounts/${user.uid}/papers/avatar.jpg`)
+
           // // Lưu thông tin người dùng vào Firebase Realtime
           await set(ref(database, `/accounts/${user.uid}`), {
             id: user.uid,
@@ -253,7 +256,10 @@ const RegisterScreen = ({ navigation }: any) => {
 
         if (user) {
           // Tạo đối tượng User mới
-          const behavior = "";
+          const behavior = {
+            content: "",
+            location: []
+          };
           const balance = 0;
           const accumulate = 0;
           const currentDate = new Date().toLocaleDateString();
