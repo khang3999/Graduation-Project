@@ -1,8 +1,10 @@
 import { auth, database, onValue, ref, set } from "@/firebase/firebaseConfig";
 import { AntDesign, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
-import { push } from "@firebase/database";
+import { endBefore, push } from "@firebase/database";
 import React, { useEffect, useState, useRef } from "react";
 import { TouchableWithoutFeedback, Keyboard } from 'react-native';
+import dayjs from 'dayjs';
+
 import {
   View,
   Image,
@@ -17,15 +19,17 @@ import {
   Platform,
 } from "react-native";
 import { Button, Checkbox, Divider } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
+// import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useHomeProvider } from "@/contexts/HomeProvider";
+import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
 
 const Payment = () => {
   const [accountId, setAccountId] = useState("");
-  const { dataAccount }: any = useHomeProvider()
-
-  //Payment
+  const { dataAccount }: any = useHomeProvider();
+  const defaultStyles = useDefaultStyles();
+  const [startDate, setStartDate] = useState<DateType>();
+  const [endDate, setEndDate] = useState<DateType>();
   const [qrDataURL, setQrDataURL] = useState(null);
   const [inputText, setInputText] = useState("");
   const [loadingRefresh, setLoadingRefresh] = useState(false);
@@ -34,49 +38,15 @@ const Payment = () => {
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isVisibleQR, setIsVisibleQR] = useState(false);
   const [isVisibleFilter, setIsVisibleFilter] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const [statusContent, setStatusContent] = useState([]);
   const [dataExchanges, setDataExchanges] = useState([]);
   let [dataExchangesFilter, setDataExchangesFilter] = useState([]);
-  //Modal filter
-  const [timeStart, setTimeStart] = useState<any>(null);
-  const [timeEnd, setTimeEnd] = useState<any>(null);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [statusOptions, setStatusOptions] = useState([]);
-
-  useEffect(() => {
-    // Tạo đường dẫn tham chiếu tới nơi cần lấy bảng posts
-    const refStatuspayment = ref(database, 'status/payment')
-    const unsubscribe = onValue(refStatuspayment, (snapshot) => {
-      if (snapshot.exists()) {
-        const dataArray = snapshot.val()
-        const result = dataArray
-          .filter((value: any) => value !== undefined) // Loại bỏ giá trị undefined
-          .map((value: any, index: any) => ({
-            id: index + 1, // Tạo id bắt đầu từ 1
-            value: value   // Giá trị từ mảng gốc
-          }));
-        setStatusOptions(result)
-      } else {
-        console.log("No data available");
-      }
-      // setLoadingPost(false)
-    }, (error) => {
-      console.error("Error fetching data:", error);
-      // setLoadingPost(false)
-    });
-    return () => {
-      unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    };
-  }, [])
-
-  const typeOptions = ["Tiền ra", "Tiền vào"];
-  const today = new Date();
+  const [startFilterDeposit, setStartFilterDeposit] = useState(false)
+  const [startFilterWithdraw, setStartFilterWithdraw] = useState(false)
+  const [placeholderText, setPlaceholderText] = useState('Nhập số tiền cần nạp');
 
   useEffect(() => {
     setAccountId(dataAccount.id)
@@ -98,7 +68,6 @@ const Payment = () => {
         console.error("Error fetching data:", error);
       }
     );
-
     return () => statusContentListener();
   }, []);
 
@@ -122,6 +91,7 @@ const Payment = () => {
                 return a.status_id - b.status_id;
               });
             setDataExchanges(data);
+            setDataExchangesFilter(data)
           } else {
             console.log("No data available");
           }
@@ -137,21 +107,15 @@ const Payment = () => {
     }
   }, [accountId]);
 
-  //Exchange data filter realtime
-  useEffect(() => {
-    if (timeEnd == null) {
-      setDataExchangesFilter(dataExchanges);
-    } else {
-      handleFilter();
-    }
-  }, [dataExchanges]);
-
   const closeDialog = () => {
     setIsVisible(false);
+    setIsVisibleQR(false);
     setIsVisibleFilter(false);
     setQrDataURL(null);
     setIsDisabled(true);
     setInputText("");
+    handleFilter(dataExchanges, 3);
+    setPlaceholderText("Nhập số tiền cần nạp");
   };
 
   //Fetch QR
@@ -240,8 +204,19 @@ const Payment = () => {
     if (!isDisabled) {
       fetchQRCode();
     }
+    // Lưu giá trị cũ vào placeholder và clear input
+  setPlaceholderText(inputText);
+  setInputText('');
+  setIsDisabled(true); // disable lại button
+
+  // Giả lập delay xử lý
+  setTimeout(() => {
+    setLoadingQR(false);
+    // Optional: bạn có thể re-enable sau khi xử lý xong
+  }, 1500);
   };
 
+  // Them yeu cau nap tien vao bang Exchange
   const handleAddRequest = async () => {
     const exchangeRef = ref(database, "exchanges");
     const newItemKey = push(exchangeRef);
@@ -263,6 +238,7 @@ const Payment = () => {
       });
   };
 
+  //Render du lieu
   const renderExchange = (exchange: any) => {
     const timestamp = exchange.item.created_at;
     const timeCreatedAt = new Date(timestamp);
@@ -299,142 +275,73 @@ const Payment = () => {
 
   //Modal
 
-  const handleSelect = (option: any, list: any, setList: any) => {
-    // console.log(option);
-
-    setList((prev: any) =>
-      prev.includes(option)
-        ? prev.filter((item: any) => item !== option)
-        : [...prev, option]
-    );
-  };
-
-  const onChangeStartDate = (event: any, selectedDate: any) => {
-    setShowStartPicker(false);
-    if (selectedDate) {
-      // Check if start date is greater than today
-      if (selectedDate > today) {
-        Alert.alert("Error", "The end date cannot be greater than today.");
-      }
-      // Check if start date is greater than end date
-      else if (timeEnd && selectedDate > timeEnd) {
-        Alert.alert(
-          "Error",
-          "The start date cannot be later than the end date."
-        );
-      } else {
-        setTimeStart(selectedDate);
-      }
-    }
-  };
-
-  const onChangeEndDate = (event: any, selectedDate: any) => {
-    setShowEndPicker(false);
-
-    if (selectedDate) {
-      // Check if end date is greater than today
-      if (selectedDate > today) {
-        Alert.alert("Error", "The end date cannot be greater than today.");
-      }
-      // Check if end date is earlier than start date
-      else if (timeStart && selectedDate < timeStart) {
-        Alert.alert(
-          "Error",
-          "The end date cannot be earlier than the start date."
-        );
-      } else {
-        setTimeEnd(selectedDate);
-      }
-    }
-  };
-
   const closeDialogFilter = () => {
     setIsVisibleFilter(false);
   };
   const openDialogFilter = () => {
     setIsVisibleFilter(true);
   };
+  const openDialogQR = () => {
+    setIsVisibleQR(true);
+  };
+  const onPressFilterDeposit = () => {
+    console.log("Deposit on - Withdraw off");
+    handleFilter(dataExchanges, 1)
+  }
+  const onPressFilterWithdraw = () => {
+    console.log("Withdraw on - Deposit off");
+    handleFilter(dataExchanges, 2)
+  }
+  const filterLogic = (item: any, typeFilter: number) => {
+    // dayjs(startDate).startOf('day').valueOf() dua ve timestamp 00:00:00 dd/mm/yyyy
+    if (item.created_at >= dayjs(startDate).startOf('day').valueOf() && item.created_at <= dayjs(endDate).endOf('day').valueOf()) {
+      switch (typeFilter) {
+        case 1: return item.payment > 0
+        case 2: return item.payment < 0
+        case 3: return item
+      }
 
-  const handleFilter = () => {
-    if (timeStart && timeEnd) {
-      setLoadingFilter(true); // Bắt đầu hiệu ứng loading
-      setTimeout(() => {
-        const filteredData = dataExchanges.filter((item: any) => {
-          //Neu ngay ket thuc la ngay hom nay thi lay tai thoi diem filter, neu la ngay trc do thi lay cuoi ngay
-          const timeEndDate =
-            timeEnd.setHours(23, 59, 59, 999) == today.setHours(23, 59, 59, 999)
-              ? new Date(today).setHours(23, 59, 59, 999)
-              : new Date(timeEnd).setHours(23, 59, 59, 999);
-          // Bat dau tu 0:0:0 cua ngay bat dau
-          const timeStartDate = new Date(timeStart).setHours(0, 0, 0, 0);
-          // Kiểm tra điều kiện thời gian, loại giao dịch và trạng thái giao dịch
-          const isWithinTimeRange =
-            item.created_at >= timeStartDate && item.created_at <= timeEndDate;
-          const isStatusMatch =
-            selectedStatus.length === 0 ||
-            selectedStatus.includes(item.status_id);
-          // Kiểm tra loại giao dịch
-          const isTypeMatch =
-            selectedType.length === 0 ||
-            (selectedType.includes("Deduction") && item.payment < 0) || // Số âm cho Deduction
-            (selectedType.includes("Recharge") && item.payment > 0); // Số dương cho Recharge
-
-          return isWithinTimeRange && isStatusMatch && isTypeMatch;
-        });
-        //Set lai data cho filter
-        setDataExchangesFilter(filteredData);
-        closeDialogFilter();
-        setLoadingFilter(false);
-      }, 1000);
-    } else {
-      Alert.alert("Lỗi", "Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.");
     }
   };
+  const handleFilter = (dataExchanges: any, typeFilter: number) => {
+    setTimeout(() => {
+      const filteredData = dataExchanges.filter((item: any) => filterLogic(item, typeFilter));
+      console.log(filteredData, " aaa");
 
+      setDataExchangesFilter(filteredData);
+      setLoadingFilter(false);
+    }, 1000);
+  };
+  //Refresh button
   const handleRefreshData = () => {
     setLoadingRefresh(true); // Bắt đầu hiệu ứng loading
     setTimeout(() => {
       setDataExchangesFilter(dataExchanges);
-      setSelectedStatus("");
-      setSelectedType("");
-      setTimeEnd(null);
-      setTimeStart(null);
+      setEndDate(new Date())
+      setStartDate(new Date())
       setLoadingRefresh(false);
     }, 1000);
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Số dư:</Text>
-          <Text style={styles.balanceAmount}>
-            {balance.toLocaleString("vi-VN")}
-          </Text>
-        </View>
-        <View style={styles.addBar}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={handleTextChange}
-            keyboardType="numeric"
-            maxLength={15}
-            placeholder="Nhập số tiền cần nạp"
+    <View style={styles.container}>
+      {/* Avatar */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <Image
+            source={{ uri: dataAccount.avatar }}
+            style={styles.miniAvatar}
           />
-          <TouchableOpacity
-            style={[styles.addBtn, isDisabled && styles.disabledBtn]}
-            onPress={handleRequest}
-            disabled={isDisabled}
-          >
-            {loadingQR ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.addBtnText}>Yêu cầu</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.column}>
+            <Text style={styles.username}>{dataAccount.fullname}</Text>
+            <Text style={styles.time}>Welcome back</Text>
+          </View>
         </View>
+        <TouchableOpacity style={styles.row} onPress={openDialogQR}>
+          <Image source={require('../../assets/images/add-payment.png')} style={styles.iconAddPayment} />
+        </TouchableOpacity>
         <Modal
-          visible={isVisible}
+          visible={isVisibleQR}
           transparent={true}
           animationType="slide"
           onRequestClose={closeDialog}
@@ -445,10 +352,32 @@ const Payment = () => {
                 <MaterialIcons name="cancel" size={24} color="red" />
               </TouchableOpacity>
               <Text style={styles.dialogTitle}>Quét mã QR</Text>
+              <View style={styles.addBar}>
+                <TextInput
+                  style={styles.textInput}
+                  value={inputText}
+                  onChangeText={handleTextChange}
+                  keyboardType="numeric"
+                  maxLength={15}
+                  placeholder= {placeholderText}
+                />
+                <TouchableOpacity
+                  style={[styles.addBtn, isDisabled && styles.disabledBtn]}
+                  onPress={handleRequest}
+                  disabled={isDisabled}
+                >
+                  {loadingQR ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.addBtnText}>Yêu cầu</Text>
+                  )}
+                </TouchableOpacity>
+                
+              </View>
               {qrDataURL ? (
                 <Image source={{ uri: qrDataURL }} style={styles.image} />
               ) : (
-                <Text>Không có mã QR</Text>
+                <Image source={require('../../assets/images/qrdefault.png')} style={styles.image} />
               )}
               <Text style={styles.dialogText}>
                 Mã QR chỉ có giá trị một lần
@@ -456,178 +385,140 @@ const Payment = () => {
             </View>
           </View>
         </Modal>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-          {/* Refresh */}
-          <TouchableOpacity onPress={handleRefreshData}>
+      </View>
+      {/* balance */}
+      <View>
+        <Text style={styles.balanceAmount}> {balance.toLocaleString("vi-VN")} <Text style={{ fontSize: 15 }}>VND</Text></Text>
+      </View>
+      {/* Option */}
+      <View style={[styles.row, { padding: 10 }]}>
+        {/* Deposit */}
+        <View style={[styles.column]}>
+          <TouchableOpacity style={styles.iconOptionCircle} onPress={onPressFilterDeposit}>
+            <Image
+              source={require('../../assets/images/increase.png')}
+              style={styles.iconOption}
+            />
+          </TouchableOpacity>
+          <Text style={styles.titleOptionCircle}>
+            Deposit
+          </Text>
+        </View>
+
+        {/* Withdraw */}
+        <View style={[styles.column]}>
+          <TouchableOpacity style={styles.iconOptionCircle} onPress={onPressFilterWithdraw}>
+            <Image
+              source={require('../../assets/images/decrease.png')}
+              style={styles.iconOption}
+            />
+          </TouchableOpacity>
+          <Text style={styles.titleOptionCircle}>
+            Withdraw
+          </Text>
+        </View>
+
+        {/* Refresh */}
+        <View style={[styles.column]}>
+          <TouchableOpacity onPress={handleRefreshData} style={styles.iconOptionCircle}>
             {loadingRefresh ? (
               <ActivityIndicator
                 color="red"
-                size={24}
-                style={{ paddingRight: 10 }}
+                size={40}
               />
             ) : (
               <SimpleLineIcons
                 name="refresh"
-                size={24}
+                size={40}
                 color="black"
-                style={{ paddingRight: 10 }}
+              // style={{ paddingRight: 10 }}
               />
             )}
           </TouchableOpacity>
-          {/* Filter */}
-          <TouchableOpacity onPress={openDialogFilter}>
-            <AntDesign
-              name="filter"
-              size={24}
-              color={timeEnd != null ? "red" : "black"}
-            />
-          </TouchableOpacity>
-          <Modal
-            visible={isVisibleFilter}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={closeDialog}
-          >
-            <View style={styles.modalOverlay}>
-              {loadingFilter ? (
-                <ActivityIndicator color="white" size={100} />
-              ) : (
-                <View style={styles.dialogContainer}>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={closeDialog}
-                  >
-                    <MaterialIcons name="cancel" size={24} color="red" />
-                  </TouchableOpacity>
-                  <View style={{ padding: 5, width: "100%" }}>
-                    <Text style={{ fontSize: 20, marginBottom: 10 }}>
-                      Bộ lọc
-                    </Text>
-
-                    {/* Date pickers for time */}
-                    <Text style={{ fontWeight: "bold" }}>Ngày bắt đầu</Text>
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowStartPicker(true)}
-                    >
-                      {timeStart
-                        ? timeStart.toLocaleDateString()
-                        : "Chọn ngày bắt đầu"}
-                    </Button>
-                    {showStartPicker && (
-                      <DateTimePicker
-                        value={timeStart || new Date()}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={onChangeStartDate}
-                      />
-                    )}
-
-                    <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-                      Ngày kết thúc
-                    </Text>
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowEndPicker(true)}
-                    >
-                      {timeEnd ? timeEnd.toLocaleDateString() : "Chọn ngày kết thúc"}
-                    </Button>
-                    {showEndPicker && (
-                      <DateTimePicker
-                        value={timeEnd || new Date()}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={onChangeEndDate}
-                      />
-                    )}
-
-                    <Divider style={{ marginVertical: 10 }} />
-
-                    {/* Transaction Status */}
-                    <Text style={{ fontWeight: "bold" }}>Trạng thái giao dịch</Text>
-                    {statusOptions.map((option: any) => (
-                      <View
-                        key={option.id}
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Checkbox
-                          status={
-                            selectedStatus.includes(option.id)
-                              ? "checked"
-                              : "unchecked"
-                          }
-                          onPress={() =>
-                            handleSelect(
-                              option.id,
-                              selectedStatus,
-                              setSelectedStatus
-                            )
-                          }
-                        />
-                        <Text>{option.value}</Text>
-                      </View>
-                    ))}
-
-                    <Divider style={{ marginVertical: 10 }} />
-
-                    {/* Transaction Type */}
-                    <Text style={{ fontWeight: "bold" }}>Kiểu giao dịch</Text>
-                    {typeOptions.map((option, index) => (
-                      <View
-                        key={index}
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <Checkbox
-                          status={
-                            selectedType.includes(option)
-                              ? "checked"
-                              : "unchecked"
-                          }
-                          onPress={() =>
-                            handleSelect(option, selectedType, setSelectedType)
-                          }
-                        />
-                        <Text>{option}</Text>
-                      </View>
-                    ))}
-
-                    <Button
-                      mode="contained"
-                      style={{ marginTop: 20 }}
-                      onPress={handleFilter}
-                    >
-                      <Text>Áp dụng</Text>
-                    </Button>
-                  </View>
-                </View>
-              )}
-            </View>
-          </Modal>
-        </View>
-        <View style={styles.divider} />
-
-        <View style={styles.exchangeList}>
-          {dataExchangesFilter.length > 0 ? (
-            <FlatList
-              data={dataExchangesFilter}
-              renderItem={renderExchange}
-            // keyExtractor={(item) => item.id}
-            />
-          ) : (
-            <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
-          )}
+          <Text style={styles.titleOptionCircle}>
+            Refresh
+          </Text>
         </View>
       </View>
-    </TouchableWithoutFeedback>
 
+
+      {/* Datepicker */}
+      <TouchableOpacity onPress={openDialogFilter} style={[styles.touchableDatePicker]}>
+        <Text style={{ fontSize: 20 }}>
+          {(startDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN")) + " - " + (endDate ? ((new Date(endDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN"))}
+        </Text>
+      </TouchableOpacity>
+      <Modal
+        visible={isVisibleFilter}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={closeDialog}
+      >
+        <View style={styles.modalOverlay}>
+          {loadingFilter ? (
+            <ActivityIndicator color="white" size={100} />
+          ) : (
+            <View style={styles.dialogContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeDialog}
+              >
+                <MaterialIcons name="cancel" size={24} color="red" />
+              </TouchableOpacity>
+              <View style={{ marginTop: 40 }}>
+                <DateTimePicker
+                  mode="range"
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={({ startDate, endDate }) => {
+                    setStartDate(startDate), setEndDate(endDate), console.log(endDate?.toLocaleString("vi-VN"));
+                  }}
+                  styles={{
+                    ...defaultStyles,
+                    today: { borderColor: 'blue', borderWidth: 1 }, // Add a border to today's date
+                    selected: { backgroundColor: 'blue' }, // Highlight the selected day
+                    selected_label: { color: 'white' }, // Highlight the selected day label
+                  }}
+                  disabledDates={(date: any) => date > new Date()}
+                  showOutsideDays={true}
+                  weekdaysFormat={"short"}
+                  // timeZone="UTC"
+                  firstDayOfWeek={1}
+                  min={1}
+                  max={31}
+
+                />
+
+              </View>
+
+
+            </View>
+          )}
+        </View>
+      </Modal>
+      {/* <View style={styles.divider} /> */}
+
+      <View style={styles.exchangeList}>
+        {dataExchangesFilter.length > 0 ? (
+          <FlatList
+            data={dataExchangesFilter}
+            renderItem={renderExchange}
+          // keyExtractor={(item) => item.id}
+          />
+        ) : (
+          <Text style={styles.noAccountsText}>Chưa có dữ liệu</Text>
+        )}
+      </View>
+    </View >
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f2f2f2",
+    paddingHorizontal: 10,
+    paddingVertical: 40,
+    backgroundColor: "#eaf7ec",
   },
   balanceContainer: {
     flexDirection: "row",
@@ -647,9 +538,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   balanceAmount: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#5E8C31",
+    fontSize: 50,
+    fontWeight: "500",
+    color: 'black',
+    textAlign: 'center',
+    paddingVertical: 30
   },
   addBar: {
     flexDirection: "row",
@@ -716,7 +609,7 @@ const styles = StyleSheet.create({
   image: {
     width: 300,
     height: 300,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   dialogText: {
     marginBottom: 20,
@@ -742,7 +635,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
-    marginBottom: 50,
+    marginBottom: 40,
+    marginTop: 20,
   },
   exchangeItem: {
     flexDirection: "row",
@@ -767,6 +661,68 @@ const styles = StyleSheet.create({
   noAccountsText: {
     textAlign: "center",
     color: "#888",
+  },
+  miniAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+  },
+  iconAddPayment: {
+    width: 40,
+    height: 40,
+    marginRight: 15,
+  },
+  iconOption: {
+    width: 40,
+    height: 40,
+
+  },
+  iconOptionCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    backgroundColor: '#74d65f',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  titleOptionCircle: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    fontWeight: "500",
+    padding: 10
+  },
+  touchableDatePicker: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: '#74d65f',
+    borderStyle: "solid",
+    padding: 20,
+  }
+  ,
+  username: {
+    fontSize: 20,
+    marginLeft: 10,
+    fontWeight: "bold",
+  },
+  column: {
+    flexDirection: "column",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
+  },
+  time: {
+    marginLeft: 10,
+    color: "grey",
   },
 });
 
