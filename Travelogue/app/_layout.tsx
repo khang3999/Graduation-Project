@@ -148,16 +148,16 @@ export default function Layout() {
           }} />
           <Stack.Screen name="tourDetail"
             options={{
-              headerShown: true,
+              headerShown: false,
               title: "Tour du lịch",
               headerStyle: {
-                backgroundColor:
-                  Colors[colorScheme ? colorScheme : "light"].background,
+                backgroundColor:Colors[colorScheme ? colorScheme : "light"].background,
+                // backgroundColor:'transparent'
               },
               headerTintColor: Colors[colorScheme ? colorScheme : "light"].text,
               headerTitleStyle: {
                 fontWeight: "600",
-                fontSize: 24
+                fontSize: 24,
               },
               headerTitleAlign: "center",
             }} />

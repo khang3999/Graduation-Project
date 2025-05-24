@@ -172,7 +172,7 @@ const Tour = () => {
             </View>
 
             {/* Badges and button  reload*/}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5, }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5, }}>
               <View style={styles.listBadges} >
                 <ScrollView
                   horizontal={true}

@@ -14,6 +14,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  StatusBar,
 } from "react-native";
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
@@ -44,7 +45,8 @@ import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
 import ImageModal from "react-native-image-modal";
-import { Entypo } from "@expo/vector-icons";
+import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons";
+import { backgroundColors, iconColors } from "@/assets/colors";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -77,6 +79,7 @@ type Tour = {
   thumbnail: string;
   discountTour: number;
   money: number;
+  title: string
 };
 
 type TourItemProps = {
@@ -430,7 +433,7 @@ const TourItem: React.FC<TourItemProps> = ({
               await update(summaryRef, summaryUpdate);
               await update(ref(database), pathsToDelete);
 
-              
+
 
 
               setRatingComments((prevComments) =>
@@ -649,11 +652,13 @@ const TourItem: React.FC<TourItemProps> = ({
   }
   return (
     <View>
-      {/* Post Header */}
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.row}
+      <View style={{ flex: 1, height: windowWidth }}>
+        {/* Post Header */}
+        <View style={styles.header}>
+          <View style={styles.row}>
+            {/* <TouchableOpacity style={styles.row}
           onPress={() => handleGoToProfileScreen(item.author.id)}
-        >
+          >
           <Image
             source={{ uri: item.author.avatar }}
             style={styles.miniAvatar}
@@ -663,83 +668,125 @@ const TourItem: React.FC<TourItemProps> = ({
             <Text style={styles.username}>{item.author.fullname}</Text>
             <Text style={styles.time}>{formatDate(item.created_at)}</Text>
           </View>
-        </TouchableOpacity>
-        <View style={{ zIndex: 1000 }}>
-          <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} locations={item.locations} />
-        </View>
-      </View>
-
-      {/* Post Images Carousel */}
-      <Carousel
-        pagingEnabled={true}
-        loop={false}
-        width={windowWidth}
-        height={windowWidth}
-        data={flattenedImagesArray}
-        scrollAnimationDuration={300}
-        renderItem={({ item, index }) => (
-          <View style={styles.carouselItem}>
-            <ImageModal swipeToDismiss={true}
-              resizeMode="cover"
-              imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
-            <View style={styles.viewTextStyles}>
-              <Text style={styles.carouselText}>
-                {index + 1}/{flattenedImagesArray.length} - {item.cityName}
-              </Text>
+          </TouchableOpacity> */}
+            <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+              <AntDesign name="arrowleft" size={24} color='white' />
+            </TouchableOpacity>
+            <View style={{}}>
+              <MenuItem isAuthor={isPostAuthor} tourId={item.id} userId={dataAccount.id} locations={item.locations} />
             </View>
           </View>
-        )}
-      />
-      <View>
-        {/* Post Interaction Buttons */}
-        <View style={styles.buttonContainer}>
-          <View style={styles.buttonRow}>
-            {/* <HeartButton style={styles.buttonItem} data={item} type={TYPE} /> */}
+        </View>
+
+        {/* Post Images Carousel */}
+        <View style={{ position: 'absolute', borderRadius: 600, width: windowWidth * 2, height: windowWidth * 2, flexDirection: 'row', left: -windowWidth / 2, top: -windowWidth, justifyContent: 'center', alignItems: 'flex-end', overflow: 'hidden' }}>
+          <View style={{ backgroundColor: 'green', width: windowWidth, height: windowWidth, }}>
+            <Carousel
+              style={{}}
+              // style={{ borderRadius: 900,}}
+              pagingEnabled={true}
+              loop={false}
+              width={windowWidth}
+              height={windowWidth}
+              data={flattenedImagesArray}
+              scrollAnimationDuration={300}
+              renderItem={({ item, index }) => (
+                <View style={styles.carouselItem}>
+                  <ImageModal swipeToDismiss={true}
+                    resizeMode="cover"
+                    imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
+
+                  <View style={{ position: 'absolute', bottom: 30, width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+                    <View style={styles.viewTextStyles}>
+                      <Text style={styles.carouselText}>
+                        {index + 1}/{flattenedImagesArray.length} - {item.cityName}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
+
+        </View>
+        {/* Button save */}
+        <View style={styles.buttonRow}>
+          <View style={[styles.buttonItem, { gap: 10 }]}>
             <CommentButton
-              style={styles.buttonItem}
+              style={[styles.buttonComment,]}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
-        </View>
-        {/* Rating Button */}
-        <View style={styles.ratingButtonContainer}>
-          <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
-          {item.discountTour !== 0 ?
-            <View style={styles.priceBackground}>
-              <View style={styles.priceWrap}>
-                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
-                <View style={{ paddingRight: 10 }}>
-                  <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                  <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                </View>
-              </View>
-            </View>
-            :
-            <View style={styles.priceBackground}>
-              <View style={styles.priceWrap}>
-                <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
-                <View style={{ paddingRight: 10 }}>
-                  <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                </View>
-              </View>
-            </View>
-          }
 
+          <View style={styles.buttonItem}>
+            {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
+            <SaveButton style={styles.buttonSave} data={item} type={TYPE} />
+          </View>
         </View>
+
+
       </View>
-      <CheckedInChip items={Object.values(flattenedLocationsArray)} />
-      {/* Post Description */}
-      <View style={{ paddingHorizontal: 15 }}>
-        <Markdown>
-          {desc.Markdown}
-        </Markdown>
-        <TouchableOpacity onPress={() => toggleDescription(item.id)}>
-          <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
-        </TouchableOpacity>
+      <View style={{ flex: 1 }}>
+        {/* Content */}
+        <View style={{ paddingTop: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 15 }}>
+            <Image style={{ width: 40, height: 80, }} source={require('@/assets/images/mountainIcon.png')}></Image>
+            <Text style={styles.contentTitle}>{item.title}</Text>
+          </View>
+          {/* Post Interaction Buttons */}
+          <View style={styles.buttonContainer}>
+            {/* <View style={styles.buttonRow}>
+              <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
+              <CommentButton
+                style={styles.buttonItem}
+                onPress={openCommentModal}
+              />
+              <Text style={styles.totalComments}>{totalComments}</Text>
+            </View> */}
+            {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
+          </View>
+          {/* Rating Button */}
+          <View style={styles.ratingButtonContainer}>
+            <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
+            {item.discountTour !== 0 ?
+              <View style={styles.priceBackground}>
+                <View style={styles.priceWrap}>
+                  <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
+                  <View style={{ paddingRight: 10 }}>
+                    <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                    <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                  </View>
+                </View>
+              </View>
+              :
+              <View style={styles.priceBackground}>
+                <View style={styles.priceWrap}>
+                  <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
+                  <View style={{ paddingRight: 10 }}>
+                    <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                  </View>
+                </View>
+              </View>
+            }
+
+          </View>
+        </View>
+        <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+        {/* Post Description */}
+        <View style={{ paddingHorizontal: 15 }}>
+          <Markdown>
+            {desc.Markdown}
+          </Markdown>
+          <TouchableOpacity onPress={() => toggleDescription(item.id)}>
+            <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
+          </TouchableOpacity>
+        </View>
+        <Divider style={styles.divider} />
       </View>
-      <Divider style={styles.divider} />
+
+
+
       {/* Comment Bottom Sheet */}
       <CommentsActionSheet
         isPostAuthor={isPostAuthor}
@@ -752,7 +799,6 @@ const TourItem: React.FC<TourItemProps> = ({
         postId={item.id}
         type={"tour"}
       />
-
 
       {/* Rating Modal */}
       <Modal
@@ -888,7 +934,12 @@ export default function ToursScreen() {
 
   return (
     <>
-
+      <StatusBar
+        barStyle={"dark-content"}
+        // hidden={true}
+        translucent={false}
+        backgroundColor="white"
+      />
       <FlatList
         data={tourId ? dataTour : memoriedTourItem}
         renderItem={({ item }) => (
@@ -919,6 +970,23 @@ export default function ToursScreen() {
   );
 }
 const styles = StyleSheet.create({
+  contentTitle: {
+    fontSize: 26,
+    fontWeight: '600',
+
+  },
+  headerButton: {
+    padding: 20,
+    backgroundColor: 'rgba(100,100,100,0.5)',
+    borderRadius: 40
+  },
+  header: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    width: '100%',
+    // paddingTop:40
+  },
   priceLabel: {
     fontSize: 20,
     fontWeight: '500',
@@ -942,151 +1010,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     bottom: 0,
     left: 220,
-  },
-  // rating comment styles
-  replyInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingTop: 8,
-    paddingBottom: 10,
-    marginTop: 15,
-
-  },
-  replyInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingHorizontal: 10,
-  },
-  replySubmitButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginLeft: 10,
-  },
-  replySubmitButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 14,
-  },
-  replyButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  replyButtonText: {
-    color: '#5a5a5a',
-    fontSize: 14,
-    marginLeft: 5,
-  },
-  marginBottom5: {
-    marginBottom: 5,
-  },
-  topBorder: {
-    borderTopWidth: 3,
-    borderTopColor: '#B1B1B1',
-    width: 50,
-    alignSelf: 'center',
-    paddingVertical: 5
-  },
-  ratingCommentsASContainer: {
-    backgroundColor: '#f9f9f9',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    height: '80%',
-  },
-  ratingCommentsHeader: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  ratingCommentCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  ratingCommentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  ratingCommentAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  ratingCommentUserInfo: {
-    flexDirection: 'column',
-  },
-  ratingCommentAuthor: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  ratingCommentTime: {
-    fontSize: 12,
-    color: '#999',
-  },
-  ratingCommentText: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 10,
-  },
-  ratingCommentImage: {
-    width: '100%',
-    height: 150,
-    borderRadius: 10,
-    marginTop: 10,
-    resizeMode: 'cover',
-  },
-  noCommentsText: {
-    fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  //
-  actionSheetContainer: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  actionOption: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  actionOptionText: {
-    fontSize: 18,
-    color: '#007AFF',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  actionOptionTextDelete: {
-    color: '#FF3B30', // Red color for delete option
-  },
-  actionOptionTextCancel: {
-    color: '#555555', // Grey color for cancel option
-  },
-  commentButtons: {
-    flexDirection: "row",
-    marginTop: 5,
   },
   // rating modal styles
   selectedImageContainer: {
@@ -1250,13 +1173,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   totalComments: {
-    marginRight: 10,
-    marginTop: 1,
+    // marginRight: 10,
+    // marginTop: 1,
     fontSize: 16,
     fontWeight: "bold",
-  },
-  commentsContainer: {
-    marginBottom: 100,
   },
   carouselText: {
     color: "#fff",
@@ -1275,36 +1195,41 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 10,
   },
-  buttonRow: {
-    flexDirection: "row",
-    width: 150,
-    paddingVertical: 6,
+
+  buttonComment: {
+    padding: 0
+  },
+  buttonSave: {
+    // padding: 20
   },
   buttonItem: {
+    flexDirection: 'row',
     alignItems: "center",
-    marginHorizontal: 10,
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 80,
+    elevation: 6,
+    width: 80,
+    height: 80
+  },
+  buttonRow: {
+    position: 'absolute',
+    bottom: 0,
+    flexDirection: "row",
+    width: '100%',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20
   },
   viewTextStyles: {
-    position: "absolute",
-    backgroundColor: "#392613",
-    top: 10,
-    left: windowWidth - 120,
-    borderRadius: 20,
-    paddingHorizontal: 7,
-  },
-  replyingToContainer: {
+    // position: "absolute",
+    backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  cancelReplyButton: {
-    color: "#FF0000",
-    marginTop: 5,
+    borderRadius: 20,
   },
   container: {
     flex: 1,
     width: "100%",
+    backgroundColor: backgroundColors.background1
   },
   row: {
     flexDirection: "row",
@@ -1312,90 +1237,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
   },
-  miniAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    borderColor: "#ccc",
-    borderWidth: 1,
-  },
-  username: {
-    fontSize: 16,
-    marginLeft: 10,
-    fontWeight: "bold",
-  },
-  time: {
-    marginLeft: 10,
-    color: "grey",
-  },
-  commentTime: {
-    color: "grey",
-  },
-  column: {
-    flexDirection: "column",
-  },
   posts: {
     width: windowWidth,
     height: windowWidth,
-  },
-  modalContent: {
-    padding: 20,
-    marginBottom: 80,
-  },
-  modalHeaderText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  commentContainer: {
-    padding: 10,
-    backgroundColor: "#f9f9f9", // Light background for the comment
-    borderRadius: 10,
-    marginBottom: 10,
-    borderColor: "#e0e0e0",
-  },
-  commentUsername: {
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#333",
-    marginRight: 10,
-  },
-  commentText: {
-    fontSize: 14,
-    color: "#555",
-    marginTop: 5,
-  },
-  replyButton: {
-    color: "grey", // Blue color for the reply button
-    fontSize: 13,
-    marginTop: 3,
-    marginRight: 10,
-  },
-  commentInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    borderTopWidth: 1,
-    borderColor: "#ccc",
-    backgroundColor: "#fff",
-    marginBottom: 20,
-  },
-  commentInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 20,
-    padding: 10,
-    marginRight: 10,
-  },
-  commentButton: {
-    backgroundColor: "#007BFF",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  commentButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
   },
 });
