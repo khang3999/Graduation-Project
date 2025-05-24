@@ -5,7 +5,7 @@ import { auth, database, get } from '@/firebase/firebaseConfig';
 import { slug, sortTourAtHomeScreen } from '@/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { asyncStorageEmitter } from '@/utils/emitter';
-import { useAccount } from './AccountProvider';
+// import { useAccount } from './AccountProvider';
 
 const HomeContext = createContext(null);
 const HomeProvider = ({ children }) => {
@@ -44,7 +44,7 @@ const HomeProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState(false);
 
-    const { setAccountData } = useAccount();
+    // const { setAccountData } = useAccount();
 
     // Login state
     const fetchUserId = async () => {
@@ -66,6 +66,7 @@ const HomeProvider = ({ children }) => {
     }, []);
 
     /// ----------------------- FETCH REAL TIME ----------------------
+
     // Lấy các thành phố
     useEffect(() => {
         const refCities = ref(database, `cities/`)
@@ -116,30 +117,63 @@ const HomeProvider = ({ children }) => {
             unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
     }, [])
-    // Lấy data account
-    useEffect(() => {
-        if (userId) {
-            const refAccount = ref(database, `accounts/${userId}`)
-            const unsubscribe = onValue(refAccount, (snapshot) => {
-                console.log('check data account');
-                if (snapshot.exists()) {
-                    const jsonDataAccount = snapshot.val();
-                    // Set behavior
-                    setDataAccount(jsonDataAccount) // use at postDetail.jsx
-                    setAccountData(jsonDataAccount) //account provider
-                } else {
-                    console.log("No data available1");
-                }
-            }, (error) => {
-                console.log("check 999:");
-                console.error("Error fetching data:", error);
-            });
 
-            return () => {
-                unsubscribe(); // Sử dụng unsubscribe để hủy listener
-            };
-        }
-    }, [userId])
+    // // Lấy các bài viết đã like
+    // useEffect(() => {
+    //     const refLikedSaved = ref(database, `accounts/${userId}`)
+    //     const unsubscribe = onValue(refLikedSaved, (snapshot) => {
+    //         if (snapshot.exists()) {
+    //             const jsonData = snapshot.val();
+    //             // POST
+    //             const likedPostsList = jsonData.likedPostsList || {};
+    //             const savedPostsList = jsonData.savedPostsList || {};
+    //             // TOUR
+    //             const likedToursList = jsonData.likedToursList || {};
+    //             const savedToursList = jsonData.savedToursList || {};
+
+
+    //         } else {
+    //             console.log("No data available liked list and saved list");
+    //         }
+    //     }, (error) => {
+    //         console.error("Error fetching liked list and saved list:", error);
+    //     });
+
+    //     return () => {
+    //         unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    //     };
+    // }, [userId])
+
+    // Lấy data account
+    // useEffect(() => {
+    //     if (userId) {
+    //         const refAccount = ref(database, `accounts/${userId}`)
+    //         const unsubscribe = onValue(refAccount, (snapshot) => {
+    //             console.log('check data account');
+    //             if (snapshot.exists()) {
+    //                 const jsonDataAccount = snapshot.val();
+    //                 // POST
+    //                 const likedPostsList = jsonDataAccount.likedPostsList || {};
+    //                 const savedPostsList = jsonDataAccount.savedPostsList || {};
+    //                 // TOUR
+    //                 const likedToursList = jsonDataAccount.likedToursList || {};
+    //                 const savedToursList = jsonDataAccount.savedToursList || {};
+    //                 // Set behavior
+    //                 setDataAccount(jsonDataAccount) // use at postDetail.jsx
+    //                 // setAccountData(jsonDataAccount) //account provider
+    //             } else {
+    //                 console.log("No data available1");
+    //             }
+    //         }, (error) => {
+    //             console.log("check 999:");
+    //             console.error("Error fetching data:", error);
+    //         });
+
+    //         return () => {
+    //             unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    //         };
+    //     }
+    // }, [userId])
     // Lắng nghe thay đổi hành vi của account
     useEffect(() => {
         if (userId) {
@@ -190,7 +224,7 @@ const HomeProvider = ({ children }) => {
         };
     }, [])
 
-    if (!userId || !accountBehavior || !dataAccount || !dataCountries) {
+    if (!userId || !accountBehavior || !dataCountries) {
         return <Text>Loading...</Text>
     }
     return (
@@ -198,9 +232,9 @@ const HomeProvider = ({ children }) => {
             value={{
                 dataPosts, setDataPosts,
                 dataTours,
-                currentPostCount,setCurrentPostCount,
+                currentPostCount, setCurrentPostCount,
                 allLocationIdFromPost, setAllLocationIdFromPost,
-                newPostCount,setNewPostCount,
+                newPostCount, setNewPostCount,
                 accountBehavior, setAccountBehavior,
                 loadedPosts, setLoadedPosts,
                 loadedTours, setLoadedTours,

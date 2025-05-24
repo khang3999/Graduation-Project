@@ -9,8 +9,8 @@ import AdminProvider from './AdminProvider';
 // List all providers you want to combine
 const providers = [  
   [PostProvider, {}], 
-  [AccountProvider, {}],
   [HomeProvider,{}],
+  [AccountProvider, {}],
   [TourProvider,{}],
   [MapCheckinProvider, {}],
   [AdminProvider, {}]

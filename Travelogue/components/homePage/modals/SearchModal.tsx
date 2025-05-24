@@ -1,5 +1,5 @@
 import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { FontAwesome, FontAwesome5, FontAwesome6, Ionicons } from '@expo/vector-icons';
 import { TextInput } from 'react-native-gesture-handler';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
@@ -78,7 +78,10 @@ const SearchModal = () => {
     // setSelectedCountry(country)
     selectedCountry.current = country
   }, [])
-
+  useEffect(()=>{
+    console.log(selectedCities,'selected cities');
+    
+  },[selectedCities])
   return (
     <Modal
       animationType="slide"

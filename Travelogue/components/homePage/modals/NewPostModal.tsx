@@ -2,8 +2,8 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, M
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { Foundation, Ionicons } from '@expo/vector-icons'
-import { PostModal } from '../homePage/PostItem'
-import NewPostItem from '../homePage/NewPostItem'
+import { PostModal } from '../PostItem'
+import NewPostItem from './NewPostItem'
 import { ref } from 'firebase/database'
 import { database, get } from '@/firebase/firebaseConfig'
 import { router } from 'expo-router'
@@ -11,24 +11,32 @@ import { useAccount } from '@/contexts/AccountProvider'
 import { backgroundColors, iconColors } from '@/assets/colors'
 const { width, height } = Dimensions.get('window')
 
-const NewPostModal = () => {
-    const {
-        modalNewPostVisible, setModalNewPostVisible,
-        setReload, dataNewPostList, dataPosts, setIsLoading
-    }: any = useHomeProvider()
+type Props = {
+    data: PostModal[],
+    dataNew: PostModal[],
+    modalNewPostVisible: boolean,
+    setReload?: React.Dispatch<React.SetStateAction<boolean>>,
+    setModalNewPostVisible?: React.Dispatch<React.SetStateAction<boolean>>,
+    setIsLoading?: React.Dispatch<React.SetStateAction<boolean>>,
+}
+const NewPostModal = ({ data, dataNew, modalNewPostVisible, setReload, setModalNewPostVisible, setIsLoading }: Props) => {
+    // const {
+    //     modalNewPostVisible, setModalNewPostVisible,
+    //     setReload, dataNewPostList, dataPosts, setIsLoading
+    // }: any = useHomeProvider()
     const { setSearchedAccountData }: any = useAccount();
     console.log('NewPostModal render');
 
     // Hàm tính những bài viết mới - DONE
     const dataFilteredNewPosts = useMemo(() => {
-        if (!modalNewPostVisible || dataNewPostList?.length === 0) return [];
+        if (!modalNewPostVisible || dataNew?.length === 0) return [];
 
-        const result = dataNewPostList.filter((postObj1: any) =>
-            !dataPosts.some((postObj2: any) => postObj1.id === postObj2.id)
+        const result = dataNew.filter((postObj1: any) =>
+            !data.some((postObj2: any) => postObj1.id === postObj2.id)
         );
         result.sort((postA: any, postB: any) => postB.created_at - postA.created_at);
         return result;
-    }, [modalNewPostVisible, dataNewPostList]);
+    }, [modalNewPostVisible, dataNew]);
 
     const handleTapToViewPostDetail = useCallback((path: any, postId: string) => {
         router.push({
@@ -75,8 +83,8 @@ const NewPostModal = () => {
     }, [])
 
     const handleTapOnReloadHomeScreen = useCallback(() => {
-        setIsLoading(true)
-        setReload((prev: Boolean) => !prev); // toggle reload
+        setIsLoading?.(true)
+        setReload?.((prev: Boolean) => !prev) // toggle reload
     }, [])
 
     return (
@@ -88,7 +96,7 @@ const NewPostModal = () => {
             // visible={true}
             onRequestClose={() => {
                 Alert.alert('Modal has been closed.');
-                setModalNewPostVisible(false);
+                setModalNewPostVisible?.(false);
             }}
         >
             <View style={styles.modalView}>
@@ -104,7 +112,7 @@ const NewPostModal = () => {
                     </View>
                     <FlatList
                         data={dataFilteredNewPosts}
-                        // data={[...dataPosts]}
+                        // data={[...data]}
                         renderItem={newPostItem}
                         // renderItem={({item})=>{return (<View><Text>{item.id}</Text></View>)}}
                         ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
@@ -117,7 +125,7 @@ const NewPostModal = () => {
                             <Text style={[styles.textStyle, { color: 'white' }]}>Làm mới</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            onPress={() => setModalNewPostVisible(false)}
+                            onPress={() => setModalNewPostVisible?.(false)}
                             style={[styles.buttonModal, styles.buttonCancel]}
                         >
                             <Text style={styles.textStyle}>Đóng</Text>

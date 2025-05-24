@@ -10,12 +10,20 @@ const TourProvider = ({ children }) => {
     const [dataModalSelected, setDataModalSelected] = useState(null)
     const [currentTourCount, setCurrentTourCount] = useState(0);
     const [newTourCount, setNewTourCount] = useState(0);
-    const [isSearchingMode, setIsSearchingMode] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
     const [showBanner, setShowBanner] = useState(true);
     const [modalSearchVisible, setModalSearchVisible] = useState(false)
     const [reload, setReload] = useState(false);
-    const [ modalNewTourVisible, setModalNewTourVisible] = useState(false);
+    const [search, setSearch] = useState(false);
+    const [modalNewTourVisible, setModalNewTourVisible] = useState(false);
+    const dataInput = useRef('')
+    const selectedCountry = useRef(null)
+    const [selectedCities, setSelectedCities] = useState([]);
+    const [dataCities, setDataCities] = useState([])
+
+
+
 
 
 
@@ -62,7 +70,6 @@ const TourProvider = ({ children }) => {
                 currentTourCount, setCurrentTourCount,
                 newTourCount, setNewTourCount,
                 loadedTours, setLoadedTours,
-                isSearchingMode, setIsSearchingMode,
                 setSelectedTour, selectedTour,
                 // selectedTypeSearch, setSelectedTypeSearch,
                 selectedTypeSearch,
@@ -71,7 +78,13 @@ const TourProvider = ({ children }) => {
                 showBanner, setShowBanner,
                 modalSearchVisible, setModalSearchVisible,
                 reload, setReload,
-                modalNewTourVisible, setModalNewTourVisible
+                modalNewTourVisible, setModalNewTourVisible,
+                isLoading, setIsLoading,
+                dataInput,
+                selectedCountry,
+                search, setSearch,
+                selectedCities, setSelectedCities,
+                dataCities, setDataCities
             }}
         >
             {children}

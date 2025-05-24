@@ -12,7 +12,7 @@ export default function AccountManagementScreen() {
   const [dataAccountReport, setDataAccountReport] = useState([]);
   const keyResolve = 2
   const [factorReport, setFactorReport] = useState(0);
-  const { accountData, setAccountData }: any = useAccount()
+  const { dataAccount, setDataAccount }: any = useAccount()
   const { imagesReport, setImagesReport }: any = useAdminProvider()
 
 

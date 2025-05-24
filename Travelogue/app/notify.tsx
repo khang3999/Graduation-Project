@@ -7,12 +7,13 @@ import { router } from 'expo-router';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
+import { useAccount } from '@/contexts/AccountProvider';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
     const [accountId, setAccountId] = useState([]);
     const { selectedPost, setSelectedPost }: any = usePost()
-    const { dataAccount }: any = useHomeProvider()
+    const { dataAccount }: any = useAccount()
     const { selectedTour, setSelectedTour }: any = useTourProvider()
 
 

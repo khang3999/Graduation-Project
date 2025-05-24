@@ -1,6 +1,6 @@
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { PostModal } from './PostItem';
+import { PostModal } from '../PostItem';
 import { formatDate } from '@/utils/commons';
 import { Badge } from 'react-native-paper';
 import { router } from 'expo-router';

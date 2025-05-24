@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Pressable, Modal, Alert, TextInput, Dimensions, RefreshControl } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { database, ref } from '@/firebase/firebaseConfig'
-import { equalTo, get, orderByChild, query, update } from '@firebase/database'
+import { database, get, ref, update } from '@/firebase/firebaseConfig'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { countMatchingLocations, mergeWithRatio, slug, sortTourAtHomeScreen } from '@/utils'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
@@ -10,6 +9,7 @@ import { useAccount } from '@/contexts/AccountProvider'
 import { backgroundColors, bagdeColors, iconColors } from '@/assets/colors'
 import PostItem, { PostModal } from './PostItem'
 import { FlashList } from "@shopify/flash-list";
+import { equalTo, orderByChild, query } from 'firebase/database'
 const { width } = Dimensions.get('window')
 
 
@@ -51,7 +51,7 @@ const PostList = () => {
   const [dataNewPosts, setDataNewPosts] = useState([]); // Chứa các bài viết mới đc thêm trên firebase
   const allLocationIdFromPost = useRef([])
   const flatListPostRef: any = useRef(null)
-  const { setSearchedAccountData }: any = useAccount();
+  const { setSearchedAccountData, likedPostsList, setLikedPostsList, }: any = useAccount();
   const { selectedCityId, content }: any = useLocalSearchParams();
 
   // ĐỊNH NGHĨA CÁC HÀM 
@@ -65,12 +65,12 @@ const PostList = () => {
   //   // Chi dong modal
   //   setModalSearchVisible(false)
   // }, [])
+
   const searchPost = useCallback(async (dataPosts: any, dataInput: any, selectedCountry: any, selectedCities: any) => {
     // Lưu lại hành vi mới lên firebase
     // Khi có chọn điều kiện sort
     // if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
     if (!(dataInput === '' && selectedCountry === null && selectedCities.length === 0)) {
-      // const userId = dataAccount.id
       // Ghi lên firebase content và location không ghi quốc gia
       const refBehaviors = ref(database, `accounts/${userId}/behavior`)
       const dataUpdate = {
@@ -193,13 +193,16 @@ const PostList = () => {
         return matchingPost.length > 0 ? matchingPost : [];
         // setDataPosts(matchingPost)
       } else {
-        console.log("No dataPosts is invalid");
+        console.log("No dataPosts, invalid");
         return []
       }
     }
     return []
   }, [])
-  const fetchSearch = useCallback(async () => {
+
+  const handleSearch = useCallback(async () => {
+    console.log(selectedCities, 'check selected cities');
+
     const resultSearch = await searchPost(dataPosts, dataInput.current, selectedCountry.current, selectedCities);
     setDataPosts(resultSearch);
     // clear data các biến select 
@@ -207,10 +210,11 @@ const PostList = () => {
     selectedCountry.current = null
     setSelectedCities([])
     setDataCities([])
-  }, [])
+  }, [selectedCities, dataPosts])
+
   // Xử lí tìm kiếm bài viết của modal search
   useEffect(() => {
-    fetchSearch()
+    handleSearch()
   }, [search])
 
   const fetchPosts = useCallback(async () => {
@@ -231,7 +235,6 @@ const PostList = () => {
     return []; // đảm bảo luôn trả về mảng
   }, [])
 
-  // SUA LAI THUAT TOAN CHUA DUNG KHI CHON NOI DUNG KHONG CHON DIA DIEM
   const sortPostListByBehavior = useCallback((list: any, behavior: any) => {
     // Ý tưởng: chuyển mảng data thành 2 mảng con và trộn (3 bước: tạo 2 mảng con, sort, trộn)
     //Bước 1: Phân loại bài viết thành 2 mảng (MỤC TIÊU)
@@ -394,10 +397,10 @@ const PostList = () => {
       } else { // Chuyển giữa các màn hình trong stack
         console.log('22');
         reloadHomeScreen()
-        return () => {
-          console.log('Screen is unfocused');
-        };
       }
+      return () => {
+        console.log('Screen is unfocused');
+      };
     }, [selectedCityId, content, reload]) // Cập nhật khi các giá trị này thay đổi
   );
 
@@ -412,34 +415,7 @@ const PostList = () => {
     if (allLocationIdFromPost.current) {
       sortToursByPostLocationId()
     }
-  }, [allLocationIdFromPost.current])
-
-  // // Run to load new post list but don't merge with old post list: 4 - DONE
-  // useEffect(() => {
-  //   if (modalNewPostVisible) {
-  //     const result = dataNewPostList.filter((postObj1: any) =>
-  //       !dataPosts.some((postObj2: any) => postObj1.id === postObj2.id)
-  //     );
-  //     result.sort((postA: any, postB: any) => {
-  //       return postB.created_at - postA.created_at
-  //     })
-  //     setDataNewPosts(result)
-  //   }
-  // }, [modalNewPostVisible])
-
-  // Hàm tính những bài viết mới - DONE
-  // const dataFilteredNewPosts = useMemo(() => {
-  //   if (!modalNewPostVisible) return []; // Modal chưa mở => không cần tính toán
-  //   if (!dataNewPostList || dataNewPostList.length === 0) return [];
-
-  //   const result = dataNewPostList.filter((postObj1: any) =>
-  //     !dataPosts.some((postObj2: any) => postObj1.id === postObj2.id)
-  //   );
-
-  //   result.sort((postA: any, postB: any) => postB.created_at - postA.created_at);
-
-  //   return result;
-  // }, [modalNewPostVisible, dataNewPostList]);
+  }, [allLocationIdFromPost.current, dataTours.current])
 
   // CÁC HÀM XỬ LÍ SỰ KIỆN
   // Hàm xem chi tiết bài viết
@@ -492,11 +468,12 @@ const PostList = () => {
         index={itemIndex}
         // userId={userId}
         data={postData}
+        liked={postData.id in likedPostsList}
         onTapToViewDetail={handleTapToViewPostDetail}
         onTapToViewProfile={handleTapToViewProfile}
       ></PostItem>
     )
-  }, [])
+  }, [likedPostsList])
   // VIEW
   return (
     <View style={styles.container}>
@@ -525,8 +502,8 @@ const PostList = () => {
                 viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
                 initialNumToRender={1}
                 maxToRenderPerBatch={1}
-                // refreshing={isLoading}
-                // onRefresh={reloadHomeScreen}
+              // refreshing={isLoading}
+              // onRefresh={reloadHomeScreen}
               />
               // <FlashList
               //   horizontal={true}

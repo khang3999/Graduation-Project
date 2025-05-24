@@ -9,28 +9,40 @@ import { Badge } from "react-native-paper";
 import HeaderIndex from "@/components/header/HeaderIndex";
 import { backgroundColors, iconColors } from "@/assets/colors";
 import { set } from "lodash";
-import SearchModal from "@/components/modals/SearchModal";
-import NewPostModal from "@/components/modals/NewPostModal";
+import SearchModal from "@/components/homePage/modals/SearchModal";
+import NewPostModal from "@/components/homePage/modals/NewPostModal";
 
 
 const height = Dimensions.get('window').height;
 const Home = () => {
   const {
-    dataModalSelected,
-    dataAllCities,
-    selectedTypeSearch, dataTypeSearch,
-    modalSearchVisible, setModalSearchVisible,
-    modalNewPostVisible, setModalNewPostVisible,
-    reload, setReload,
+    dataPosts,
     currentPostCount,
     newPostCount,
-    isLoading, setIsLoading,
+    dataModalSelected, setDataModalSelected,
+    dataAllCities,
+    dataNewPostList,
+    setReload,
+    setSearch,
+    setIsLoading,
+    // ModalSearch
+    modalSearchVisible, setModalSearchVisible,
+    dataInput,
+    dataCountries,
+    selectedCountry,
+    // setDataCities,
+    selectedCities, setSelectedCities,
+    dataTypeSearch,
+    selectedTypeSearch,
+    // Modal new post
+    modalNewPostVisible, setModalNewPostVisible,
+
   }: any = useHomeProvider();
 
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const loopRef = useRef<any>(null);
 
-  // Animated loop
+  // Animation
   useEffect(() => {
     loopRef.current = Animated.loop(
       Animated.sequence([
@@ -58,7 +70,8 @@ const Home = () => {
     outputRange: ['-2deg', '0deg', '2deg'],
   });
 
-  const renderPostList = useCallback(() => (<PostList></PostList>), [])
+  const renderPostList = useCallback(() => (<PostList />), [])
+  const renderTourList = useCallback(() => (<TourSection />), [])
   // const renderSearchModal = useCallback(() => {
   //   return modalSearchVisible ? <SearchModal /> : null
   // }, [modalSearchVisible])
@@ -72,8 +85,36 @@ const Home = () => {
   const renderModal = useCallback(() => {
     return (
       <>
-        {modalSearchVisible && <SearchModal />}
-        {modalNewPostVisible && <NewPostModal />}
+        {modalSearchVisible && <SearchModal
+
+        />}
+        {/* {modalSearchVisible && <SearchModal
+          modalSearchVisible={modalSearchVisible}
+          setModalSearchVisible={setModalSearchVisible}
+          dataInput={dataInput}
+          dataCountries={dataCountries}
+          selectedCountry={selectedCountry}
+          // dataCities={dataAllCities}
+          selectedCities={selectedCities}
+          setSelectedCities={setSelectedCities}
+          // setDataCities={setDataCities}
+          dataTypeSearch={dataTypeSearch}
+          selectedTypeSearch={selectedTypeSearch}
+          setIsLoading={setIsLoading}
+          setSearch={setSearch}
+          dataModalSelected={dataModalSelected}
+          setDataModalSelected={setDataModalSelected}
+        />} */}
+
+
+        {modalNewPostVisible && <NewPostModal
+          data={dataPosts}
+          dataNew={dataNewPostList}
+          modalNewPostVisible={modalNewPostVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewPostVisible}
+          setIsLoading={setIsLoading}
+        />}
       </>
     );
   }, [modalSearchVisible, modalNewPostVisible]);
@@ -137,12 +178,12 @@ const Home = () => {
             <Text style={styles.textCategory}>Nổi bật</Text>
           </View>
           {/* Tour section */}
-          {/* <View>
+          <View>
             <Text style={[styles.textCategory]}>Tour du lịch</Text>
             <View style={{ paddingBottom: 20 }}>
-              <TourSection></TourSection>
+              {renderTourList()}
             </View>
-          </View> */}
+          </View>
           {/* POST */}
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

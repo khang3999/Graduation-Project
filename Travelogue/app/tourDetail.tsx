@@ -162,7 +162,8 @@ const TourItem: React.FC<TourItemProps> = ({
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
   const [averageRatingValue, setAverageRatingValue] = useState(averageRating(item.ratingSummary.totalRatingValue, item.ratingSummary.totalRatingCounter));
 
-  const { dataAccount }: any = useHomeProvider();
+  // const { dataAccount }: any = useHomeProvider();
+  const { setSearchedAccountData, dataAccount }: any = useAccount();
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const [ratingImage, setRatingImage] = useState<string | null>(null);
@@ -178,7 +179,6 @@ const TourItem: React.FC<TourItemProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
   const [bannedWords, setBannedWords] = useState<any[]>([])
-  const { setSearchedAccountData }: any = useAccount();
   const originalPrice = item.money
   const promotionalPrice = item.money * (100 - item.discountTour) / 100
 
@@ -694,7 +694,7 @@ const TourItem: React.FC<TourItemProps> = ({
         {/* Post Interaction Buttons */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonRow}>
-            <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
+            {/* <HeartButton style={styles.buttonItem} data={item} type={TYPE} /> */}
             <CommentButton
               style={styles.buttonItem}
               onPress={openCommentModal}

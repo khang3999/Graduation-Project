@@ -7,10 +7,12 @@ import LiveModeButton from '../buttons/LiveModeButton'
 import { iconColors } from '@/assets/colors'
 import HeartButton from '../buttons/HeartButton'
 import SaveButton from '../buttons/SaveButton'
-import { database, ref, update } from '@/firebase/firebaseConfig'
+import { database, get, ref, update } from '@/firebase/firebaseConfig'
 import { useHomeProvider } from '@/contexts/HomeProvider'
+import { useAccount } from '@/contexts/AccountProvider'
 
 const { width } = Dimensions.get('window')
+const TYPE = 0 // 0: post, 1: tour
 export type PostModal = {
     author: {
         avatar: string,
@@ -47,15 +49,21 @@ export type PostModal = {
 type Props = {
     data: PostModal,
     index: number,
+    liked: boolean,
     // userId: string,
     // onTapLocationItemMenu?: (selectedCityId: string, selectedCountryId: string, userId: string) => void | undefined,
     onTapToViewDetail?: (path: any, postId: string) => void | undefined
     onTapToViewProfile?: (authorId: string) => Promise<void> | undefined,
 };
-const PostItem = ({ data, index, onTapToViewDetail, onTapToViewProfile }: Props) => {
+const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }: Props) => {
     const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
     const { userId }: any = useHomeProvider()
+    const { likedPostsList, setLikedPostsList }: any = useAccount()
 
+    // useEffect(() => {
+    // // console.log(`PostItem render by liked: ${liked}`, data.id)
+    // console.log(likedPostsList, 'check');
+    // },[likedPostsList])
     const handleTapOnLocationInMenu = useCallback((selectedCityId: string, selectedCountryId: string, userId: string) => {
         const updateAndNavigate = async () => {
             // Update hành vi lên firebase
@@ -166,12 +174,12 @@ const PostItem = ({ data, index, onTapToViewDetail, onTapToViewProfile }: Props)
                     <View style={styles.footer}>
                         <View style={styles.actionBar}>
                             <View style={[styles.btn, {
-                                paddingHorizontal: 10,
+                                paddingHorizontal: 10, zIndex: 3
                             }]}>
-                                <HeartButton data={data} type={0}></HeartButton>
+                                <HeartButton data={data} type={TYPE} liked={liked}></HeartButton>
                             </View>
-                            <View style={[styles.btn, { width: 50, marginLeft: 0 }]}>
-                                <SaveButton data={data} type={0}></SaveButton>
+                            <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}>
+                                <SaveButton data={data} type={TYPE}></SaveButton>
                             </View>
                         </View>
                         {/* Topic */}
@@ -293,7 +301,7 @@ const styles = StyleSheet.create({
         elevation: 4
     },
 })
-
+// export default PostItem
 export default React.memo(PostItem, (prevProps: Props, nextProps: Props) => {
     if (!prevProps.data || !nextProps.data) return false;
     const prevTemp = prevProps.data
@@ -309,5 +317,6 @@ export default React.memo(PostItem, (prevProps: Props, nextProps: Props) => {
         && prevTemp.scores === nextTemp.scores
         && prevTemp.mode === nextTemp.mode
         && prevTemp.reports === nextTemp.reports
+        && prevProps.liked === nextProps.liked
     )
 })
