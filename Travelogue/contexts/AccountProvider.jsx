@@ -63,9 +63,9 @@ export const AccountProvider = ({ children }) => {
     }
   }, [userId,])
 
-  if (!dataAccount) {
-      return (<Text>Loading...</Text>)
-  }
+  // if (!dataAccount) {
+  //     return (<Text>Loading...</Text>)
+  // }
   return (
     <AccountContext.Provider value={{
       dataAccount, setDataAccount,

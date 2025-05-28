@@ -178,9 +178,9 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                             }]}>
                                 <HeartButton data={data} type={TYPE} liked={liked}></HeartButton>
                             </View>
-                            <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}>
-                                <SaveButton data={data} type={TYPE}></SaveButton>
-                            </View>
+                            {/* <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}> */}
+                                <SaveButton myStyle={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]} data={data} type={TYPE}></SaveButton>
+                            {/* </View> */}
                         </View>
                         {/* Topic */}
                         <View style={styles.topicContainer}>

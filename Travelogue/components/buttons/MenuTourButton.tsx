@@ -68,7 +68,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
       buttonRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
         setMenuPosition({
           top: py + height - 20, // Place the menu right below the button
-          left: px - 140, // Align it with the left side of the button
+          right: px - 140, // Align it with the left side of the button
         });
       });
     }

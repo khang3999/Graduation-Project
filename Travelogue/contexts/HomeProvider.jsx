@@ -224,9 +224,9 @@ const HomeProvider = ({ children }) => {
         };
     }, [])
 
-    if (!userId || !accountBehavior || !dataCountries) {
-        return <Text>Loading...</Text>
-    }
+    // if (!userId || !accountBehavior || !dataCountries) {
+    //     return <Text>Loading...</Text>
+    // }
     return (
         <HomeContext.Provider
             value={{

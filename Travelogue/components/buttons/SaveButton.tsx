@@ -144,7 +144,7 @@ const SaveButton = (props: any) => {
     }
   }
   return (
-    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} {...props}>
+    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} style={props.myStyle}>
       <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />
     </TouchableOpacity>
   )

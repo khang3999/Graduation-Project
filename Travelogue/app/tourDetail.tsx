@@ -45,7 +45,7 @@ import { useTourProvider } from "@/contexts/TourProvider";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActionSheet";
 import ImageModal from "react-native-image-modal";
-import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons";
+import { AntDesign, Entypo, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { backgroundColors, iconColors } from "@/assets/colors";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -98,13 +98,14 @@ const RatingButton: React.FC<RatingButtonProps> = ({
 }) => {
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <Text style={styles.ratingLabel}>Đánh giá: </Text>
-      <TouchableOpacity style={styles.ratingButton} onPress={onPress}>
-        <Icon name="smile-o" size={40} color="black" />
-        <Text style={styles.ratingValue}>{averageRating.toFixed(1)}/5.0</Text>
+    <>
+      {/* <Text style={styles.ratingLabel}>Đánh giá: </Text> */}
+      <TouchableOpacity style={styles.buttonItem} onPress={onPress}>
+        {/* <Icon name="smile-o" size={40} color="black" /> */}
+        <Text style={styles.ratingValue}>{averageRating.toFixed(1)}</Text>
+        <FontAwesome name="star" size={24} color="#F6CE00" style={{ marginLeft: 4 }} />
       </TouchableOpacity>
-    </View>
+    </>
   );
 };
 
@@ -159,7 +160,7 @@ const TourItem: React.FC<TourItemProps> = ({
   setIsScrollEnabled,
 }) => {
   const TYPE = 1;
-  const MAX_LENGTH = 5;
+  const MAX_LENGTH = 20;
   const commentAS = useRef<ActionSheetRef>(null);
   const ratingCommentAS = useRef<ActionSheetRef>(null);
   const [ratingComments, setRatingComments] = useState(Object.values(item.ratings || {}));
@@ -651,11 +652,11 @@ const TourItem: React.FC<TourItemProps> = ({
 
   }
   return (
-    <View>
+    <View style={{}}>
       <View style={{ flex: 1, height: windowWidth }}>
         {/* Post Header */}
         <View style={styles.header}>
-          <View style={styles.row}>
+          <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
             {/* <TouchableOpacity style={styles.row}
           onPress={() => handleGoToProfileScreen(item.author.id)}
           >
@@ -696,7 +697,7 @@ const TourItem: React.FC<TourItemProps> = ({
                     resizeMode="cover"
                     imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
 
-                  <View style={{ position: 'absolute', bottom: 30, width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+                  <View style={{ position: 'absolute', bottom: 65, width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
                     <View style={styles.viewTextStyles}>
                       <Text style={styles.carouselText}>
                         {index + 1}/{flattenedImagesArray.length} - {item.cityName}
@@ -707,10 +708,10 @@ const TourItem: React.FC<TourItemProps> = ({
               )}
             />
           </View>
-
         </View>
-        {/* Button save */}
+        {/* BUTTON */}
         <View style={styles.buttonRow}>
+          {/* Button comment */}
           <View style={[styles.buttonItem, { gap: 10 }]}>
             <CommentButton
               style={[styles.buttonComment,]}
@@ -718,37 +719,43 @@ const TourItem: React.FC<TourItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-
-          <View style={styles.buttonItem}>
-            {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
-            <SaveButton style={styles.buttonSave} data={item} type={TYPE} />
-          </View>
+          {/* Button save */}
+          {/* <View style={styles.buttonItem}> */}
+          {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
+          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type={TYPE} />
+          {/* </View> */}
         </View>
-
-
+        {/* Button Rating */}
+        <View style={[styles.buttonRow, { justifyContent: 'center', bottom: -25 }]}>
+          <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
+        </View>
       </View>
+      {/* CONTENT */}
       <View style={{ flex: 1 }}>
-        {/* Content */}
-        <View style={{ paddingTop: 0 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 15 }}>
-            <Image style={{ width: 40, height: 80, }} source={require('@/assets/images/mountainIcon.png')}></Image>
-            <Text style={styles.contentTitle}>{item.title}</Text>
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <Image style={{ width: 40, height: 80, }} source={require('@/assets/images/mountainIcon.png')}></Image>
+          <Text style={styles.textTitle}>{item.title}</Text>
+        </View>
+        {/* CHIPS */}
+        <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+
+        <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
+          <View style={[{ justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
+            <Ionicons name="calendar" size={22} color={iconColors.green1} />
+            <Text style={{ fontSize: 18, paddingLeft: 10 }}>4 ngày</Text>
           </View>
-          {/* Post Interaction Buttons */}
-          <View style={styles.buttonContainer}>
-            {/* <View style={styles.buttonRow}>
-              <HeartButton style={styles.buttonItem} data={item} type={TYPE} />
-              <CommentButton
-                style={styles.buttonItem}
-                onPress={openCommentModal}
-              />
-              <Text style={styles.totalComments}>{totalComments}</Text>
-            </View> */}
-            {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
-          </View>
-          {/* Rating Button */}
-          <View style={styles.ratingButtonContainer}>
+          {/* <View style={[styles.row, { backgroundColor: 'white', padding: 10, borderRadius: 50, elevation: 4 }]}>
+            <FontAwesome6 name="money-check-dollar" size={22} color={iconColors.green1} />
+            <Text style={{}}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+          </View> */}
+        </View>
+        {/* Post Interaction Buttons */}
+
+        {/* Rating Button */}
+        {/* <View style={styles.ratingButtonContainer}>
             <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
+
             {item.discountTour !== 0 ?
               <View style={styles.priceBackground}>
                 <View style={styles.priceWrap}>
@@ -769,20 +776,23 @@ const TourItem: React.FC<TourItemProps> = ({
                 </View>
               </View>
             }
+          </View> */}
 
-          </View>
-        </View>
-        <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+
         {/* Post Description */}
-        <View style={{ paddingHorizontal: 15 }}>
+        <View style={{ paddingHorizontal: 15, backgroundColor: 'white', padding: 10, margin: 10, borderRadius: 30, elevation: 4 }}>
           <Markdown>
             {desc.Markdown}
           </Markdown>
+
           <TouchableOpacity onPress={() => toggleDescription(item.id)}>
             <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
           </TouchableOpacity>
         </View>
         <Divider style={styles.divider} />
+      </View>
+      <View style={[styles.row, { position: 'absolute', bottom: 0, width: '100 %', backgroundColor: 'red', padding: 20}]}>
+        <Text>Booking now</Text>
       </View>
 
 
@@ -964,16 +974,22 @@ export default function ToursScreen() {
             <ActivityIndicator size="large" color="#B1B1B1" />
           </View>
         )} */}
-
-
     </>
   );
 }
 const styles = StyleSheet.create({
-  contentTitle: {
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 15,
+    paddingTop: 20,
+    height: 70,
+    overflow: 'hidden'
+  },
+  textTitle: {
     fontSize: 26,
     fontWeight: '600',
-
   },
   headerButton: {
     padding: 20,
@@ -1151,7 +1167,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   ratingLabel: { fontSize: 16, marginRight: 5, fontWeight: "bold" },
-  ratingValue: { marginLeft: 10, fontWeight: "bold", marginTop: 10 },
+  ratingValue: {
+    fontWeight: "bold",
+    fontSize: 18
+  },
   ratingButton: {
     flexDirection: "row",
   },
@@ -1175,7 +1194,7 @@ const styles = StyleSheet.create({
   totalComments: {
     // marginRight: 10,
     // marginTop: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
   },
   carouselText: {
@@ -1233,9 +1252,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 10,
   },
   posts: {
     width: windowWidth,
