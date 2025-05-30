@@ -6,6 +6,7 @@ import { useHomeProvider } from '@/contexts/HomeProvider';
 import PlusButton from '../buttons/PlusButton';
 import BellButton from '../buttons/BellButton';
 import { router } from 'expo-router';
+import { rgbaArrayToRGBAColor } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 
 const HeaderIndex = () => {
   const [countNotify, setCountNotify] = useState(10);
@@ -42,13 +43,14 @@ const HeaderIndex = () => {
     <View style={styles.header}>
       <Text style={styles.appName}>Travelogue</Text>
       <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignSelf: 'flex-end' }}>
-        <PlusButton onPress={() => {
-          role === "user" ? router.push('/(article)/addPostUser') : router.push('/(article)/addPostTour')
-        }} style={styles.buttonRight}></PlusButton>
+        <View style={{marginRight: 6}}>
+          <PlusButton onPress={() => {
+            role === "user" ? router.push('/(article)/addPostUser') : router.push('/(article)/addPostTour')
+          }} ></PlusButton>
+        </View>
+
         {/* Chuong thong bao voi so luong thong bao chua xem */}
-        <View
-          style={{ position: 'relative' }}
-        >
+        <View style={styles.buttonRight}>
           {/* <View style={{}}> */}
           <BellButton
             style={styles.buttonRight}
@@ -89,8 +91,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonRight: {
-    marginHorizontal: 8,
-    padding: 6,
+    // marginHorizontal: 4,
   },
   appName: {
     fontSize: 40,
@@ -99,10 +100,10 @@ const styles = StyleSheet.create({
   header: {
     // height: 70,
     flexDirection: 'row',
-    marginVertical: 10,
+    marginTop: 15,
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 20,
     zIndex: 2
   }
 })

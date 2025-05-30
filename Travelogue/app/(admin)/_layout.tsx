@@ -34,7 +34,7 @@ function CustomDrawerContent(props: any) {
       {/* Danh sách các Drawer.Screen */}
       <DrawerItemList {...props} />
       <TouchableOpacity onPress={handleLogout}>
-        <Text  style={{color:'red', fontSize:30, textAlign:'center', marginTop:40}}>Đăng xuất</Text>
+        <Text style={{ color: 'red', fontSize: 30, textAlign: 'center', marginTop: 40 }}>Đăng xuất</Text>
       </TouchableOpacity>
     </DrawerContentScrollView>
   );
@@ -67,7 +67,7 @@ export default function Layout() {
             drawerIcon: ({ color, size }) => (
               <MaterialIcons name="report" color={color} size={size} />
             ),
-            
+
           }}
         />
         <Drawer.Screen
@@ -127,6 +127,16 @@ export default function Layout() {
           options={{
             drawerLabel: 'Thông tin địa điểm',
             title: 'Thông tin địa điểm',
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+            )
+          }}
+        />
+        <Drawer.Screen
+          name="scrape"
+          options={{
+            drawerLabel: 'Scrape',
+            title: 'Scrape',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )

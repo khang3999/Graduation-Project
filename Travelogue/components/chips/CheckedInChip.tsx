@@ -19,13 +19,13 @@ export default function CheckedInChip({ items }: CheckedInChipProps) {
   return (
     <View style={styles.container}>
       {items.map((item, index) => (
-        <TouchableOpacity key={index} onPress={()=>router.push({
+        <TouchableOpacity style={styles.chipItem} key={index} onPress={() => router.push({
           pathname: '/gallery',
-          params: {idCountry: item.country, idCity: item.locationCode},
+          params: { idCountry: item.country, idCity: item.locationCode },
         })}>
-        <Chip key={index} style={styles.chipItem}>
-          <Text style={styles.chipText}>{item.locationName}</Text>
-        </Chip>
+          <Chip key={index} style={{backgroundColor:'white'}}>
+            <Text style={styles.chipText}>{item.locationName}</Text>
+          </Chip>
         </TouchableOpacity>
       ))}
     </View>
@@ -36,14 +36,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical:10,
+    justifyContent: 'center',
+    marginVertical: 10,
+    gap: 10
   },
   chipItem: {
-    margin: 5,
-    backgroundColor: '#C1E1C1',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    maxWidth: '100%',
+    backgroundColor: 'white',
+    alignSelf: 'center',
+    padding: 6,
+    borderRadius: 50,
+    elevation: 4
   },
   chipText: {
     flexWrap: 'wrap',

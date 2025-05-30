@@ -10,8 +10,23 @@ const TourProvider = ({ children }) => {
     const [dataModalSelected, setDataModalSelected] = useState(null)
     const [currentTourCount, setCurrentTourCount] = useState(0);
     const [newTourCount, setNewTourCount] = useState(0);
-    const [isSearchingMode, setIsSearchingMode] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const [loadedTours, setLoadedTours] = useState(false)
+    const [showBanner, setShowBanner] = useState(true);
+    const [modalSearchVisible, setModalSearchVisible] = useState(false)
+    const [reload, setReload] = useState(false);
+    const [search, setSearch] = useState(false);
+    const [modalNewTourVisible, setModalNewTourVisible] = useState(false);
+    const dataInput = useRef('')
+    const selectedCountry = useRef(null)
+    const [selectedCities, setSelectedCities] = useState([]);
+    const [dataCities, setDataCities] = useState([])
+
+
+
+
+
+
     // const [selectedTypeSearch, setSelectedTypeSearch] = useState(1);
 
     const [selectedTour, setSelectedTour] = useState(undefined)
@@ -21,7 +36,6 @@ const TourProvider = ({ children }) => {
         { key: 2, value: 'Thích nhiều nhất' },
         { key: 3, value: 'Đánh giá tốt nhất' }
     ]
-
     const selectedTypeSearch = useRef(1)
 
     // Hàm lắng nghe thay khi có tour mới từ firebase để hiển thị button reload
@@ -56,12 +70,21 @@ const TourProvider = ({ children }) => {
                 currentTourCount, setCurrentTourCount,
                 newTourCount, setNewTourCount,
                 loadedTours, setLoadedTours,
-                isSearchingMode, setIsSearchingMode,
                 setSelectedTour, selectedTour,
                 // selectedTypeSearch, setSelectedTypeSearch,
                 selectedTypeSearch,
                 dataNewTourList, setDataNewTourList,
-                dataTypeSearch
+                dataTypeSearch,
+                showBanner, setShowBanner,
+                modalSearchVisible, setModalSearchVisible,
+                reload, setReload,
+                modalNewTourVisible, setModalNewTourVisible,
+                isLoading, setIsLoading,
+                dataInput,
+                selectedCountry,
+                search, setSearch,
+                selectedCities, setSelectedCities,
+                dataCities, setDataCities
             }}
         >
             {children}

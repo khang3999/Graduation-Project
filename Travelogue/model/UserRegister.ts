@@ -5,7 +5,7 @@ export class UserRegister {
   totalLikes: number;
   totalPosts: number;
   password: string;
-  behavior?: string; 
+  behavior?: { content: string; location: string[] };
   avatar?: string;
   balance?: number | null;
   accumulate?: number | null; 
@@ -48,7 +48,7 @@ export class UserRegister {
     totalLikes: number;
     totalPosts: number;
     password: string;
-    behavior?: string;
+    behavior?: { content: string; location: string[] };
     avatar?: string;
     balance: number | null;
     accumulate : number | null;

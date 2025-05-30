@@ -2,11 +2,12 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useEffect } from 'react'
 import TabBarButton from './TabBarButton'
+import { iconColors } from '@/assets/colors'
 
+// Color
+const focusedColor = '#3E5F4B'
+const unfocus = '#A0AFA4'
 const TabBar = ({ state, descriptors, navigation, isTabBarVisible = true, role }) => {
-  // Color
-  const focusedColor = '#0891b2'
-  const greyColor = '#444444'
   if (!isTabBarVisible) return null
   useEffect(() => {
     console.log("Role in TabBar:", role);
@@ -56,7 +57,7 @@ const TabBar = ({ state, descriptors, navigation, isTabBarVisible = true, role }
             onLongPress={onLongPress}
             isFocused={isFocused}
             routeName={route.name}
-            color={isFocused ? focusedColor : greyColor}
+            color={isFocused ? focusedColor : unfocus}
             label={label}
           />
         )
@@ -98,9 +99,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    borderWidth: 3,
+    borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: '#f1f1f1',
+    borderColor: '#BCC8BA',
+    elevation: 10,
   },
   tabbarItem: {
     flex: 1,

@@ -26,7 +26,7 @@ import { useHomeProvider } from "@/contexts/HomeProvider";
 
 
 export default function EditingProfileScreen() {  
-  const { dataAccount }: any = useHomeProvider();
+  const { dataAccount }: any = useAccount();
   
   const initialAvatarUrl =  dataAccount.avatar;
   const [selectedImage, setSelectedImage] = React.useState<string | null>(

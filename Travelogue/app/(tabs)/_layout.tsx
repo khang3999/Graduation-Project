@@ -15,7 +15,7 @@ const _layout = () => {
   const [role, setRole] = useState("user");
   // const [userID, setUserId] = useState("");
   const [countNotify, setCountNotify] = useState(10);
-    const { dataAccount, userId }: any = useHomeProvider();
+  const { dataAccount, userId }: any = useHomeProvider();
   useEffect(() => {
     if (userId) {
       const userRef = ref(database, `accounts/${userId}`);
@@ -107,7 +107,7 @@ const _layout = () => {
         name="payment"
         options={{
           title: 'Payment',
-          // headerShown: false,
+          headerShown: false,
         }} />
       <Tabs.Screen
         key={5}

@@ -39,10 +39,15 @@ export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
 
 // Hàm slug text
 export const slug = (str) => {
-    if (!str || str.trim() === '') {
-        return '';
+    // if (!str || str.trim() === '') {
+    //     return '';
+    // }
+    const raw = String(str ?? ""); // ép kiểu + fallback nếu null/undefined
+
+    if (raw.trim() === "") {
+        return "";
     }
-    return String(str)
+    return raw
         .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')  //Xóa dấu
         .trim().toLowerCase() //Cắt khoảng trắng đầu, cuối và chuyển chữ thường
         .replace(/[^a-z0-9\s-]/g, '').replace(/brbr/g, "-") //Xóa ký tự đặc biệt

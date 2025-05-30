@@ -4,47 +4,127 @@ import { router, useLocalSearchParams } from "expo-router";
 import PostList from '@/components/homePage/PostList'
 import TourSection from "@/components/homePage/TourSection";
 import HomeProvider, { useHomeProvider } from "@/contexts/HomeProvider";
-import { AntDesign, Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
+import { AntDesign, Entypo, FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Badge } from "react-native-paper";
 import HeaderIndex from "@/components/header/HeaderIndex";
 import { backgroundColors, iconColors } from "@/assets/colors";
+<<<<<<< HEAD
 import Featured from "@/components/homePage/Featured ";
+=======
+import { set } from "lodash";
+import SearchModal from "@/components/homePage/modals/SearchModal";
+import NewPostModal from "@/components/homePage/modals/NewPostModal";
+>>>>>>> main
 
 
 const height = Dimensions.get('window').height;
 const Home = () => {
   const {
-    dataModalSelected,
-    setDataModalSelected,
+    dataPosts,
+    currentPostCount,
+    newPostCount,
+    dataModalSelected, setDataModalSelected,
     dataAllCities,
-    setDataAllCities,
-    isFocus, setIsFocus, dataAccount,
-    selectedTypeSearch, dataTypeSearch,
+    dataNewPostList,
+    setReload,
+    setSearch,
+    setIsLoading,
+    // ModalSearch
     modalSearchVisible, setModalSearchVisible,
-    reload, setReload
+    dataInput,
+    dataCountries,
+    selectedCountry,
+    // setDataCities,
+    selectedCities, setSelectedCities,
+    dataTypeSearch,
+    selectedTypeSearch,
+    // Modal new post
+    modalNewPostVisible, setModalNewPostVisible,
+
   }: any = useHomeProvider();
-  const { selectedCityId } = useLocalSearchParams()
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     if (selectedCityId) {
-  //       console.log('have param', selectedCityId);
-  //     } 
-  //     return () => {
-  //       console.log('Screen is unfocused');
-  //     };
-  //   }, [selectedCityId]) // Cập nhật khi các giá trị này thay đổi
-  // );
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const loopRef = useRef<any>(null);
 
-  // useEffect(() => {
-  //   if (selectedCityId) {
-  //     console.log('have param', selectedCityId);
-  //   }
-  // }, [])
+  // Animation
+  useEffect(() => {
+    loopRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: -1,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start()
+  }, []);
+
+  const rotate = rotateAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-2deg', '0deg', '2deg'],
+  });
+
+  const renderPostList = useCallback(() => (<PostList />), [])
+  const renderTourList = useCallback(() => (<TourSection />), [])
+  // const renderSearchModal = useCallback(() => {
+  //   return modalSearchVisible ? <SearchModal /> : null
+  // }, [modalSearchVisible])
+  // // const renderSearchModal = () => {
+  // //   return modalSearchVisible ? <SearchModal /> : null
+  // // }
+  // const renderNewPostModal = useCallback(() => {
+  //   return modalNewPostVisible ? <NewPostModal /> : null
+  // }, [modalNewPostVisible])
+
+  const renderModal = useCallback(() => {
+    return (
+      <>
+        {modalSearchVisible && <SearchModal
+
+        />}
+        {/* {modalSearchVisible && <SearchModal
+          modalSearchVisible={modalSearchVisible}
+          setModalSearchVisible={setModalSearchVisible}
+          dataInput={dataInput}
+          dataCountries={dataCountries}
+          selectedCountry={selectedCountry}
+          // dataCities={dataAllCities}
+          selectedCities={selectedCities}
+          setSelectedCities={setSelectedCities}
+          // setDataCities={setDataCities}
+          dataTypeSearch={dataTypeSearch}
+          selectedTypeSearch={selectedTypeSearch}
+          setIsLoading={setIsLoading}
+          setSearch={setSearch}
+          dataModalSelected={dataModalSelected}
+          setDataModalSelected={setDataModalSelected}
+        />} */}
+
+
+        {modalNewPostVisible && <NewPostModal
+          data={dataPosts}
+          dataNew={dataNewPostList}
+          modalNewPostVisible={modalNewPostVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewPostVisible}
+          setIsLoading={setIsLoading}
+        />}
+      </>
+    );
+  }, [modalSearchVisible, modalNewPostVisible]);
+
   // Dùng cho kiểu 1
   const scrollY = useAnimatedValue(0);
-  // Dùng cho kiểu 2
-  const translateY = useRef(new Animated.Value(0)).current; // Giá trị dùng để di chuyển container
 
   // Kiểu Animation 1
   const handleScroll = Animated.event(
@@ -52,34 +132,16 @@ const Home = () => {
     { useNativeDriver: true }
   );
 
-  const headerTranslateY = scrollY.interpolate({
+  const contentSectionTranslateY = scrollY.interpolate({
     inputRange: [0, 500], // Khi cuộn từ 0 đến 100
-    outputRange: [changePercentToPixel(height, 16), 0], // Di chuyển từ 0 đến -50px
+    outputRange: [changePercentToPixel(height, 16), 20], // Di chuyển từ 0 đến -50px
     extrapolate: 'clamp', // Giới hạn di chuyển
   });
-  // KIểu Animation 2
-  // const handleScroll = (event: any) => {
-  //   const offsetY = event.nativeEvent.contentOffset.y; // Lấy vị trí cuộn hiện tại
 
-  //   if (!scrolledUp && offsetY >= 5) {
-  //     // Nếu chưa di chuyển và cuộn vượt quá 100px
-  //     Animated.timing(translateY, {
-  //       toValue: -100, // Di chuyển lên trên 100px
-  //       duration: 100,
-  //       useNativeDriver: true,
-  //     }).start();
-  //     setScrolledUp(true);
-  //   } else if (scrolledUp && offsetY <= 0) {
-  //     // Nếu đã di chuyển lên và quay lại phần tử đầu tiên
-  //     Animated.timing(translateY, {
-  //       toValue: 0, // Reset về vị trí ban đầu
-  //       duration: 100,
-  //       useNativeDriver: true,
-  //     }).start();
-  //     setScrolledUp(false);
-  //   }
-  // };
-
+  const handleTapOnReloadHomeScreen = useCallback(() => {
+    setIsLoading(true)
+    setReload((prev: Boolean) => !prev); // toggle reload
+  }, [])
 
   return (
     <View style={styles.container}>
@@ -100,29 +162,19 @@ const Home = () => {
       <Animated.View
         style={[
           styles.contentSection,
-          // {
-          //   transform: [{ translateY: translateY }], // Di chuyển header
-          // },
           {
-            transform: [{ translateY: headerTranslateY }], // Di chuyển header
+            transform: [{ translateY: contentSectionTranslateY }], // Di chuyển header
           },
         ]}
       >
         <Animated.ScrollView
-          // style={[
-          //   { height: 400, position: 'relative'},
-
-          // ]}
-          contentContainerStyle={{ borderRadius: 20, overflow: 'hidden', backgroundColor: backgroundColors.background1 }}
+          contentContainerStyle={{ overflow: 'hidden', backgroundColor: backgroundColors.background1 }}
           nestedScrollEnabled={true}
-          // BỎ COMMENT DÒNG DƯỚI ĐỂ SỬ DỤNG ANIMATION
           onScroll={handleScroll}
-          // onScroll={moveUp}
           scrollEventThrottle={16}
         >
           <View>
             <Text style={[styles.textTitle, { marginBottom: 20 }]}>Explore the World through Stories</Text>
-            {/* <Text style={[styles.textTitle, { marginBottom: 10 }]}></Text> */}
           </View>
 
         
@@ -135,20 +187,34 @@ const Home = () => {
           {/* Tour section */}
           <View>
             <Text style={[styles.textCategory]}>Tour du lịch</Text>
-            <TourSection></TourSection>
+            <View style={{ paddingBottom: 20 }}>
+              {renderTourList()}
+            </View>
           </View>
-
-
-
-          {/* Post Section */}
+          {/* POST */}
           <View>
-            <Text style={styles.textCategory}>Bài viết</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={[styles.textCategory, { flex: 1 }]}>Bài viết</Text>
+
+              <View style={{ flex: 2 }}>
+                {((currentPostCount !== newPostCount)) && (
+                  <Animated.View style={{ transform: [{ rotate: rotate }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                    <TouchableOpacity style={styles.btnNotifyNewPost} onPress={() => setModalNewPostVisible(true)}>
+                      <FontAwesome6 name="newspaper" size={20} color="black" />
+                      <Text style={{ fontWeight: '500' }}>Bài viết mới</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </View>
+              <View style={{ flex: 1 }}></View>
+            </View>
+
             {/* Đang hiển thị */}
-            <View style={{ flexDirection: 'row', alignItems:'center', marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10, marginBottom: 20 }}>
               <ScrollView
                 horizontal={true}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingLeft: 20,paddingVertical: 10, gap: 10 }}
+                contentContainerStyle={{ paddingLeft: 20, paddingVertical: 10, gap: 10 }}
               >
                 {/* <Text style={{ fontWeight: '600' }}>Hiển thị: </Text> */}
                 {dataModalSelected == null ?
@@ -168,26 +234,28 @@ const Home = () => {
 
                 <Badge size={24} style={[styles.badge, styles.bagdeType]} >{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
 
+                {/* <Badge size={24} style={styles.badge}>Tất cả</Badge>
                 <Badge size={24} style={styles.badge}>Tất cả</Badge>
                 <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
+                <Badge size={24} style={styles.badge}>Tất cả</Badge> */}
               </ScrollView>
               {/* Button search and reload */}
               <View style={styles.containerButton}>
                 <TouchableOpacity
                   style={styles.btn}
                   onPress={() => setModalSearchVisible(true)}>
+                  {/* <Ionicons name="options-outline" size={28} color={iconColors.green1} /> */}
                   <MaterialCommunityIcons name="tune-variant" size={24} color={iconColors.green1} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.btn} onPress={() => setReload(!reload)}>
-                  <AntDesign name="reload1" size={22} color={iconColors.green1} />
+                <TouchableOpacity style={[styles.btn, { backgroundColor: backgroundColors.reloadButton }]} onPress={handleTapOnReloadHomeScreen}>
+                  <AntDesign name="reload1" size={22} color='white' />
                 </TouchableOpacity>
               </View>
             </View>
             {/* Danh sach bài viết */}
-            <PostList ></PostList>
+            {/* <PostList ></PostList> */}
+            {renderPostList()}
           </View>
           {/* <Text>ádsads</Text>
           <Text>ádsads</Text>
@@ -197,8 +265,11 @@ const Home = () => {
           <Text>ádsads</Text> */}
         </Animated.ScrollView>
       </Animated.View>
-
-    </View>
+      {/* Modal */}
+      {/* {renderSearchModal()}
+      {renderNewPostModal()} */}
+      {renderModal()}
+    </View >
   )
 }
 
@@ -218,30 +289,26 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
   },
-
   textCategory: {
-    marginVertical: 20,
     marginHorizontal: 20,
     fontSize: 20,
     fontWeight: '600',
   },
-
   textTitle: {
     fontSize: 34,
     fontWeight: '500',
     paddingHorizontal: 20,
   },
-
   contentSection: {
     paddingTop: 36,
-    paddingBottom: 60,
+    paddingBottom: 77,
     position: 'absolute',
     backgroundColor: backgroundColors.background1,
     // backgroundColor: 'red',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     bottom: 0,
-    height: height - changePercentToPixel(height, 12),
+    height: height - changePercentToPixel(height, 13),
   },
   banner: {
     width: "100%",
@@ -267,7 +334,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   bagdeType: {
-    backgroundColor: iconColors.green3,
+    backgroundColor: iconColors.green1,
+    color: 'white',
   },
   badge: {
     fontSize: 16,
@@ -279,7 +347,18 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     elevation: 4,
-  }
+  },
+  btnNotifyNewPost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    width: 110,
+    paddingVertical: 4,
+    backgroundColor: '#ffff77',
+    borderRadius: 8,
+    elevation: 4,
+  },
 })
 
 export default Home;

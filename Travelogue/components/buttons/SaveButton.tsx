@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { auth, database, ref } from '@/firebase/firebaseConfig';
 import { get, remove, runTransaction, update } from '@firebase/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -210,8 +210,8 @@ const SaveButton = (props: any) => {
     }
   };
   return (
-    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} {...props}>
-      <Icon name={saved ? 'bookmark' : 'bookmark-o'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />
+    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} style={props.myStyle}>
+      <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />
     </TouchableOpacity>
   )
 }
