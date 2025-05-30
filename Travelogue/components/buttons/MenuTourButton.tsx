@@ -35,7 +35,7 @@ interface MenuPopupButtonProps {
 
 const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, userId, locations }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 }); // Position of the menu
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 }); // Position of the menu
   const [isLoading, setIsLoading] = useState(false);
   const buttonRef = useRef<TouchableOpacity>(null); // To measure the button's position
   // Function to toggle modal visibility
@@ -68,7 +68,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
       buttonRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
         setMenuPosition({
           top: py + height - 20, // Place the menu right below the button
-          left: px - 140, // Align it with the left side of the button
+          right: px - 140, // Align it with the left side of the button
         });
       });
     }
@@ -225,7 +225,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
 
 
   const handleReport = (reason: any) => {
-    if(!selectedReason) {
+    if (!selectedReason) {
       Alert.alert('Lỗi', 'Vui lòng chọn lý do báo cáo');
       return;
     }
@@ -267,7 +267,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         ...item.reason,
         [reasonKey]: reason
       },
-      type:"tour",
+      type: "tour",
       status_id: 1
     }
     await update(reportRef, itemNew)
@@ -410,12 +410,14 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         onPress={toggleModal}
         style={styles.button}
       >
-        <Icon size={24} name="dots-horizontal" style={styles.icon} />
+        <Icon size={24} name="dots-horizontal" color='white' />
       </TouchableOpacity>
 
       {/* Menu Modal */}
       {isAuthor && isModalVisible ? (
         <Modal
+          style={{ position: 'absolute', right: 0, backgroundColor: 'red', zIndex: 100 }}
+
           transparent={true}
           visible={isModalVisible}
           animationType="fade"
@@ -426,7 +428,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
               <View
                 style={[
                   styles.menu,
-                  { top: menuPosition.top, left: menuPosition.left },
+                  { top: 80, right: 10 },
                 ]}
               >
                 <TouchableOpacity style={styles.menuItem}
@@ -448,6 +450,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
         </Modal>
       ) : (
         <Modal
+          style={{ position: 'absolute', right: 0, backgroundColor: 'red', zIndex: 100 }}
           transparent={true}
           visible={isModalVisible}
           animationType="fade"
@@ -458,18 +461,17 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({ isAuthor, tourId, use
               <View
                 style={[
                   styles.menu,
-                  { top: menuPosition.top, left: menuPosition.left },
+                  { top: 80, right: 10 },
                 ]}
               >
                 <TouchableOpacity style={styles.menuItem} onPress={() => handlePressReport('post')}>
                   <Icon name="send" size={20} style={styles.menuIcon} />
-                  <Text style={styles.menuText}>Báo cáo</Text>
+                  <Text style={styles.menuText}>Báo cáooo</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
           </TouchableWithoutFeedback>
-
         </Modal>
       )}
       {/* Report Modal */}
@@ -661,9 +663,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   button: {
-    padding: 8,
-    borderRadius: 25,
-    backgroundColor: '#f0f0f0',
+    padding: 20,
+    backgroundColor: 'rgba(100,100,100,0.5)',
+    borderRadius: 40
   },
   icon: {
     color: '#333',
@@ -695,7 +697,6 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     marginRight: 10,
-
   }
 });
 

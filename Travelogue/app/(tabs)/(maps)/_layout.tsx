@@ -26,7 +26,7 @@ const MapLayout = () => {
                 },
                 headerTitle: 'Bản đồ',
                 headerTitleStyle: {
-                    fontFamily: 'FuzzyBold',
+                    // fontFamily: 'FuzzyBold',
                     fontSize: 22
                 }
             }}
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     headerTitleText: {
         marginHorizontal: 20,
         fontSize: 22,
-        fontFamily: 'FuzzyBold'
+        // fontFamily: 'FuzzyBold'
     }
 })
 

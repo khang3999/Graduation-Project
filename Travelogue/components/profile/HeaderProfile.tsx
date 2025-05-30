@@ -21,9 +21,9 @@ interface HeaderProfileProps {
 
 export default function HeaderProfile({ onModalOpen = () => { }, onModalClose = () => { }, handleSearch = () => { }, isSearched }: HeaderProfileProps) {
   const [isDisplay, setIsDisplay] = useState(true);
-  const { accountData } = useAccount();
+  const { dataAccount } = useAccount();
 
-  if (!accountData) {
+  if (!dataAccount) {
     return <HeaderProfileSkeleton />;
   }
 

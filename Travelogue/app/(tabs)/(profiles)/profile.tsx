@@ -34,7 +34,7 @@ export default function ProfileScreen() {
     avatar: string;
   }
 
-  const { accountData, setAccountData, setSearchedAccountData }: any = useAccount();
+  const { dataAccount, setDataAccount, setSearchedAccountData }: any = useAccount();
   const [userId, setUserId] = useState<String | null>()  
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
     onValue(userRef, async (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setAccountData(data); // Update state                         
+        setDataAccount(data); // Update state                         
       }
     });
   };

@@ -35,7 +35,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
       avatar: string;
     }
   
-    const { accountData, setAccountData, setSearchedAccountData }: any = useAccount();
+    const { dataAccount, setDataAccount, setSearchedAccountData }: any = useAccount();
     // const [userId, setUserId] = useState<String | null>()  
     const { height: SCREEN_HEIGHT } = Dimensions.get("window");
     const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -56,7 +56,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
         const data = snapshot.val();
         console.log(data,"   daa");
         if (data) {
-          setAccountData(data);
+          setDataAccount(data);
           setSearchedAccountData(data) // Update state                         
         }
       });
@@ -150,7 +150,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
                 keyExtractor={(item, index) => `${item}-${index}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => {
-                    router.push("/searchResult");
+                    router.push({ pathname: '/SearchResult' });
                     setSearchedAccountData(item);
                     setRecentSearches([...recentSearches, item]);
                   }}>

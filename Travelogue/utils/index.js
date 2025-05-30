@@ -2,14 +2,19 @@
 
 // Hàm làm tròn lượt like
 export const formatNumberLike = (value) => {
+    let formattedValue;
     if (value >= 1_000_000_000) {
-        return (value / 1_000_000_000).toFixed(2) + 'B';
+        formattedValue = (value / 1_000_000_000).toFixed(2) + 'B';
     } else if (value >= 1_000_000) {
-        return (value / 1_000_000).toFixed(2) + 'M';
+        formattedValue = (value / 1_000_000).toFixed(2) + 'M';
     } else if (value >= 1_000) {
-        return (value / 1_000).toFixed(2) + 'K';
+        formattedValue = (value / 1_000).toFixed(2) + 'K';
+    } else {
+        return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
     }
-    return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
+
+    // Loại bỏ .00 nếu có
+    return formattedValue.replace(/\.00/, '');
 }
 // Hàm trộn mảng tour và bài viết theo tỉ lệ bất kì truyền vào
 export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
@@ -34,10 +39,15 @@ export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
 
 // Hàm slug text
 export const slug = (str) => {
-    if (!str || str.trim() === '') {
-        return '';
+    // if (!str || str.trim() === '') {
+    //     return '';
+    // }
+    const raw = String(str ?? ""); // ép kiểu + fallback nếu null/undefined
+
+    if (raw.trim() === "") {
+        return "";
     }
-    return String(str)
+    return raw
         .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')  //Xóa dấu
         .trim().toLowerCase() //Cắt khoảng trắng đầu, cuối và chuyển chữ thường
         .replace(/[^a-z0-9\s-]/g, '').replace(/brbr/g, "-") //Xóa ký tự đặc biệt

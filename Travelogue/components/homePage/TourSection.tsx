@@ -1,174 +1,220 @@
 import { View, Text, FlatList, StyleSheet, Image, ScrollView, Dimensions, TouchableOpacity, Pressable } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Carousel from 'react-native-reanimated-carousel';
-import { database, onValue, ref, update } from '@/firebase/firebaseConfig';
+import { database, get, onValue, ref, update } from '@/firebase/firebaseConfig';
 import { types } from '@babel/core';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import SkeletonTourHome from '../skeletons/SkeletonTourHome';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTourProvider } from '@/contexts/TourProvider';
+import { IconButton, MD3Colors } from 'react-native-paper';
+import { Feather, FontAwesome, FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Marquee } from '@animatereactnative/marquee';
+import { averageRating } from "@/utils/commons"
+import SaveButton from '../buttons/SaveButton';
+import { backgroundColors, iconColors } from '@/assets/colors';
+import { useAccount } from '@/contexts/AccountProvider';
+import TourItem, { TourModal } from './TourItem';
+
 
 const { width } = Dimensions.get('window');
+const TYPE = 1
 const TourSection = () => {
     // const [dataTours, setDataTours] = useState([])
-    const { dataTours, loadedTours,
-        dataToursSorted, setDataToursSorted
+    const {
+        dataToursSorted,
+        reload,
+        isLoading,
+        setIsLoading
     }: any = useHomeProvider();
-    const { setSelectedTour }: any = useTourProvider()
-    const { dataAccount }: any = useHomeProvider()
+    const { setSearchedAccountData, likedPostsList, setLikedPostsList, }: any = useAccount();
     const flatListTourRef: any = useRef(null)
-    useEffect(() => {
-        if (flatListTourRef.current) {
-            flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
-        }
-    }, [dataToursSorted]);
+    // useEffect(() => {
+    //     if (flatListTourRef.current) {
+    //         flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
+    //     }
+    // }, [reload]);
 
-    const handleTapOnLocationInMenu = async (selectedCityId: any, selectedCountryId: any) => {
-        // Update hành vi lên firebase
-        const userId = dataAccount.id
-        // 1. Lưu lên firebase
-        const refBehavior = ref(database, `accounts/${userId}/behavior`);
-        const dataUpdate = {
-            content: "",
-            location: [selectedCityId],
-        };
-        await update(refBehavior, dataUpdate);
+    useFocusEffect(
+        useCallback(() => {
+            setIsLoading(true)
+            // Scroll to first item in list 
+            if (flatListTourRef.current) {
+                flatListTourRef.current.scrollToOffset({ offset: 0, animated: true });
+            }
+        }, [reload])
+    )
 
+
+    // CÁC HÀM XỬ LÍ SỰ KIỆN
+    // Hàm xem chi tiết bài viết
+    const handleTapToViewTourDetail = useCallback((path: any, tourId: string) => {
         router.push({
-            pathname: "/gallery",
-            params: { idCity: selectedCityId, idCountry: selectedCountryId },
+            pathname: path,
+            params: { tourId: tourId },
         });
-    }
-    const tourItem = (tour: any) => {
-        const locations: any = tour.item.locations
-        const allLocations: any[] = Object.keys(locations).flatMap((country: any) => //Object.keys(locations): lấy được mảng ["avietnam", "japan"]
-            // Lấy các giá trị (địa điểm) của từng country (vd: Hà Nội, Cao Bằng)
-            Object.entries(locations[country]).map(([id, name]) => ({
-                id,
-                name,
-                country
-            }))
-        );
+    }, [])
+    
+    // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
+    const handleTapToViewProfile = useCallback(async (authorId: string) => {
+        if (!authorId) {
+            console.log('Go to profile fail: check authorId');
+            return
+        }
+        try {
+            const refAccount = ref(database, `accounts/${authorId}`)
+            const snapshot = await get(refAccount);
+            if (snapshot.exists()) {
+                const dataAccountJson = snapshot.val()
+                await setSearchedAccountData(dataAccountJson)
+                router.push("/SearchResult");
+            } else {
+                console.log("Go to profile: No data account available");
+            }
+        } catch (error) {
+            console.error("Go to profile: Error fetching data account: ", error);
+        }
+    }, [])
+
+    const tourItem = useCallback((tour: any) => {
+        const tourData: TourModal = tour.item
+        const itemIndex = tour.index
         return (
-            <Pressable style={styles.tourItem} key={tour.item.id}
-                onPress={() => {
-                    router.push({
-                        pathname: "/tourDetail",
-                        params: { tourId: tour.item.id },
-                    });
-                }}>
-                <View style={styles.imageWrap}>
-                    <View style={styles.locationWrap}>
-                        <Carousel
-                            loop
-                            width={(width - 40) / 3}
-                            height={30}
-                            autoPlay={true}
-                            data={allLocations}
-                            autoPlayInterval={0}
-                            scrollAnimationDuration={3000}
-                            style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
-                            // onSnapToItem={(index) => console.log('current index:', index)}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity key={item.id} style={{ flex: 1, justifyContent: 'center' }} onPress={() => handleTapOnLocationInMenu(item.id, item.country)}>
-                                    <View style={{ backgroundColor: 'grey', opacity: 0.6, width: '100%', height: 30, position: 'absolute' }}></View>
-                                    <Text style={{ textAlign: 'center', fontSize: 14, color: 'white' }}>
-                                        {item.name + ""}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                    </View>
-                    <Image
-                        style={styles.image}
-                        source={{ uri: tour.item.thumbnail }}
-                    />
-                </View>
-                <View style={styles.overPlay}></View>
-            </Pressable>
+            <TourItem
+                // key={tourData.id}
+                data={tourData}
+                index={itemIndex}
+                liked={tourData.id in likedPostsList}
+                onTapToViewDetail={handleTapToViewTourDetail}
+                onTapToViewProfile={handleTapToViewProfile}
+            />
         )
-    }
+
+    }, [])
 
     return (
-        <View style={styles.container}>
-            <View style={{ backgroundColor: '#009400', marginVertical: 10, paddingLeft: 6, borderTopRightRadius: 10, borderBottomRightRadius: 10, alignSelf: 'flex-start' }}>
-                <Text style={[styles.textCategory]}>Tour du lịch</Text>
-            </View>
-            <View style={{ backgroundColor: '#f0f0f0', marginBottom: 8}}>
-                {loadedTours ?
-                    <FlatList
-                        // ref={flatListTourRef}
-                        horizontal={true}
-                        // scrollToOffset={ }
-                        data={dataToursSorted}
-                        renderItem={tourItem}
-                        keyExtractor={(tour: any) => tour.id}
-                        contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10}}
-                        ItemSeparatorComponent={() => <View style={{ width: 10, }} />}
-                    // pagingEnabled
-                    >
-                    </FlatList>
-                    :
-                    <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 10, paddingLeft: 10, paddingBottom: 20 }}>
-                        <SkeletonTourHome />
-                        <SkeletonTourHome />
-                        <SkeletonTourHome />
-                    </View>
-                }
-            </View>
+        <View style={{}}>
+            {!isLoading ?
+                <FlatList
+                    ref={flatListTourRef}
+                    horizontal={true}
+                    // scrollToOffset={ }
+                    data={dataToursSorted}
+                    renderItem={tourItem}
+                    keyExtractor={(tour: any) => tour.id}
+                    contentContainerStyle={{ padding: 20 }}
+                    ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
+                // pagingEnabled
+                >
+                </FlatList>
+                :
+                <View style={{ paddingTop: 20, display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 20, paddingBottom: 20 }}>
+                    <SkeletonTourHome />
+                    <SkeletonTourHome />
+                </View>
+            }
         </View >
     )
 }
 const styles = StyleSheet.create({
-    textCategory: {
-        fontSize: 14,
-        backgroundColor: '#E6F6E6',
-        borderTopRightRadius: 10,
-        borderBottomRightRadius: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        fontWeight: '500',
-        // alignSelf: 'flex-start',
-        elevation: 10,
+    tourDiscountedPrice: {
+        fontSize: 18,
+        // fontFamily: 'NotoSans_600SemiBold',
     },
-    textLocation: {
-        color: 'white'
+    tourOriginalPrice: {
+        textDecorationLine: 'line-through',
+        // fontFamily: 'NotoSans_500Medium',
+        color: '#c1c1c1'
     },
-    overPlay: {
-        backgroundColor: 'black',
+    tourPriceContainer: {
+        flex: 1,
+        // paddingVertical: 8,
+        marginLeft: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        // backgroundColor:'red'
+    },
+    dotCustom: {
         position: 'absolute',
-        width: "100%",
-        height: "100%",
-        // zIndex: 3,
-        opacity: 0.4,
-        borderRadius: 10,
+        width: 20,
+        height: 20,
+        borderRadius: 50,
+        backgroundColor: backgroundColors.background1,
+        top: -10,
     },
     locationWrap: {
-        position: 'absolute',
-        zIndex: 4,
-        height: 30,
-        top: 0
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'white',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderTopWidth: 3,
+        borderStyle: 'dotted',
+        borderColor: '#d3d3d3',
+    },
+    tourItemTitle: {
+        fontSize: 20,
+        // fontFamily: 'NotoSans_600SemiBold',
+        fontWeight: '500',
+        marginBottom: 0
     },
     image: {
-        width: (width - 40) / 3,
-        height: "100%",
-        borderRadius: 10,
+        flex: 1,
+        borderRadius: 20,
+        elevation: 10,
+        // overlayColor: 'white'
     },
-    imageWrap: {
-        position: 'relative',
+    tourFooterSection: {
+        flexDirection: 'row',
+        backgroundColor: iconColors.green5,
+        // backgroundColor: '#7B9A6D',
+        height: '12%',
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        overflow: 'hidden',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    tourItemContentSection: {
+        width: '100%',
+        height: '28%',
+        // padding: 10,
+        borderTopWidth: 3,
+        borderStyle: 'dashed',
+        borderColor: '#d3d3d3',
+        justifyContent: 'space-around',
+    },
+    tourItemImageSection: {
+        width: '100%',
+        height: '50%',
+        padding: 14,
+        // paddingBottom: 20,
+        borderRadius: 20,
+    },
+    tourItemHeader: {
+        width: '100%',
+        height: '10%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        // backgroundColor: 'red',
+        paddingHorizontal: 14,
+        paddingTop: 10,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
     tourItem: {
-        position: 'relative',
-        // backgroundColor: 'green',
+        backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
-        height: 90,
-        elevation: 6
-    },
-    container: {
-        flexDirection: 'column',
-        justifyContent: 'center',
+        borderRadius: 20,
+        height: 460,
+        width: width * 2 / 3,
+        // overflow: 'hidden',
+        elevation: 4
     }
 })
 export default TourSection
