@@ -57,7 +57,6 @@ export default function Layout() {
 
   return (
     <AppProvider>
-<<<<<<< HEAD
       <RankingProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <Stack
@@ -234,7 +233,6 @@ export default function Layout() {
           <Toast />
         </GestureHandlerRootView>
       </RankingProvider>
-=======
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack
           screenOptions={{
@@ -374,7 +372,6 @@ export default function Layout() {
         <Toast />
 
       </GestureHandlerRootView>
->>>>>>> main
     </AppProvider>
   );
 }

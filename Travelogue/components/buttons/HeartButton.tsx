@@ -19,6 +19,12 @@ type Props = {
     liked: boolean
 }
 
+const updateArray = (array: any[], id: any, newLikes: number) => {
+    return array.map(item =>
+        item.id === id ? { ...item, likes: newLikes } : item
+    );
+};
+
 const HeartButton = ({ data, type, liked }: Props) => {
     const { likedPostsList }: any = useAccount()
     const { userId }: any = useHomeProvider()
@@ -26,12 +32,14 @@ const HeartButton = ({ data, type, liked }: Props) => {
     // const [isLiked, setIsLiked] = useState(data.id in likedPostsList)
     const [isLiked, setIsLiked] = useState(liked)
     const [likeNum, setLikeNum] = useState(data.likes)
+    // Dummy state and updater for dataPosts and dataTours to avoid errors
+    const [dataPosts, setDataPosts] = useState<any[]>([]);
+    const [dataTours, setDataTours] = useState<any[]>([]);
     // const [currentLiked, setCurrentLiked] = useState(liked)
 
     // Hàm set like
-<<<<<<< HEAD
     const handleLike = async (dataID: any, userID: any) => {
-        setDisabled(true);
+        setIsProcessing(true);
     
         const refColumn = type === 0 ? 'likedPostsList' : 'likedToursList';
         const refTable = type === 0 ? 'posts' : 'tours';
@@ -110,45 +118,9 @@ const HeartButton = ({ data, type, liked }: Props) => {
                 }
     
                 console.log('Đã bỏ thích ' + dataID);
-=======
-    const toggleLike = async () => {
-        // Nếu đang xử lý, không cho phép nhấn lại
-        if (isProcessing) {
-            return;
-        }
-        setIsProcessing(true)
-        // CẬP NHẬT DANH SÁCH LIKED CỦA USER
-        // Tạo đường dẫn đến  likedPost hay likedTour của user
-        const typeName = type === 0 ? 'likedPostsList' : 'likedToursList'
-        const refLikedList = ref(database, `accounts/${userId}/${typeName}`);
-        const refItemInLikedList = ref(database, `accounts/${userId}/${typeName}/${data.id}`);
-        // Tạo đường dẫn đến bài viết/tour
-        const tableName = type === 0 ? 'posts' : 'tours'
-        const refLikeNumberOfItemInTable = ref(database, `${tableName}/${data.id}/likes`)
-
-        try {
-            const snapshot = await get(refItemInLikedList);
-            if (snapshot.exists()) {
-                // Hủy bỏ like trong mảng likedList
-                await remove(refItemInLikedList);
-                // Cập nhật like của bài viết
-                runTransaction(refLikeNumberOfItemInTable, (currentValue) => {
-                    return currentValue - 1; // Cập nhật dựa trên giá trị hiện tại
-                }).then(() => {
-                    // setLikeNum((prev: any) => prev - 1);
-                    setLikeNum(likeNum - 1);
-                    // if (type === 0) {
-                    //     setDataPosts(updateElementAtIndex(dataPosts, data.id, likeNum - 1))
-                    // } else {
-                    //     setDataTours(updateElementAtIndex(dataTours, data.id, likeNum - 1))
-                    // }
-                })
-                console.log('Đã bỏ thích và giảm like của ' + data.id);
->>>>>>> main
             } else {
                 // LIKE: chưa tồn tại -> thêm vào danh sách
                 await update(refLikedList, {
-<<<<<<< HEAD
                     [dataID]: true,
                 });
     
@@ -210,41 +182,23 @@ const HeartButton = ({ data, type, liked }: Props) => {
                 }
     
                 console.log(`Đã thêm ${dataID} vào likedList`);
-=======
-                    [data.id]: true, // Thêm postId vào savedList
-                });
-                runTransaction(refLikeNumberOfItemInTable, (currentValue) => {
-                    return currentValue + 1; // Cập nhật dựa trên giá trị hiện tại
-                }).then(() => {
-                    // setLikeNum((prev: any) => prev + 1);
-                    setLikeNum(likeNum + 1);
-                    // if (type === 0) {
-                    //     setDataPosts(updateElementAtIndex(dataPosts, data.id, likeNum + 1))
-                    // } else {
-                    //     setDataTours(updateElementAtIndex(dataTours, data.id, likeNum + 1))
-                    // }
-                })
-                console.log(`Đã thêm ${data.id} vào likedList và tăng like`);
->>>>>>> main
             }
 
         } catch (error) {
             console.error('Lỗi khi cập nhật likedList:', error);
-<<<<<<< HEAD
         } finally {
-            setDisabled(false);
-            setLiked(!liked);
+            setIsProcessing(false);
+            setIsLiked(!isLiked);
         }
     };
     
-=======
-        } finally { // Đổi state
-            setIsProcessing(false)
-            setIsLiked(!isLiked);
+    // Toggle like handler
+    const toggleLike = useCallback(() => {
+        if (!isProcessing && userId && data?.id) {
+            handleLike(data.id, userId);
         }
-    }
+    }, [isProcessing, userId, data?.id, handleLike]);
 
->>>>>>> main
     return (
         <View style={styles.container}>
             <TouchableOpacity disabled={isProcessing} delayPressOut={20} onPress={toggleLike} >

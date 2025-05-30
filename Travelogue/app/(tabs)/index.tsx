@@ -8,13 +8,10 @@ import { AntDesign, Entypo, FontAwesome6, Ionicons, MaterialCommunityIcons } fro
 import { Badge } from "react-native-paper";
 import HeaderIndex from "@/components/header/HeaderIndex";
 import { backgroundColors, iconColors } from "@/assets/colors";
-<<<<<<< HEAD
 import Featured from "@/components/homePage/Featured ";
-=======
 import { set } from "lodash";
 import SearchModal from "@/components/homePage/modals/SearchModal";
 import NewPostModal from "@/components/homePage/modals/NewPostModal";
->>>>>>> main
 
 
 const height = Dimensions.get('window').height;
