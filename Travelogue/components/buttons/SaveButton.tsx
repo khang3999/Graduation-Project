@@ -84,65 +84,131 @@ const SaveButton = (props: any) => {
 
   // Hàm set save
   const handleSave = async (dataID: any, userID: any) => {
-    // Phân loại vì account có 2 cột saved : bài viết và tour
-    const refColumn = type == 0 ? 'savedPostsList' : 'savedToursList'
-    const refTable = type === 0 ? 'posts' : 'tours'
+    const refColumn = type == 0 ? 'savedPostsList' : 'savedToursList';
+    const refTable = type === 0 ? 'posts' : 'tours';
     const refSavedList = ref(database, `accounts/${userID}/${refColumn}/`);
-    const refItemInSavedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`)
-    const snapshot = await get(refItemInSavedList); // Kiểm tra xem dataID đã tồn tại chưa
-    const refSavesOfTable = ref(database, `${refTable}/${dataID}/saves`)
-
+    const refItemInSavedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`);
+    const snapshot = await get(refItemInSavedList);
+    const refSavesOfTable = ref(database, `${refTable}/${dataID}/scores`);
+  
+    // Lấy danh sách các tỉnh thành từ `locations`
+    const locations = data.locations; // Đảm bảo `data.locations` chứa thông tin các tỉnh thành
+    console.log("Locations:", locations);
+  
     try {
       if (snapshot.exists()) {
-        // Nếu đã tồn tại, xóa dataID khỏi savedList
+        // Unsave
         await remove(refItemInSavedList);
-
         console.log('Đã bỏ lưu ' + dataID);
-
-        // Cập nhật saves của bài viết
-        runTransaction(refSavesOfTable, (currentValue) => {
-          return currentValue - 1; // Cập nhật dựa trên giá trị hiện tại
-        }).then(() => {
-          setSaveNum(saveNum - 1)
-          if (type === 0) {
-            setDataPosts([...updateArray(dataPosts, dataID, saveNum - 1)])
-          } else {
-            setDataTours([...updateArray(dataTours, dataID, saveNum - 1)])
-          }
-          console.log("Update save successfully committed!");
-        }).catch((error) => {
-          console.error("Transaction failed: ", error);
+  
+        // Giảm 2 điểm
+        await runTransaction(refSavesOfTable, (currentValue) => {
+          return (currentValue || 0) - 2;
         });
-        console.log('Đã bỏ save ' + dataID);
+  
+        // Giảm 2 điểm cho từng tỉnh thành
+        if (locations) {
+          for (const countryKey in locations) {
+            const provinces = locations[countryKey];
+            for (const provinceID in provinces) {
+              console.log("Tìm provinceID:", provinceID);
+  
+              // Dò vào bảng cities để tìm tỉnh thành
+              const citiesRef = ref(database, `cities/${countryKey}`);
+              const citiesSnapshot = await get(citiesRef);
+  
+              if (citiesSnapshot.exists()) {
+                const citiesData = citiesSnapshot.val();
+                let found = false;
+  
+                for (const regionKey in citiesData) {
+                  if (citiesData[regionKey][provinceID]) {
+                    console.log("Tìm thấy provinceID:", provinceID);
+                    console.log("countryKey:", countryKey);
+                    console.log("regionKey:", regionKey);
+  
+                    // Cập nhật scores cho tỉnh thành
+                    const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
+                    await runTransaction(refProvinceScores, (currentValue) => {
+                      return (currentValue || 0) - 2; // Giảm 2 điểm
+                    });
+  
+                    found = true;
+                    break;
+                  }
+                }
+  
+                if (!found) {
+                  console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
+                }
+              }
+            }
+          }
+        }
+  
+        setSaveNum(saveNum - 1);
+        const updatedData = updateArray(type === 0 ? dataPosts : dataTours, dataID, saveNum - 1);
+        type === 0 ? setDataPosts(updatedData) : setDataTours(updatedData);
       } else {
-        // Nếu không tồn tại, thêm vào savedList
-        await update(refSavedList, {
-          [dataID]: true, // Thêm dataID vào savedList
+        // Save
+        await update(refSavedList, { [dataID]: true });
+        console.log('Đã lưu ' + dataID);
+  
+        // Tăng 2 điểm
+        await runTransaction(refSavesOfTable, (currentValue) => {
+          return (currentValue || 0) + 2;
         });
-
-        // Cập nhật saves của bài viết
-        runTransaction(refSavesOfTable, (currentValue) => {
-          return currentValue + 1; // Cập nhật dựa trên giá trị hiện tại
-        }).then(() => {
-          setSaveNum(saveNum + 1)
-          if (type === 0) {
-            setDataPosts([...updateArray(dataPosts, dataID, saveNum + 1)])
-          } else {
-            setDataTours([...updateArray(dataTours, dataID, saveNum + 1)])
+  
+        // Tăng 2 điểm cho từng tỉnh thành
+        if (locations) {
+          for (const countryKey in locations) {
+            const provinces = locations[countryKey];
+            for (const provinceID in provinces) {
+              console.log("Tìm provinceID:", provinceID);
+  
+              // Dò vào bảng cities để tìm tỉnh thành
+              const citiesRef = ref(database, `cities/${countryKey}`);
+              const citiesSnapshot = await get(citiesRef);
+  
+              if (citiesSnapshot.exists()) {
+                const citiesData = citiesSnapshot.val();
+                let found = false;
+  
+                for (const regionKey in citiesData) {
+                  if (citiesData[regionKey][provinceID]) {
+                    console.log("Tìm thấy provinceID:", provinceID);
+                    console.log("countryKey:", countryKey);
+                    console.log("regionKey:", regionKey);
+  
+                    // Cập nhật scores cho tỉnh thành
+                    const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
+                    await runTransaction(refProvinceScores, (currentValue) => {
+                      return (currentValue || 0) + 2; // Tăng 2 điểm
+                    });
+  
+                    found = true;
+                    break;
+                  }
+                }
+  
+                if (!found) {
+                  console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
+                }
+              }
+            }
           }
-          console.log("Update save successfully committed!");
-        }).catch((error) => {
-          console.error("Transaction failed: ", error);
-        });
-        console.log('Đã bỏ save ' + dataID);
+        }
+  
+        setSaveNum(saveNum + 1);
+        const updatedData = updateArray(type === 0 ? dataPosts : dataTours, dataID, saveNum + 1);
+        type === 0 ? setDataPosts(updatedData) : setDataTours(updatedData);
       }
     } catch (error) {
       console.error('Lỗi khi cập nhật savedPosts:', error);
-    }
-    finally { // Đổi state
+    } finally {
       setSaved(!saved);
     }
-  }
+  };
   return (
     <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} style={props.myStyle}>
       <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />

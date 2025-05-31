@@ -464,6 +464,101 @@ const PostList = () => {
     const postData: PostModal = post.item
     const itemIndex = post.index
     return (
+      // <View key={post.item.id} style={styles.itemWrap}>
+      //   < PaperProvider >
+      //       <TouchableOpacity style={styles.item} onPress={async () => {
+            
+      //       router.push({
+      //         pathname: "/postDetail",
+      //         params: { postId: post.item.id },
+      //       });
+      //       }}>
+      //       {/* Label */}
+      //       <View style={{ borderRadius: 30, position: 'absolute', backgroundColor: 'rgba(100,100,100,0.1)', zIndex: 1, width: '100%', height: '100%' }}></View>
+
+      //       <View style={styles.header}>
+      //         {/*Author*/}
+      //         <View style={styles.authorContent}>
+      //           <TouchableOpacity style={styles.avatarWrap} onPress={() => handleGoToProfileScreen(authorId)}>
+      //             <Image style={styles.avatar} source={{ uri: post.item.author.avatar }}></Image>
+      //           </TouchableOpacity>
+      //           <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
+      //             <TouchableOpacity>
+      //               <Text style={{ fontWeight: '600', }} numberOfLines={1}>
+      //                 {post.item.author.fullname}
+      //               </Text>
+      //             </TouchableOpacity>
+      //             <Text style={{ fontSize: 12, fontStyle: 'italic' }}>{formatDate(post.item.created_at)}</Text>
+      //           </View>
+      //         </View>
+      //         {/* Live mode */}
+      //         <View style={styles.liveModeWrap}>
+      //           <LiveModeButton type="1"></LiveModeButton>
+      //         </View>
+      //         {/* Location */}
+      //         <View style={styles.flagBtn}>
+      //           {/* <Provider > */}
+      //           <Menu
+      //             style={styles.listLocations}
+      //             visible={indexVisibleMenu === post.index} // Thay the 1 bang index của post trong mang
+      //             onDismiss={closeMenu}
+      //             theme={''}
+      //             elevation={4}
+      //             // statusBarHeight={0}
+      //             anchorPosition='bottom'
+      //             contentStyle={{ backgroundColor: 'white', right: 26, }}
+      //             anchor={
+      //               <View style={{ alignItems: "center" }}>
+      //                 <IconButton
+      //                   style={{ backgroundColor: 'white', width: 50, height: 40 }}
+      //                   icon="map-marker-radius"
+      //                   iconColor={iconColors.green1}
+      //                   size={26}
+      //                   onPress={() => openMenu(post.index)}
+      //                   accessibilityLabel="Menu button"
+      //                 />
+      //               </View>
+      //             }
+      //           >
+      //             {allLocations.map((location: any) => {
+      //               return (
+      //                 <TouchableOpacity key={location.id} onPress={() => handleTapOnLocationInMenu(location.id, location.country)}>
+      //                   <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
+      //                   <Divider />
+      //                 </TouchableOpacity>
+      //               )
+      //             })
+      //             }
+      //           </Menu>
+      //           {/* </Provider> */}
+      //         </View>
+      //       </View>
+      //       <View style={styles.imagePostWrap}>
+      //         <Image style={styles.imagePost} source={{ uri: post.item.thumbnail }}></Image>
+      //       </View>
+      //       {/* Button like, comment, save */}
+      //       {/* <ActionBar style={styles.actionBar} data={post.item} type={TYPE}></ActionBar> */}
+      //       {/* Action button */}
+      //       <View style={styles.footer}>
+      //         <View style={styles.actionBar}>
+      //           <View style={[styles.btn, {
+      //             paddingHorizontal: 10,
+      //           }]}>
+      //             <HeartButton data={post.item} type={TYPE}></HeartButton>
+      //           </View>
+      //           <View style={[styles.btn, { width: 50, marginLeft: 0 }]}>
+      //             <SaveButton data={post.item} type={TYPE}></SaveButton>
+      //           </View>
+      //         </View>
+      //         {/* Topic */}
+      //         <View style={styles.topicContainer}>
+      //           <Text numberOfLines={2} ellipsizeMode='tail' textBreakStrategy='balanced' style={styles.topicText}>{post.item.title}</Text>
+      //         </View>
+      //       </View>
+
+      //     </TouchableOpacity>
+      //   </PaperProvider>
+      // </View>
       <PostItem
         index={itemIndex}
         // userId={userId}

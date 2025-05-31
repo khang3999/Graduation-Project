@@ -375,7 +375,7 @@ const CheckInMap = () => {
   const handleTapOnGallery = () => {
     if (selectedCity) {
       router.push({
-        pathname: "/gallery",
+        pathname: "/galleryCities",
         params: { idCity: selectedCity.value, idCountry: selectedCountry.value },
       });
       // console.log(selectedCity.value, selectedCountry.value);

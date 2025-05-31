@@ -8,6 +8,7 @@ import { AntDesign, Entypo, FontAwesome6, Ionicons, MaterialCommunityIcons } fro
 import { Badge } from "react-native-paper";
 import HeaderIndex from "@/components/header/HeaderIndex";
 import { backgroundColors, iconColors } from "@/assets/colors";
+import Featured from "@/components/homePage/Featured ";
 import { set } from "lodash";
 import SearchModal from "@/components/homePage/modals/SearchModal";
 import NewPostModal from "@/components/homePage/modals/NewPostModal";
@@ -173,9 +174,12 @@ const Home = () => {
             <Text style={[styles.textTitle, { marginBottom: 20 }]}>Explore the World through Stories</Text>
           </View>
 
+        
+
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
+             <Featured></Featured>
           </View>
           {/* Tour section */}
           <View>
@@ -285,6 +289,7 @@ const styles = StyleSheet.create({
   textCategory: {
     marginHorizontal: 20,
     fontSize: 20,
+    fontWeight: '600',
   },
   textTitle: {
     fontSize: 34,

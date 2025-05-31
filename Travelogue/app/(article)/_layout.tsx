@@ -23,6 +23,8 @@ const Layout = () => {
             <Stack.Screen name="reviewPostUser" options={{title: "Xem trước"}}/>
             <Stack.Screen name="editPostUser" options={{title: "Chỉnh sửa bài viết"}}/>
             <Stack.Screen name="editPostTour" options={{title: "Chỉnh sửa tour"}}/>
+            <Stack.Screen name="editPostLive" options={{title: "Chỉnh sửa bài viết"}}/>
+            
             
         </Stack>
        

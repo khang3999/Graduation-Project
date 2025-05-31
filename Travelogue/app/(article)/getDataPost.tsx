@@ -92,6 +92,7 @@ export const getDataPost = async (postId: string) => {
       // console.log(images);
 
       //Return processed data
+      console.log("Parsed days:", parsedData?.days);
       return {
         title: parsedData?.title || "",
         content: parsedData?.content || "",

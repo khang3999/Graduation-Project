@@ -150,7 +150,7 @@ import HeaderProfileGuest from "@/components/profile/HeaderProfileGuest";
                 keyExtractor={(item, index) => `${item}-${index}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => {
-                    router.push({ pathname: '/SearchResult' });
+                    router.push({ pathname: '/SearchResult', params: {} });
                     setSearchedAccountData(item);
                     setRecentSearches([...recentSearches, item]);
                   }}>
