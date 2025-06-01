@@ -1083,6 +1083,7 @@ const EditPostUser = () => {
         status_id: isPublic ? 1 : 2,
       };
 
+      
       // cập nhật thông tin bài viết
       await update(postsRef, postData);
 
