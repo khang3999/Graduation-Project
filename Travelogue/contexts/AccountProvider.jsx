@@ -36,8 +36,8 @@ export const AccountProvider = ({ children }) => {
         if (snapshot.exists()) {
           const jsonDataAccount = snapshot.val();
 
-          console.log(jsonDataAccount.likedPostsList);
-          console.log('khkhkhkhkh');
+          // console.log(jsonDataAccount.likedPostsList);
+          // console.log('khkhkhkhkh');
           
           // POST
           // console.log(jsonDataAccount.likedPostsList);
