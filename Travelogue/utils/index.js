@@ -54,6 +54,24 @@ export const slug = (str) => {
         .replace(/[\s-]+/g, '-') //Thay khoảng trắng bằng dấu -, ko cho 2 -- liên tục
 }
 
+export const extractFullLocationSlug = (text) => {
+    const parts = [];
+
+    const wardMatch = text.match(/(xã|phường|thị trấn|thị xã|tx\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (wardMatch) parts.push(`${slug(wardMatch[1])}-${slug(wardMatch[2])}`);
+
+    const districtMatch = text.match(/(huyện|quận|thị xã|tx\.?|q\.?|h\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (districtMatch) parts.push(`${slug(districtMatch[1])}-${slug(districtMatch[2])}`);
+
+    const provinceMatch = text.match(/(tỉnh)\s+([\p{L}\d\s\-]+)/iu);
+    if (provinceMatch) parts.push(`${slug(provinceMatch[1])}-${slug(provinceMatch[2])}`);
+
+    const cityMatch = text.match(/(thành phố|tp\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (cityMatch) parts.push(`${slug(cityMatch[1])}-${slug(cityMatch[2])}`);
+
+    return parts.join(", ");
+};
+
 // Hàm để đếm số lượng địa điểm trùng khớp trả về % trùng khớp
 export const countMatchingLocations = (listLocationIdBase, locationsList) => {
     // const locationIdOfTour = Object.keys(tour.locations).flatMap((country) =>

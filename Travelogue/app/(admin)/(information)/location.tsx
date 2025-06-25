@@ -8,7 +8,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Checkbox, Divider } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { SelectList } from "react-native-dropdown-select-list";
@@ -26,94 +26,67 @@ import { ScrollView, TextInput } from "react-native-gesture-handler";
 import IconA from "react-native-vector-icons/AntDesign";
 import Toast from "react-native-toast-message-custom";
 import { set } from "lodash";
+import { useHomeProvider } from "@/contexts/HomeProvider";
+import { Province } from "@/model/ProvinceModal";
 
 const Location = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedCity, setSelectedCity] = useState('-1');
   const [cityArea, setCityArea] = useState("");
   const [cityInformation, setCityInformation] = useState("");
-  const [dataCountries, setDataCountries] = useState([]);
+  // const [dataCountries, setDataCountries] = useState([]);
   const [dataCities, setDataCities] = useState<any>([]);
   const [editText, setEditText] = useState(false);
   const inputRef: any = useRef(null);
   const [defaultImages, setdefaultImages] = useState<string[]>([]);
   const [disabled, setDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const { dataCountries }: any = useHomeProvider();
 
-  //Countries
-  useEffect(() => {
-    const refCountries = ref(database, `countries`);
-    const unsubscribe = onValue(
-      refCountries,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const jsonDataCountries = snapshot.val();
-          const countriesArray: any = Object.keys(jsonDataCountries).map(
-            (key) => ({
-              key,
-              value: jsonDataCountries[key].label,
-            })
-          );
-          setDataCountries(countriesArray);
-        } else {
-          console.log("No data available1");
-        }
-      },
-      (error) => {
-        console.error("Error fetching data:", error);
-      }
-    );
-
-    return () => {
-      unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    };
-  }, []);
-  // Fetch data cities theo quốc gia
-  const fetchCityByCountry = (countryId: any) => {
+  // Lấy các tỉnh/ thành của quốc gia - XONG
+  const fetchCityByCountry = useCallback(async (countryId: any) => {
     try {
-      const refCity = ref(database, `cities/${countryId}`);
-      
-      // Real-time listener
-      onValue(refCity, (snapshot) => {
-        if (snapshot.exists()) {
-          const dataCityJson = snapshot.val();
-          const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(
-            ([region, cities]: any) =>
-              Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-                key: cityCode,
-                value: cityInfo.name,
-                area: cityInfo.area_id,
-                information: cityInfo.information,
-                defaultImages: cityInfo.defaultImages,
-              }))
-          );
-          setDataCities(dataCitiesArray);
-          // Optionally set selected city
-          // setSelectedCity(dataCitiesArray[0].key);
-        } else {
-          console.log("No data city available");
-        }
-      });
+      const refProvinces = ref(database, `provinces/${countryId}`)
+      const snapshot = await get(refProvinces);
+      if (snapshot.exists()) {
+        const dataCityJson = snapshot.val();
+        const data = dataCityJson.data as Record<string, Province>;
+        const result = Object.entries(data).map(([key, item]) => ({
+          key,
+          value: item.value
+        }));
+        result.unshift({ key: '-1', value: 'Chọn tỉnh/thành phố' })
+        setDataCities(result);
+        setSelectedCity(result[0].key);
+      } else {
+        console.log("FetchCityByCountry: No data available1");
+      }
     } catch (error) {
-      console.error("Error fetching data: ", error);
+      console.error("FetchCityByCountry: Error fetching data: ", error);
     }
-  }
+  }, [])
+
   //Handle when selected countries
-  const handleSelectedCountry = (val: any) => {
-    // setDataCities([])
-    setCityInformation("");
-    setCityArea("");
+  const handleSelectedCountry = useCallback((val: any) => {
+    if (val === 'avietnam') {
+      fetchCityByCountry(val)
+    } else {
+      Alert.alert('Chưa hỗ trợ quốc gia này');
+    }
+    // setCityInformation("");
+    // setCityArea("");
+    setDataCities([])
     setdefaultImages([]);
-    fetchCityByCountry(val)
     setSelectedCountry(val);
-  };
+  }, []);
+
   //Handle when selected countries
   const handleSelectedCity = (val: any) => {
-    console.log(val);
-    
-    if (val != "" && val != undefined) {
+
+    if (val && val !== '-1') {
+      console.log(val);
       const a: any = dataCities.find((e: any) => e.key == val);
-      setCityArea(a.area);
+      // setCityArea(a.area);
       setCityInformation(a.information);
       if (a.defaultImages) {
         setdefaultImages(a.defaultImages);
@@ -122,10 +95,12 @@ const Location = () => {
       }
       setDisabled(false);
       setSelectedCity(val);
+    } else {
+      console.log(val);
     }
 
   };
-//   console.log("defaultImages", defaultImages);
+  //   console.log("defaultImages", defaultImages);
   const uploadImagesToStorage = async () => {
     const uploadedImageUrls = [];
 
@@ -179,7 +154,7 @@ const Location = () => {
           {
             text: "OK",
             onPress: async () => {
-                setLoading(true);
+              setLoading(true);
               const defaultImages = await uploadImagesToStorage();
 
               update(cityUpdateRef, {
@@ -187,11 +162,11 @@ const Location = () => {
                 defaultImages: defaultImages,
               })
                 .then(() => {
-                    setLoading(false);
+                  setLoading(false);
                   console.log("Data updated successfully!");
                 })
                 .catch((error) => {
-                    setLoading(false);
+                  setLoading(false);
                   console.error("Error updating data:", error);
                 });
             },
@@ -269,7 +244,7 @@ const Location = () => {
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
-          defaultOption={{key:'',value:''}}
+          defaultOption={{ key: '', value: '' }}
           // placeholder={
           //   dataCities.length > 0 ? dataCities[0].value  : "Cities"
           // }
@@ -354,24 +329,24 @@ const Location = () => {
         </TouchableOpacity>
       )}
       {/* Loading */}
-        {loading && (
-            <View
-            style={{
-                position: "absolute",
-                flex: 1,
-                width: "108%",
-                height: "108%",
-                top: 0,
-                left: 0,
-                zIndex: 100,
-                backgroundColor: "rgba(0, 0, 0, 0.1)",
-                justifyContent: "center",
-                alignItems: "center",
-            }}
-            >
-             <ActivityIndicator size="large" color="red" />
-            </View>
-        )}
+      {loading && (
+        <View
+          style={{
+            position: "absolute",
+            flex: 1,
+            width: "108%",
+            height: "108%",
+            top: 0,
+            left: 0,
+            zIndex: 100,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="red" />
+        </View>
+      )}
     </View>
   );
 };

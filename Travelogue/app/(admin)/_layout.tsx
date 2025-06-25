@@ -125,7 +125,7 @@ export default function Layout() {
         <Drawer.Screen
           name="(information)"
           options={{
-            drawerLabel: 'Thông tin địa điểm',
+            drawerLabel: 'Cập nhật thủ công',
             title: 'Thông tin địa điểm',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
@@ -135,8 +135,8 @@ export default function Layout() {
         <Drawer.Screen
           name="scrape"
           options={{
-            drawerLabel: 'Scrape',
-            title: 'Scrape',
+            drawerLabel: 'Cập nhật tự động',
+            title: 'Cập nhật thông tin',
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )

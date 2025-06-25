@@ -1,7 +1,7 @@
 import { View, Text, Alert } from 'react-native'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { ref } from 'firebase/database'
-import { database, onValue, update } from '@/firebase/firebaseConfig'
+import { database, get, onValue, update } from '@/firebase/firebaseConfig'
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons'
 
 const AdminContext = createContext(undefined)
@@ -10,6 +10,28 @@ const AdminProvider = ({ children }) => {
   const [imagesReport, setImagesReport] = useState([])
   const [dataStatus, setDataStatus] = useState([]);
   const [factorReport, setFactorReport] = useState(0);
+  const [areasByProvinceName, setAreasByProvinceName] = useState({})
+
+
+  // Get Area template
+  useEffect(() => {
+    const getAreasTemplate = async () => {
+      try {
+        const refAreaTemplate = ref(database, 'areasTemplate/avietnam')
+        // const postsQuery = query(refPosts, orderByChild('status_id'), equalTo(1));
+        const snapshot = await get(refAreaTemplate);
+        if (snapshot.exists()) {
+          const dataJson = snapshot.val()
+          setAreasByProvinceName(dataJson)
+        } else {
+          console.log("No data post available");
+        }
+      } catch (error) {
+        console.error("Error fetching post data: ", error);
+      }
+    }
+    getAreasTemplate()
+  }, [])
 
   //Doc du lieu Status
   useEffect(() => {
@@ -221,7 +243,8 @@ const AdminProvider = ({ children }) => {
         lockAcc,
         unLockAcc,
         unReportAcc,
-        renderIcon
+        renderIcon,
+        areasByProvinceName, setAreasByProvinceName
       }}>
       {children}
     </AdminContext.Provider>
