@@ -27,74 +27,37 @@ const Map = () => {
   const navigation = useNavigation();
 
   const [filteredCityData, setFilteredCityData] = useState([]);
-  const [cityLoading, setCityLoading] = useState(true);
-  const [areaLoading, setAreaLoading] = useState(true);
 
-  // ...existing code...
-  useEffect(() => {
-    if (!selectedCountry) {
-      setCityData([]);
-      setAreaData([]);
-      setCityLoading(false);
-      setAreaLoading(false);
-      return;
-    }
-    setCityLoading(true);
-    setAreaLoading(true);
-    const cityRef = ref(database, `provinces/${selectedCountry}/data`);
-    const unsubscribeCity = onValue(cityRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      //  data -> cityId -> cityData
-      const formattedCities = Object.keys(data)
-        .map((cityId) => {
-          const city = data[cityId];
-          return {
-            id: cityId,
-            name: city.value || city.title || city.name || "", 
-            area_id: city.areaId, 
-            latitude:
-              Array.isArray(city.geocode) && city.geocode[0]?.latitude
-                ? city.geocode[0].latitude
-                : city.latitude,
-            longitude:
-              Array.isArray(city.geocode) && city.geocode[0]?.longitude
-                ? city.geocode[0].longitude
-                : city.longitude,
-            ...city,
-          };
-        })
-        .filter(
-          (city) =>
-            typeof city.latitude === "number" &&
-            typeof city.longitude === "number" &&
-            !isNaN(city.latitude) &&
-            !isNaN(city.longitude) &&
-            city.name
-        );
-      setCityData(formattedCities);
-      setCityLoading(false);
-    });
-    const areasRef = ref(database, `areas/${selectedCountry}`);
-    const unsubscribeArea = onValue(areasRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const formattedAreas = Object.keys(data).map((key) => ({
-        id: key,
-        label: data[key].label || key,
-        latitude: data[key].latitude || 0,
-        longitude: data[key].longitude || 0,
-        countryId: selectedCountry,
-        cityIds: data[key].cityIds || [],
-      }));
-      setAreaData(formattedAreas);
-      setAreaLoading(false);
-    });
-    return () => {
-      unsubscribeCity();
-      unsubscribeArea();
-    };
-  }, [selectedCountry]);
 
-  useEffect(() => {
+
+  const mapViewRef = useRef(null);
+  const [mapLat] = useState(16.494413736992392);
+  const [mapLong] = useState(105.18357904627919);
+  const [mapRegion] = useState({
+    latitude: mapLat,
+    longitude: mapLong,
+    latitudeDelta: 8,
+    longitudeDelta: 10,
+  });
+  // Selected đất nước và khu vực
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedFestival, setSelectedFestival] = useState(null);
+  // Modal
+  const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
+  const [modalVisibleArea, setModalVisibleArea] = useState(false);
+  const [modalVisibleCity, setModalVisibleCity] = useState(false);
+  //Bottom sheet
+  const bottomSheetRef = useRef(null);
+  //Scroll View
+  const scrollViewRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  //lấy id của tp
+  const [idCities, setIdCities] = useState([]);
+
+     useEffect(() => {
     const countriesRef = ref(database, "countries");
     const pointRef = ref(database, "pointsNew");
 
@@ -179,34 +142,52 @@ const Map = () => {
     });
   }, []);
   // console.log("Points:", points);
+  useEffect(() => {
+    if (!selectedCountry) {
+      setCityData([]);
+      setAreaData([]);
+      return;
+    }
+    const cityRef = ref(database, `provinces/${selectedCountry}/data`);
+    const unsubscribeCity = onValue(cityRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      //  data -> cityId -> cityData
+      const formattedCities = Object.keys(data)
+        .map((cityId) => {
+          const city = data[cityId];
+          return {
+            id: cityId,
+            name: city.value || city.title || city.name || "", 
+            area_id: city.areaId, 
+            latitude:
+              Array.isArray(city.geocode) && city.geocode[0]?.latitude
+                ? city.geocode[0].latitude
+                : city.latitude,
+            longitude:
+              Array.isArray(city.geocode) && city.geocode[0]?.longitude
+                ? city.geocode[0].longitude
+                : city.longitude,
+            ...city,
+          };
+        })
+        .filter(
+          (city) =>
+            typeof city.latitude === "number" &&
+            typeof city.longitude === "number" &&
+            !isNaN(city.latitude) &&
+            !isNaN(city.longitude) &&
+            city.name
+        );
+      setCityData(formattedCities);
+    });
+   
+    return () => {
+      unsubscribeCity();
+      unsubscribeArea();
+    };
+  }, [selectedCountry]);
 
-  const mapViewRef = useRef(null);
-  const [mapLat] = useState(16.494413736992392);
-  const [mapLong] = useState(105.18357904627919);
-  const [mapRegion] = useState({
-    latitude: mapLat,
-    longitude: mapLong,
-    latitudeDelta: 8,
-    longitudeDelta: 10,
-  });
-  // Selected đất nước và khu vực
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedArea, setSelectedArea] = useState(null);
-  const [selectedCity, setSelectedCity] = useState(null);
-  const [selectedFestival, setSelectedFestival] = useState(null);
-  // Modal
-  const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
-  const [modalVisibleArea, setModalVisibleArea] = useState(false);
-  const [modalVisibleCity, setModalVisibleCity] = useState(false);
-  //Bottom sheet
-  const bottomSheetRef = useRef(null);
-  //Scroll View
-  const scrollViewRef = useRef(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
-  //lấy id của tp
-  const [idCities, setIdCities] = useState([]);
-
+ 
   //Thay đổi quốc gia
   const handleCountryChange = (country) => {
     if (country !== null) {
@@ -248,17 +229,19 @@ const Map = () => {
  
   //Xử lý chọn thành phố theo khu vực
   useEffect(() => {
-    if (cityLoading || areaLoading) return; // Chỉ filter khi đã load xong
+    // Chỉ filter khi đã có cityData và areaData
+    if (!cityData.length || !areaData.length) return;
     if (selectedArea) {
-      // Lấy cityIds từ area đã chọn
       const area = areaData.find(a => a.id === selectedArea);
       if (area && area.cityIds && area.cityIds.length > 0) {
         const filteredData = cityData.filter(city =>
           area.cityIds.map(String).includes(String(city.id))
         );
         setFilteredCityData(filteredData);
+        if (filteredData.length === 0) {
+          console.log('Không có city nào khớp cityIds:', area.cityIds, cityData.map(c => c.id));
+        }
       } else {
-        // Fallback: filter theo area_id như cũ
         const filteredData = cityData.filter(
           (city) => city.area_id && city.area_id.includes(selectedArea)
         );
@@ -268,7 +251,7 @@ const Map = () => {
     } else {
       setFilteredCityData(cityData);
     }
-  }, [selectedArea, cityData, areaData, cityLoading, areaLoading]);
+  }, [selectedArea, cityData]);
 
   // Cập nhật idCities khi filteredCityData thay đổi
   useEffect(() => {
@@ -290,8 +273,8 @@ const Map = () => {
           1000
         );
       }
-      setSelectedArea(area.id); // Chỉ set trực tiếp, không setIdCities nữa
-      // Không cần setIdCities ở đây, useEffect sẽ tự cập nhật
+      setSelectedArea(area.id); 
+
     }
     setModalVisibleArea(false);
   };
