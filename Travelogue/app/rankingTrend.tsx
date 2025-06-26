@@ -215,6 +215,7 @@ const RankingTrend = () => {
                   },
                 ]}
               >
+                {/* hhh */}
                 <View style={styles.rankImageContainer}>
                   <Image
                     source={{

@@ -7,7 +7,6 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
-  Alert,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -17,9 +16,6 @@ import { ImageSlider } from "react-native-image-slider-banner";
 import { RowComponent, SectionComponent } from "@/components";
 import { database, ref, onValue, get } from "@/firebase/firebaseConfig";
 import { ScrollView } from "react-native-gesture-handler";
-import { set } from "lodash";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { update } from "firebase/database";
 import { useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
 
@@ -30,114 +26,159 @@ const Map = () => {
   const [points, setPoints] = useState([]);
   const navigation = useNavigation();
 
-  // Lua chon kieu points
-  const festivalTypeOptions = [
-    {
-      id: "all",
-      label: "Chọn tất cả",
-      type: "all",
-    },
-    {
-      id: "festival",
-      label: "Lễ hội",
-      type: "festival",
-    },
-    {
-      id: "landmark",
-      label: "Danh lam",
-      type: "landmark",
-    },
-  ];
+  const [filteredCityData, setFilteredCityData] = useState([]);
+  const [cityLoading, setCityLoading] = useState(true);
+  const [areaLoading, setAreaLoading] = useState(true);
+
+  // ...existing code...
+  useEffect(() => {
+    if (!selectedCountry) {
+      setCityData([]);
+      setAreaData([]);
+      setCityLoading(false);
+      setAreaLoading(false);
+      return;
+    }
+    setCityLoading(true);
+    setAreaLoading(true);
+    const cityRef = ref(database, `provinces/${selectedCountry}/data`);
+    const unsubscribeCity = onValue(cityRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      //  data -> cityId -> cityData
+      const formattedCities = Object.keys(data)
+        .map((cityId) => {
+          const city = data[cityId];
+          return {
+            id: cityId,
+            name: city.value || city.title || city.name || "", 
+            area_id: city.areaId, 
+            latitude:
+              Array.isArray(city.geocode) && city.geocode[0]?.latitude
+                ? city.geocode[0].latitude
+                : city.latitude,
+            longitude:
+              Array.isArray(city.geocode) && city.geocode[0]?.longitude
+                ? city.geocode[0].longitude
+                : city.longitude,
+            ...city,
+          };
+        })
+        .filter(
+          (city) =>
+            typeof city.latitude === "number" &&
+            typeof city.longitude === "number" &&
+            !isNaN(city.latitude) &&
+            !isNaN(city.longitude) &&
+            city.name
+        );
+      setCityData(formattedCities);
+      setCityLoading(false);
+    });
+    const areasRef = ref(database, `areas/${selectedCountry}`);
+    const unsubscribeArea = onValue(areasRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const formattedAreas = Object.keys(data).map((key) => ({
+        id: key,
+        label: data[key].label || key,
+        latitude: data[key].latitude || 0,
+        longitude: data[key].longitude || 0,
+        countryId: selectedCountry,
+        cityIds: data[key].cityIds || [],
+      }));
+      setAreaData(formattedAreas);
+      setAreaLoading(false);
+    });
+    return () => {
+      unsubscribeCity();
+      unsubscribeArea();
+    };
+  }, [selectedCountry]);
 
   useEffect(() => {
     const countriesRef = ref(database, "countries");
-    const areaRef = ref(database, "areas");
-    const pointRef = ref(database, "points");
-    const cityRef = ref(database, "cities");
+    const pointRef = ref(database, "pointsNew");
 
     // Lấy dữ liệu từ firebase (qgia)
     onValue(countriesRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // Chuyển từ đối tượng thành mảng
       const formattedDataCountry = Object.keys(data).map((key) => ({
         id: key,
         ...data[key],
       }));
-      // console.log(formattedDataCountry);
       setCountryData(formattedDataCountry);
-      // setSelectedCountry(formattedDataCountry[0].id)
-      // console.log("Country Data:", countryData);
-    });
-    // Lấy dữ liệu từ firebase (khu vực)
-    onValue(areaRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      // console.log(data);
-      // Chuyển từ đối tượng thành mảng
-
-      const formattedDataAreas = Object.keys(data).flatMap((countryId) =>
-        Object.keys(data[countryId]).map((key) => ({
-          id: key,
-          countryId,
-          ...data[countryId][key],
-        }))
-      );
-      
-      setAreaData(formattedDataAreas);
-      // console.log("Area Data:");
-    });
-    // console.log("Area Data:", areaData);
-
-    onValue(cityRef, (snapshot) => {
-      const data = snapshot.val() || {};
-
-      // Duyệt qua tất cả các quốc gia
-      const formattedData = Object.keys(data).flatMap((countryKey) => {
-        return Object.keys(data[countryKey]).flatMap((area_id) => {
-          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
-            id: cityKey,
-            area_id: area_id,
-            id_nuoc: countryKey,
-            ...data[countryKey][area_id][cityKey],
-          }));
-        });
-      });
-
-      setCityData(formattedData);
-      // console.log("Cty:", formattedData);
+      console.log("Country Data:", formattedDataCountry); // Thêm dòng này
     });
 
     // Lấy dữ liệu từ firebase (points)
     onValue(pointRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // console.log("____________________")
-      // console.log(data);
 
       const formattedPoints = Object.keys(data).flatMap((countryId) => {
-        const countryPoints = data[countryId];
-        // console.log("countryPoints:", countryPoints);
+        const countryData = data[countryId] || {};
+        return Object.keys(countryData).flatMap((cityId) => {
+          const cityPoints = countryData[cityId] || {};
+          return Object.keys(cityPoints).map((pointId) => {
+            const point = cityPoints[pointId];
 
-        return Object.keys(countryPoints).flatMap((type) => {
-          const typePoints = countryPoints[type];
-          // console.log("typePoints:", typePoints);
+            // Improved coordinate extraction with validation
+            let validLatitude = null;
+            let validLongitude = null;
 
-          return Object.keys(typePoints).flatMap((pointId) => {
-            const point = typePoints[pointId];
-            // console.log("point:", point);
+            // Check for geocode array first
+            if (Array.isArray(point.geocode) && point.geocode.length > 0) {
+              const firstGeocode = point.geocode[0];
+              if (
+                firstGeocode &&
+                typeof firstGeocode.latitude === "number" &&
+                typeof firstGeocode.longitude === "number" &&
+                !isNaN(firstGeocode.latitude) &&
+                !isNaN(firstGeocode.longitude) &&
+                !(
+                  firstGeocode.latitude === 0 && firstGeocode.longitude === 0
+                ) &&
+                !(
+                  firstGeocode.latitude === 21.023897 &&
+                  firstGeocode.longitude === 105.844719
+                )
+              ) {
+                validLatitude = firstGeocode.latitude;
+                validLongitude = firstGeocode.longitude;
+              }
+            }
 
-            return Object.keys(point).map((pointKey) => ({
-              id: pointKey,
+            // Fall back to direct properties if geocode wasn't valid
+            if (validLatitude === null && validLongitude === null) {
+              if (
+                typeof point.latitude === "number" &&
+                typeof point.longitude === "number" &&
+                !isNaN(point.latitude) &&
+                !isNaN(point.longitude) &&
+                !(point.latitude === 0 && point.longitude === 0) &&
+                !(
+                  point.latitude === 21.023897 && point.longitude === 105.844719
+                )
+              ) {
+                validLatitude = point.latitude;
+                validLongitude = point.longitude;
+              }
+            }
+
+            return {
+              id: pointId,
               countryId: countryId,
-              cityId: pointId,
-              type: type,
-              ...point[pointKey],
-            }));
+              cityId: cityId,
+              latitude: validLatitude,
+              longitude: validLongitude,
+              ...point,
+            };
           });
         });
       });
-      // console.log("formattedPoints:", formattedPoints);
+
       setPoints(formattedPoints);
     });
   }, []);
+  // console.log("Points:", points);
 
   const mapViewRef = useRef(null);
   const [mapLat] = useState(16.494413736992392);
@@ -152,18 +193,13 @@ const Map = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
-  const [selectedFestivalType, setSelectedFestivalType] = useState("all");
   const [selectedFestival, setSelectedFestival] = useState(null);
   // Modal
   const [modalVisibleCountry, setModalVisibleCountry] = useState(false);
   const [modalVisibleArea, setModalVisibleArea] = useState(false);
   const [modalVisibleCity, setModalVisibleCity] = useState(false);
-  const [modalFestivalType, setmodalFestivalType] = useState(false);
   //Bottom sheet
   const bottomSheetRef = useRef(null);
-  //Xu ly lại chỗ khu vực phụ thuộc vào quốc gia
-  const [filteredAreaData, setFilteredAreaData] = useState(areaData);
-  const [filteredCityData, setFilteredCityData] = useState(cityData);
   //Scroll View
   const scrollViewRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -173,90 +209,89 @@ const Map = () => {
 
   //Thay đổi quốc gia
   const handleCountryChange = (country) => {
-    // console.log("Selected Country1:", country);
     if (country !== null) {
-      const { latitude, longitude } = country;
-      // sử dụng animateToRegion
+      // Lấy tọa độ, nếu không có thì dùng mặc định
+      const latitude = country.latitude || 16.494413736992392;
+      const longitude = country.longitude || 105.18357904627919;
       if (mapViewRef.current) {
         mapViewRef.current.animateToRegion(
           {
-            latitude: latitude,
-            longitude: longitude,
+            latitude,
+            longitude,
             latitudeDelta: 8.0,
             longitudeDelta: 10,
           },
           1000
         );
       }
-
       setSelectedCountry(country.id);
       setSelectedArea(null);
       setSelectedCity(null);
 
-      // console.log("Selected Country:", country);
-      // console.log("Selected Country id:", country.id);
+      // Load areas for selected country
+      const areasRef = ref(database, `areas/${country.id}`);
+      onValue(areasRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        const formattedAreas = Object.keys(data).map((key) => ({
+          id: key,
+          label: data[key].label || key,
+          latitude: data[key].latitude || 0,
+          longitude: data[key].longitude || 0,
+          countryId: country.id,
+          cityIds: data[key].cityIds || [],
+        }));
+        setAreaData(formattedAreas);
+      });
     }
-
     setModalVisibleCountry(false);
   };
-  //Xử lý khu vực theo nước
-  useEffect(() => {
-    if (selectedCountry) {
-      // console.log("Selected Country:", selectedCountry);
-      setFilteredAreaData(
-        // console.log("Area Data:", areaData),
-        areaData.filter((area) => area.countryId === selectedCountry)
-      );
-      // console.log("Filtered Area Data:", filteredAreaData);
-      // setSelectedArea(filteredAreaData.id);
-      // console.log("Selected Area:", selectedArea);
-    }
-  }, [selectedCountry]);
-
+ 
   //Xử lý chọn thành phố theo khu vực
   useEffect(() => {
+    if (cityLoading || areaLoading) return; // Chỉ filter khi đã load xong
     if (selectedArea) {
-      // console.log("Selected Area:", selectedArea);
-      const filteredData = cityData.filter(
-        (city) => city.area_id && city.area_id.includes(selectedArea)
-      );
-      setFilteredCityData(filteredData);
-      // console.log("Filtered City Data:", filteredData);
+      // Lấy cityIds từ area đã chọn
+      const area = areaData.find(a => a.id === selectedArea);
+      if (area && area.cityIds && area.cityIds.length > 0) {
+        const filteredData = cityData.filter(city =>
+          area.cityIds.map(String).includes(String(city.id))
+        );
+        setFilteredCityData(filteredData);
+      } else {
+        // Fallback: filter theo area_id như cũ
+        const filteredData = cityData.filter(
+          (city) => city.area_id && city.area_id.includes(selectedArea)
+        );
+        setFilteredCityData(filteredData);
+      }
       setSelectedCity(null);
     } else {
-      // console.log("____________________");
-      // console.log("cityData:", cityData);
       setFilteredCityData(cityData);
     }
-  }, [selectedArea, cityData]);
+  }, [selectedArea, cityData, areaData, cityLoading, areaLoading]);
 
   // Cập nhật idCities khi filteredCityData thay đổi
   useEffect(() => {
     setIdCities(filteredCityData.map((city) => city.id));
-    // console.log(
-    //   "idCities:",
-    //   filteredCityData.map((city) => city.id)
-    // );
   }, [filteredCityData]);
 
   // Thay đổi khu vực
   const handleAreaChange = (area) => {
     if (area !== null) {
-      const { latitude, longitude } = area;
-      // sử dụng animateToRegion
-      if (mapViewRef.current) {
+      // Check if area has valid coordinates
+      if (mapViewRef.current && area.latitude && area.longitude) {
         mapViewRef.current.animateToRegion(
           {
-            latitude: latitude,
-            longitude: longitude,
+            latitude: area.latitude,
+            longitude: area.longitude,
             latitudeDelta: 5,
             longitudeDelta: 5,
           },
           1000
         );
       }
-      setSelectedArea(area.id);
-      // console.log("Selected Area:", area.label);
+      setSelectedArea(area.id); // Chỉ set trực tiếp, không setIdCities nữa
+      // Không cần setIdCities ở đây, useEffect sẽ tự cập nhật
     }
     setModalVisibleArea(false);
   };
@@ -282,78 +317,34 @@ const Map = () => {
     setModalVisibleCity(false);
   };
 
-  // Thay đổi type lễ hội
-  const handleFestivalChange = (value) => {
-    // console.log("Selected Festival Type:", value);
-    setSelectedFestivalType(value.id);
-    setmodalFestivalType(false);
-  };
   // Points phụ thuộc vào quốc gia và loại lễ hội
   const filteredPoints = useMemo(() => {
-    console.log(selectedFestivalType);
-
     if (!selectedCountry) {
       return points;
     }
-    // hiển thị các point theo điều kiện
     return points.filter((point) => {
-      if (selectedFestivalType) {
-        if (selectedFestivalType === "all") {
-          if (selectedCountry && point.countryId !== selectedCountry) {
-            return false;
-          }
-        
-          if (idCities) {
-            if (!idCities.includes(point.cityId)) {
-              return false;
-            }
-            }
-
-          if (selectedCity && point.cityId !== selectedCity) {
-            return false;
-          }
-        
-          console.log(point);
-
-         
-        }
-       else {
-        if (point.type !== selectedFestivalType) {
-          return false;
-        }
-        if (selectedCountry && point.countryId !== selectedCountry) {
-          return false;
-        }
-        if (idCities) {
-          if (!idCities.includes(point.cityId)) {
-            return false;
-          }
-          }
-        if (selectedCity && point.cityId !== selectedCity) {
-          return false;
-        }
-       
-       }
+      if (selectedCountry && point.countryId !== selectedCountry) {
+        return false;
       }
-
+      // Chỉ lọc theo idCities nếu đã chọn khu vực
+      if (selectedArea && idCities && !idCities.map(String).includes(String(point.cityId))) {
+        return false;
+      }
+      if (selectedCity && String(point.cityId) !== String(selectedCity)) {
+        return false;
+      }
       return true;
     });
-  }, [points, selectedCountry, selectedFestivalType, selectedCity, idCities]);
+  }, [points, selectedCountry, selectedArea, selectedCity, idCities]);
 
   // xử lý cuộn scroll
   const handleScroll = (event) => {
-    //CHiều rộng nội dung
     const contentWidth = event.nativeEvent.contentSize.width;
-    //Chiều rộng man hình
     const scrollWidth = event.nativeEvent.layoutMeasurement.width;
-    //Vị trí cuộn
     const scrollX = event.nativeEvent.contentOffset.x;
-    // console.log("contentWidth:", contentWidth);
-    // console.log("scrollWidth:", scrollWidth);
-    // console.log("scrollX:", scrollX);
 
     setShowLeftArrow(scrollX > 0);
-    setShowRightArrow(scrollX + scrollWidth < contentWidth);
+    setShowRightArrow(scrollX + scrollWidth < contentWidth - 2); // -2 để tránh lỗi làm tròn
   };
 
   // Xu ly bottom sheet
@@ -406,15 +397,15 @@ const Map = () => {
     //   // }
     // }
     // Thông báo tùy thuộc vào type
-    console.log(content,'mmmm');
+    console.log(content, "mmmm");
     if (type === "post") {
       // 2. Chuyển về home hoặc tour
       // navigation.navigate("index");
       bottomSheetRef.current.close();
       router.replace({
         pathname: "/",
-        params: { selectedCityId: location , content: content }
-      })
+        params: { selectedCityId: location, content: content },
+      });
     }
     if (type === "tour") {
       // 2. Chuyển về home hoặc tour
@@ -422,9 +413,32 @@ const Map = () => {
       bottomSheetRef.current.close();
       router.replace({
         pathname: "/tour",
-        params: { selectedCityId: location, content: content }
-      })
+        params: { selectedCityId: location, content: content },
+      });
     }
+  };
+
+  const parseContent = (content) => {
+    if (!content) return "";
+    // Thay thế các thẻ xuống dòng thành \n trước khi loại bỏ HTML
+    let text = content
+      .replace(/<\s*br\s*\/?>/gi, "\n")
+      .replace(/<\s*div\s*[^>]*>/gi, "\n")
+      .replace(/<\s*\/div\s*>/gi, "\n")
+      .replace(/<\s*p\s*[^>]*>/gi, "\n")
+      .replace(/<\s*\/p\s*>/gi, "\n");
+    // Loại bỏ tất cả thẻ HTML còn lại
+    text = text.replace(/<[^>]+>/g, "");
+    // Thay thế các entity HTML phổ biến
+    text = text.replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+    // Chuẩn hóa: loại bỏ các dòng chỉ chứa khoảng trắng
+    text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
+    return text;
   };
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
@@ -434,30 +448,35 @@ const Map = () => {
         {/* <View style={styles.header}></View> */}
         {/* Map của Google Map */}
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
-          {filteredPoints.map((point) => {
-            // console.log("pointhello:", point);
-            // Chọn màu sắc cho Marker
-            const pinColor =
-              point.type === "landmark"
-                ? "blue"
-                : point.type === "festival"
-                ? "red"
-                : "green";
-
-            const latitude = point.latitude;
-            const longitude = point.longitude;
-            return (
+          {filteredPoints
+            .filter((point) => {
+              // Chỉ giữ lại điểm có tọa độ thực (khác 0,0)
+              return (
+                point.latitude &&
+                point.longitude &&
+                (point.latitude !== 0 || point.longitude !== 0) &&
+                !isNaN(point.latitude) &&
+                !isNaN(point.longitude)
+              );
+            })
+            .map((point) => (
               <Marker
-                key={point.id}
-                coordinate={{ latitude, longitude }}
-                title={point.title}
-                pinColor={pinColor}
-                onPress={() => {
-                  openBottomSheet(point);
+                key={`${point.countryId}_${point.cityId}_${point.id}`}
+                coordinate={{
+                  latitude: point.latitude,
+                  longitude: point.longitude,
                 }}
+                title={point.title}
+                pinColor={
+                  point.type === "landmark"
+                    ? "blue"
+                    : point.type === "festival"
+                    ? "red"
+                    : "green"
+                }
+                onPress={() => openBottomSheet(point)}
               />
-            );
-          })}
+            ))}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
         <RowComponent styles={{ marginTop: 10 }} justify="center">
@@ -471,7 +490,8 @@ const Map = () => {
               >
                 <Text style={styles.arrowText}>&lt;</Text>
               </TouchableOpacity>
-            )}
+            )
+            }
             <ScrollView
               ref={scrollViewRef}
               horizontal
@@ -567,33 +587,6 @@ const Map = () => {
                   </TouchableOpacity>
                 </View>
               </SectionComponent>
-              {/* Lễ hội danh lam */}
-              <SectionComponent>
-                <View style={styles.festivalSelector}>
-                  <TouchableOpacity
-                    onPress={() => setmodalFestivalType(true)}
-                    style={styles.festivalButton}
-                  >
-                    <Text
-                      style={styles.countryButtonText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {selectedFestivalType != null
-                        ? festivalTypeOptions.find(
-                            (option) => option.id === selectedFestivalType
-                          )?.label
-                        : "Chọn tất cả"}
-                    </Text>
-                    <Icon
-                      name="angle-down"
-                      size={20}
-                      style={{ padding: 10 }}
-                      color="#000"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </SectionComponent>
             </ScrollView>
             {showRightArrow && (
               <TouchableOpacity
@@ -649,9 +642,13 @@ const Map = () => {
                 <Text style={styles.warningText}>
                   Vui lòng chọn quốc gia trước khi chọn khu vực
                 </Text>
+              ) : areaData.length === 0 ? (
+                <Text style={styles.warningText}>
+                  Không có khu vực nào cho quốc gia này
+                </Text>
               ) : (
                 <FlatList
-                  data={filteredAreaData}
+                  data={areaData}
                   keyExtractor={(item) => item.id}
                   style={styles.countryList}
                   renderItem={({ item }) => (
@@ -674,7 +671,7 @@ const Map = () => {
             </View>
           </View>
         </Modal>
-        {/* Modal chọn khu vực */}
+        {/* Modal chọn thành phố */}
         <Modal visible={modalVisibleCity} transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -708,46 +705,28 @@ const Map = () => {
             </View>
           </View>
         </Modal>
-        {/* Modal chọn type lễ hội */}
-        <Modal visible={modalFestivalType} transparent={true}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Chọn thể loại</Text>
-              <FlatList
-                data={festivalTypeOptions}
-                keyExtractor={(item) => item.id}
-                style={styles.countryList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.countryOption}
-                    onPress={() => handleFestivalChange(item)}
-                  >
-                    <Text style={styles.countryLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setmodalFestivalType(false)}
-              >
-                <Text style={styles.closeButtonText}>Đóng</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
         {/* BottomSheet le hoi */}
         <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={650}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
-              <RowComponent><Text style={{fontWeight: '900'}}>Lưu ý: </Text><Text style={{color:'red'}}>Hãy dùng 2 ngón để kéo nội dụng lên</Text></RowComponent>
-              <View style={{borderColor: '#ccc', borderWidth: 1}}>
+              <RowComponent>
+                <Text style={{ fontWeight: "900" }}>Lưu ý: </Text>
+                <Text style={{ color: "red" }}>
+                  Hãy dùng 2 ngón để kéo nội dung lên
+                </Text>
+              </RowComponent>
+              <View style={{ borderColor: "#ccc", borderWidth: 1 }}>
                 <ScrollView
-                  style={{ maxHeight: 150,minHeight: 150, marginBottom: 10, padding: 5 }}
+                  style={{
+                    maxHeight: 150,
+                    minHeight: 150,
+                    marginBottom: 10,
+                    padding: 5,
+                  }}
                 >
                   <Text style={styles.commentsText}>
-                    {selectedFestival.content}
+                    {parseContent(selectedFestival.content)}
                   </Text>
                 </ScrollView>
               </View>
@@ -1048,7 +1027,6 @@ const styles = StyleSheet.create({
   imageSlider: {
     borderRadius: 10,
   },
-  //Scroll View
   containerScroll: {
     flexDirection: "row",
     alignItems: "center",

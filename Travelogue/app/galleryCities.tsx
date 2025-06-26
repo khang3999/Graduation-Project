@@ -33,18 +33,25 @@ const GalleryCities = () => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    const countryRef = ref(database, `cities/${idCountry}`);
+    const countryRef = ref(database, `provinces/${idCountry}`);
     onValue(countryRef, (snapshot) => {
       const countryData = snapshot.val();
       if (countryData) {
         let cityData = null;
         for (const area in countryData) {
-          if (countryData[area][idCity]) {
+          // Bỏ qua các key không phải object (ví dụ: updatedAt)
+          if (
+            typeof countryData[area] === "object" &&
+            countryData[area] !== null &&
+            countryData[area][idCity]
+          ) {
             cityData = countryData[area][idCity];
             break;
           }
         }
         setDataCity(cityData);
+      } else {
+        setDataCity(null);
       }
     });
   }, [idCity, idCountry]);
@@ -158,13 +165,13 @@ const GalleryCities = () => {
       )}
 
       <View style={styles.headerTextContainer}>
-        <Text style={styles.title}>{dataCity?.name}</Text>
+        <Text style={styles.title}>{dataCity?.value}</Text>
         <Text style={styles.subtitle}>
-          {dataCity?.id_nuoc === "avietnam"
+          {dataCity?.idCountry === "avietnam"
             ? "Việt Nam"
-            : dataCity?.id_nuoc
-            ? dataCity.id_nuoc.charAt(0).toUpperCase() +
-              dataCity.id_nuoc.slice(1)
+            : dataCity?.idCountry
+            ? dataCity.idCountry.charAt(0).toUpperCase() +
+              dataCity.idCountry.slice(1)
             : "Unknown"}
         </Text>
         <View style={styles.rating}>

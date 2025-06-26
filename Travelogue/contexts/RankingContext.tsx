@@ -38,25 +38,36 @@ export const RankingProvider = ({ children }: any) => {
     
     setIsRefreshing(true);
     try {
-      const cityRef = ref(database, "cities");
+      const cityRef = ref(database, "provinces");
       const citySnapshot = await get(cityRef);
       const cityData = citySnapshot.val() || {};
 
       const formattedCityData = Object.keys(cityData).flatMap((countryKey) =>
-        Object.keys(cityData[countryKey]).flatMap((area_id) =>
-          Object.keys(cityData[countryKey][area_id]).map((cityKey) => {
-            const cityInfo = cityData[countryKey][area_id][cityKey];
-            return {
-              id: cityKey,
-              name: cityInfo.name,
-              id_nuoc: countryKey,
-              area_id: area_id,
-              image: cityInfo.defaultImages?.[0] || null,
-              score: cityInfo.scores || 0,
-            };
-          })
-        )
+        Object.keys(cityData[countryKey])
+          .filter((areaKey) => typeof cityData[countryKey][areaKey] === "object") // Lọc areaKey hợp lệ
+          .flatMap((areaKey) =>
+            Object.keys(cityData[countryKey][areaKey] || {})
+              .filter((cityKey) => {
+                const cityInfo = cityData[countryKey][areaKey][cityKey];
+                // Lọc cityKey hợp lệ (có name hoặc value)
+                return cityInfo && (cityInfo.name || cityInfo.value);
+              })
+              .map((cityKey) => {
+                const cityInfo = cityData[countryKey][areaKey][cityKey];
+                return {
+                  id: cityKey,
+                  name:
+                    (cityInfo.name || cityInfo.value || "")
+                      .replace(/^Thành [Pp]hố\s*/g, ""),
+                  id_nuoc: countryKey,
+                  area_id: areaKey,
+                  image: cityInfo.defaultImages?.[0] || null,
+                  score: cityInfo.scores || 0,
+                };
+              })
+          )
       );
+      // console.log("Formatted city data:", formattedCityData);
 
       const sortedCityData = formattedCityData
         .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
@@ -137,7 +148,7 @@ export const RankingProvider = ({ children }: any) => {
     }
 
     // Listen for changes in both cities and posts
-    const cityRef = ref(database, "cities");
+    const cityRef = ref(database, "provinces");
     const postsRef = ref(database, "posts");
 
     const unsubscribeCities = onValue(cityRef, (snapshot) => {
@@ -204,10 +215,11 @@ export const RankingProvider = ({ children }: any) => {
   );
 };
 
+// hhh
 export const useRanking = () => {
   const context = useContext(RankingContext);
   if (!context) {
     throw new Error("useRanking must be used within a RankingProvider");
   }
   return context;
-}; 
+};
