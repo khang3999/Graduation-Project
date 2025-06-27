@@ -72,6 +72,9 @@ export const extractFullLocationSlug = (text) => {
     return parts.join(", ");
 };
 
+export const formatKeySearch = (text) =>{
+    return  text.trim().replace(/\s+/g, '_');
+}
 // Hàm để đếm số lượng địa điểm trùng khớp trả về % trùng khớp
 export const countMatchingLocations = (listLocationIdBase, locationsList) => {
     // const locationIdOfTour = Object.keys(tour.locations).flatMap((country) =>

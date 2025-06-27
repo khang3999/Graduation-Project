@@ -44,7 +44,7 @@ const Location = () => {
   const { dataCountries }: any = useHomeProvider();
 
   // Lấy các tỉnh/ thành của quốc gia - XONG
-  const fetchCityByCountry = useCallback(async (countryId: any) => {
+  const fetchCitiesByCountry = useCallback(async (countryId: any) => {
     try {
       const refProvinces = ref(database, `provinces/${countryId}`)
       const snapshot = await get(refProvinces);
@@ -66,14 +66,31 @@ const Location = () => {
     }
   }, [])
 
+  // Fetch data of Province
+  const fetchCityData = useCallback(async (cityId: string) => {
+    try {
+      const refDataCity = ref(database, `provinces/${selectedCountry}/data/${cityId}`)
+      const snapshot = await get(refDataCity);
+      if (snapshot.exists()) {
+        const dataCityJson = snapshot.val();
+        console.log(dataCityJson, `at ${cityId}`);
+        setCityInformation(dataCityJson.information);
+
+      } else {
+        console.log("FetchCityByCountry: No data available1");
+      }
+    } catch (error) {
+      console.error("FetchCityByCountry: Error fetching data: ", error);
+    }
+  }, [selectedCountry])
   //Handle when selected countries
   const handleSelectedCountry = useCallback((val: any) => {
     if (val === 'avietnam') {
-      fetchCityByCountry(val)
+      fetchCitiesByCountry(val)
     } else {
       Alert.alert('Chưa hỗ trợ quốc gia này');
     }
-    // setCityInformation("");
+    setCityInformation("");
     // setCityArea("");
     setDataCities([])
     setdefaultImages([]);
@@ -82,19 +99,19 @@ const Location = () => {
 
   //Handle when selected countries
   const handleSelectedCity = (val: any) => {
-
     if (val && val !== '-1') {
-      console.log(val);
-      const a: any = dataCities.find((e: any) => e.key == val);
-      // setCityArea(a.area);
-      setCityInformation(a.information);
-      if (a.defaultImages) {
-        setdefaultImages(a.defaultImages);
-      } else {
-        setdefaultImages([]);
-      }
-      setDisabled(false);
-      setSelectedCity(val);
+      // console.log(val);
+      // const a: any = dataCities.find((e: any) => e.key == val);
+      // // setCityArea(a.area);
+      // setCityInformation(a.information);
+      // if (a.defaultImages) {
+      //   setdefaultImages(a.defaultImages);
+      // } else {
+      //   setdefaultImages([]);
+      // }
+      // setDisabled(false);
+      // setSelectedCity(val);
+      fetchCityData(val)
     } else {
       console.log(val);
     }

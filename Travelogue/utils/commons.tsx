@@ -1,5 +1,3 @@
-
-
 // Hàm định dạng ngày tháng
 export const formatDate = (timestamp: number) => {
   const date = new Date(Number(timestamp));
