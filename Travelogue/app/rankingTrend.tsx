@@ -218,11 +218,11 @@ const RankingTrend = () => {
                 <View style={styles.rankImageContainer}>
                   <Image
                     source={{
-                      uri:
-                        (activeTab === "Địa điểm" 
+                      uri: getValidImageUri(
+                        activeTab === "Địa điểm"
                           ? (rankingData[1] as City).image
-                          : (rankingData[1] as Post).image) ||
-                        "https://mediatech.vn/assets/images/imgstd.jpg",
+                          : (rankingData[1] as Post).image
+                      ),
                     }}
                     style={styles.rankImageFill}
                   />
@@ -690,5 +690,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+const getValidImageUri = (uri?: string | null) =>
+  uri && uri.trim() !== "" ? uri : "https://mediatech.vn/assets/images/imgstd.jpg";
 
 export default RankingTrend;
