@@ -51,8 +51,8 @@ import LottieView from "lottie-react-native";
 import ReviewPostUser from "./reviewPostUser";
 import { useBannedWords } from "@/components/wordPosts/BannedWordData";
 import { bannedWordsChecker } from "@/components/wordPosts/BannedWordsChecker";
-import Geolocation from "@react-native-community/geolocation"; 
-import * as Location from "expo-location"; 
+import Geolocation from "@react-native-community/geolocation"; // Import Geolocation
+import * as Location from "expo-location"; // Import expo-location
 
 const AddPostUser = () => {
   interface Country {
@@ -86,8 +86,6 @@ const AddPostUser = () => {
   const [cities, setCities] = useState<
     { id: string; name: string; id_nuoc: string; area_id: string }[]
   >([]);
-
-  console.log("Cities:", cities);
 
   // useEffect(() => {
   //   console.log("Cities:", cities);
@@ -187,7 +185,7 @@ const AddPostUser = () => {
   //Lay data banned words
   const bannedWords = useBannedWords();
 
-  const [activeTab, setActiveTab] = useState<"form" | "live">("form"); // Quản lý tab hiện tại
+  const [activeTab, setActiveTab] = useState<"form" | "live">("form"); 
 
   const [liveDays, setLiveDays] = useState<
     {
@@ -226,7 +224,7 @@ const AddPostUser = () => {
           Object.keys(data[countryKey]).flatMap((areaKey) =>
             Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
               id: cityKey,
-              name: data[countryKey][areaKey][cityKey].value || "",
+              name: data[countryKey][areaKey][cityKey].value,
               id_nuoc: countryKey,
               area_id: areaKey,
             }))
@@ -237,6 +235,7 @@ const AddPostUser = () => {
       });
     }
   }, [activeTab]);
+
 
   const addLiveDay = async () => {
     try {
@@ -277,43 +276,45 @@ const AddPostUser = () => {
     }
   };
   //
-  // const getCityInfo = async (
-  //   provinceName: string
-  // ): Promise<{ id?: string; name?: string } | null> => {
-  //   try {
-  //     const cityRef = ref(database, "cities");
-  //     return new Promise((resolve, reject) => {
-  //       onValue(cityRef, (snapshot) => {
-  //         const data = snapshot.val() || {};
+  const getCityInfo = async (
+    provinceName: string
+  ): Promise<{ id?: string; name?: string } | null> => {
+    try {
+      const cityRef = ref(database, "cities");
+      return new Promise((resolve, reject) => {
+        onValue(cityRef, (snapshot) => {
+          const data = snapshot.val() || {};
 
-  //         // Duyệt qua tất cả các quốc gia và khu vực
-  //         const cities = Object.keys(data).flatMap((countryKey) =>
-  //           Object.keys(data[countryKey]).flatMap((areaKey) =>
-  //             Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
-  //               id: cityKey,
-  //               name: data[countryKey][areaKey][cityKey].name,
-  //               id_nuoc: countryKey,
-  //               area_id: areaKey,
-  //             }))
-  //           )
-  //         );
+          // Duyệt qua tất cả các quốc gia và khu vực
+          const cities = Object.keys(data).flatMap((countryKey) =>
+            Object.keys(data[countryKey]).flatMap((areaKey) =>
+              Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
+                id: cityKey,
+                name: data[countryKey][areaKey][cityKey].value,
+                id_nuoc: countryKey,
+                area_id: areaKey,
+              }))
+            )
+          );
 
-  //         // Tìm tỉnh/thành phố khớp với provinceName
-  //         const matchedCity = cities.find((city) => city.name === provinceName);
+  
 
-  //         if (matchedCity) {
-  //           resolve(matchedCity);
-  //         } else {
-  //           console.warn("Không tìm thấy tỉnh/thành phố:", provinceName);
-  //           resolve(null);
-  //         }
-  //       });
-  //     });
-  //   } catch (error) {
-  //     console.error("Lỗi khi lấy dữ liệu thành phố:", error);
-  //     throw error;
-  //   }
-  // };
+          // Tìm tỉnh/thành phố khớp với provinceName
+          const matchedCity = cities.find((city) => city.name === provinceName);
+
+          if (matchedCity) {
+            resolve(matchedCity);
+          } else {
+            console.warn("Không tìm thấy tỉnh/thành phố:", provinceName);
+            resolve(null);
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu thành phố:", error);
+      throw error;
+    }
+  };
   // Lấy vị trí hiện tại
   const getCurrentLocation = async () => {
     try {
@@ -435,34 +436,27 @@ const AddPostUser = () => {
   // *********************************************************************
   //Lấy data từ cty fb
   useEffect(() => {
-    const cityRef = ref(database, "provinces");
+    const cityRef = ref(database, "cities");
     onValue(cityRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // Duyệt qua tất cả các quốc gia, vùng, thành phố
+
+      // Duyệt qua tất cả các quốc gia
       const formattedData = Object.keys(data).flatMap((countryKey) => {
-        const country = data[countryKey] || {};
-        return Object.keys(country).flatMap((areaKey) => {
-          const area = country[areaKey] || {};
-          return Object.keys(area).map((cityKey) => {
-            const cityObj = area[cityKey] || {};
-            return {
-              id: cityKey,
-              name: (
-  (cityObj.name || cityObj.value || cityObj.title || "")
-    .replace(/^(Thành phố|Tỉnh|TP\\.?|Tp\\.?|tx\\.?|TX\\.?|Thị xã|Huyện|Quận|Q\\.?|H\\.?|Xã|Phường|Thị trấn)\\s*/i, "")
-    .replace(/^Thành phố\\s+/i, "")
-    .replace(/^TP\\.?\\s+/i, "")
-    .trim()
-),
-              area_id: areaKey,
-              id_nuoc: countryKey,
-              ...cityObj,
-            };
-          });
+        return Object.keys(data[countryKey]).flatMap((area_id) => {
+          return Object.keys(data[countryKey][area_id]).map((cityKey) => ({
+            id: cityKey,
+            area_id: area_id,
+            id_nuoc: countryKey,
+            name: data[countryKey][area_id][cityKey].value,
+            ...data[countryKey][area_id][cityKey],
+          }));
         });
       });
+
       setCitiesData(formattedData);
-      console.log("CitiesData:", formattedData);
+      // console.log("$$$$$$$$$$$$$$$$$$");
+      // console.log("Cty:", formattedData);
+      console.log("Cities:", formattedData[1]);
     });
   }, []);
   //Lọc tỉnh thành theo nước
@@ -1308,7 +1302,7 @@ const AddPostUser = () => {
             await set(
               ref(
                 database,
-                `provinces/${city?.id_nuoc}/data/${id}/postImages/posts/${postId}`
+                `cities/${city?.id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
               ),
               {
                 images: uploadedImageUrls[id_nuoc][id].images_value,
@@ -1390,7 +1384,7 @@ const AddPostUser = () => {
         await update(
           ref(
             database,
-            `provinces/${city?.id_nuoc}/data/${id}/postImages/posts/${postId}`
+            `cities/${id_nuoc}/${id_khuvucimages}/${id}/postImages/posts/${postId}`
           ),
           {
             avatar: avatar,
@@ -3163,39 +3157,33 @@ const AddPostUser = () => {
               />
             </View>
             {selectedCountry ? (
-              citiesDataFilter.length > 0 ? (
-                <FlatList
-                  data={citiesDataFilter}
-                  keyExtractor={(item) => item.id}
-                  style={[styles.countryList, { minHeight: 200 }]}
-                  renderItem={({ item }) => {
-                    //Loc ra nhung thanh pho da chon
-                    const isCitySelected = cities.some(
-                      (city) => city.id === item.id
-                    );
-                    return (
-                      <TouchableOpacity
-                        style={styles.countryOption}
-                        onPress={handCityPress(item)}
-                        disabled={isCitySelected}
+              <FlatList
+                data={citiesDataFilter}
+                keyExtractor={(item) => item.id}
+                style={[styles.countryList, { minHeight: 200 }]}
+                renderItem={({ item }) => {
+                  //Loc ra nhung thanh pho da chon
+                  const isCitySelected = cities.some(
+                    (city) => city.id === item.id
+                  );
+                  return (
+                    <TouchableOpacity
+                      style={styles.countryOption}
+                      onPress={handCityPress(item)}
+                      disabled={isCitySelected}
+                    >
+                      <Text
+                        style={[
+                          styles.countryLabel,
+                          isCitySelected && { color: "gray" },
+                        ]}
                       >
-                        <Text
-                          style={[
-                            styles.countryLabel,
-                            isCitySelected && { color: "gray" },
-                          ]}
-                        >
-                          {item.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-              ) : (
-                <Text style={{ fontSize: 16, color: "red" }}>
-                  Không có thành phố nào trong quốc gia này
-                </Text>
-              )
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
             ) : (
               <Text style={{ fontSize: 16, color: "red" }}>
                 Chưa chọn quốc gia trước khi chọn thành phố
@@ -3404,7 +3392,7 @@ const AddPostUser = () => {
                 </TouchableOpacity>
                 {selectedCityForImages ? (
                   <TouchableOpacity
-                    style={[styles.fixedRightButton]}
+                    style={[styles.fixedRightButton, { width: 130 }]}
                     onPress={() => setModalVisibleCityImages(true)}
                   >
                     <Text>
@@ -3819,7 +3807,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     padding: 10,
     height: 40,
-    width: "auto",
+    width: 100,
     fontSize: 16,
     backgroundColor: appColors.btncity,
     borderRadius: 30,
