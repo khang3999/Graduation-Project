@@ -252,6 +252,7 @@ const EditPostUser = () => {
             id: cityKey,
             area_id: area_id,
             id_nuoc: countryKey,
+            name: data[countryKey][area_id][cityKey].value || "",
             ...data[countryKey][area_id][cityKey],
           }));
         });

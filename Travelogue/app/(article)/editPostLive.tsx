@@ -102,7 +102,7 @@ const EditPostLive = () => {
         Object.keys(data[countryKey]).flatMap((areaKey) =>
           Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
             id: cityKey,
-            name: data[countryKey][areaKey][cityKey].name,
+            name: data[countryKey][areaKey][cityKey].value || "", 
             id_nuoc: countryKey,
             area_id: areaKey,
           }))

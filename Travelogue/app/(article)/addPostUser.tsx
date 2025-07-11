@@ -185,7 +185,7 @@ const AddPostUser = () => {
   //Lay data banned words
   const bannedWords = useBannedWords();
 
-  const [activeTab, setActiveTab] = useState<"form" | "live">("form"); // Quản lý tab hiện tại
+  const [activeTab, setActiveTab] = useState<"form" | "live">("form"); 
 
   const [liveDays, setLiveDays] = useState<
     {
@@ -224,7 +224,7 @@ const AddPostUser = () => {
           Object.keys(data[countryKey]).flatMap((areaKey) =>
             Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
               id: cityKey,
-              name: data[countryKey][areaKey][cityKey].name,
+              name: data[countryKey][areaKey][cityKey].value,
               id_nuoc: countryKey,
               area_id: areaKey,
             }))
@@ -235,6 +235,7 @@ const AddPostUser = () => {
       });
     }
   }, [activeTab]);
+
 
   const addLiveDay = async () => {
     try {
@@ -289,12 +290,14 @@ const AddPostUser = () => {
             Object.keys(data[countryKey]).flatMap((areaKey) =>
               Object.keys(data[countryKey][areaKey]).map((cityKey) => ({
                 id: cityKey,
-                name: data[countryKey][areaKey][cityKey].name,
+                name: data[countryKey][areaKey][cityKey].value,
                 id_nuoc: countryKey,
                 area_id: areaKey,
               }))
             )
           );
+
+  
 
           // Tìm tỉnh/thành phố khớp với provinceName
           const matchedCity = cities.find((city) => city.name === provinceName);
@@ -444,6 +447,7 @@ const AddPostUser = () => {
             id: cityKey,
             area_id: area_id,
             id_nuoc: countryKey,
+            name: data[countryKey][area_id][cityKey].value,
             ...data[countryKey][area_id][cityKey],
           }));
         });
@@ -452,7 +456,7 @@ const AddPostUser = () => {
       setCitiesData(formattedData);
       // console.log("$$$$$$$$$$$$$$$$$$");
       // console.log("Cty:", formattedData);
-      // console.log(citiesData)
+      console.log("Cities:", formattedData[1]);
     });
   }, []);
   //Lọc tỉnh thành theo nước
