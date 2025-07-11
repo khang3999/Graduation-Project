@@ -1142,6 +1142,9 @@ const EditPostTour = () => {
           id: tourId,
           status_id: status,
         };
+
+      
+        
         // cập nhật thông tin bài viết
         await update(postsRef, postData);
 
