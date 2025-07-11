@@ -35,7 +35,7 @@ export const RankingProvider = ({ children }: any) => {
 
   const refreshCitiesData = async () => {
     if (isRefreshing) return;
-    
+
     setIsRefreshing(true);
     try {
       const cityRef = ref(database, "cities");
@@ -48,7 +48,7 @@ export const RankingProvider = ({ children }: any) => {
             const cityInfo = cityData[countryKey][area_id][cityKey];
             return {
               id: cityKey,
-              name: cityInfo.name,
+              name: cityInfo.name || cityInfo.value || "",
               id_nuoc: countryKey,
               area_id: area_id,
               image: cityInfo.defaultImages?.[0] || null,
@@ -210,4 +210,4 @@ export const useRanking = () => {
     throw new Error("useRanking must be used within a RankingProvider");
   }
   return context;
-}; 
+};

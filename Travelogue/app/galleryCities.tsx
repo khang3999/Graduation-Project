@@ -20,7 +20,10 @@ import ListPoints from "@/components/listPoints/ListPoints";
 import GalleryPosts from "@/components/gallery/GalleryPosts";
 
 const { width } = Dimensions.get("window");
-
+const getValidImageUri = (uri?: string | null) =>
+  uri && uri.trim() !== ""
+    ? uri
+    : "https://mediatech.vn/assets/images/imgstd.jpg";
 const GalleryCities = () => {
   const [selectedTab, setSelectedTab] = useState("Chi tiết");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -69,6 +72,8 @@ const GalleryCities = () => {
     }
   }, [selectedImage]);
 
+  console.log("City Data:", dataCity);
+
   const handleTextLayout = (e: any) => {
     const { lines } = e.nativeEvent;
     if (lines.length > 14) setIsTextTruncated(true);
@@ -88,7 +93,7 @@ const GalleryCities = () => {
               {dataCity?.defaultImages?.map((img: string, i: number) => (
                 <TouchableOpacity key={i} onPress={() => setSelectedImage(img)}>
                   <Image
-                    source={{ uri: img }}
+                    source={{ uri: getValidImageUri(img) }}
                     style={[
                       styles.detailImage,
                       selectedImage === img && styles.detailImageActive,
@@ -154,17 +159,20 @@ const GalleryCities = () => {
       </View>
 
       {selectedImage && (
-        <Image source={{ uri: selectedImage }} style={styles.headerImage} />
+        <Image
+          source={{ uri: getValidImageUri(selectedImage) }}
+          style={styles.headerImage}
+        />
       )}
 
       <View style={styles.headerTextContainer}>
-        <Text style={styles.title}>{dataCity?.name}</Text>
+        <Text style={styles.title}>{dataCity?.value}</Text>
         <Text style={styles.subtitle}>
-          {dataCity?.id_nuoc === "avietnam"
+          {dataCity?.idCountry === "avietnam"
             ? "Việt Nam"
-            : dataCity?.id_nuoc
-            ? dataCity.id_nuoc.charAt(0).toUpperCase() +
-              dataCity.id_nuoc.slice(1)
+            : dataCity?.idCountry
+            ? dataCity.idCountry.charAt(0).toUpperCase() +
+              dataCity.idCountry.slice(1)
             : "Unknown"}
         </Text>
         <View style={styles.rating}>
@@ -247,7 +255,12 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
     elevation: 5,
   },
-  ratingText: { fontWeight: "bold", marginRight: 4, fontSize: 14, color: "#000" },
+  ratingText: {
+    fontWeight: "bold",
+    marginRight: 4,
+    fontSize: 14,
+    color: "#000",
+  },
 
   contentContainer: {
     flex: 1,

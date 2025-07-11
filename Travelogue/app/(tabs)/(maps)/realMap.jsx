@@ -30,29 +30,11 @@ const Map = () => {
   const [points, setPoints] = useState([]);
   const navigation = useNavigation();
 
-  // Lua chon kieu points
-  const festivalTypeOptions = [
-    {
-      id: "all",
-      label: "Chọn tất cả",
-      type: "all",
-    },
-    {
-      id: "festival",
-      label: "Lễ hội",
-      type: "festival",
-    },
-    {
-      id: "landmark",
-      label: "Danh lam",
-      type: "landmark",
-    },
-  ];
 
   useEffect(() => {
     const countriesRef = ref(database, "countries");
     const areaRef = ref(database, "areas");
-    const pointRef = ref(database, "points");
+    const pointRef = ref(database, "pointsNew");
     const cityRef = ref(database, "cities");
 
     // Lấy dữ liệu từ firebase (qgia)
@@ -97,6 +79,7 @@ const Map = () => {
             id: cityKey,
             area_id: area_id,
             id_nuoc: countryKey,
+            name: data[countryKey][area_id][cityKey].value || "",
             ...data[countryKey][area_id][cityKey],
           }));
         });
@@ -109,35 +92,74 @@ const Map = () => {
     // Lấy dữ liệu từ firebase (points)
     onValue(pointRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // console.log("____________________")
-      // console.log(data);
 
       const formattedPoints = Object.keys(data).flatMap((countryId) => {
-        const countryPoints = data[countryId];
-        // console.log("countryPoints:", countryPoints);
+        const countryData = data[countryId] || {};
+        return Object.keys(countryData).flatMap((cityId) => {
+          const cityPoints = countryData[cityId] || {};
+          return Object.keys(cityPoints).map((pointId) => {
+            const point = cityPoints[pointId];
 
-        return Object.keys(countryPoints).flatMap((type) => {
-          const typePoints = countryPoints[type];
-          // console.log("typePoints:", typePoints);
+            // Improved coordinate extraction with validation
+            let validLatitude = null;
+            let validLongitude = null;
 
-          return Object.keys(typePoints).flatMap((pointId) => {
-            const point = typePoints[pointId];
-            // console.log("point:", point);
+            // Check for geocode array first
+            if (Array.isArray(point.geocode) && point.geocode.length > 0) {
+              const firstGeocode = point.geocode[0];
+              if (
+                firstGeocode &&
+                typeof firstGeocode.latitude === "number" &&
+                typeof firstGeocode.longitude === "number" &&
+                !isNaN(firstGeocode.latitude) &&
+                !isNaN(firstGeocode.longitude) &&
+                !(
+                  firstGeocode.latitude === 0 && firstGeocode.longitude === 0
+                ) &&
+                !(
+                  firstGeocode.latitude === 21.023897 &&
+                  firstGeocode.longitude === 105.844719
+                )
+              ) {
+                validLatitude = firstGeocode.latitude;
+                validLongitude = firstGeocode.longitude;
+              }
+            }
 
-            return Object.keys(point).map((pointKey) => ({
-              id: pointKey,
+            // Fall back to direct properties if geocode wasn't valid
+            if (validLatitude === null && validLongitude === null) {
+              if (
+                typeof point.latitude === "number" &&
+                typeof point.longitude === "number" &&
+                !isNaN(point.latitude) &&
+                !isNaN(point.longitude) &&
+                !(point.latitude === 0 && point.longitude === 0) &&
+                !(
+                  point.latitude === 21.023897 && point.longitude === 105.844719
+                )
+              ) {
+                validLatitude = point.latitude;
+                validLongitude = point.longitude;
+              }
+            }
+
+            return {
+              id: pointId,
               countryId: countryId,
-              cityId: pointId,
-              type: type,
-              ...point[pointKey],
-            }));
+              cityId: cityId,
+              latitude: validLatitude,
+              longitude: validLongitude,
+              ...point,
+            };
           });
         });
       });
-      // console.log("formattedPoints:", formattedPoints);
+
       setPoints(formattedPoints);
     });
   }, []);
+  // console.log("Points:", points);
+
 
   const mapViewRef = useRef(null);
   const [mapLat] = useState(16.494413736992392);
@@ -216,16 +238,22 @@ const Map = () => {
   //Xử lý chọn thành phố theo khu vực
   useEffect(() => {
     if (selectedArea) {
-      // console.log("Selected Area:", selectedArea);
-      const filteredData = cityData.filter(
-        (city) => city.area_id && city.area_id.includes(selectedArea)
-      );
-      setFilteredCityData(filteredData);
-      // console.log("Filtered City Data:", filteredData);
-      setSelectedCity(null);
+      const area = areaData.find(a => a.id === selectedArea);
+      if (area && area.cityIds && area.cityIds.length > 0) {
+        // So sánh kiểu chuỗi
+        const filteredData = cityData.filter(city =>
+          area.cityIds.map(String).includes(String(city.id))
+        );
+        setFilteredCityData(filteredData);
+        setSelectedCity(null);
+      } else {
+        const filteredData = cityData.filter(
+          (city) => city.area_id && city.area_id.includes(selectedArea)
+        );
+        setFilteredCityData(filteredData);
+        setSelectedCity(null);
+      }
     } else {
-      // console.log("____________________");
-      // console.log("cityData:", cityData);
       setFilteredCityData(cityData);
     }
   }, [selectedArea, cityData]);
@@ -290,55 +318,24 @@ const Map = () => {
   };
   // Points phụ thuộc vào quốc gia và loại lễ hội
   const filteredPoints = useMemo(() => {
-    console.log(selectedFestivalType);
-
     if (!selectedCountry) {
       return points;
     }
-    // hiển thị các point theo điều kiện
     return points.filter((point) => {
-      if (selectedFestivalType) {
-        if (selectedFestivalType === "all") {
-          if (selectedCountry && point.countryId !== selectedCountry) {
-            return false;
-          }
-        
-          if (idCities) {
-            if (!idCities.includes(point.cityId)) {
-              return false;
-            }
-            }
-
-          if (selectedCity && point.cityId !== selectedCity) {
-            return false;
-          }
-        
-          console.log(point);
-
-         
-        }
-       else {
-        if (point.type !== selectedFestivalType) {
-          return false;
-        }
-        if (selectedCountry && point.countryId !== selectedCountry) {
-          return false;
-        }
-        if (idCities) {
-          if (!idCities.includes(point.cityId)) {
-            return false;
-          }
-          }
-        if (selectedCity && point.cityId !== selectedCity) {
-          return false;
-        }
-       
-       }
+      if (String(point.countryId) !== String(selectedCountry)) {
+        return false;
       }
-
+      // Nếu đã chọn thành phố, chỉ lấy đúng cityId đó
+      if (selectedCity) {
+        return String(point.cityId) === String(selectedCity);
+      }
+      // Nếu đã chọn khu vực, chỉ lấy các cityId thuộc khu vực
+      if (selectedArea && idCities && idCities.length > 0) {
+        return idCities.map(String).includes(String(point.cityId));
+      }
       return true;
     });
-  }, [points, selectedCountry, selectedFestivalType, selectedCity, idCities]);
+  }, [points, selectedCountry, selectedArea, selectedCity, idCities]);
 
   // xử lý cuộn scroll
   const handleScroll = (event) => {
@@ -426,6 +423,29 @@ const Map = () => {
       })
     }
   };
+    const parseContent = (content) => {
+    if (!content) return "";
+    // Thay thế các thẻ xuống dòng thành \n trước khi loại bỏ HTML
+    let text = content
+      .replace(/<\s*br\s*\/?>/gi, "\n")
+      .replace(/<\s*div\s*[^>]*>/gi, "\n")
+      .replace(/<\s*\/div\s*>/gi, "\n")
+      .replace(/<\s*p\s*[^>]*>/gi, "\n")
+      .replace(/<\s*\/p\s*>/gi, "\n");
+    // Loại bỏ tất cả thẻ HTML còn lại
+    text = text.replace(/<[^>]+>/g, "");
+    // Thay thế các entity HTML phổ biến
+    text = text.replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+    // Chuẩn hóa: loại bỏ các dòng chỉ chứa khoảng trắng
+    text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
+    return text;
+  };
+
 
   // selectedFestival && console.log("Selected Festival:", selectedFestival);
   return (
@@ -434,30 +454,35 @@ const Map = () => {
         {/* <View style={styles.header}></View> */}
         {/* Map của Google Map */}
         <MapView style={styles.map} ref={mapViewRef} initialRegion={mapRegion}>
-          {filteredPoints.map((point) => {
-            // console.log("pointhello:", point);
-            // Chọn màu sắc cho Marker
-            const pinColor =
-              point.type === "landmark"
-                ? "blue"
-                : point.type === "festival"
-                ? "red"
-                : "green";
-
-            const latitude = point.latitude;
-            const longitude = point.longitude;
-            return (
+          {filteredPoints
+            .filter((point) => {
+              // Chỉ giữ lại điểm có tọa độ thực (khác 0,0)
+              return (
+                point.latitude &&
+                point.longitude &&
+                (point.latitude !== 0 || point.longitude !== 0) &&
+                !isNaN(point.latitude) &&
+                !isNaN(point.longitude)
+              );
+            })
+            .map((point) => (
               <Marker
-                key={point.id}
-                coordinate={{ latitude, longitude }}
-                title={point.title}
-                pinColor={pinColor}
-                onPress={() => {
-                  openBottomSheet(point);
+                key={`${point.countryId}_${point.cityId}_${point.id}`}
+                coordinate={{
+                  latitude: point.latitude,
+                  longitude: point.longitude,
                 }}
+                title={point.title}
+                pinColor={
+                  point.type === "landmark"
+                    ? "blue"
+                    : point.type === "festival"
+                    ? "red"
+                    : "green"
+                }
+                onPress={() => openBottomSheet(point)}
               />
-            );
-          })}
+            ))}
         </MapView>
         {/* Chọn khu vực và lễ hội danh lam */}
         <RowComponent styles={{ marginTop: 10 }} justify="center">
@@ -471,7 +496,8 @@ const Map = () => {
               >
                 <Text style={styles.arrowText}>&lt;</Text>
               </TouchableOpacity>
-            )}
+            )
+            }
             <ScrollView
               ref={scrollViewRef}
               horizontal
@@ -567,33 +593,6 @@ const Map = () => {
                   </TouchableOpacity>
                 </View>
               </SectionComponent>
-              {/* Lễ hội danh lam */}
-              <SectionComponent>
-                <View style={styles.festivalSelector}>
-                  <TouchableOpacity
-                    onPress={() => setmodalFestivalType(true)}
-                    style={styles.festivalButton}
-                  >
-                    <Text
-                      style={styles.countryButtonText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {selectedFestivalType != null
-                        ? festivalTypeOptions.find(
-                            (option) => option.id === selectedFestivalType
-                          )?.label
-                        : "Chọn tất cả"}
-                    </Text>
-                    <Icon
-                      name="angle-down"
-                      size={20}
-                      style={{ padding: 10 }}
-                      color="#000"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </SectionComponent>
             </ScrollView>
             {showRightArrow && (
               <TouchableOpacity
@@ -649,9 +648,13 @@ const Map = () => {
                 <Text style={styles.warningText}>
                   Vui lòng chọn quốc gia trước khi chọn khu vực
                 </Text>
+              ) : filteredAreaData.length === 0 ? (
+                <Text style={styles.warningText}>
+                  Không có khu vực nào cho quốc gia này
+                </Text>
               ) : (
                 <FlatList
-                  data={filteredAreaData}
+                  data={filteredAreaData} // <-- Sửa chỗ này
                   keyExtractor={(item) => item.id}
                   style={styles.countryList}
                   renderItem={({ item }) => (
@@ -674,7 +677,7 @@ const Map = () => {
             </View>
           </View>
         </Modal>
-        {/* Modal chọn khu vực */}
+        {/* Modal chọn thành phố */}
         <Modal visible={modalVisibleCity} transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -708,46 +711,28 @@ const Map = () => {
             </View>
           </View>
         </Modal>
-        {/* Modal chọn type lễ hội */}
-        <Modal visible={modalFestivalType} transparent={true}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Chọn thể loại</Text>
-              <FlatList
-                data={festivalTypeOptions}
-                keyExtractor={(item) => item.id}
-                style={styles.countryList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.countryOption}
-                    onPress={() => handleFestivalChange(item)}
-                  >
-                    <Text style={styles.countryLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setmodalFestivalType(false)}
-              >
-                <Text style={styles.closeButtonText}>Đóng</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
         {/* BottomSheet le hoi */}
         <BottomSheet hasDraggableIcon ref={bottomSheetRef} height={650}>
           {selectedFestival && (
             <View style={styles.sheetContent}>
               <Text style={styles.modalTitle}>{selectedFestival.title}</Text>
-              <RowComponent><Text style={{fontWeight: '900'}}>Lưu ý: </Text><Text style={{color:'red'}}>Hãy dùng 2 ngón để kéo nội dụng lên</Text></RowComponent>
-              <View style={{borderColor: '#ccc', borderWidth: 1}}>
+              <RowComponent>
+                <Text style={{ fontWeight: "900" }}>Lưu ý: </Text>
+                <Text style={{ color: "red" }}>
+                  Hãy dùng 2 ngón để kéo nội dung lên
+                </Text>
+              </RowComponent>
+              <View style={{ borderColor: "#ccc", borderWidth: 1 }}>
                 <ScrollView
-                  style={{ maxHeight: 150,minHeight: 150, marginBottom: 10, padding: 5 }}
+                  style={{
+                    maxHeight: 150,
+                    minHeight: 150,
+                    marginBottom: 10,
+                    padding: 5,
+                  }}
                 >
                   <Text style={styles.commentsText}>
-                    {selectedFestival.content}
+                    {parseContent(selectedFestival.content)}
                   </Text>
                 </ScrollView>
               </View>
@@ -1048,7 +1033,6 @@ const styles = StyleSheet.create({
   imageSlider: {
     borderRadius: 10,
   },
-  //Scroll View
   containerScroll: {
     flexDirection: "row",
     alignItems: "center",
@@ -1064,3 +1048,5 @@ const styles = StyleSheet.create({
 });
 
 export default Map;
+
+
