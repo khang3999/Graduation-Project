@@ -90,7 +90,7 @@ const ScrapeInfomation = () => {
     const [stringScript, setStringScript] = useState('');
     const [handleMessage, setHandleMessage] = useState<(event: WebViewMessageEvent) => void>(() => () => { })
 
-    const [selectedCountry, setSelectedCountry] = useState(null)
+    const [selectedCountry, setSelectedCountry] = useState('')
     const [selectedProvince, setSelectedProvince] = useState<Province | null>(null)
     const [dataProvinces, setDataProvinces] = useState<Province[]>([])
     const [pointIds, setPointIds] = useState<string[]>([]);
@@ -154,13 +154,17 @@ const ScrapeInfomation = () => {
                 const options = provinceSelect ? provinceSelect.querySelectorAll("option") : [];
                 const provinces = {};
 
+                // Hàm chuẩn hóa chuỗi
+                const myNormalize = (str) =>
+                    str.replace(/Hoà/g, "Hòa").normalize("NFC").trim().replace(/\\s+/g, " ");
+
                 options.forEach((option) => {
                     const key = option.value.trim();
-                    const value = option.textContent.trim();
+                    const value = myNormalize(option.textContent);
                     // Bỏ qua nếu key rỗng hoặc chứa ký tự không hợp lệ
                     if (!key || /[.#$/[\]]/.test(key)) return;
                     const matchedArea = Object.entries(areasByProvinceName).find(([provinceName]) =>
-                        provinceName.includes(value)
+                        myNormalize(value).includes(myNormalize(provinceName))
                     );
                 
                     provinces[key] = {
@@ -172,7 +176,7 @@ const ScrapeInfomation = () => {
                         information: 'Chưa có thông tin',
                         latitude: 0,
                         longitude: 0,
-                        value: value,
+                        value: value
                     };
                 });
                 const webExtractedData = {
@@ -259,14 +263,21 @@ const ScrapeInfomation = () => {
     // Lấy các tỉnh/ thành của quốc gia - XONG
     const fetchCityByCountry = useCallback(async (countryId: any) => {
         try {
-            const refProvinces = ref(database, `provinces/${countryId}`)
+            const refProvinces = ref(database, `cities/${countryId}`)
             const snapshot = await get(refProvinces);
             if (snapshot.exists()) {
-                const dataProvinces = snapshot.val();
-                const dataProvincesArray: Province[] = (Object.values(dataProvinces.data) as Province[]).sort((a: Province, b: Province) => a.value.localeCompare(b.value));
+                const dataProvinces = snapshot.val() as Record<string, any>;
+                // console.log(dataProvinces, 'fet');
+
+                // Dùng Object.entries + flatMap để gom dữ liệu từ các vùng thành 1 mảng Province[]
+                const dataProvincesArray: Province[] = Object.values(dataProvinces)
+                    .flatMap(item => Object.values(item as Province))
+                    .sort((a: Province, b: Province) => a.value.localeCompare(b.value));
+                // Thêm phần tử default
                 dataProvincesArray.unshift(new Province());
                 setDataProvinces(dataProvincesArray);
-                setProvinceUpdatedAt(dataProvinces.updatedAt || 0);
+
+                setProvinceUpdatedAt(dataProvincesArray[1].updatedAt);
             } else {
                 console.log("FetchCityByCountry: No data available1");
             }
@@ -295,7 +306,6 @@ const ScrapeInfomation = () => {
     // Lấy kinh độ và vĩ độ của tỉnh/thành phố
     const fetchLatLong = useCallback(async (url: string) => {
         try {
-            // const response = await fetch(`${DOMAIN_OSM}/search?q=${encodeURIComponent(stringQuery)}&format=json`, {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -312,55 +322,83 @@ const ScrapeInfomation = () => {
             return { latitude: 0, longitude: 0 };
         }
     }, [])
-    // Lấy tuần tự kinh độ và vĩ độ các tỉnh
-    const fetchProvincesLatLongSequentially = useCallback(async (provinces: any[]) => {
-        const updated: Record<string, Province> = {};
-        for (const provinceObj of provinces) {
-            // Đưa Object thành mảng ["01":{area_id:"aa",...}]
-            const [idCountry, rawData] = Object.entries(provinceObj)[0];
-            //Ép kiểu
-            const valueData = rawData as Province
-            try {
-                // Chờ xong trước khi tiếp, location là object chứa key và value, 
-                const provinceName = valueData.value
-                // console.log(provinceName,'tinh');
-                
-                const url = `${DOMAIN_WIKI}/${formatKeySearch(provinceName)}`
-                const result = await fetchLatLong(url);
-                
-                if (result.type === 'standard') {
-                    updated[idCountry] = {
-                        ...valueData,
-                        latitude: parseFloat(result.coordinates.lat),
-                        longitude: parseFloat(result.coordinates.lon),
-                        information: result.extract
-                    };
-                    console.log(`${valueData.value}: lat=${result.coordinates.lat}, lon=${result.coordinates.lon}`);
-                } else {
-                    console.log(`Không tìm thấy kết quả cho ${valueData.value}`);
-                }
 
-                // Delay 500ms để tránh spam API
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error: any) {
-                console.error(`Lỗi với ${location}:`, error.message);
-            }
-        }
+    // Update privince to firebase
+    const updateProvinceToFirebase = useCallback(async (provinceData: Province, selectedCountry: string) => {
+        const areaName = areasByProvinceName[provinceData.value]
 
-        return updated
-    }, [selectedCountry])
-
-    // UPDATE provinces : Ghi lên firebase --- XONG
-    // Data có dạng {'avietnam':[{'key':01, value:'TP Hà Nội'}, ...]}
-    const updateProvinces = useCallback(async (data: any, selectedCountry: string) => {
         try {
-            const refProvinces = ref(database, `provinces/${selectedCountry}/`)
-            // console.log(JSON.stringify(data, null, 2), 'pipip');
-            await update(refProvinces, data)
+            const refCountry = ref(database, `cities/${selectedCountry}/${areaName}/${provinceData.key}/`)
+            await update(refCountry, provinceData)
         } catch (error) {
             console.error("Update data provinces: ", error);
         }
-    }, [])
+    }, [areasByProvinceName])
+
+    // Lấy tuần tự kinh độ và vĩ độ các tỉnh
+    const fetchProvincesLatLongSequentially = useCallback(async (provinces: any[]) => {
+        for (let i = 0; i < provinces.length; i++) {
+            const provinceObj = provinces[i];
+            // Chuyển thành mảng [["10", { key: "10", value: "Lào Cai", information: "Chưa có thông tin" }]] và lấy phần tử đầu trong mảng
+            const [proviceId, provinceData] = Object.entries(provinceObj)[0];
+            //Ép kiểu
+            const provinceDataImplicit = provinceData as Province
+
+            // Chờ xong trước khi tiếp, location là object chứa key và value, 
+            const provinceName = formatKeySearch(provinceDataImplicit.value)
+
+            const keywords = ['Hòa Bình', 'Nam Định', 'Bình Định'];
+            let url = `${DOMAIN_WIKI}/${(provinceName)}`
+
+
+            if (keywords.some(k => provinceDataImplicit.value.includes(k.normalize("NFC")))) {
+                url += '_(tỉnh)'
+            }
+            console.log(url, '-----', provinceName);
+
+
+            try {
+                const result = await fetchLatLong(url);
+                if (result.type === 'standard') {
+                    const provinceDataUpdated = {
+                        ...provinceDataImplicit,
+                        latitude: parseFloat(result.coordinates?.lat || 0),
+                        longitude: parseFloat(result.coordinates?.lon || 0),
+                        information: result.extract,
+                        defaultImages: [result.originalimage.source || result.thumbnail.source],
+                        updatedAt: Date.now()
+                    };
+
+                    // console.log(`${provinceDataImplicit.value}: lat=${result.coordinates?.lat || 0}, lon=${result.coordinates?.lon || 0}`);
+                    await updateProvinceToFirebase(provinceDataUpdated, selectedCountry)
+                } else {
+                    console.log(`Không tìm thấy kết quả cho ${provinceDataImplicit}`);
+                }
+
+                if (i === provinces.length - 1) {
+                    setProvinceUpdatedAt(Date.now())
+                }
+                // Delay 500ms để tránh spam API
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (error: any) {
+                console.error(`Lỗi với :`, error.message);
+            }
+        }
+
+        // return updated
+    }, [selectedCountry, updateProvinceToFirebase, fetchLatLong])
+
+    // UPDATE provinces : Ghi lên firebase --- XONG
+    // Data có dạng {'avietnam':[{'key':01, value:'TP Hà Nội'}, ...]}
+    // const updateProvinces = useCallback(async (data: any, selectedCountry: string) => {
+    //     try {
+    //         const refProvinces = ref(database, `provinces/${selectedCountry}/`)
+    //         // console.log(JSON.stringify(data, null, 2), 'pipip');
+    //         await update(refProvinces, data)
+    //     } catch (error) {
+    //         console.error("Update data provinces: ", error);
+    //     }
+    // }, [])
 
     // Xử lý sự kiện khi chọn quốc gia --- XONG
     const handleSelectedCountry = useCallback((val: any) => {
@@ -456,9 +494,14 @@ const ScrapeInfomation = () => {
                             const message = JSON.parse(event.nativeEvent.data);
                             // console.log(message.data, 'provinces');
                             // Khác con trỏ dù data giống nhau
+                            console.log(message.data, 'che');
+
                             const arrayFormat = Object.entries(message.data).map(([key, value]) => ({
-                                [key]: value
+                                // [key]: String(value).normalize('NFC')
+                                [key]: value // value là một object chứa thông tin
                             }));
+                            // console.log(arrayFormat,'ss');
+
                             setDataProvincesCrawled(arrayFormat || []);
                         });
                     },
@@ -486,7 +529,8 @@ const ScrapeInfomation = () => {
                 const pointIds = message.data;
                 setPointIds(pointIds ? pointIds : []);
                 // Set để ghi dữ liệu lên firebase luôn 
-                console.log(currentIndexPointIds);
+                console.log(currentIndexPointIds,'curent');
+                console.log(pointIds,'total ids');
 
                 setCurrentIndexPointIds(0)// khởi chạy từ index đầu tiên
                 console.log(message.type, 'dataaa');
@@ -528,7 +572,7 @@ const ScrapeInfomation = () => {
         }
 
         try {
-            const refPointsNew = ref(database, `pointsNew/${selectedCountry}/${selectedProvinceId} `);
+            const refPointsNew = ref(database, `pointsNew/${selectedCountry}/${selectedProvinceId}/`);
 
             await update(refPointsNew, dataUpdated);
             console.log("call up to fb");
@@ -567,7 +611,7 @@ const ScrapeInfomation = () => {
         setStringScript(scriptsToRun.getDataPoint);
 
         // Gán lại callback nhận message
-        setStringURI(`${DOMAIN_CSDL} /dest/ ? item = ${pointId} `);
+        setStringURI(`${DOMAIN_CSDL}/dest/?item=${pointId}`);
     }, [updatePointData])
 
     // Hàm script theo currentPageIndex để lấy tất cả pointId
@@ -595,7 +639,7 @@ const ScrapeInfomation = () => {
             });
             // Không cần set lại script vì vẫn còn script cũ
             setStringScript(script)
-            setStringURI(`${DOMAIN_CSDL} /dest/ ? province = ${selectedProvince?.key}& page=${currentIndexPage + 1} `)
+            setStringURI(`${DOMAIN_CSDL}/dest/?province=${selectedProvince?.key}&page=${currentIndexPage + 1}`)
         }
     }, [selectedProvince])
 
@@ -615,18 +659,20 @@ const ScrapeInfomation = () => {
         if (dataProvincesCrawled.length === 0) return;
         console.log('here');
         // Thực hiện crawl longitude và latitude cho từng tỉnh
-        const updateToFirebase = async () => {
-            // Chỉ lấy 3 tỉnh đầu tiên để tránh quá tải
-            const updated = await fetchProvincesLatLongSequentially(dataProvincesCrawled.slice(0, 3))
+        // const updateToFirebase = async () => {
+        //     // Chỉ lấy 3 tỉnh đầu tiên để tránh quá tải
+        //     const updated = await fetchProvincesLatLongSequentially(dataProvincesCrawled.slice(0, 3))
 
-            // const updated = await fetchProvincesLatLongSequentially(dataProvincesCrawled)
-            const dataUpdate = { data: updated, updatedAt: Date.now() }
-            await updateProvinces(dataUpdate, selectedCountry ? selectedCountry : 'unknown');
-            // Lấy lại thời gian cập nhật
-            fetchCityByCountry(selectedCountry)
-        }
+        //     // const updated = await fetchProvincesLatLongSequentially(dataProvincesCrawled)
+        //     const dataUpdate = { data: updated, updatedAt: Date.now() }
+        //     await updateProvinces(dataUpdate, selectedCountry ? selectedCountry : 'unknown');
+        //     // Lấy lại thời gian cập nhật
+        //     fetchCityByCountry(selectedCountry)
+        // }
         // Mở này ra để chạy bình thường
-        updateToFirebase();
+        // updateToFirebase();
+        // fetchProvincesLatLongSequentially(dataProvincesCrawled.slice(0, 7))
+        fetchProvincesLatLongSequentially(dataProvincesCrawled)
     }, [dataProvincesCrawled]);
 
     // Script này để lấy tất cả pointId qua từng trang

@@ -8,6 +8,7 @@ export class Province {
     information: string = '';
     latitude: number = 0;
     longitude: number = 0;
+    updatedAt: number = 0;
     constructor();
     constructor(
         key: string,
@@ -19,6 +20,7 @@ export class Province {
         information: string,
         latitude: number,
         longitude: number,
+        updatedAt:number
     )
     constructor(
         key?: string,
@@ -30,6 +32,7 @@ export class Province {
         information?: string,
         latitude?: number,
         longitude?: number,
+        updatedAt?: number
     ) {
         this.key = key ?? '-1';
         this.value = value ?? 'Chọn tỉnh/thành phố';
@@ -40,5 +43,6 @@ export class Province {
         this.information = information ?? '';
         this.latitude = latitude ?? 0;
         this.longitude = longitude ?? 0;
+        this.updatedAt = updatedAt ?? 0;
     }
 }

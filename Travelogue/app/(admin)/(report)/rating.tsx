@@ -159,9 +159,9 @@ export default function RatingReport() {
         <View style={{width:240}}>
 
           <Text style={styles.name}>{rating.item.rating_id}</Text>
-          {Object.values(rating.item.reason).map((reason: any) => {
+          {Object.values(rating.item.reason).map((reason: any, index: number) => {
             return (
-              <Text style={styles.reason}>- {reason}</Text>
+              <Text key={index} style={styles.reason}>- {reason}</Text>
             )
           })}
 

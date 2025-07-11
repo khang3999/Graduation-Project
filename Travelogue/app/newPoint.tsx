@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   TextInput,
@@ -30,6 +30,8 @@ import {
 } from "@/firebase/firebaseConfig";
 import { push } from "firebase/database";
 import { router } from "expo-router";
+import { Point } from "@/model/PointModal";
+import { update } from "lodash";
 
 const NewPoint = () => {
   const festivalTypeOptions = [
@@ -41,20 +43,22 @@ const NewPoint = () => {
   const [longitude, setLongitude] = useState("");
   const [latitude, setLatitude] = useState("");
   const [content, setContent] = useState("");
-  const [timeStartDate, setTimeStartDate] = useState<any>(null);
-  const [timeEndDate, setTimeEndDate] = useState<any>(null);
-  const [timeStartTime, setTimeStartTime] = useState<any>(null);
-  const [timeEndTime, setTimeEndTime] = useState<any>(null);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [startDate, setStartDate] = useState<any>(null);
+  const [endDate, setEndDate] = useState<any>(null);
+  const [startTime, setStartTime] = useState<any>(null);
+  const [endTime, setEndTime] = useState<any>(null);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [defaultImages, setDefaultImages] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string>("festival");
   const [loading, setLoading] = useState(false);
   const route = useRoute();
-  const { idCity, idCountry }: any = route.params;
+  const { idCity, idCountry, nameCity, nameCountry }: any = route.params;
   const local = 'vi-VN'
-  const [dataCountries, setDataCountries]:any = useState([])
+  const [dataCountries, setDataCountries]: any = useState([])
 
 
 
@@ -68,7 +72,7 @@ const NewPoint = () => {
           key,
           value: jsonDataCountries[key].label,
         }));
-        
+
         setDataCountries(countriesArray)
 
       } else {
@@ -101,69 +105,93 @@ const NewPoint = () => {
       setDefaultImages([...selectedUris, ...defaultImages]);
     }
   };
+
+  const mergeDateAndTime = useCallback((date: Date, time: Date): Date => {
+    const merged = new Date(date);
+    merged.setHours(time.getHours());
+    merged.setMinutes(time.getMinutes());
+    merged.setSeconds(0);
+    merged.setMilliseconds(0);
+    return merged;
+  }, []);
+
   //Chọn ngày bắt đầu
-  const onChangeStartDate = (event: any, selectedDate: any) => {
-    setShowStartPicker(false);
+  const onChangeStartDate = useCallback((event: any, selectedDate: any) => {
+    setShowStartDatePicker(false); // luôn tắt picker đi khi đổi ngày
     if (selectedDate) {
-      if (selectedOption === "festival") {
-        if (timeEndDate && selectedDate > timeEndDate) {
-          Alert.alert("Lỗi", "Ngày bắt đầu không thể sau ngày kết thúc.");
-        } else {
-          setTimeStartDate(selectedDate);
-        }
+      // if (selectedOption === "festival") {
+      if (endDate && selectedDate > endDate) {
+        Alert.alert("Lỗi", "Ngày bắt đầu không thể sau ngày kết thúc.");
       } else {
-        if (timeEndTime && selectedDate > timeEndTime) {
-          Alert.alert("Lỗi", "Giờ bắt đầu không thể sau giờ kết thúc.");
-        } else {
-          setTimeStartTime(selectedDate);
-        }
+        setStartDate(selectedDate);
       }
     }
-  };
+  }, []);
   //Chọn ngày kết thúc
-  const onChangeEndDate = (event: any, selectedDate: any) => {
-    setShowEndPicker(false);
+  const onChangeEndDate = useCallback((event: any, selectedDate: any) => {
+    setShowEndDatePicker(false);
     if (selectedDate) {
-      if (selectedOption === "festival") {
-        if (timeStartDate && selectedDate < timeStartDate) {
-          Alert.alert("Lỗi", "Ngày bắt đầu không thể sau ngày kết thúc.");
-        } else {
-          setTimeEndDate(selectedDate);
-        }
+      // if (selectedOption === "festival") {
+      if (startDate && selectedDate < startDate) {
+        Alert.alert("Lỗi", "Ngày kết thúc không thể trước ngày bắt đầu.");
       } else {
-        if (timeStartTime && selectedDate < timeStartTime) {
-          Alert.alert("Lỗi", "Giờ bắt đầu không thể sau giờ kết thúc.");
-        } else {
-          setTimeEndTime(selectedDate);
-        }
+        setEndDate(selectedDate);
       }
     }
-  };
-  useEffect(() => {
-    if (
-      name &&
-      longitude &&
-      latitude &&
-      content &&
-      defaultImages.length > 0 &&
-      ((selectedOption === "festival" && timeStartDate && timeEndDate) ||
-        (selectedOption === "landmark" && timeStartTime && timeEndTime))
-    ) {
-      setIsReady(true);
-    } else {
-      setIsReady(false);
+  }, []);
+
+  //Chọn giờ bắt đầu
+  const onChangeStartTime = useCallback((event: any, selectedTime: any) => {
+    setShowStartTimePicker(false); // luôn tắt picker đi khi đổi giờ
+    if (selectedTime) {
+      // if (selectedOption === "festival") {
+      if (endTime && selectedTime > endTime) {
+        Alert.alert("Lỗi", "Giờ bắt đầu không thể sau giờ kết thúc.");
+      } else {
+        setStartTime(selectedTime);
+      }
     }
-  }, [
-    name,
-    longitude,
-    latitude,
-    content,
-    defaultImages,
-    timeStartDate,
-    timeEndDate,
-    timeStartTime,
-    timeEndTime,
-  ]);
+  }, []);
+
+  //Chọn giờ kết thúc
+  const onChangeEndTime = useCallback((event: any, selectedTime: any) => {
+    setShowEndTimePicker(false); // luôn tắt picker đi khi đổi giờ
+    if (selectedTime) {
+      // if (selectedOption === "festival") {
+      if (startTime && selectedTime > startTime) {
+        Alert.alert("Lỗi", "Giờ kết thúc không thể sau giờ bắt đầu.");
+      } else {
+        setEndTime(selectedTime);
+      }
+    }
+  }, []);
+
+
+  // useEffect(() => {
+  //   if (
+  //     name &&
+  //     // longitude &&
+  //     // latitude &&
+  //     content
+  //     // &&defaultImages.length > 0
+  //     // &&((selectedOption === "festival" && timeStartDate && timeEndDate) ||
+  //     //   (selectedOption === "landmark" && timeStartTime && timeEndTime))
+  //   ) {
+  //     setIsReady(true);
+  //   } else {
+  //     setIsReady(false);
+  //   }
+  // }, [
+  //   name,
+  //   longitude,
+  //   latitude,
+  //   content,
+  //   defaultImages,
+  //   startDate,
+  //   endDate,
+  //   startTime,
+  //   endTime,
+  // ]);
 
   // Lưu những ảnh đã chọn lên storage
   const uploadImagesToStorage = async (pointId: any) => {
@@ -185,7 +213,7 @@ const NewPoint = () => {
   };
 
   const handleSave = async () => {
-    if (isReady) {
+    // if (isReady) {
       setLoading(true);
       if (isNaN(Number(longitude)) || isNaN(Number(latitude))) {
         Toast.show({
@@ -197,28 +225,25 @@ const NewPoint = () => {
         return;
       }
 
-      const pointRef = ref(
-        database,
-        `points/${idCountry}/${selectedOption}/${idCity}`
+      const pointRef = ref(database, `pointsNew/${idCountry}/${idCity}/`
       );
       const newPointRef = push(pointRef);
       const pointId = newPointRef.key;
 
       const imageUrls = await uploadImagesToStorage(pointId);
       const data = {
+        id: newPointRef.key || "",
+        address: "",
+        content: content,
+        end: mergeDateAndTime(endDate, endTime).getTime() || 0,
+        geocode: [{
+          longitude: Number(longitude) || 0,
+          latitude: Number(latitude) || 0,
+        }],
+        images: imageUrls || [''],
+        start: mergeDateAndTime(startDate, startTime).getTime() || 0,
         title: name,
-        longitude: Number(longitude),
-        latitude: Number(latitude),
-        content,
-        start:
-          selectedOption === "festival"
-            ? timeStartDate.toLocaleDateString(local).slice(0, 10)
-            : timeStartTime.toLocaleTimeString().slice(0, 4),
-        end:
-          selectedOption === "festival"
-            ? timeEndDate.toLocaleDateString(local).slice(0, 10)
-            : timeEndTime.toLocaleTimeString().slice(0, 4),
-        images: imageUrls,
+        updatedAt: new Date().getTime(),
       };
 
       set(newPointRef, data)
@@ -229,15 +254,16 @@ const NewPoint = () => {
           setLongitude("");
           setLatitude("");
           setContent("");
-          setTimeStartDate(null);
-          setTimeEndDate(null);
-          setTimeStartTime(null);
-          setTimeEndTime(null);
+          setStartDate(null);
+          setEndDate(null);
+          setStartTime(null);
+          setEndTime(null);
           setDefaultImages([]);
           setSelectedOption("festival");
           setIsReady(false);
 
-          router.push("/(admin)/(information)/festival");
+          // router.push("/(admin)/(information)/festival");
+          router.back();
           Toast.show({
             type: "success",
             text1: "Thành công",
@@ -248,37 +274,36 @@ const NewPoint = () => {
           setLoading(false);
           console.error("Error adding data: ", error);
         });
-    }
+    // }
   };
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-
-        <Text>#{dataCountries.find((country:any)=>country.key === idCountry)?.value}</Text>
-        <Text>#{idCity}</Text>
+        <Text>#{nameCity}</Text>
+        <Text>#{nameCountry}</Text>
       </View>
       <ScrollView>
-        <Text style={styles.label}>Tên</Text>
+        <Text style={styles.label}>Tiêu đề</Text>
         <TextInput
-          placeholder="Nhập tên"
+          placeholder="Nhập tiêu đề"
           value={name}
           onChangeText={setName}
           style={styles.input} />
-
-        <Text style={styles.label}>Vĩ độ</Text>
-        <TextInput
-          placeholder="Nhập vĩ độ"
-          value={latitude}
-          onChangeText={setLatitude}
-          keyboardType="numeric"
-          style={styles.input}
-        />
 
         <Text style={styles.label}>Kinh độ</Text>
         <TextInput
           placeholder="Nhập kinh độ"
           value={longitude}
           onChangeText={setLongitude}
+          keyboardType="numeric"
+          style={styles.input}
+        />
+
+        <Text style={styles.label}>Vĩ độ</Text>
+        <TextInput
+          placeholder="Nhập vĩ độ"
+          value={latitude}
+          onChangeText={setLatitude}
           keyboardType="numeric"
           style={styles.input}
         />
@@ -293,7 +318,7 @@ const NewPoint = () => {
           style={styles.input}
         />
 
-        <Text style={styles.label}>Chọn loại</Text>
+        {/* <Text style={styles.label}>Chọn loại</Text>
         <RadioButton.Group
           onValueChange={(newValue) => setSelectedOption(newValue)}
           value={selectedOption}
@@ -304,7 +329,7 @@ const NewPoint = () => {
               <Text style={styles.radioLabel}>{option.label}</Text>
             </View>
           ))}
-        </RadioButton.Group>
+        </RadioButton.Group> */}
 
         <Text style={styles.label}>Thêm ảnh</Text>
         <RowComponent>
@@ -332,58 +357,91 @@ const NewPoint = () => {
           </ScrollView>
         </RowComponent>
 
-        <Text style={styles.label}>Chọn thời gian bắt đầu</Text>
-        <TouchableOpacity onPress={() => setShowStartPicker(true)}>
-          <Text style={styles.timeText}>
-            {selectedOption === "festival"
-              ? timeStartDate
-                ? timeStartDate.toLocaleDateString(local).slice(0, 10)
-                : "Chọn ngày"
-              : timeStartTime
-                ? timeStartTime.toLocaleTimeString().slice(0, 4)
-                : "Chọn giờ"}{" "}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.label}>Ngày</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text style={styles.textLabel}>Bắt đầu: </Text>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowStartDatePicker(true)}>
+            <Text style={styles.timeText}>
+              {startDate
+                ? startDate.toLocaleDateString(local).slice(0, 10)
+                : " Chọn ngày bắt đầu"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        <Text style={styles.label}>Chọn thời gian kết thúc</Text>
-        <TouchableOpacity onPress={() => setShowEndPicker(true)}>
-          <Text style={styles.timeText}>
-            {selectedOption === "festival"
-              ? timeEndDate
-                ? timeEndDate.toLocaleDateString(local).slice(0, 10)
-                : "Chọn ngày"
-              : timeEndTime
-                ? timeEndTime.toLocaleTimeString().slice(0, 4)
-                : "Chọn giờ"}{" "}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text style={styles.textLabel}>Kết thúc: </Text>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowEndDatePicker(true)}>
+            <Text style={styles.timeText}>
+              {endDate
+                ? endDate.toLocaleDateString(local).slice(0, 10)
+                : "Chọn ngày kết thúc"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {showStartPicker && (
+        {/* GIỜ */}
+        <Text style={styles.label}>Giờ</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text style={styles.textLabel}>Bắt đầu: </Text>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowStartTimePicker(true)}>
+            <Text style={styles.timeText}>
+              {startTime
+                ? startTime.toLocaleTimeString().slice(0, 4)
+                : "Chọn giờ bắt đầu"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Text style={styles.label}>Chọn giờ kết thúc</Text>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowEndTimePicker(true)}>
+            <Text style={styles.timeText}>
+              {endTime
+                ? endTime.toLocaleTimeString().slice(0, 4)
+                : "Chọn giờ kết thúc"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {showStartDatePicker && (
           <DateTimePicker
-            mode={selectedOption === "festival" ? "date" : "time"}
-            value={
-              selectedOption === "festival"
-                ? timeStartDate || new Date()
-                : timeStartTime || new Date()
-            }
+            // mode={selectedOption === "festival" ? "date" : "time"}
+            mode="date"
+            value={startDate || new Date()}
             onChange={onChangeStartDate}
-
           />
         )}
-
-        {showEndPicker && (
+        {showEndDatePicker && (
           <DateTimePicker
-            mode={selectedOption === "festival" ? "date" : "time"}
-            value={
-              selectedOption === "festival"
-                ? timeEndDate || new Date()
-                : timeEndTime || new Date()
-            }
+            // mode={selectedOption === "festival" ? "date" : "time"}
+            mode="date"
+            value={endDate || new Date()}
             onChange={onChangeEndDate}
           />
         )}
 
-        <Button mode="contained" onPress={handleSave} disabled={!isReady}>
+        {showStartTimePicker && (
+          <DateTimePicker
+            // mode={selectedOption === "festival" ? "date" : "time"}
+            mode="time"
+            value={startTime || new Date()}
+            onChange={onChangeStartTime}
+          />
+        )}
+        {showEndTimePicker && (
+          <DateTimePicker
+            // mode={selectedOption === "festival" ? "date" : "time"}
+            mode="time"
+            value={endTime || new Date()}
+            onChange={onChangeEndTime}
+          />
+        )}
+
+        <Button mode="contained" onPress={handleSave}
+          // disabled={true}
+          // disabled={!isReady}
+        >
           Lưu
         </Button>
       </ScrollView>
@@ -453,6 +511,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 8,
   },
+  textLabel: {
+    padding: 16,
+    textAlign: "center",
+    marginVertical: 6,
+    fontStyle: "italic",
+  }
 });
 
 export default NewPoint;

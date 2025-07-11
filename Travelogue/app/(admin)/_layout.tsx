@@ -2,12 +2,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { Image, View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { MaterialIcons, MaterialCommunityIcons, Octicons, Entypo, AntDesign } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Octicons, Entypo, AntDesign, FontAwesome6 } from '@expo/vector-icons';
 import React from 'react';
 import { signOut } from 'firebase/auth';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth } from '@/firebase/firebaseConfig';
 import { router } from 'expo-router';
+import { iconColors } from '@/assets/colors';
 
 function CustomDrawerContent(props: any) {
   const handleLogout = async () => {
@@ -33,8 +34,11 @@ function CustomDrawerContent(props: any) {
 
       {/* Danh sách các Drawer.Screen */}
       <DrawerItemList {...props} />
-      <TouchableOpacity onPress={handleLogout}>
-        <Text style={{ color: 'red', fontSize: 30, textAlign: 'center', marginTop: 40 }}>Đăng xuất</Text>
+      <TouchableOpacity
+        style={{ backgroundColor: '#D10000', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', margin: 20, paddingVertical: 10, borderRadius: 15, gap: 10 }}
+        onPress={handleLogout}>
+        <Text style={{ color: 'white', fontSize: 20, textAlign: 'center', marginRight: 0 }}>Đăng xuất</Text>
+        <MaterialIcons name="logout" size={22} color="white" />
       </TouchableOpacity>
     </DrawerContentScrollView>
   );
@@ -46,7 +50,9 @@ export default function Layout() {
       <Drawer
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
-          headerShown: true
+          headerShown: true,
+          drawerType: 'back',
+          drawerActiveTintColor: iconColors.green1,
         }}
       >
         <Drawer.Screen
@@ -55,19 +61,23 @@ export default function Layout() {
             drawerLabel: 'Tài khoản',
             title: 'Tài khoản',
             drawerIcon: ({ color, size }) => (
-              <MaterialIcons name="manage-accounts" color={color} size={size} />
-            )
+              <View style={{ marginRight: 5 }}>
+                <MaterialIcons name="manage-accounts" color={color} size={size} />
+              </View>
+            ),
+
           }}
         />
         <Drawer.Screen
           name="(report)"
           options={{
-            drawerLabel: 'Báo cáo',
-            title: 'Báo cáo',
+            drawerLabel: 'Báo cáo vi phạm',
+            title: 'Báo cáo vi phạm',
             drawerIcon: ({ color, size }) => (
-              <MaterialIcons name="report" color={color} size={size} />
+              <View style={{ marginRight: 5 }}>
+                <MaterialIcons name="report" color={color} size={size} />
+              </View>
             ),
-
           }}
         />
         <Drawer.Screen
@@ -76,47 +86,57 @@ export default function Layout() {
             drawerLabel: 'Từ cấm',
             title: 'Từ cấm',
             drawerIcon: ({ color, size }) => (
-              <MaterialIcons name="block" color={color} size={size} />
+              <View style={{ marginRight: 5 }}>
+                <MaterialIcons name="block" color={color} size={size} />
+              </View>
             )
           }}
         />
         <Drawer.Screen
           name="factorA"
           options={{
-            drawerLabel: 'Hệ số',
+            drawerLabel: ' Hệ số',
             title: 'Hệ số',
             drawerIcon: ({ color, size }) => (
-              <Octicons name="number" size={32} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <Octicons name="number" size={28} color={color} />
+              </View>
             )
           }}
         />
         <Drawer.Screen
           name="(reason)"
           options={{
-            drawerLabel: 'Lí do báo cáo',
-            title: 'Lí do báo cáo',
+            drawerLabel: 'Lí do vi phạm',
+            title: 'Lí do vi phạm',
             drawerIcon: ({ color, size }) => (
-              <Entypo name="list" size={size} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <Entypo name="list" size={size} color={color} />
+              </View>
             )
           }}
         />
         <Drawer.Screen
           name="exchange"
           options={{
-            drawerLabel: 'Giao dịch',
-            title: 'Giao dịch',
+            drawerLabel: 'Quản lý nạp tiền',
+            title: 'Quản lý nạp tiền',
             drawerIcon: ({ color, size }) => (
-              <MaterialIcons name="currency-exchange" size={size} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <MaterialIcons name="currency-exchange" size={size} color={color} />
+              </View>
             )
           }}
         />
         <Drawer.Screen
           name="package"
           options={{
-            drawerLabel: 'Gói doanh nghiệp',
-            title: 'Gói doanh nghiệp',
+            drawerLabel: '  Gói bài đăng',
+            title: 'Gói bài đăng doanh nghiệp',
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="package" size={size} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <FontAwesome6 name="file-invoice-dollar" size={size} color={color} />
+              </View>
             )
           }}
 
@@ -126,9 +146,11 @@ export default function Layout() {
           name="(information)"
           options={{
             drawerLabel: 'Cập nhật thủ công',
-            title: 'Thông tin địa điểm',
+            title: 'Thông tin',
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <MaterialCommunityIcons name="content-save-edit-outline" size={size} color={color} />
+              </View>
             )
           }}
         />
@@ -138,12 +160,13 @@ export default function Layout() {
             drawerLabel: 'Cập nhật tự động',
             title: 'Cập nhật thông tin',
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+              <View style={{ marginRight: 5 }}>
+                <MaterialIcons name="browser-updated" size={size} color={color} />
+              </View>
             )
           }}
         />
       </Drawer>
-
     </GestureHandlerRootView>
 
   );

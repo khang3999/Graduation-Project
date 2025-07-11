@@ -30,15 +30,21 @@ import { useHomeProvider } from "@/contexts/HomeProvider";
 import { Province } from "@/model/ProvinceModal";
 
 const Location = () => {
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedCity, setSelectedCity] = useState('-1');
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [cityArea, setCityArea] = useState("");
   const [cityInformation, setCityInformation] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState("");
+
+  const [cityData, setCityData] = useState<Province>();
   // const [dataCountries, setDataCountries] = useState([]);
   const [dataCities, setDataCities] = useState<any>([]);
   const [editText, setEditText] = useState(false);
-  const inputRef: any = useRef(null);
-  const [defaultImages, setdefaultImages] = useState<string[]>([]);
+  const informationRef: any = useRef(null);
+  const longitudeRef: any = useRef(null);
+  const latitudeRef: any = useRef(null);
+  const [defaultImages, setDefaultImages] = useState<string[]>([]);
   const [disabled, setDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const { dataCountries }: any = useHomeProvider();
@@ -46,18 +52,21 @@ const Location = () => {
   // Lấy các tỉnh/ thành của quốc gia - XONG
   const fetchCitiesByCountry = useCallback(async (countryId: any) => {
     try {
-      const refProvinces = ref(database, `provinces/${countryId}`)
+      const refProvinces = ref(database, `cities/${countryId}`)
       const snapshot = await get(refProvinces);
       if (snapshot.exists()) {
-        const dataCityJson = snapshot.val();
-        const data = dataCityJson.data as Record<string, Province>;
-        const result = Object.entries(data).map(([key, item]) => ({
-          key,
-          value: item.value
-        }));
-        result.unshift({ key: '-1', value: 'Chọn tỉnh/thành phố' })
-        setDataCities(result);
-        setSelectedCity(result[0].key);
+        const dataProvinces = snapshot.val() as Record<string, any>;;
+        // 👉 Dùng Object.entries + flatMap để gom dữ liệu từ các vùng thành 1 mảng Province[]
+        const dataCitiesArray: Province[] = Object.values(dataProvinces)
+          .flatMap(item => Object.values(item as Province))
+          .sort((a: Province, b: Province) => a.value.localeCompare(b.value));
+
+        // Thêm phần tử default
+        dataCitiesArray.unshift(new Province());
+        console.log(dataCitiesArray.slice(0, 3), 'check');
+
+        setDataCities(dataCitiesArray);
+        setSelectedCity(dataCitiesArray[1].key);
       } else {
         console.log("FetchCityByCountry: No data available1");
       }
@@ -68,57 +77,66 @@ const Location = () => {
 
   // Fetch data of Province
   const fetchCityData = useCallback(async (cityId: string) => {
+    const foundProvince = dataCities.find((p: Province) => p.key === cityId);
+    let area = ''
+    if (foundProvince) {
+      area = foundProvince.areaId
+      console.log("Tỉnh tìm thấy:", foundProvince.value); // An Giang
+    } else {
+      console.log("Không tìm thấy tỉnh");
+    }
     try {
-      const refDataCity = ref(database, `provinces/${selectedCountry}/data/${cityId}`)
+      const refDataCity = ref(database, `cities/${selectedCountry}/${area}/${cityId}`)
       const snapshot = await get(refDataCity);
       if (snapshot.exists()) {
         const dataCityJson = snapshot.val();
         console.log(dataCityJson, `at ${cityId}`);
         setCityInformation(dataCityJson.information);
-
+        setDefaultImages(dataCityJson.defaultImages)
+        setCityArea(dataCityJson.areaId)
+        setLongitude(dataCityJson.longitude + "")
+        setLatitude(dataCityJson.latitude + "")
       } else {
         console.log("FetchCityByCountry: No data available1");
       }
     } catch (error) {
       console.error("FetchCityByCountry: Error fetching data: ", error);
     }
-  }, [selectedCountry])
+  }, [selectedCountry, dataCities])
   //Handle when selected countries
   const handleSelectedCountry = useCallback((val: any) => {
+    if (!val) return
     if (val === 'avietnam') {
       fetchCitiesByCountry(val)
     } else {
       Alert.alert('Chưa hỗ trợ quốc gia này');
     }
-    setCityInformation("");
-    // setCityArea("");
-    setDataCities([])
-    setdefaultImages([]);
     setSelectedCountry(val);
-  }, []);
+    setSelectedCity('');
+
+    // Set default
+    setCityInformation("");
+    setLongitude("")
+    setLatitude("")
+    setCityArea("");
+    setDataCities([])
+    setDefaultImages([]);
+  }, [fetchCitiesByCountry]);
 
   //Handle when selected countries
-  const handleSelectedCity = (val: any) => {
-    if (val && val !== '-1') {
-      // console.log(val);
-      // const a: any = dataCities.find((e: any) => e.key == val);
-      // // setCityArea(a.area);
-      // setCityInformation(a.information);
-      // if (a.defaultImages) {
-      //   setdefaultImages(a.defaultImages);
-      // } else {
-      //   setdefaultImages([]);
-      // }
-      // setDisabled(false);
-      // setSelectedCity(val);
+  const handleSelectedCity = useCallback((val: any) => {
+    if (!val) return
+    if (val !== '-1') {
+      setDisabled(false);
       fetchCityData(val)
     } else {
+      Alert.alert('Chưa hỗ trợ tỉnh/thành phố này');
       console.log(val);
     }
-
-  };
+    setSelectedCity(val);
+  }, [fetchCityData]);
   //   console.log("defaultImages", defaultImages);
-  const uploadImagesToStorage = async () => {
+  const uploadImagesToStorage = useCallback(async () => {
     const uploadedImageUrls = [];
 
     for (const imageUri of defaultImages) {
@@ -134,10 +152,10 @@ const Location = () => {
     }
 
     return uploadedImageUrls;
-  };
+  }, [defaultImages]);
 
   //Handle Save
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (disabled) {
       Toast.show({
         type: "error",
@@ -150,34 +168,29 @@ const Location = () => {
         bottomOffset: 40,
       });
     } else {
-      setEditText(false);
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-
-      const cityUpdateRef = ref(
-        database,
-        `cities/${selectedCountry}/${cityArea}/${selectedCity}`
-      );
-
       Alert.alert(
-        "Xác nhận thay đổi",
-        "Bạn chắc chắn muốn lưu những thay đổi?",
+        'Xác nhận',
+        'Bạn có chắc muốn làm mới dữ liệu hiện tại. Quá trình sẽ tốn nhiều thời gian.',
         [
           {
-            text: "Hủy",
-            style: "cancel",
+            text: 'Hủy',
+            style: 'cancel',
           },
           {
-            text: "OK",
+            text: 'Đồng ý',
             onPress: async () => {
               setLoading(true);
               const defaultImages = await uploadImagesToStorage();
 
-              update(cityUpdateRef, {
+              const cityUpdateRef = ref(database, `cities/${selectedCountry}/${cityArea}/${selectedCity}`
+              );
+              const dataUpdated = {
                 information: cityInformation,
                 defaultImages: defaultImages,
-              })
+                longitude: longitude,
+                latitude: latitude
+              }
+              await update(cityUpdateRef, dataUpdated)
                 .then(() => {
                   setLoading(false);
                   console.log("Data updated successfully!");
@@ -186,18 +199,28 @@ const Location = () => {
                   setLoading(false);
                   console.error("Error updating data:", error);
                 });
+
+
             },
           },
         ]
-      );
+      )
     }
-  };
+    // Unfocus
+    setEditText(false);
+    // Unfocus
+    // if (informationRef.current) {
+    informationRef.current.blur();
+    longitudeRef.current.blur();
+    latitudeRef.current.blur();
+    // }
+  }, [disabled, uploadImagesToStorage, selectedCountry, cityArea, selectedCity, informationRef, longitude, latitude]);
   //Xóa ảnh
   const handleRemoveImage = (index: number) => {
     setEditText(true);
     const updatedImages = [...defaultImages];
     updatedImages.splice(index, 1);
-    setdefaultImages(updatedImages);
+    setDefaultImages(updatedImages);
   };
   //Upload anh
   const handleChooseImages = async () => {
@@ -221,7 +244,7 @@ const Location = () => {
 
       if (!result.canceled) {
         const selectedUris = result.assets.map((item) => item.uri);
-        setdefaultImages([...selectedUris, ...defaultImages]);
+        setDefaultImages([...selectedUris, ...defaultImages]);
       }
     }
   };
@@ -233,8 +256,7 @@ const Location = () => {
           flexDirection: "row",
           justifyContent: "space-evenly",
           marginBottom: 15,
-        }}
-      >
+        }}>
         <SelectList
           dropdownStyles={{
             zIndex: 10,
@@ -262,9 +284,6 @@ const Location = () => {
           data={dataCities}
           save="key"
           defaultOption={{ key: '', value: '' }}
-          // placeholder={
-          //   dataCities.length > 0 ? dataCities[0].value  : "Cities"
-          // }
           placeholder="Thành phố"
 
         />
@@ -330,8 +349,37 @@ const Location = () => {
           />
         </TouchableOpacity>
       )}
+
+      <View style={[styles.row, { marginTop: 20, gap: 5 }]}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <Text> Kinh độ: </Text>
+          {/* <Text>{longitude}</Text> */}
+          <TextInput
+            ref={longitudeRef}
+            value={longitude}
+            numberOfLines={1}
+            multiline={false}
+            style={styles.inputGeo}
+            onChangeText={setLongitude}
+            onFocus={() => setEditText(true)}
+          />
+        </View>
+
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <Text> Vĩ độ: </Text>
+          <TextInput
+            ref={latitudeRef}
+            value={latitude}
+            numberOfLines={1}
+            multiline={false}
+            style={styles.inputGeo}
+            onChangeText={setLatitude}
+            onFocus={() => setEditText(true)}
+          />
+        </View>
+      </View>
       <TextInput
-        ref={inputRef}
+        ref={informationRef}
         style={styles.textArea}
         multiline={true}
         numberOfLines={4} // sets the height based on line count
@@ -340,6 +388,7 @@ const Location = () => {
         onChangeText={setCityInformation}
         onFocus={() => setEditText(true)}
       />
+
       {editText && (
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
           <Text style={styles.buttonText}>Lưu</Text>
@@ -368,6 +417,20 @@ const Location = () => {
   );
 };
 const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  inputGeo: {
+    flex: 1,
+    padding: 10,
+    height: 40,
+    // width: 100,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    textAlign: "right",
+  },
   container: {
     padding: 10,
   },

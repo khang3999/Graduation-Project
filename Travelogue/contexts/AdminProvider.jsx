@@ -22,6 +22,8 @@ const AdminProvider = ({ children }) => {
         const snapshot = await get(refAreaTemplate);
         if (snapshot.exists()) {
           const dataJson = snapshot.val()
+          console.log(dataJson,'areas');
+          
           setAreasByProvinceName(dataJson)
         } else {
           console.log("No data post available");
