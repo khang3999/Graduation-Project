@@ -330,6 +330,17 @@ const ScrapeInfomation = () => {
         try {
             const refCountry = ref(database, `cities/${selectedCountry}/${areaName}/${provinceData.key}/`)
             await update(refCountry, provinceData)
+
+            // Set scores mặc định là 0 nếu chưa có
+            const refScores = ref(database, `cities/${selectedCountry}/${areaName}/${provinceData.key}/scores/`);
+            const scoresSnapshot = await get(refScores);
+            if (!scoresSnapshot.exists()) {
+                // Nếu chưa có scores thì tạo mới mặc định là 9
+                await set(refScores, 0);
+                console.log("Added default score = 0");
+            } else {
+                console.log("Score already exists:", scoresSnapshot.val());
+            }
         } catch (error) {
             console.error("Update data provinces: ", error);
         }
@@ -529,8 +540,8 @@ const ScrapeInfomation = () => {
                 const pointIds = message.data;
                 setPointIds(pointIds ? pointIds : []);
                 // Set để ghi dữ liệu lên firebase luôn 
-                console.log(currentIndexPointIds,'curent');
-                console.log(pointIds,'total ids');
+                console.log(currentIndexPointIds, 'curent');
+                console.log(pointIds, 'total ids');
 
                 setCurrentIndexPointIds(0)// khởi chạy từ index đầu tiên
                 console.log(message.type, 'dataaa');

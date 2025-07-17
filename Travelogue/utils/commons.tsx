@@ -25,3 +25,14 @@ export const averageRating = (totalRatingValue: number, totalRatingCounter: numb
   const roundedAverage = Math.ceil(average * 2) / 2;
   return roundedAverage;
 };
+
+export const getValidImageUri = (uri: any) => {
+  if (!uri) {
+    return "https://mediatech.vn/assets/images/imgstd.jpg"
+  }
+  return uri.trim()
+}
+export const formatCityName = (cityName:string) =>{
+  if (!cityName) return ''
+  return cityName.replace('Thành phố', '').trim()
+}

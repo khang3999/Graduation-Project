@@ -32,7 +32,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
-import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
+import { ref, push, set, get, refFromURL, update, increment, runTransaction } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
@@ -124,7 +124,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const [comments, setComments] = useState(Object.values(item.comments || {}));
   const [longPressedComment, setLongPressedComment] = useState<Comment | null>(null);
   const totalComments = comments.length;
-  const isPostAuthor = userId=== item.author.id;
+  const isPostAuthor = userId === item.author.id;
   const flattenedLocationsArray = flattenLocations(item.locations);
   const flattenedImagesArray = flattenImages(item.images);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
@@ -330,7 +330,7 @@ const PostItem: React.FC<PostItemProps> = ({
       ? item.content.replace(/<br>/g, '\n')
       : `${item.content.replace(/<br>/g, '\n').slice(0, MAX_LENGTH)} ...`,
   };
-  
+
 
   const handleGoToProfileScreen = async (accountId: any) => {
     if (accountId) {
@@ -354,15 +354,15 @@ const PostItem: React.FC<PostItemProps> = ({
   }
 
   useEffect(() => {
-      // console.log(`PostItem render by liked: ${liked}`, data.id)
-      console.log(likedPostsList, 'check detail');
-      },[likedPostsList])
+    // console.log(`PostItem render by liked: ${liked}`, data.id)
+    console.log(likedPostsList, 'check detail');
+  }, [likedPostsList])
   return (
     <View>
       {/* Post Header */}
       <View style={styles.row}>
         <TouchableOpacity style={styles.row}
-        onPress={()=>handleGoToProfileScreen(item.author.id)}
+          onPress={() => handleGoToProfileScreen(item.author.id)}
         >
           <Image
             source={{ uri: item.author.avatar }}
@@ -456,6 +456,13 @@ export default function PostsScreen() {
   const fetchPostById = async (postId: any) => {
     try {
       const refPost = ref(database, `posts/${postId}`)
+      const refScore = ref(database, `posts/${postId}/scores`);
+
+      // Cập nhật scores trước
+      await runTransaction(refScore, (currentScore) => {
+        return (currentScore || 0) + 1;
+      });
+     
       const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataPostJson: any = snapshot.val()

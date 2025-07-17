@@ -12,10 +12,22 @@ export const formatNumberLike = (value) => {
     } else {
         return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
     }
-
     // Loại bỏ .00 nếu có
     return formattedValue.replace(/\.00/, '');
 }
+
+export const formatNumberShort = (num) => {
+    // if (num < 10_000) return num.toLocaleString('vi-VN'); 
+    if (num < 10_000) return num
+    
+    if (num < 1_000_000)
+        return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+
+    if (num < 1_000_000_000)
+        return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+
+    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+};
 // Hàm trộn mảng tour và bài viết theo tỉ lệ bất kì truyền vào
 export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
     const mergedArray = [];

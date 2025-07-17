@@ -12,6 +12,7 @@ import Featured from "@/components/homePage/Featured ";
 import { set } from "lodash";
 import SearchModal from "@/components/homePage/modals/SearchModal";
 import NewPostModal from "@/components/homePage/modals/NewPostModal";
+import { Icon } from "react-native-vector-icons/Icon";
 
 
 const height = Dimensions.get('window').height;
@@ -174,18 +175,18 @@ const Home = () => {
             <Text style={[styles.textTitle, { marginBottom: 20 }]}>Explore the World through Stories</Text>
           </View>
 
-        
+
 
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
-             <Featured></Featured>
+            <Featured></Featured>
           </View>
           {/* Tour section */}
           <View>
             <Text style={[styles.textCategory]}>Tour du lịch</Text>
             <View style={{ paddingBottom: 20 }}>
-              {renderTourList()}
+              {/* {renderTourList()} */}
             </View>
           </View>
           {/* POST */}
@@ -254,12 +255,6 @@ const Home = () => {
             {/* <PostList ></PostList> */}
             {renderPostList()}
           </View>
-          {/* <Text>ádsads</Text>
-          <Text>ádsads</Text>
-          <Text>ádsads</Text>
-          <Text>ádsads</Text>
-          <Text>ádsads</Text>
-          <Text>ádsads</Text> */}
         </Animated.ScrollView>
       </Animated.View>
       {/* Modal */}

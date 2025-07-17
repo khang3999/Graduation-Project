@@ -65,7 +65,8 @@ const Layout = () => {
       if (role === "admin") {
         router.replace("/(admin)/(account)/account");
       } else {
-        router.replace("/(tabs)");
+        // router.replace("/(tabs)");
+        router.replace("/(trending)/cityTrending");
       }
     }
   }, [role]);

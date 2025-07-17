@@ -1,9 +1,9 @@
-import { database, onValue } from "@/firebase/firebaseConfig";
+import { database, get, onValue } from "@/firebase/firebaseConfig";
 import { useNavigationState, useRoute } from "@react-navigation/native";
-import { router } from "expo-router";
-import { ref } from "firebase/database";
+import { router, useFocusEffect } from "expo-router";
+import { ref, runTransaction } from "firebase/database";
 import { ArrowLeft } from "iconsax-react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -25,32 +25,72 @@ const getValidImageUri = (uri?: string | null) =>
     ? uri
     : "https://mediatech.vn/assets/images/imgstd.jpg";
 const GalleryCities = () => {
-  const [selectedTab, setSelectedTab] = useState("Chi tiết");
+  const [selectedTab, setSelectedTab] = useState("Chung");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullText, setShowFullText] = useState(false);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
   const route = useRoute();
-  const { idCity, idCountry }: any = route.params;
+  const { idCity, idCountry, idArea }: any = route.params;
   const cities = { id_city: idCity, id_country: idCountry };
   const [dataCity, setDataCity] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [images, setImages] = useState<string[]>([])
 
-  useEffect(() => {
-    const countryRef = ref(database, `cities/${idCountry}`);
-    onValue(countryRef, (snapshot) => {
-      const countryData = snapshot.val();
-      if (countryData) {
+  // useEffect(() => {
+  //   const countryRef = ref(database, `cities/${idCountry}`);
+  //   onValue(countryRef, (snapshot) => {
+  //     const countryData = snapshot.val();
+  //     if (countryData) {
+  //       let cityData = null;
+  //       for (const area in countryData) {
+  //         if (countryData[area][idCity]) {
+  //           cityData = countryData[area][idCity];
+  //           break;
+  //         }
+  //       }
+  //       setDataCity(cityData);
+  //     }
+  //   });
+  // }, [idCity, idCountry]);
+
+  const fetchCityData = useCallback(async (idCity: string, idCountry: string) => {
+    try {
+      const countryRef = ref(database, `cities/${idCountry}`);
+      const snapshot = await get(countryRef)
+      if (snapshot.exists()) {
+        const countryDataWithArea = snapshot.val();
         let cityData = null;
-        for (const area in countryData) {
-          if (countryData[area][idCity]) {
-            cityData = countryData[area][idCity];
+        let images: any[] = []
+        for (const area in countryDataWithArea) {
+          if (countryDataWithArea[area][idCity]) {
+            cityData = countryDataWithArea[area][idCity];
+            images.push(...cityData.defaultImages)
+
+            const postImages: any[] = cityData.postImages && Object.values(cityData.postImages?.posts) // Mảng các bài viết
+            const tourImages: any[] = cityData.tourImages && Object.values(cityData.tourImages.tours) // Mảng các tour
+
+            postImages?.forEach(post => {
+              images.push(...post.images)
+            });
+            tourImages?.forEach(tour => {
+              images.push(...tour.images)
+            });
             break;
           }
         }
+        setImages(images)
         setDataCity(cityData);
+      } else {
+        console.log("Gallery city: No trending city data found.");
       }
-    });
-  }, [idCity, idCountry]);
+    } catch (error) {
+      console.error("Error fetching City data:", error);
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCityData(idCity, idCountry)
+  }, [idCity, idCountry, fetchCityData]);
 
   useEffect(() => {
     if (dataCity?.defaultImages?.length > 0) {
@@ -72,7 +112,37 @@ const GalleryCities = () => {
     }
   }, [selectedImage]);
 
-  console.log("City Data:", dataCity);
+  // // console.log("City Data:", dataCity);
+  // const upScoreTrending = useCallback(async () => {
+  //   try {
+  //     const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);
+
+  //     await runTransaction(cityRef, (currentValue) => {
+  //       return (currentValue || 0) + 1;
+  //     });
+  //   } catch (error) {
+  //     console.error("Up score treding failed: ", error);
+  //   }
+  // }, [])
+  // Tăng scores trending mỗi khi màn hình được mở
+  useFocusEffect(
+    useCallback(() => {
+      const upScoreTrending = async () => {
+        try {
+          const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);
+          await runTransaction(cityRef, (currentValue) => {
+            return (currentValue || 0) + 1;
+          });
+        } catch (error) {
+          console.error("Up score trending failed: ", error);
+        }
+      };
+      upScoreTrending();
+      return () => {
+        console.log("Screen unfocused!");
+      };
+    }, [idCountry, idArea, idCity])
+  );
 
   const handleTextLayout = (e: any) => {
     const { lines } = e.nativeEvent;
@@ -81,7 +151,7 @@ const GalleryCities = () => {
 
   const renderTabContent = () => {
     switch (selectedTab) {
-      case "Chi tiết":
+      case "Chung":
         return (
           <>
             <ScrollView
@@ -90,7 +160,7 @@ const GalleryCities = () => {
               showsHorizontalScrollIndicator={false}
               ref={scrollViewRef}
             >
-              {dataCity?.defaultImages?.map((img: string, i: number) => (
+              {images.map((img: string, i: number) => (
                 <TouchableOpacity key={i} onPress={() => setSelectedImage(img)}>
                   <Image
                     source={{ uri: getValidImageUri(img) }}
@@ -101,9 +171,9 @@ const GalleryCities = () => {
                   />
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </ScrollView >
             <View style={styles.detailsContainer}>
-              <Text style={styles.detailsTitle}>Thông Tin Tỉnh Thành</Text>
+              <Text style={styles.detailsTitle}>Thông tin chi tiết</Text>
 
               {/* Text wrapper with gradient hint */}
               <View style={styles.textWrapper}>
@@ -171,9 +241,9 @@ const GalleryCities = () => {
           {dataCity?.idCountry === "avietnam"
             ? "Việt Nam"
             : dataCity?.idCountry
-            ? dataCity.idCountry.charAt(0).toUpperCase() +
+              ? dataCity.idCountry.charAt(0).toUpperCase() +
               dataCity.idCountry.slice(1)
-            : "Unknown"}
+              : "Unknown"}
         </Text>
         <View style={styles.rating}>
           <Text style={styles.ratingText}>{formatScore(dataCity?.scores)}</Text>
@@ -183,7 +253,7 @@ const GalleryCities = () => {
 
       <View style={styles.contentContainer}>
         <View style={styles.tabsContainer}>
-          {["Chi tiết", "Bài viết", "Địa điểm"].map((tab) => (
+          {["Chung", "Bài viết", "Địa điểm"].map((tab) => (
             <TouchableOpacity
               key={tab}
               onPress={() => setSelectedTab(tab)}
@@ -229,12 +299,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
-    fontSize: 45,
+    fontSize: 35,
     fontWeight: "bold",
     color: "#EEEEEE",
     textShadowColor: "#000",
+    paddingHorizontal: 10,
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 2,
+    textAlign: 'center'
   },
   subtitle: {
     fontSize: 16,
