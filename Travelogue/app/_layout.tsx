@@ -229,6 +229,24 @@ export default function Layout() {
                 headerTitleAlign: "center",
               }}
             />
+            <Stack.Screen
+              name="(trending)"
+              options={{
+                headerShown: false,
+                title: "Bảng xếp hạng",
+                headerStyle: {
+                  backgroundColor:
+                    Colors[colorScheme ? colorScheme : "light"].background,
+                },
+                headerTintColor:
+                  Colors[colorScheme ? colorScheme : "light"].text,
+                headerTitleStyle: {
+                  fontSize: 25, fontWeight: "bold"
+                },
+                headerTitleAlign: "center",
+
+              }}
+            />
           </Stack>
           <Toast />
         </GestureHandlerRootView>

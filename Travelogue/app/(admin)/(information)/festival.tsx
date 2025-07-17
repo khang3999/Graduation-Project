@@ -1,115 +1,112 @@
 import { View, Text, Platform, Alert, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Checkbox, Divider } from 'react-native-paper';
 import { SelectList } from 'react-native-dropdown-select-list'
 import { ref } from '@firebase/database';
-import { database, onValue } from '@/firebase/firebaseConfig';
-import { get, update, set, push, remove } from '@firebase/database'
+import { database, onValue, get } from '@/firebase/firebaseConfig';
+import { remove } from '@firebase/database'
 import { TextInput } from 'react-native-gesture-handler';
 import { green100 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 import { router } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Entypo } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message-custom';
+import { useHomeProvider } from '@/contexts/HomeProvider';
+import { Province } from '@/model/ProvinceModal';
+import { Point } from '@/model/PointModal';
+import { iconColors } from '@/assets/colors';
+import { add } from 'lodash';
 
 
 const Festival = () => {
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [cityArea, setCityArea] = useState("");
-  const [filteredData, setFilteredData] = useState([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [cityInformation, setCityInformation] = useState("");
-  const [dataCountries, setDataCountries] = useState([])
-  const [dataCities, setDataCities] = useState([])
+  // const [dataCountries, setDataCountries] = useState([])
+  const [dataCities, setDataCities] = useState<any>([]);
   const [editText, setEditText] = useState(false)
   const inputRef: any = useRef(null);
   const [isReady, setIsReady] = useState(false)
+  const { dataCountries }: any = useHomeProvider();
+
   const type = [
     { key: 1, value: "landmark" }, { key: 2, value: "festival" },]
 
-  //Countries
-  useEffect(() => {
-    const refCountries = ref(database, `countries`)
-    const unsubscribe = onValue(refCountries, (snapshot) => {
+  // Fetch data cities theo quốc gia
+  // Lấy các tỉnh/ thành của quốc gia - XONG
+  const fetchCitiesByCountry = useCallback(async (countryId: any) => {
+    try {
+      const refProvinces = ref(database, `cities/${countryId}`)
+      const snapshot = await get(refProvinces);
       if (snapshot.exists()) {
-        const jsonDataCountries = snapshot.val();
-        const countriesArray: any = Object.keys(jsonDataCountries).map(key => ({
-          key,
-          value: jsonDataCountries[key].label,
-        }));
-        setDataCountries(countriesArray)
+        const dataProvinces = snapshot.val() as Record<string, any>;;
+        // Dùng Object.entries + flatMap để gom dữ liệu từ các vùng thành 1 mảng Province[]
+        const dataCitiesArray: Province[] = Object.values(dataProvinces)
+          .flatMap(item => Object.values(item as Province))
+          .sort((a: Province, b: Province) => a.value.localeCompare(b.value));
 
+        // Thêm phần tử default
+        dataCitiesArray.unshift(new Province());
+        console.log(dataCitiesArray.slice(0, 3), 'check');
+
+        setDataCities(dataCitiesArray);
       } else {
-        console.log("No data available1");
+        console.log("FetchCityByCountry: No data available1");
+      }
+    } catch (error) {
+      console.error("FetchCityByCountry: Error fetching data: ", error);
+    }
+  }, [])
+  // Real time listening Firebase- Khi thêm thủ công vào Firebase thì sẽ tự động cập nhật dữ liệu
+  useEffect(() => {
+    if (!selectedCountry && (!selectedCity || selectedCity == '-1')) return
+    // setIsReady(true)
+    const refPoints = ref(database, `pointsNew/${selectedCountry}/${selectedCity}/`)
+
+    // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
+    const unsubscribe = onValue(refPoints, (snapshot) => {
+      if (snapshot.exists()) {
+        const dataPoints = snapshot.val() as Record<string, Point>;
+        const pointArr = Object.entries(dataPoints).map(([key, value]) => ({
+          key, // same as: key: key
+          value: value.title,
+          address: value.address,
+        }));
+        setFilteredData(pointArr)
+      } else {
+        setFilteredData([])
+        console.log("No data point available");
       }
     }, (error) => {
       console.error("Error fetching data:", error);
     });
 
-    return () => {
-      unsubscribe(); // Sử dụng unsubscribe để hủy listener
-    };
-  }, [])
-  // Fetch data cities theo quốc gia
-  const fetchCityByCountry = async (countryId: any) => {
-    // setDataCities([])
-    try {
-      const refCity = ref(database, `cities/${countryId}`)
-      const snapshot = await get(refCity);
-      if (snapshot.exists()) {
-        const dataCityJson = snapshot.val()
-        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]: any) =>
-          Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-            key: cityCode,
-            value: cityInfo.name,
-            // area: cityInfo.area_id,
-            // information: cityInfo.information
-          }))
-        );
-        console.log(dataCitiesArray,'array');
-        
-        setDataCities(dataCitiesArray)
-      } else {
-        setDataCities([])
-        console.log("No data city available");
-      }
-    } catch (error) {
-      console.error("Error fetching data: ", error);
-    }
-  }
-  // Fetch data point theo city
-  useEffect(() => {
-    if (selectedCity != "" && selectedCountry != "" ) {
-      setIsReady(true)
+    // Cleanup function để hủy listener khi component unmount
+    return () => unsubscribe();
+  }, [selectedCity])
 
-      const type = getValueFromKey(selectedPoint)
-      // console.log(type);
-
-      const onValueChange = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
-      // console.log(onValueChange);
-
-      // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
-      const data = onValue(onValueChange, (snapshot) => {
-        if (snapshot.exists()) {
-          const dataPoints = snapshot.val()
-          const pointArr: any = Object.entries(dataPoints).map((key: any) => ({
-            key: key[0],
-            value: key[1],
-          }));
-          setFilteredData(pointArr)
-        } else {
-          setFilteredData([])
-          console.log("No data point available");
-        }
-      }, (error) => {
-        console.error("Error fetching data:", error);
-      });
-
-      // Cleanup function để hủy listener khi component unmount
-      return () => data();
-    }
-  }, [selectedCity, selectedCountry, selectedPoint])
-
+  // const fetchDataPoints = useCallback(async (selectedCountry: any, selectedCity: any) => {
+  //   console.log(selectedCity, selectedCountry, 'check');
+  //   try {
+  //     const refPoints = ref(database, `pointsNew/${selectedCountry}/${selectedCity}/`)
+  //     const snapshot = await get(refPoints);
+  //     if (snapshot.exists()) {
+  //       const dataPoints = snapshot.val() as Record<string, Point>;
+  //       const pointArr = Object.entries(dataPoints).map(([key, value]) => ({
+  //         key, // same as: key: key
+  //         value: value.title
+  //       }));
+  //       setFilteredData(pointArr);
+  //     } else {
+  //       console.log("Fetch data Points: No data available11");
+  //       setFilteredData([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error: data points by City fetching data ", error);
+  //   }
+  // }, [])
   //When selectedCity & selectCountry & selectedPoint is ready
   // useEffect(() => {
   //   if (selectedCity != "" && selectedCountry != "" && selectedPoint != null) {
@@ -119,68 +116,79 @@ const Festival = () => {
 
 
   //Handle when selected countries
-  const handleSelectedCountry = (val: any) => {
-    setSelectedCountry(val)
-    fetchCityByCountry(val)
-  }
-  //Handle when selected countries
-  const handleSelectedCity = (val: any) => {
-    setSelectedCity(val)
+  const handleSelectedCountry = useCallback(async (val: any) => {
+    if (!val) return
+    if (val === 'avietnam') {
+      await fetchCitiesByCountry(val)
+    } else {
+      Alert.alert('Chưa hỗ trợ quốc gia này');
+    }
 
-    // if (val != null && val != undefined) {
-    //   const a: any = dataCities.find((e: any) => (e.key == val))
-    //   setCityArea(a.area)
-    //   setCityInformation(a.information)
-    // }
-  }
+    setIsReady(false)
+    setSelectedCountry(val);
+    setSelectedCity('-1');
+    setFilteredData([]);
+  }, [fetchCitiesByCountry])
+
+  //Handle when selected countries
+  const handleSelectedCity = useCallback((val: any) => {
+    if (!val) return
+    if (val != '-1') {
+      setIsReady(true)
+    }
+    else {
+      setIsReady(false)
+    }
+    setSelectedCity(val);
+  }, [selectedCountry]);
+  // }, [fetchDataPoints, selectedCountry]);
+
   // Find type
   const getValueFromKey = (key: any) => {
     const item = type.find((item) => item.key === key);
     return item ? item.value : null;
   };
-  const handleAdd = async () => {
-    if (selectedCity && selectedCity) {
-      // Dữ liệu mà bạn muốn truyền
-    const data = {
-      idCity: selectedCity,
-      idCountry: selectedCountry,
-    };
 
-    router.push({
-      pathname: "/newPoint",
-      params: data,
-    });
+
+  const handleAdd = useCallback(() => {
+    if (!selectedCity || selectedCity == '-1') {
+      Alert.alert("Có vấn đề gì đó!", "Có vẻ bạn chưa chọn tỉnh/thành phố.", [
+        { text: "OK", onPress: () => console.log("OK Pressed") }
+      ]);
+      return;
     } else {
-      Toast.show({
-        type: "error",
-        position: "top",
-        text1: "Có vấn đề gì đó!",
-        text2: `Có vẻ bạn chưa chọn tỉnh.`,
-        visibilityTime: 3000,
-        text1Style: { fontSize: 16 },
-        text2Style: { fontSize: 14 },
+      // Dữ liệu mà bạn muốn truyền
+      const data = {
+        idCity: selectedCity,
+        idCountry: selectedCountry,
+        nameCity: dataCities.find((item: any) => item.key === selectedCity)?.value || '',
+        nameCountry: dataCountries.find((item: any) => item.key === selectedCountry)?.value || ''
+      };
+      router.push({
+        pathname: "/newPoint",
+        params: data,
       });
     }
-    
-  };
+  }, [selectedCity, selectedCountry, dataCities, selectedCountry]);
   // Remove
   const handleRemove = (id: string) => {
-    const type = getValueFromKey(selectedPoint)
-    const refP = ref(database, `points/${selectedCountry}/${type}/${selectedCity}`)
+    // const type = getValueFromKey(selectedPoint)
+    const refP = ref(database, `pointsNew/${selectedCountry}/${selectedCity}/${id}`);
     Alert.alert(
-      "Remove point",
-      "Are you sure you want to remove this point?",
+      "Xóa địa điểm",
+      "Bạn chắc chắn muốn xóa địa điểm này chứ?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Hủy", style: "cancel" },
         {
-          text: "OK", onPress: () => {
+          text: "Đồng ý",
+          onPress: () => {
             remove(refP).then(() => {
-              console.log('Data remove successfully');
+              console.log('Xóa dữ liệu thành công');
             })
               .catch((error) => {
                 console.error('Error removing data: ', error);
               }); // Xóa từ khỏi Realtime Database
-          }
+          },
         }
       ]
     );
@@ -189,34 +197,63 @@ const Festival = () => {
 
   const renderPointsItem = (item: any) => {
     return (
-      <View style={styles.item}>
-        <Text style={styles.name}>{item.item.value.title}</Text>
-        <AntDesign name="delete" size={24} style={{ width: '10%', color: 'red' }} onPress={() => handleRemove(item.item.key)} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20, paddingHorizontal: 15, backgroundColor: '#fff', borderRadius: 20, elevation: 2 }}>
+        <View style={styles.item}>
+          <Text style={styles.name}>{item.item.value}</Text>
+          <Text style={{ paddingTop: 6 }}>{item.item.address}</Text>
+        </View>
+        <View style={{ flex: 0.2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <AntDesign name="delete" size={24} style={{ color: 'red' }} onPress={() => handleRemove(item.item.key)} />
+        </View>
       </View>
+
     )
   };
 
   return (
-    <View style={{flex:1, padding: 15, backgroundColor: 'white' }}>
-      <View style={styles.selectContainer}>
+    <View style={{ flex: 1, padding: 15, backgroundColor: 'white' }}>
+      {/* <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+        <Entypo name="info" size={14} color="#999999" />
+        <Text style={{ paddingLeft: 5, fontStyle: 'italic', color: "gray" }}>Quản lý thông tin về các địa điểm của từng tỉnh/thành phố</Text>
+      </View> */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-evenly",
+          marginBottom: 15,
+        }}>
         <SelectList
-          dropdownStyles={{width: 170, backgroundColor: 'white' }}
-          boxStyles={styles.selectList}
+          dropdownStyles={{
+            zIndex: 10,
+            position: "absolute",
+            width: 170,
+            backgroundColor: "white",
+            top: 40,
+          }}
+          boxStyles={{ width: 170 }}
           setSelected={(val: any) => handleSelectedCountry(val)}
           data={dataCountries}
           save="key"
-          placeholder='Quốc gia'
+          placeholder="Quốc gia"
         />
         <SelectList
-          dropdownStyles={{width: 170, backgroundColor: 'white'}}
-          boxStyles={styles.selectList}
+          dropdownStyles={{
+            zIndex: 10,
+            position: "absolute",
+            width: 170,
+            backgroundColor: "white",
+            top: 40,
+          }}
+          boxStyles={{ width: 170 }}
           setSelected={(val: any) => handleSelectedCity(val)}
           data={dataCities}
           save="key"
+          defaultOption={{ key: '', value: '' }}
           placeholder="Thành phố"
+
         />
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: "space-between", marginHorizontal: 20 }}>
+      {/* <View style={{ flexDirection: 'row', justifyContent: "space-between", marginHorizontal: 20 }}>
         {type.map((item) => (
           <TouchableOpacity
             key={item.key}
@@ -256,12 +293,12 @@ const Festival = () => {
             <Text>{item.value === "landmark" ? "Danh lam thắng cảnh":"Lễ hội"}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </View> */}
       <View style={styles.addBar}>
         {
           isReady && (
             <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-              <Text style={{ color: '#ffffff', fontSize: 20 }} >+</Text>
+              <Text style={{ color: '#ffffff', fontSize: 24 }} >+</Text>
             </TouchableOpacity>
           )}
       </View>
@@ -269,9 +306,10 @@ const Festival = () => {
         {filteredData.length > 0 ? (
           <FlatList
             data={filteredData}
-            keyExtractor={(item:any) => item.id}
+            keyExtractor={(item: any) => item.id}
             renderItem={renderPointsItem}
             contentContainerStyle={styles.containerFlatList}
+            ItemSeparatorComponent={() => <View style={{ height: 20, }} />}
           />
         ) : (
           <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
@@ -290,7 +328,7 @@ const styles = StyleSheet.create({
   }, containerFlat: {
     marginVertical: 20,
     // height: "75%",
-    flex:1,
+    flex: 1,
     borderColor: "red",
     borderWidth: 1,
     borderRadius: 30,
@@ -328,24 +366,25 @@ const styles = StyleSheet.create({
   selectList: {
     width: 170,
     // zIndex: 10, // Giúp hiển thị SelectList không bị đẩy xuống dưới khi mở
-  }, item: {
-    backgroundColor: '#fff',
-    padding: 16,
-    margin: 10,
-    borderRadius: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  },
+  item: {
+    flex: 1
+    // backgroundColor: '#fff',
+    // padding: 16,
+    // margin: 10,
+    // borderRadius: 20,
+    // flexDirection: 'row',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 1 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 2,
+    // elevation: 2,
   },
   name: {
     fontSize: 18,
     fontWeight: '600',
-    width: "50%"
   }, noAccountsText: {
     textAlign: 'center',
     fontSize: 16,
@@ -354,15 +393,14 @@ const styles = StyleSheet.create({
   }, addBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 10,
-    marginRight: 20,
-    height: 30
+    alignItems: 'center',
+    marginRight: 10,
   },
   addBtn: {
-    backgroundColor: '#5E8C31',
-    paddingHorizontal: 16,
-    marginLeft: 20,
+    backgroundColor: iconColors.green1,
+    paddingHorizontal: 20,
     borderRadius: 8,
+    elevation: 4
   },
 });
 

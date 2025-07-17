@@ -151,16 +151,15 @@ export default function PostReport() {
 
   // Render từng item trong danh sách
   const renderPostItem = (post: any) => {
-
     return (
       <TouchableOpacity key={post.item.id} style={styles.accountItem} onPress={
         () => handleNavigatePostDetail(post.item)
       }>
         <View style={{width:240}}>
           <Text style={styles.name}>{post.item.post_id}</Text>
-          {Object.values(post.item.reason).map((reason: any) => {
+          {Object.values(post.item.reason).map((reason: any, index: number) => {
             return (
-              <Text style={styles.reason}>- {reason}</Text>
+              <Text key={index} style={styles.reason}>- {reason}</Text>
             )
           })}
 

@@ -159,9 +159,9 @@ export default function CommentReport() {
         <View style={{width:240}}>
 
           <Text style={styles.name}>{comment.item.comment_id}</Text>
-          {Object.values(comment.item.reason).map((reason: any) => {
+          {Object.values(comment.item.reason).map((reason: any, index: number) => {
             return (
-              <Text style={styles.reason}>- {reason}</Text>
+              <Text key={index} style={styles.reason}>- {reason}</Text>
             )
           })}
 

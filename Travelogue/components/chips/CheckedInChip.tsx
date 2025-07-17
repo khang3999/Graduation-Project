@@ -20,7 +20,7 @@ export default function CheckedInChip({ items }: CheckedInChipProps) {
     <View style={styles.container}>
       {items.map((item, index) => (
         <TouchableOpacity style={styles.chipItem} key={index} onPress={() => router.push({
-          pathname: '/gallery',
+          pathname: '/galleryCities',
           params: { idCountry: item.country, idCity: item.locationCode },
         })}>
           <Chip key={index} style={{backgroundColor:'white'}}>
@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    alignItems:'center',
     marginVertical: 10,
     gap: 10
   },

@@ -12,10 +12,22 @@ export const formatNumberLike = (value) => {
     } else {
         return value.toString(); // Trả về giá trị gốc nếu nhỏ hơn 1,000
     }
-
     // Loại bỏ .00 nếu có
     return formattedValue.replace(/\.00/, '');
 }
+
+export const formatNumberShort = (num) => {
+    // if (num < 10_000) return num.toLocaleString('vi-VN'); 
+    if (num < 10_000) return num
+    
+    if (num < 1_000_000)
+        return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+
+    if (num < 1_000_000_000)
+        return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+
+    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+};
 // Hàm trộn mảng tour và bài viết theo tỉ lệ bất kì truyền vào
 export const mergeWithRatio = (arr1, arr2, ratio1, ratio2) => {
     const mergedArray = [];
@@ -54,6 +66,28 @@ export const slug = (str) => {
         .replace(/[\s-]+/g, '-') //Thay khoảng trắng bằng dấu -, ko cho 2 -- liên tục
 }
 
+export const extractFullLocationSlug = (text) => {
+    const parts = [];
+
+    const wardMatch = text.match(/(xã|phường|thị trấn|thị xã|tx\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (wardMatch) parts.push(`${slug(wardMatch[1])}-${slug(wardMatch[2])}`);
+
+    const districtMatch = text.match(/(huyện|quận|thị xã|tx\.?|q\.?|h\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (districtMatch) parts.push(`${slug(districtMatch[1])}-${slug(districtMatch[2])}`);
+
+    const provinceMatch = text.match(/(tỉnh)\s+([\p{L}\d\s\-]+)/iu);
+    if (provinceMatch) parts.push(`${slug(provinceMatch[1])}-${slug(provinceMatch[2])}`);
+
+    const cityMatch = text.match(/(thành phố|tp\.?)\s+([\p{L}\d\s\-]+)/iu);
+    if (cityMatch) parts.push(`${slug(cityMatch[1])}-${slug(cityMatch[2])}`);
+
+    return parts.join(", ");
+};
+
+export const formatKeySearch = (text) => {
+    if (!text) return '';
+    return String(text).replace(/Hoà/g, "Hòa").normalize("NFC").trim().replace(/\s+/g, '_');
+}
 // Hàm để đếm số lượng địa điểm trùng khớp trả về % trùng khớp
 export const countMatchingLocations = (listLocationIdBase, locationsList) => {
     // const locationIdOfTour = Object.keys(tour.locations).flatMap((country) =>

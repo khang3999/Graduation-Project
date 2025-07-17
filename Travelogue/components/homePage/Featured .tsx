@@ -1,52 +1,55 @@
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Image, Text, FlatList, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useRanking } from "@/contexts/RankingContext";
+import { iconColors } from "@/assets/colors";
+import { icons } from "@/assets/icons";
+import { MaterialIcons } from "@expo/vector-icons";
 
-interface StoryItemProps {
-  item: {
-    id: string;
-    name: string;
-    image: string;
-    id_nuoc: string;
-  };
-}
+// interface StoryItemProps {
+//   item: {
+//     id: string;
+//     name: string;
+//     image: string;
+//     id_nuoc: string;
+//   };
+// }
 
-const StoryItem = ({ item }: StoryItemProps) => (
+const StoryItem = ({ item }: any) => (
   <TouchableOpacity
     style={{ alignItems: "center", marginHorizontal: 8 }}
     onPress={() => {
       router.push({
         pathname: "/galleryCities",
         params: {
-          idCity: item.id,
-          idCountry: item?.id_nuoc,
+          idCity: item.key,
+          idCountry: item.idCountry,
         },
       });
     }}
   >
     <View
       style={{
-        width: 82,
-        height: 82,
+        width: 75,
+        height: 75,
         borderRadius: 50,
-        borderWidth: 3.5,
-        borderColor: "#9966FF",
+        borderWidth: 2,
+        borderColor: iconColors.green1,
         padding: 2,
       }}
     >
       <Image
         source={{
-          uri: item.image || "https://mediatech.vn/assets/images/imgstd.jpg",
+          uri: item.defaultImages?.[0]
         }}
         style={{ width: "100%", height: "100%", borderRadius: 50 }}
       />
     </View>
     <Text
-      style={{ color: "white", fontSize: 13, marginTop: 5, fontWeight: "bold" }}
+      style={{ color: "black", fontSize: 13, marginTop: 5, fontWeight: "500" }}
     >
-      {item.name}
+      {item.value}
     </Text>
   </TouchableOpacity>
 );
@@ -54,39 +57,68 @@ const StoryItem = ({ item }: StoryItemProps) => (
 const Featured = () => {
   const { citiesData } = useRanking();
 
+  useEffect(() => {
+    // console.log(citiesData, "Cities data in Featured component");
+
+  }, [])
+
   return (
     <View
-      style={{ position: "relative", padding: 10, backgroundColor: "#000022" }}
+      style={{ flexDirection: 'row', backgroundColor: iconColors.green1, marginVertical: 10 }}
     >
       <FlatList
-        data={citiesData.slice(0, 4)}
+        data={[]}
+        // data={citiesData.slice(0, 4)}
         horizontal
-        keyExtractor={(item) => item.id}
+        style={{
+          flex: 1, padding: 10, backgroundColor: iconColors.green2, borderTopRightRadius: 6,
+          borderBottomRightRadius: 6,
+        }}
+        keyExtractor={(item:any) => item.key}
         renderItem={({ item }) => <StoryItem item={item} />}
         showsHorizontalScrollIndicator={false}
       />
       <TouchableOpacity
         style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: 30,
-          backgroundColor: "rgba(255, 255, 255, 0.6)",
+          backgroundColor: iconColors.green1,
           justifyContent: "center",
           alignItems: "center",
-          borderTopLeftRadius: 5,
-          borderBottomLeftRadius: 5,
+          padding: 2
+
+        }}
+        onPress={() => {
+          // router.push({
+          //   pathname: "/rankingTrend",
+          // });
+          router.push({
+            pathname: "/(trending)/cityTrending",
+          });
+        }}
+      // activeOpacity={0.7}
+      >
+        <MaterialIcons name="read-more" size={28} color='white' />
+      </TouchableOpacity>
+
+      {/* <TouchableOpacity
+        style={{
+          backgroundColor: iconColors.green1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 2
+
         }}
         onPress={() => {
           router.push({
             pathname: "/rankingTrend",
           });
+          // router.push({
+          //   pathname: "/(trending)/cityTrending",
+          // });
         }}
-        activeOpacity={0.7}
+      // activeOpacity={0.7}
       >
-        <Icon name="chevron-forward" size={24} color="#fff" />
-      </TouchableOpacity>
+        <MaterialIcons name="read-more" size={28} color='white' />
+      </TouchableOpacity> */}
     </View>
   );
 };

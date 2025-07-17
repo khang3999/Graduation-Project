@@ -28,7 +28,7 @@ export default function AccountManagementScreen() {
     const account = onValue(onValueChange, (snapshot) => {
       if (snapshot.exists()) {
         const jsonData = snapshot.val();
-        console.log(jsonData);
+        // console.log(jsonData);
         const jsonDataArr: any = Object.values(jsonData)
         // console.log(jsonDataArr);
         // Lọc các bài có status != 2, da xu ly
@@ -138,7 +138,7 @@ export default function AccountManagementScreen() {
         <FlatList
           data={dataAccount}
           renderItem={renderAccountItem}
-          keyExtractor={(item: any) => item.account_id}
+          keyExtractor={(item: any) => item.id}
         />
       ) : (
         <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
