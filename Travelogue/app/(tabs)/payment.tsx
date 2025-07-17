@@ -294,13 +294,21 @@ const Payment = () => {
   }
   const filterLogic = (item: any, typeFilter: number) => {
     // dayjs(startDate).startOf('day').valueOf() dua ve timestamp 00:00:00 dd/mm/yyyy
-    if (item.created_at >= dayjs(startDate).startOf('day').valueOf() && item.created_at <= dayjs(endDate).endOf('day').valueOf()) {
+    if (startDate&&endDate){
+      if (item.created_at >= dayjs(startDate).startOf('day').valueOf() && item.created_at <= dayjs(endDate).endOf('day').valueOf()) {
+        switch (typeFilter) {
+          case 1: return item.payment > 0
+          case 2: return item.payment < 0
+          case 3: return item
+        }
+      }
+    }
+    else{
       switch (typeFilter) {
         case 1: return item.payment > 0
         case 2: return item.payment < 0
         case 3: return item
       }
-
     }
   };
   const handleFilter = (dataExchanges: any, typeFilter: number) => {
@@ -317,8 +325,8 @@ const Payment = () => {
     setLoadingRefresh(true); // Bắt đầu hiệu ứng loading
     setTimeout(() => {
       setDataExchangesFilter(dataExchanges);
-      setEndDate(new Date())
-      setStartDate(new Date())
+      setEndDate(null)
+      setStartDate(null)
       setLoadingRefresh(false);
     }, 1000);
   };
@@ -444,8 +452,11 @@ const Payment = () => {
 
       {/* Datepicker */}
       <TouchableOpacity onPress={openDialogFilter} style={[styles.touchableDatePicker]}>
-        <Text style={{ fontSize: 20 }}>
+        {/* <Text style={{ fontSize: 20 }}>
           {(startDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN")) + " - " + (endDate ? ((new Date(endDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN"))}
+        </Text> */}
+        <Text style={{ fontSize: 20 }}>
+          {(startDate && endDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN") + " - " + (new Date(endDate.toString())).toLocaleDateString("vi-VN")) :"Tất cả giao dịch")}
         </Text>
       </TouchableOpacity>
       <Modal
@@ -480,7 +491,7 @@ const Payment = () => {
                     selected_label: { color: 'white' }, // Highlight the selected day label
                   }}
                   disabledDates={(date: any) => date > new Date()}
-                  showOutsideDays={true}
+                  // showOutsideDays={true}
                   weekdaysFormat={"short"}
                   // timeZone="UTC"
                   firstDayOfWeek={1}
