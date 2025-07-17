@@ -2,44 +2,66 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import React, { useState, useEffect, Children, useCallback } from 'react';
 import { database, onValue, ref, get } from '@/firebase/firebaseConfig';
 import { runTransaction, update } from '@firebase/database';
+import { useRanking } from '@/contexts/RankingContext';
+import { now } from 'lodash';
 
 const Reset = () => {
   const [selected, setSelected] = useState("");
   const [selectedCities, setSelectedCities] = useState([]);
-  const resetScore = useCallback(async()=>{
+  const { citiesData } = useRanking()
+
+  const resetScore = useCallback(async () => {
     if (!selected) {
       console.log("aaaaaa");
-      
+
       return
     }
     try {
-      const refReset = ref(database,selected)
-      const snapshot = await get (refReset)
+      const refReset = ref(database, selected)
+      const snapshot = await get(refReset)
       if (snapshot.exists()) {
-        const posts = snapshot.val()  
-        for (const selectedId of Object.keys(posts)){
-          const refPost = ref(database,`${selected}/${selectedId}/scores`)
-          await runTransaction(refPost,()=>{
+        const posts = snapshot.val()
+        for (const selectedId of Object.keys(posts)) {
+          const refPost = ref(database, `${selected}/${selectedId}/scores`)
+          await runTransaction(refPost, () => {
             return 0
           })
         };
-        
+
       }
-      else{
+      else {
         console.log("Reset fail");
-        
+
       }
     } catch (error) {
-      console.error("Reset fail: ", error);      
+      console.error("Reset fail: ", error);
     }
-  },[selected])
+  }, [selected])
+  const resetCitiesScore = useCallback(async () => {
+    if (!selected) {
+      console.log("cccc");
 
-  // const resetCitiesScore = 
+      return
+    }
+    try {
 
-  const handleReset = (key:any) => {
+      for (const city of citiesData) {
+        const refCity = ref(database, `cities/${city.idCountry}/${city.areaId}/${city.key}/scores`)
+        await runTransaction(refCity, () => {
+          return 0
+        })
+      };
+
+
+    } catch (error) {
+      console.error("Reset fail: ", error);
+    }
+  }, [selected, citiesData])
+
+  const handleReset = (key: any) => {
     let notiKey = "";
     switch (key) {
-      case ("test"):
+      case ("cities"):
         notiKey = "Tỉnh thành";
         break;
       case ("posts"):
@@ -49,77 +71,56 @@ const Reset = () => {
         notiKey = "Tour"
         break;
     }
-    Alert.alert(
-      "Xác nhận làm mới điểm ",
-      "Bạn chắc chắn muốn làm mới điểm của " + notiKey + " ?",
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Đồng ý", onPress: () => {
-            
-            setSelected(key)
-            
+    if (new Date().getDate() !== 17) {
+      Alert.alert(
+        "Xác nhận làm mới điểm ",
+        "Hôm nay không phải ngày đầu tháng, bạn chắc chắn muốn làm mới điểm của " + notiKey + " ?",
+        [
+          { text: "Huỷ", style: "cancel" },
+          {
+            text: "Đồng ý", onPress: () => {
+
+                      setSelected(key)
+
+                    }
+                  }
+                ]
+              );
+    }
+    else {
+      Alert.alert(
+        "Xác nhận làm mới điểm ",
+        "Bạn chắc chắn muốn làm mới điểm của " + notiKey + " ?",
+        [
+          { text: "Huỷ", style: "cancel" },
+          {
+            text: "Đồng ý", onPress: () => {
+
+              setSelected(key)
+
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!selected) {
       console.log("bbbb");
-      
+
       return
     }
-    if (selected!="cities") {
+    if (selected != "cities") {
       resetScore()
     }
-    else{
-
+    else {
+      resetCitiesScore()
     }
     setSelected("")
-  },[selected])
+  }, [selected])
 
-  useEffect(()=>{
-    try {
-      
-    } catch (error) {
-      
-    }
-  },[])
-  // const fetchTrendingCity = useCallback(async () => {
-  //   if (isRefreshing) return;
 
-  //   setIsRefreshing(true);
-  //   try {
-  //     const cityRef = ref(database, "cities/avietnam/");
-
-  //     const snapshot = await get(cityRef);
-
-  //     // const cityQuery = query(cityRef, orderByChild("scores"));
-  //     // const trendingSnapshot = await get(cityQuery);
-  //     if (snapshot.exists()) {
-  //       const trendingData = snapshot.val();
-  //       const dataProvincesArray: any[] = Object.values(trendingData)
-  //         .flatMap((item: any) => Object.values(item))
-  //         // .sort((a: any, b: any) => b.scores - a.scores);
-  //         .sort((a: any, b: any) => b.scores - a.scores).slice(0, 15);
-  //       // const trendingCitiesArray = Object.keys(trendingData)
-  //       // console.log(dataProvincesArray, "Trending city data:");
-  //       setCitiesData(dataProvincesArray);
-
-  //       console.log("Trending city data fetched successfully.");
-  //     } else {
-  //       console.log("No trending city data found.");
-  //     }
-
-  //     // globalCitiesData = formattedTrendingData;
-  //   } catch (error) {
-  //     console.error("Error fetching trending city data:", error);
-  //   } finally {
-  //     setIsRefreshing(false);
-  //   }
-  // }, []);
 
   return (
     <View>
@@ -128,7 +129,7 @@ const Reset = () => {
         <Text style={styles.name}>Làm mới lại điểm của Tỉnh Thành</Text>
         <TouchableOpacity
           style={[styles.resetBtn]}
-          onPress={() => handleReset("test")}
+          onPress={() => handleReset("cities")}
         >
           <Text style={{ color: '#ffffff' }}>Reset</Text>
         </TouchableOpacity>
