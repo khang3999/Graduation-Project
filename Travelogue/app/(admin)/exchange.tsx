@@ -1,6 +1,6 @@
 import { View, Text, Alert, StyleSheet, FlatList, TextInput } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { database, onValue, ref ,get} from '@/firebase/firebaseConfig';
+import { database, onValue, ref, get } from '@/firebase/firebaseConfig';
 import { update } from '@firebase/database';
 import { Feather } from '@expo/vector-icons';
 
@@ -34,7 +34,7 @@ const Exchange = () => {
         });
         setDataExchanges(dataPending);
         console.log(dataPending);
-        
+
       } else {
         setDataExchanges([]);
         setFilteredData([]);
@@ -67,7 +67,7 @@ const Exchange = () => {
   const approvePayment = (payment: any) => {
     const refExchanges = ref(database, `exchanges/${payment.id}`);
     const refAccount = ref(database, `accounts/${payment.account_id}`);
-    
+
     Alert.alert(
       "Xác nhận nạp tiền",
       "Bạn chắc chắn muốn hoàn tất giao dịch này?",
@@ -79,14 +79,14 @@ const Exchange = () => {
             update(refExchanges, { status_id: 2 })
               .then(() => {
                 console.log('Exchange status updated successfully!');
-                
+
                 // Get balance of account (one-time read)
                 get(refAccount)
                   .then((snapshot) => {
                     if (snapshot.exists()) {
                       const jsonData = snapshot.val();
                       const newBalance = jsonData.balance + payment.payment;
-  
+
                       // Update balance of account
                       update(refAccount, { balance: newBalance })
                         .then(() => {
@@ -111,8 +111,8 @@ const Exchange = () => {
       ]
     );
   };
-  
-  
+
+
 
   const rejectPayment = (paymentId: any) => {
     const refExchanges = ref(database, `exchanges/${paymentId}`);
@@ -160,9 +160,15 @@ const Exchange = () => {
       <View style={styles.item}>
         <View style={styles.itemDetails}>
           <Text style={styles.fullName}>{exchange.item.name}</Text>
-          <View >
-            <Text style={styles.time}>{formatDate(exchange.item.created_at)}</Text>
-            <Text style={styles.accountId}>{exchange.item.account_id}</Text>
+          <View>
+            <View style={{}}>
+              <Text style={styles.textLabel}>- Thời gian yêu cầu:</Text>
+              <Text style={styles.time}>{formatDate(exchange.item.created_at)}</Text>
+            </View>
+            <View style={{}}>
+              <Text style={styles.textLabel}>- Mã công ty:</Text>
+              <Text style={styles.accountId}>{exchange.item.account_id}</Text>
+            </View>
           </View>
         </View>
         <View style={styles.paymentContainer}>
@@ -188,7 +194,7 @@ const Exchange = () => {
           <FlatList
             data={filteredData}
             renderItem={renderExchangeItem}
-          // keyExtractor={(item) => item.id}
+            keyExtractor={(item: any) => item.id}
           />
         ) : (
           <Text style={styles.noAccountsText}>Không có dữ liệu</Text>
@@ -229,16 +235,13 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: '#fff',
-    padding: 24, // Increased padding for better spacing
+    padding: 16, // Increased padding for better spacing
     marginBottom: 20, // Increased spacing between items
     borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowRadius: 10,
     elevation: 2,
   },
   itemDetails: {
@@ -250,17 +253,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   accountId: {
-    fontSize: 10, // Decreased font size for account ID
+    fontSize: 14, // Decreased font size for account ID
     fontStyle: 'italic',
-    color: '#777',
-    marginTop: 4,
+    fontWeight: '500',
+    paddingLeft: 10,
+    color: '#333333',
   },
   time: {
-    fontSize: 10, // Decreased font size for timestamp
+    fontSize: 14, // Decreased font size for timestamp
     fontStyle: 'italic',
-    color: '#777',
+    fontWeight: '500',
+    paddingLeft: 10,
+    color: '#333333',
+  },
+  textLabel: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#777777',
   },
   paymentContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
     flexDirection: 'row',
     alignItems: 'center',
   },

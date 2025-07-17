@@ -663,9 +663,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   button: {
-    padding: 20,
+    padding: 15,
     backgroundColor: 'rgba(100,100,100,0.5)',
-    borderRadius: 40
+    borderRadius: 40, 
+    elevation:4,
   },
   icon: {
     color: '#333',

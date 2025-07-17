@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import React, { useState, useEffect, Children } from 'react';
-import { FlatList, TextInput } from 'react-native-gesture-handler';
+import { FlatList } from 'react-native-gesture-handler';
 import { set, ref, database, onValue } from "@/firebase/firebaseConfig";
 import { push, remove } from '@firebase/database';
 
@@ -49,7 +49,7 @@ const Ban = () => {
       // Tạo key tu dong cua firebase
       const newItemKey = push(wordsRef);
       console.log(newItemKey);
-      
+
 
       // Sử dụng set() để thêm dữ liệu vào Firebase theo dạng key: value
       await set(newItemKey, inputText)

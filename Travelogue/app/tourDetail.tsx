@@ -33,7 +33,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { usePost } from "@/contexts/PostProvider";
 import TabBar from "@/components/navigation/TabBar";
 import { auth, database, getDownloadURL, onValue, storage, storageRef, uploadBytes } from "@/firebase/firebaseConfig";
-import { ref, push, set, get, refFromURL, update, increment } from "firebase/database";
+import { ref, push, set, get, refFromURL, update, increment, runTransaction } from "firebase/database";
 import { useAccount } from "@/contexts/AccountProvider";
 import HeartButton from "@/components/buttons/HeartButton";
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
@@ -732,18 +732,30 @@ const TourItem: React.FC<TourItemProps> = ({
       </View>
       {/* CONTENT */}
       <View style={{ flex: 1 }}>
+        {/* Author */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, marginTop: 30 }}>
+          <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleGoToProfileScreen(item.author.id)}>
+            <View style={{ width: 50, height: 50, borderRadius: 30, padding: 2, backgroundColor: 'white', elevation: 4, }}>
+              <Image source={{ uri: item.author.avatar }} style={{ width: '100%', height: '100%', borderRadius: 30 }}></Image>
+            </View>
+            <Text style={{ fontWeight: '500', marginLeft: 10, fontSize: 16 }}>{item.author.fullname}</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={{ fontStyle: 'italic' }}>{formatDate(item.created_at)}</Text>
+          </View>
+        </View>
         {/* Title */}
         <View style={styles.titleContainer}>
           <Image style={{ width: 40, height: 80, }} source={require('@/assets/images/mountainIcon.png')}></Image>
-          <Text style={styles.textTitle}>{item.title}</Text>
+          <Text style={styles.textTitle} >{item.title}</Text>
         </View>
         {/* CHIPS */}
         <CheckedInChip items={Object.values(flattenedLocationsArray)} />
 
         <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
-          <View style={[{ justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
+          <View style={[{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
             <Ionicons name="calendar" size={22} color={iconColors.green1} />
-            <Text style={{ fontSize: 18, paddingLeft: 10 }}>4 ngày</Text>
+            <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
           </View>
           {/* <View style={[styles.row, { backgroundColor: 'white', padding: 10, borderRadius: 50, elevation: 4 }]}>
             <FontAwesome6 name="money-check-dollar" size={22} color={iconColors.green1} />
@@ -780,7 +792,7 @@ const TourItem: React.FC<TourItemProps> = ({
 
 
         {/* Post Description */}
-        <View style={{ paddingHorizontal: 15, backgroundColor: 'white', padding: 10, margin: 10, borderRadius: 30, elevation: 4 }}>
+        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 10, borderRadius: 30, elevation: 4 }}>
           <Markdown>
             {desc.Markdown}
           </Markdown>
@@ -789,10 +801,24 @@ const TourItem: React.FC<TourItemProps> = ({
             <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
           </TouchableOpacity>
         </View>
-        <Divider style={styles.divider} />
+        {/* <Divider style={styles.divider} /> */}
       </View>
-      <View style={[styles.row, { position: 'absolute', bottom: 0, width: '100 %', backgroundColor: 'red', padding: 20}]}>
-        <Text>Booking now</Text>
+      <View style={[styles.row, { bottom: 0, width: '100%', backgroundColor: iconColors.green5, padding: 15, gap: 10 }]}>
+        <TouchableOpacity style={{ backgroundColor: iconColors.green3, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
+          <FontAwesome6 name="phone-volume" size={20} color="black" />
+          <Text style={{ fontWeight: '500', paddingLeft: 10 }}>LIÊN HỆ</Text>
+        </TouchableOpacity>
+        {/* Price */}
+        <View style={{ flex: 1 }}></View>
+        <View style={{ backgroundColor: 'red' }}>
+          <Text style={{ textAlign: 'left' }} >500</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Text >1000</Text>
+            <View style={{ width: 2, height: 50, backgroundColor: 'gray', marginHorizontal: 20 }}></View>
+            <Text>1</Text>
+            <Ionicons name="people" size={20} color={iconColors.green1} />
+          </View>
+        </View>
       </View>
 
 
@@ -918,6 +944,14 @@ export default function ToursScreen() {
   const fetchTourById = async (tourId: any) => {
     try {
       const refTour = ref(database, `tours/${tourId}`)
+
+      const refScore = ref(database, `tours/${tourId}/scores`);
+
+      // Cập nhật scores trước
+      await runTransaction(refScore, (currentScore) => {
+        return (currentScore || 0) + 1;
+      });
+
       const snapshot = await get(refTour);
       if (snapshot.exists()) {
         const dataTourJson: any = snapshot.val()
@@ -983,8 +1017,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 15,
-    paddingTop: 20,
-    height: 70,
+    paddingHorizontal: 20,
+    // height: 50,
     overflow: 'hidden'
   },
   textTitle: {
@@ -992,9 +1026,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   headerButton: {
-    padding: 20,
+    padding: 15,
     backgroundColor: 'rgba(100,100,100,0.5)',
-    borderRadius: 40
+    borderRadius: 40,
+    elevation: 4,
   },
   header: {
     position: 'absolute',
