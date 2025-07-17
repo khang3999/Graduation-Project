@@ -39,7 +39,7 @@ const PostTrending = () => {
             router.push({
               pathname: "/postDetail",
               params: {
-                postId: postsData1[1]?.id
+                postId: postsData1?.[1]?.id
               },
             })
           }
@@ -102,7 +102,7 @@ const PostTrending = () => {
             router.push({
               pathname: "/postDetail",
               params: {
-                postId: postsData1[0]?.id
+                postId: postsData1?.[0]?.id
               },
             })
           }
@@ -163,7 +163,7 @@ const PostTrending = () => {
             router.push({
               pathname: "/postDetail",
               params: {
-                postId: postsData1[2]?.id
+                postId: postsData1?.[2]?.id
               },
             })
           }

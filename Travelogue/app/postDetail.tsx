@@ -41,8 +41,9 @@ import CommentsActionSheet from "@/components/comments/CommentsActionSheet";
 import { Comment, RatingComment } from '@/types/CommentTypes';
 import { formatDate } from "@/utils/commons"
 import { useHomeProvider } from "@/contexts/HomeProvider";
-import { MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ImageModal from "react-native-image-modal";
+import { backgroundColors, iconColors } from "@/assets/colors";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -66,7 +67,8 @@ type Post = {
   reports: number;
   mode: number;
   view_mode: boolean;
-  thumbnail: any
+  thumbnail: any,
+  title: string
 }
 type PostItemProps = {
   item: Post;
@@ -358,73 +360,109 @@ const PostItem: React.FC<PostItemProps> = ({
     console.log(likedPostsList, 'check detail');
   }, [likedPostsList])
   return (
-    <View>
-      {/* Post Header */}
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.row}
-          onPress={() => handleGoToProfileScreen(item.author.id)}
-        >
-          <Image
-            source={{ uri: item.author.avatar }}
-            style={styles.miniAvatar}
-          />
-          <View style={styles.column}>
-            <Text style={styles.username}>{item.author.fullname}</Text>
-            <Text style={styles.time}>{formatDate(item.created_at)}</Text>
+    <View style={{ backgroundColor: backgroundColors.background1 }}>
+      <View style={{ flex: 1, height: windowWidth }}>
+        {/* Post Header */}
+        <View style={styles.header}>
+          <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
+            <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+              <AntDesign name="arrowleft" size={24} color='white' />
+            </TouchableOpacity>
+            <View style={{}}>
+              <MenuItem locations={item.locations} mode={item.mode} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+            </View>
           </View>
-        </TouchableOpacity>
-        <View style={{ zIndex: 1000 }}>
-          <MenuItem locations={item.locations} mode={item.mode} isAuthor={isPostAuthor} postId={item.id} userId={dataAccount.id} />
+        </View>
+
+        {/* Post Images Carousel */}
+        <View style={{ backgroundColor: 'white', width: windowWidth, height: windowWidth, }}>
+          <Carousel
+            pagingEnabled={true}
+            loop={false}
+            width={windowWidth}
+            height={windowWidth + 100}
+            data={flattenedImagesArray}
+            scrollAnimationDuration={300}
+            renderItem={({ item, index }) => (
+              <View style={styles.carouselItem}>
+                <ImageModal swipeToDismiss={true}
+                  resizeMode="cover"
+                  imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
+                <View style={{ position: 'absolute', bottom: 140, width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+                  <View style={styles.viewTextStyles}>
+                    <Text style={styles.carouselText}>
+                      {index + 1}/{flattenedImagesArray.length} - {item.cityName}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          />
         </View>
       </View>
 
-      {/* Post Images Carousel */}
-      <Carousel
-        pagingEnabled={true}
-        loop={false}
-        width={windowWidth}
-        height={windowWidth}
-        data={flattenedImagesArray}
-        scrollAnimationDuration={300}
-        renderItem={({ item, index }) => (
-          <View style={styles.carouselItem}>
-            <ImageModal swipeToDismiss={true}
-              resizeMode="contain"
-              imageBackgroundColor="#fff" style={styles.posts} source={{ uri: item.imageUrl }} />
-            <View style={styles.viewTextStyles}>
-              <Text style={styles.carouselText}>
-                {index + 1}/{flattenedImagesArray.length} - {item.cityName}
-              </Text>
-            </View>
-          </View>
-        )}
-      />
-      <View>
-        {/* Post Interaction Buttons */}
-        <View style={styles.buttonContainer}>
-          <View style={styles.buttonRow}>
-            {/* <HeartButton style={styles.buttonItem} data={item} type={TYPE}/> */}
-            <HeartButton data={item} type={TYPE} liked={item.id in likedPostsList}></HeartButton>
+      <View style={{ position: 'absolute', borderRadius: 600, width: windowWidth * 2, height: windowWidth * 2, left: -windowWidth / 2, top: windowWidth, justifyContent: 'center', alignItems: 'flex-end', overflow: 'hidden', backgroundColor: backgroundColors.background1 }}>
+      </View>
+
+      {/* CONTENT */}
+      <View style={{ flex: 1, }}>
+        {/* BUTTON */}
+        <View style={styles.buttonRow}>
+          {/* Button comment */}
+          <View style={[styles.buttonItem, { gap: 10 }]}>
             <CommentButton
-              style={styles.buttonItem}
+              style={[styles.buttonComment,]}
               onPress={openCommentModal}
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          <SaveButton style={styles.buttonItem} data={item} type={TYPE} />
+
+          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type={TYPE} />
         </View>
+
+        {/* CHIP */}
+        {/* Author */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, marginTop: 80 }}>
+          <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleGoToProfileScreen(item.author.id)}>
+            <View style={{ width: 50, height: 50, borderRadius: 30, padding: 2, backgroundColor: 'white', elevation: 4, }}>
+              <Image source={{ uri: item.author.avatar }} style={{ width: '100%', height: '100%', borderRadius: 30 }}></Image>
+            </View>
+            <Text style={{ fontWeight: '500', marginLeft: 10, fontSize: 16 }}>{item.author.fullname}</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={{ fontStyle: 'italic' }}>{formatDate(item.created_at)}</Text>
+          </View>
+        </View>
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <Image style={{ width: 40, height: 80, }} source={require('@/assets/images/mountainIcon.png')}></Image>
+          <Text style={styles.textTitle} >{item.title}</Text>
+        </View>
+        {/* CHIP */}
+        <View style={{ paddingHorizontal: 20 }}>
+          <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+        </View>
+        {/* BADGE */}
+        <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
+          <View style={[{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
+            <Ionicons name="calendar" size={22} color={iconColors.green1} />
+            <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
+          </View>
+        </View>
+
+        {/* Post Description */}
+        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 10, borderRadius: 30, elevation: 4 }}>
+          <Markdown>
+            {desc.Markdown}
+          </Markdown>
+          <TouchableOpacity onPress={() => toggleDescription(item.id)}>
+            <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
+          </TouchableOpacity>
+        </View>
+        {/* <Divider style={styles.divider} /> */}
       </View>
-      <CheckedInChip items={Object.values(flattenedLocationsArray)} />
-      {/* Post Description */}
-      <View style={{ paddingHorizontal: 15 }}>
-        <Markdown>
-          {desc.Markdown}
-        </Markdown>
-        <TouchableOpacity onPress={() => toggleDescription(item.id)}>
-          <Text>{isExpanded ? "Ẩn bớt" : "Xem thêm"}</Text>
-        </TouchableOpacity>
-      </View>
-      <Divider style={styles.divider} />
+
+
       {/* Comment Bottom Sheet */}
       <CommentsActionSheet
         commentRefAS={commentAS}
@@ -435,9 +473,6 @@ const PostItem: React.FC<PostItemProps> = ({
         postId={item.id}
         type={"post"}
       />
-
-
-
     </View>
   );
 };
@@ -462,7 +497,7 @@ export default function PostsScreen() {
       await runTransaction(refScore, (currentScore) => {
         return (currentScore || 0) + 1;
       });
-     
+
       const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataPostJson: any = snapshot.val()
@@ -518,6 +553,38 @@ export default function PostsScreen() {
   );
 }
 const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 15,
+    paddingHorizontal: 20,
+    // height: 50,
+    overflow: 'hidden'
+  },
+  textTitle: {
+    fontSize: 26,
+    fontWeight: '600',
+  },
+  buttonComment: {
+    padding: 0
+  },
+  buttonSave: {
+    // padding: 20
+  },
+  headerButton: {
+    padding: 15,
+    backgroundColor: 'rgba(100,100,100,0.5)',
+    borderRadius: 40,
+    // elevation: 4,
+  },
+  header: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    width: '100%',
+    // paddingTop:40
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -856,10 +923,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   totalComments: {
-    marginRight: 10,
-    marginTop: 1,
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "500",
   },
   commentsContainer: {
     marginBottom: 100,
@@ -875,7 +940,9 @@ const styles = StyleSheet.create({
   },
   carouselItem: {
     flex: 1,
+    alignSelf: 'center',
     justifyContent: "center",
+    height: windowWidth,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -883,21 +950,33 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   buttonRow: {
+    position: 'absolute',
+    top: 0,
     flexDirection: "row",
-    width: 150,
-    paddingVertical: 6,
+    width: '100%',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20
   },
   buttonItem: {
+    flexDirection: 'row',
     alignItems: "center",
-    marginHorizontal: 10,
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 80,
+    elevation: 6,
+    width: 65,
+    height: 65
   },
   viewTextStyles: {
-    position: "absolute",
-    backgroundColor: "#392613",
-    top: 10,
-    left: windowWidth - 120,
+    // position: "absolute",
+    // backgroundColor: "#392613",
+    // top: 10,
+    // left: windowWidth - 120,
+    // borderRadius: 20,
+    // paddingHorizontal: 7,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
     borderRadius: 20,
-    paddingHorizontal: 7,
   },
   replyingToContainer: {
     padding: 10,
@@ -946,7 +1025,7 @@ const styles = StyleSheet.create({
   },
   posts: {
     width: windowWidth,
-    height: windowWidth,
+    height: windowWidth + 100,
   },
   modalContent: {
     padding: 20,

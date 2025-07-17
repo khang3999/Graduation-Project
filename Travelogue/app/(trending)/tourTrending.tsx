@@ -35,11 +35,12 @@ const TourTrending = () => {
         {/* top 2 */}
         <TouchableOpacity
           style={styles.rankContainer}
+          disabled={toursData.length === 0 ? true : false}
           onPress={() =>
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[1]?.id
+                tourId: toursData?.[1]?.id
               },
             })
           }
@@ -99,11 +100,12 @@ const TourTrending = () => {
         {/* top 1 */}
         <TouchableOpacity
           style={[styles.rankContainer]}
+          disabled={toursData.length === 0 ? true : false}
           onPress={() =>
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[0]?.id
+                tourId: toursData?.[0]?.id
               },
             })
           }
@@ -164,7 +166,7 @@ const TourTrending = () => {
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[2]?.id
+                tourId: toursData?.[2]?.id
               },
             })
           }
@@ -221,7 +223,7 @@ const TourTrending = () => {
       </View>
 
       {/* danh sách các hạng còn lại */}
-      <View style={{ backgroundColor: backgroundColors.background2, flex: 1, padding: 10, paddingBottom:70 }}>
+      <View style={{ backgroundColor: backgroundColors.background2, flex: 1, padding: 10, paddingBottom: 70 }}>
         <FlatList
           data={toursData.slice(3)}
           // contentContainerStyle={{ backgroundColor: backgroundColors.background2, paddingHorizontal: 10 }}
@@ -236,7 +238,7 @@ const TourTrending = () => {
               onPress={() =>
                 router.push({
                   pathname: "/tourDetail",
-                  params: { tourId: item.id},
+                  params: { tourId: item.id },
                 })
               }
             >

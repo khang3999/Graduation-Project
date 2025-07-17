@@ -17,9 +17,12 @@ export const formatNumberLike = (value) => {
 }
 
 export const formatNumberShort = (num) => {
+    if (!num && num !== 0) {
+        return '...'
+    }
     // if (num < 10_000) return num.toLocaleString('vi-VN'); 
     if (num < 10_000) return num
-    
+
     if (num < 1_000_000)
         return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
 

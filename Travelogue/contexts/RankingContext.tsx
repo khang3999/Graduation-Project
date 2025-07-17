@@ -183,6 +183,7 @@ export const RankingProvider = ({ children }: any) => {
         console.log("Trending tour data fetched successfully.");
       } else {
         console.log("No trending tour data found.");
+        setToursData([]);
       }
 
       // globalCitiesData = formattedTrendingData;

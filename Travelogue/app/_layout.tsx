@@ -160,7 +160,7 @@ export default function Layout() {
             <Stack.Screen
               name="postDetail"
               options={{
-                headerShown: true,
+                headerShown: false,
                 title: "Bài viết",
                 headerStyle: {
                   backgroundColor:
