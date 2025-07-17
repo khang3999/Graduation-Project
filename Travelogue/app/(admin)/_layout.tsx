@@ -141,7 +141,16 @@ export default function Layout() {
               <MaterialCommunityIcons name="information-outline" size={size} color={color} />
             )
           }}
-        />
+        /><Drawer.Screen
+        name="reset"
+        options={{
+          drawerLabel: 'Reset',
+          title: 'Reset',
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="information-outline" size={size} color={color} />
+          )
+        }}
+      />
       </Drawer>
 
     </GestureHandlerRootView>
