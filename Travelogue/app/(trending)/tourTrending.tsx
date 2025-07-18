@@ -1,5 +1,5 @@
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 import { router } from 'expo-router';
@@ -7,10 +7,22 @@ import { useRanking } from '@/contexts/RankingContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import { formatNumberShort } from '@/utils';
 import { backgroundColors } from '@/assets/colors';
+import { useIsFocused } from '@react-navigation/native';
 const screenHeight = Dimensions.get('window').height;
 const TourTrending = () => {
   const insets = useSafeAreaInsets();
-  const { toursData } = useRanking()
+  const { toursData, fetchTrendingTour, setCurrentScreen } = useRanking()
+
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      // Màn hình hiện tại được focus
+      setCurrentScreen('tour')
+      console.log("Đã quay lại màn hình - load lại dữ liệu");
+      fetchTrendingTour();
+    }
+  }, [isFocused]);
 
   return (
     <View style={{ height: screenHeight - insets.bottom - insets.top }}>
@@ -35,11 +47,12 @@ const TourTrending = () => {
         {/* top 2 */}
         <TouchableOpacity
           style={styles.rankContainer}
+          disabled={toursData.length === 0 ? true : false}
           onPress={() =>
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[1]?.id
+                tourId: toursData?.[1]?.id
               },
             })
           }
@@ -99,11 +112,12 @@ const TourTrending = () => {
         {/* top 1 */}
         <TouchableOpacity
           style={[styles.rankContainer]}
+          disabled={toursData.length === 0 ? true : false}
           onPress={() =>
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[0]?.id
+                tourId: toursData?.[0]?.id
               },
             })
           }
@@ -164,7 +178,7 @@ const TourTrending = () => {
             router.push({
               pathname: "/tourDetail",
               params: {
-                tourId: toursData[2]?.id
+                tourId: toursData?.[2]?.id
               },
             })
           }
@@ -221,7 +235,7 @@ const TourTrending = () => {
       </View>
 
       {/* danh sách các hạng còn lại */}
-      <View style={{ backgroundColor: backgroundColors.background2, flex: 1, padding: 10, paddingBottom:70 }}>
+      <View style={{ backgroundColor: backgroundColors.background2, flex: 1, padding: 10, paddingBottom: 70 }}>
         <FlatList
           data={toursData.slice(3)}
           // contentContainerStyle={{ backgroundColor: backgroundColors.background2, paddingHorizontal: 10 }}
@@ -236,7 +250,7 @@ const TourTrending = () => {
               onPress={() =>
                 router.push({
                   pathname: "/tourDetail",
-                  params: { tourId: item.id},
+                  params: { tourId: item.id },
                 })
               }
             >

@@ -4,13 +4,13 @@ import { FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-ico
 import { StyleSheet } from 'react-native'
 
 export default function LiveModeButton(props: any) {
-    const type = props.type
-    if (type == 0) {
+    const mode = props.mode
+    if (mode !== 'live') {
         return <View></View>
     }
     return (
         <>
-            {type == 1 ?
+            {mode === 'live' ?
                 <View style={[styles.container, { backgroundColor: 'red' }]}>
                     <MaterialCommunityIcons name="run-fast" size={22} color='white' />
                     {/* <Ionicons name="footsteps" size={24} color="red" /> */}

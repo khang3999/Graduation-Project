@@ -1,20 +1,36 @@
 import { View, Text, TouchableOpacity } from 'react-native'
-import React, { useCallback } from 'react'
-import { router, Tabs } from 'expo-router'
+import React, { useCallback, useEffect } from 'react'
+import { router, Tabs, useRouter } from 'expo-router'
 import { useRanking } from '@/contexts/RankingContext';
 import { AntDesign, Entypo, FontAwesome6, Fontisto, Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { iconColors } from '@/assets/colors';
 import Toast from 'react-native-toast-message-custom';
+import { useNavigationState } from '@react-navigation/native';
 
 const _layout = () => {
-  const { refreshTrendingAll } = useRanking();
+
+  const { currentScreen, fetchTrendingCity,
+    fetchTrendingPost,
+    fetchTrendingTour, } = useRanking();
   const currentMonth = new Date().getMonth() + 1; // Tháng hiện tại (1 - 12)
   const title = `Top trending tháng ${currentMonth}`;
 
   const handleRefeshTrending = useCallback(async () => {
-    await refreshTrendingAll()
-
+    switch (currentScreen) {
+      case 'city':
+        await fetchTrendingCity()
+        break;
+      case 'post':
+        await fetchTrendingPost()
+        break;
+      case 'tour':
+        await fetchTrendingTour()
+        break;
+      default:
+        break;
+    }
+    // await refreshTrendingAll()
     //Khi xong thì show toast
     Toast.show({
       type: 'success',
@@ -22,7 +38,7 @@ const _layout = () => {
       text2: 'Bảng xếp hạng đã được làm mới',
       position: 'top',
     });
-  }, [refreshTrendingAll])
+  }, [currentScreen, fetchTrendingCity, fetchTrendingPost, fetchTrendingTour])
   return (
     <Tabs
       screenOptions={{

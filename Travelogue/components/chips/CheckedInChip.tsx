@@ -1,8 +1,9 @@
 import { View, StyleSheet, Text } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Chip } from 'react-native-paper';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
+import { useAdminProvider } from '@/contexts/AdminProvider';
 
 interface Location {
   country: string;
@@ -15,15 +16,24 @@ interface CheckedInChipProps {
 }
 
 export default function CheckedInChip({ items }: CheckedInChipProps) {
-  console.log(items);
+  // console.log(items);
+  const { areasByProvinceName }: any = useAdminProvider();
+  const dataChipsArray = useMemo(() => {
+    return items.map((item) => {
+      const idArea = areasByProvinceName[item.locationName] ?? 'unknown';
+
+      return { ...item, idArea };
+    })
+  }, [areasByProvinceName, items])
+
   return (
     <View style={styles.container}>
-      {items.map((item, index) => (
+      {dataChipsArray.map((item, index) => (
         <TouchableOpacity style={styles.chipItem} key={index} onPress={() => router.push({
           pathname: '/galleryCities',
-          params: { idCountry: item.country, idCity: item.locationCode },
+          params: { idCountry: item.country, idCity: item.locationCode, idArea: item.idArea },
         })}>
-          <Chip key={index} style={{backgroundColor:'white'}}>
+          <Chip key={index} style={{ backgroundColor: 'white' }}>
             <Text style={styles.chipText}>{item.locationName}</Text>
           </Chip>
         </TouchableOpacity>
@@ -37,7 +47,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    alignItems:'center',
+    alignItems: 'center',
     marginVertical: 10,
     gap: 10
   },

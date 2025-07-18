@@ -47,6 +47,7 @@ import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActio
 import ImageModal from "react-native-image-modal";
 import { AntDesign, Entypo, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { backgroundColors, iconColors } from "@/assets/colors";
+import { useAdminProvider } from "@/contexts/AdminProvider";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -641,7 +642,7 @@ const TourItem: React.FC<TourItemProps> = ({
           console.log(dataAccountJson, 'adsd');
 
           await setSearchedAccountData(dataAccountJson)
-          router.push("/SearchResult");
+          router.replace("/SearchResult");
         } else {
           console.log("No data account available");
         }
@@ -657,19 +658,6 @@ const TourItem: React.FC<TourItemProps> = ({
         {/* Post Header */}
         <View style={styles.header}>
           <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
-            {/* <TouchableOpacity style={styles.row}
-          onPress={() => handleGoToProfileScreen(item.author.id)}
-          >
-          <Image
-            source={{ uri: item.author.avatar }}
-            style={styles.miniAvatar}
-          />
-
-          <View style={styles.column}>
-            <Text style={styles.username}>{item.author.fullname}</Text>
-            <Text style={styles.time}>{formatDate(item.created_at)}</Text>
-          </View>
-          </TouchableOpacity> */}
             <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
               <AntDesign name="arrowleft" size={24} color='white' />
             </TouchableOpacity>
@@ -730,6 +718,7 @@ const TourItem: React.FC<TourItemProps> = ({
           <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
         </View>
       </View>
+
       {/* CONTENT */}
       <View style={{ flex: 1 }}>
         {/* Author */}
@@ -750,48 +739,19 @@ const TourItem: React.FC<TourItemProps> = ({
           <Text style={styles.textTitle} >{item.title}</Text>
         </View>
         {/* CHIPS */}
-        <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+        <View style={{ paddingHorizontal: 20 }}>
+          <CheckedInChip items={Object.values(flattenedLocationsArray)} />
+        </View>
 
+        {/* BADGE */}
         <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
           <View style={[{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
             <Ionicons name="calendar" size={22} color={iconColors.green1} />
             <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
           </View>
-          {/* <View style={[styles.row, { backgroundColor: 'white', padding: 10, borderRadius: 50, elevation: 4 }]}>
-            <FontAwesome6 name="money-check-dollar" size={22} color={iconColors.green1} />
-            <Text style={{}}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-          </View> */}
         </View>
-        {/* Post Interaction Buttons */}
 
-        {/* Rating Button */}
-        {/* <View style={styles.ratingButtonContainer}>
-            <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
-
-            {item.discountTour !== 0 ?
-              <View style={styles.priceBackground}>
-                <View style={styles.priceWrap}>
-                  <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
-                  <View style={{ paddingRight: 10 }}>
-                    <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                    <Text style={{ fontSize: 18 }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                  </View>
-                </View>
-              </View>
-              :
-              <View style={styles.priceBackground}>
-                <View style={styles.priceWrap}>
-                  <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color="#824b24" />
-                  <View style={{ paddingRight: 10 }}>
-                    <Text style={{ fontSize: 18 }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                  </View>
-                </View>
-              </View>
-            }
-          </View> */}
-
-
-        {/* Post Description */}
+        {/* Tour Description */}
         <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 10, borderRadius: 30, elevation: 4 }}>
           <Markdown>
             {desc.Markdown}
@@ -803,25 +763,32 @@ const TourItem: React.FC<TourItemProps> = ({
         </View>
         {/* <Divider style={styles.divider} /> */}
       </View>
-      <View style={[styles.row, { bottom: 0, width: '100%', backgroundColor: iconColors.green5, padding: 15, gap: 10 }]}>
-        <TouchableOpacity style={{ backgroundColor: iconColors.green3, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
+
+      <View style={[styles.row, { bottom: 0, width: '100%', backgroundColor: iconColors.green5, gap: 10 }]}>
+        <TouchableOpacity style={{ backgroundColor: iconColors.green3, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', margin: 15, marginHorizontal: 30, flex: 1 }} >
           <FontAwesome6 name="phone-volume" size={20} color="black" />
           <Text style={{ fontWeight: '500', paddingLeft: 10 }}>LIÊN HỆ</Text>
         </TouchableOpacity>
+        <View style={{
+          borderRightWidth: 10, borderColor: iconColors.green3, height: '100%'
+        }}></View>
         {/* Price */}
-        <View style={{ flex: 1 }}></View>
-        <View style={{ backgroundColor: 'red' }}>
-          <Text style={{ textAlign: 'left' }} >500</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <Text >1000</Text>
-            <View style={{ width: 2, height: 50, backgroundColor: 'gray', marginHorizontal: 20 }}></View>
-            <Text>1</Text>
+        <View style={{ backgroundColor: iconColors.green3, height: '100%', paddingHorizontal: 15, paddingVertical: 10 }}>
+          {item.discountTour !== 0 ?  // Co discount
+            <Text style={{ flex: 1, textDecorationLine: 'line-through', color: '#eeeeee', textAlignVertical: 'center', fontStyle: 'italic' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+            :
+            <></>
+          }
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: '500' }}>
+              {(item.discountTour !== 0 ? promotionalPrice : originalPrice).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+            </Text>
+            <View style={{ width: 2, height: 25, backgroundColor: '#333333', marginHorizontal: 6 }}></View>
+            <Text style={{ fontSize: 18, fontWeight: '500' }}>1 </Text>
             <Ionicons name="people" size={20} color={iconColors.green1} />
           </View>
         </View>
       </View>
-
-
 
       {/* Comment Bottom Sheet */}
       <CommentsActionSheet
@@ -930,6 +897,8 @@ const TourItem: React.FC<TourItemProps> = ({
 
 export default function ToursScreen() {
   // State to track whether full description is shown
+  const { areasByProvinceName }: any = useAdminProvider();
+
 
   const { selectedTour }: any = useTourProvider();
   const { initialIndex, tourId } = useLocalSearchParams();
@@ -937,6 +906,7 @@ export default function ToursScreen() {
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   const [dataTour, setDataTour] = useState<any>([])
+  const [dataLocations, setDataLoctions] = useState<any>([])
 
 
   const memoriedTourItem = useMemo(() => selectedTour, [selectedTour]);
@@ -944,7 +914,6 @@ export default function ToursScreen() {
   const fetchTourById = async (tourId: any) => {
     try {
       const refTour = ref(database, `tours/${tourId}`)
-
       const refScore = ref(database, `tours/${tourId}/scores`);
 
       // Cập nhật scores trước
@@ -955,6 +924,9 @@ export default function ToursScreen() {
       const snapshot = await get(refTour);
       if (snapshot.exists()) {
         const dataTourJson: any = snapshot.val()
+
+        const dataLocations = dataTourJson.locations
+        setDataLoctions(flattenLocations(dataLocations))
         setDataTour([dataTourJson])
       } else {
         console.log("No data tour available");
@@ -963,19 +935,37 @@ export default function ToursScreen() {
       console.error("Error fetching data tour: ", error);
     }
   }
-  useFocusEffect(
-    useCallback(() => {
-      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (tourId) {
-        fetchTourById(tourId)
+
+  const updateScoresForCities = async () => {
+    for (const city of dataLocations) {
+      try {
+        const coutnryId = city.country
+        const areaId = areasByProvinceName[city.locationName]
+        const cityId = city.locationCode
+
+        const refCityScores = ref(database, `cities/${coutnryId}/${areaId}/${cityId}/scores`)
+        await runTransaction(refCityScores, (currentScore) => {
+          return (currentScore || 0) + 1;
+        });
+      } catch (error) {
+        console.error("Error fetching data: ", error);
       }
-      return () => {
-        console.log('Screen is unfocused');
-      };
-    }, []) // Cập nhật khi các giá trị này thay đổi
-  );
+    }
+  }
 
 
+
+  useEffect(() => {
+    // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+    if (tourId) {
+      fetchTourById(tourId)
+    }
+  }, [tourId])
+
+  useEffect(() => {
+    if (dataLocations.length === 0) return
+    updateScoresForCities()
+  }, [dataLocations])
   return (
     <>
       <StatusBar
@@ -1029,7 +1019,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: 'rgba(100,100,100,0.5)',
     borderRadius: 40,
-    elevation: 4,
+    // elevation: 4,
   },
   header: {
     position: 'absolute',
@@ -1230,7 +1220,7 @@ const styles = StyleSheet.create({
     // marginRight: 10,
     // marginTop: 1,
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   carouselText: {
     color: "#fff",
@@ -1242,6 +1232,7 @@ const styles = StyleSheet.create({
   },
   carouselItem: {
     flex: 1,
+    alignSelf: 'center',
     justifyContent: "center",
   },
   buttonContainer: {
@@ -1263,8 +1254,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 80,
     elevation: 6,
-    width: 80,
-    height: 80
+    width: 65,
+    height: 65
   },
   buttonRow: {
     position: 'absolute',

@@ -436,7 +436,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({
         onPress={toggleModal}
         style={styles.button}
       >
-        <Icon size={24} name="dots-horizontal" style={styles.icon} />
+        <Icon size={24} name="dots-horizontal" color='white' />
       </TouchableOpacity>
 
       {/* Menu Modal */}
@@ -736,9 +736,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   button: {
-    padding: 8,
-    borderRadius: 25,
-    backgroundColor: "#f0f0f0",
+    padding: 15,
+    backgroundColor: 'rgba(100,100,100,0.5)',
+    borderRadius: 40,
+    // elevation: 4,
   },
   icon: {
     color: "#333",

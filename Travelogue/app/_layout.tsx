@@ -10,6 +10,9 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 // import { SplashScreen } from "expo-router";
 import * as Font from "expo-font";
 import { RankingProvider } from "@/contexts/RankingContext";
+import { TouchableOpacity } from "react-native";
+import { AntDesign } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 // Giữ màn hình Splash hiển thị cho đến khi tài nguyên được tải xong
 // SplashScreen.preventAutoHideAsync();
@@ -160,7 +163,7 @@ export default function Layout() {
             <Stack.Screen
               name="postDetail"
               options={{
-                headerShown: true,
+                headerShown: false,
                 title: "Bài viết",
                 headerStyle: {
                   backgroundColor:
@@ -227,6 +230,14 @@ export default function Layout() {
                   fontSize: 24,
                 },
                 headerTitleAlign: "center",
+                headerLeft: () => (
+                  <>
+                    <TouchableOpacity onPress={() => router.replace('/(tabs)/')}>
+                      {/* <AntDesign name="arrowleft" size={24} color='black' /> */}
+                      <AntDesign name="home" size={26} color="black" />
+                    </TouchableOpacity>
+                  </>
+                )
               }}
             />
             <Stack.Screen
