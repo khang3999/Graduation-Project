@@ -486,6 +486,7 @@ export default function PostsScreen() {
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   const [dataPost, setDataPost] = useState<any>([])
+  const [dataChip, setDataChips] = useState<any>([])
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   const fetchPostById = async (postId: any) => {
@@ -501,6 +502,9 @@ export default function PostsScreen() {
       const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataPostJson: any = snapshot.val()
+        const dataChips  = dataPostJson.locations
+        console.log(dataChips, 'ádasdas');
+        
         setDataPost([dataPostJson])
       } else {
         console.log("No data city available");
