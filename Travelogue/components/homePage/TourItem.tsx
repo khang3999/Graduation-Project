@@ -8,6 +8,7 @@ import { averageRating } from '@/utils/commons'
 import { backgroundColors, iconColors } from '@/assets/colors'
 import SaveButton from '../buttons/SaveButton'
 import { Marquee } from '@animatereactnative/marquee'
+import { useAdminProvider } from '@/contexts/AdminProvider'
 
 const { width } = Dimensions.get('window');
 const TYPE = 1 // 0: post, 1: tour
@@ -72,25 +73,24 @@ type Props = {
 const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }: Props) => {
     const { userId }: any = useHomeProvider()
     const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
+    const { areasByProvinceName }: any = useAdminProvider()
 
 
-    const handleTapOnLocationInMenu = useCallback((selectedCityId: string, selectedCountryId: string, userId: string) => {
-        const updateAndNavigate = async () => {
-            // Update hành vi lên firebase
-            // 1. Lưu lên firebase
-            const refBehavior = ref(database, `accounts/${userId}/behavior`);
-            const dataUpdate = {
-                content: "",
-                location: [selectedCityId],
-            };
-            await update(refBehavior, dataUpdate);
-            router.push({
-                pathname: "/gallery",
-                params: { idCity: selectedCityId, idCountry: selectedCountryId },
-            });
-        }
-        updateAndNavigate()
-    }, [])
+    const handleTapOnLocationInMenu = useCallback(async (location: any, userId: string) => {
+        const areaId = areasByProvinceName[location.name]
+        // Update hành vi lên firebase
+        // 1. Lưu lên firebase
+        const refBehavior = ref(database, `accounts/${userId}/behavior`);
+        const dataUpdate = {
+            content: "",
+            location: [location.id],
+        };
+        await update(refBehavior, dataUpdate);
+        router.push({
+            pathname: "/galleryCities",
+            params: { idCity: location.id, idCountry: location.country, idArea: areaId },
+        });
+    }, [areasByProvinceName])
 
     const allLocations = useMemo(() => {
         if (!data.locations) {
@@ -186,7 +186,7 @@ const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                                 <TouchableOpacity
                                     key={location.id}
                                     style={{ paddingHorizontal: 10 }}
-                                    onPress={() => handleTapOnLocationInMenu(location.id, location.country, userId)}>
+                                    onPress={() => handleTapOnLocationInMenu?.(location, userId)}>
                                     <Text style={{}}>{location.name}</Text>
                                 </TouchableOpacity>
                             ))}

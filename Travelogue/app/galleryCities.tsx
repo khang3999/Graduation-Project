@@ -26,7 +26,7 @@ const getValidImageUri = (uri?: string | null) =>
     : "https://mediatech.vn/assets/images/imgstd.jpg";
 const GalleryCities = () => {
   const [selectedTab, setSelectedTab] = useState("Chung");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>("https://mediatech.vn/assets/images/imgstd.jpg");
   const [showFullText, setShowFullText] = useState(false);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
   const route = useRoute();
@@ -34,7 +34,7 @@ const GalleryCities = () => {
   const cities = { id_city: idCity, id_country: idCountry };
   const [dataCity, setDataCity] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<string[]>(["https://mediatech.vn/assets/images/imgstd.jpg"])
 
   // useEffect(() => {
   //   const countryRef = ref(database, `cities/${idCountry}`);
@@ -53,33 +53,22 @@ const GalleryCities = () => {
   //   });
   // }, [idCity, idCountry]);
 
-  const fetchCityData = useCallback(async (idCity: string, idCountry: string) => {
+  const fetchCityData = useCallback(async (idCity: string, idArea: string, idCountry: string) => {
     try {
-      const countryRef = ref(database, `cities/${idCountry}`);
+      const countryRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/`);
+
+      // Update scores
+      const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);
+      await runTransaction(cityRef, (currentValue) => {
+        return (currentValue || 0) + 1;
+      });
+
       const snapshot = await get(countryRef)
       if (snapshot.exists()) {
-        const countryDataWithArea = snapshot.val();
-        let cityData = null;
-        let images: any[] = []
-        for (const area in countryDataWithArea) {
-          if (countryDataWithArea[area][idCity]) {
-            cityData = countryDataWithArea[area][idCity];
-            images.push(...cityData.defaultImages)
-
-            const postImages: any[] = cityData.postImages && Object.values(cityData.postImages?.posts) // Mảng các bài viết
-            const tourImages: any[] = cityData.tourImages && Object.values(cityData.tourImages.tours) // Mảng các tour
-
-            postImages?.forEach(post => {
-              images.push(...post.images)
-            });
-            tourImages?.forEach(tour => {
-              images.push(...tour.images)
-            });
-            break;
-          }
-        }
-        setImages(images)
-        setDataCity(cityData);
+        const countryData = snapshot.val();
+        console.log(countryData.defaultImages);
+        setImages(countryData.defaultImages)
+        setDataCity(countryData);
       } else {
         console.log("Gallery city: No trending city data found.");
       }
@@ -89,8 +78,8 @@ const GalleryCities = () => {
   }, [])
 
   useEffect(() => {
-    fetchCityData(idCity, idCountry)
-  }, [idCity, idCountry, fetchCityData]);
+    fetchCityData(idCity, idArea, idCountry)
+  }, [idCity, idCountry]);
 
   useEffect(() => {
     if (dataCity?.defaultImages?.length > 0) {
@@ -125,24 +114,24 @@ const GalleryCities = () => {
   //   }
   // }, [])
   // Tăng scores trending mỗi khi màn hình được mở
-  useFocusEffect(
-    useCallback(() => {
-      const upScoreTrending = async () => {
-        try {
-          const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);
-          await runTransaction(cityRef, (currentValue) => {
-            return (currentValue || 0) + 1;
-          });
-        } catch (error) {
-          console.error("Up score trending failed: ", error);
-        }
-      };
-      upScoreTrending();
-      return () => {
-        console.log("Screen unfocused!");
-      };
-    }, [idCountry, idArea, idCity])
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const upScoreTrending = async () => {
+  //       try {
+  //         const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);
+  //         await runTransaction(cityRef, (currentValue) => {
+  //           return (currentValue || 0) + 1;
+  //         });
+  //       } catch (error) {
+  //         console.error("Up score trending failed: ", error);
+  //       }
+  //     };
+  //     upScoreTrending();
+  //     return () => {
+  //       console.log("Screen unfocused!");
+  //     };
+  //   }, [idCountry, idArea, idCity])
+  // );
 
   const handleTextLayout = (e: any) => {
     const { lines } = e.nativeEvent;
@@ -163,7 +152,7 @@ const GalleryCities = () => {
               {images.map((img: string, i: number) => (
                 <TouchableOpacity key={i} onPress={() => setSelectedImage(img)}>
                   <Image
-                    source={{ uri: getValidImageUri(img) }}
+                    source={{ uri: getValidImageUri(img) || "https://mediatech.vn/assets/images/imgstd.jpg" }}
                     style={[
                       styles.detailImage,
                       selectedImage === img && styles.detailImageActive,
@@ -230,7 +219,7 @@ const GalleryCities = () => {
 
       {selectedImage && (
         <Image
-          source={{ uri: getValidImageUri(selectedImage) }}
+          source={{ uri: getValidImageUri(selectedImage) || "https://mediatech.vn/assets/images/imgstd.jpg" }}
           style={styles.headerImage}
         />
       )}
@@ -245,6 +234,7 @@ const GalleryCities = () => {
               dataCity.idCountry.slice(1)
               : "Unknown"}
         </Text>
+        
         <View style={styles.rating}>
           <Text style={styles.ratingText}>{formatScore(dataCity?.scores)}</Text>
           <MaterialIcons name="sports-score" size={16} color="#FF3300" />

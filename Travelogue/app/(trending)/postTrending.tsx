@@ -1,5 +1,5 @@
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 import { router } from 'expo-router';
@@ -7,10 +7,21 @@ import { useRanking } from '@/contexts/RankingContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import { formatNumberShort } from '@/utils';
 import { backgroundColors } from '@/assets/colors';
+import { useIsFocused } from '@react-navigation/native';
 const screenHeight = Dimensions.get('window').height;
 const PostTrending = () => {
   const insets = useSafeAreaInsets();
-  const { citiesData, postsData1 } = useRanking()
+  const { postsData1, fetchTrendingPost, setCurrentScreen } = useRanking()
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      // Màn hình hiện tại được focus
+      setCurrentScreen('post')
+      console.log("Đã quay lại màn hình - load lại dữ liệu");
+      fetchTrendingPost();
+    }
+  }, [isFocused]);
 
   return (
     <View style={{ height: screenHeight - insets.bottom - insets.top }}>

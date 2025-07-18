@@ -47,6 +47,7 @@ import RatingCommentsActionSheet from "@/components/comments/RatingCommentsActio
 import ImageModal from "react-native-image-modal";
 import { AntDesign, Entypo, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { backgroundColors, iconColors } from "@/assets/colors";
+import { useAdminProvider } from "@/contexts/AdminProvider";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -641,7 +642,7 @@ const TourItem: React.FC<TourItemProps> = ({
           console.log(dataAccountJson, 'adsd');
 
           await setSearchedAccountData(dataAccountJson)
-          router.push("/SearchResult");
+          router.replace("/SearchResult");
         } else {
           console.log("No data account available");
         }
@@ -896,6 +897,8 @@ const TourItem: React.FC<TourItemProps> = ({
 
 export default function ToursScreen() {
   // State to track whether full description is shown
+  const { areasByProvinceName }: any = useAdminProvider();
+
 
   const { selectedTour }: any = useTourProvider();
   const { initialIndex, tourId } = useLocalSearchParams();
@@ -903,6 +906,7 @@ export default function ToursScreen() {
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   const [dataTour, setDataTour] = useState<any>([])
+  const [dataLocations, setDataLoctions] = useState<any>([])
 
 
   const memoriedTourItem = useMemo(() => selectedTour, [selectedTour]);
@@ -910,7 +914,6 @@ export default function ToursScreen() {
   const fetchTourById = async (tourId: any) => {
     try {
       const refTour = ref(database, `tours/${tourId}`)
-
       const refScore = ref(database, `tours/${tourId}/scores`);
 
       // Cập nhật scores trước
@@ -921,6 +924,9 @@ export default function ToursScreen() {
       const snapshot = await get(refTour);
       if (snapshot.exists()) {
         const dataTourJson: any = snapshot.val()
+
+        const dataLocations = dataTourJson.locations
+        setDataLoctions(flattenLocations(dataLocations))
         setDataTour([dataTourJson])
       } else {
         console.log("No data tour available");
@@ -929,19 +935,37 @@ export default function ToursScreen() {
       console.error("Error fetching data tour: ", error);
     }
   }
-  useFocusEffect(
-    useCallback(() => {
-      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (tourId) {
-        fetchTourById(tourId)
+
+  const updateScoresForCities = async () => {
+    for (const city of dataLocations) {
+      try {
+        const coutnryId = city.country
+        const areaId = areasByProvinceName[city.locationName]
+        const cityId = city.locationCode
+
+        const refCityScores = ref(database, `cities/${coutnryId}/${areaId}/${cityId}/scores`)
+        await runTransaction(refCityScores, (currentScore) => {
+          return (currentScore || 0) + 1;
+        });
+      } catch (error) {
+        console.error("Error fetching data: ", error);
       }
-      return () => {
-        console.log('Screen is unfocused');
-      };
-    }, []) // Cập nhật khi các giá trị này thay đổi
-  );
+    }
+  }
 
 
+
+  useEffect(() => {
+    // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+    if (tourId) {
+      fetchTourById(tourId)
+    }
+  }, [tourId])
+
+  useEffect(() => {
+    if (dataLocations.length === 0) return
+    updateScoresForCities()
+  }, [dataLocations])
   return (
     <>
       <StatusBar

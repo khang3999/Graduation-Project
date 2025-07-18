@@ -9,15 +9,18 @@ interface RankingContextType {
   postsData: any[];
   hasNewCitiesUpdates: boolean;
   hasNewPostsUpdates: boolean;
+  currentScreen: string;
+  setCurrentScreen: React.Dispatch<React.SetStateAction<string>>;
   isRefreshing: boolean;
   lastUpdateTime: Date | null;
   // refreshCitiesData: () => Promise<void>;
   // refreshPostsData: () => Promise<void>;
   fetchTrendingCity: () => Promise<void>;
   fetchTrendingPost: () => Promise<void>;
+  fetchTrendingTour: () => Promise<void>;
   refreshTrendingAll: () => Promise<void>;
-  postsData1: any[],
-  toursData: any[]
+  postsData1: any[];
+  toursData: any[];
 }
 
 // Global states
@@ -40,6 +43,7 @@ export const RankingProvider = ({ children }: any) => {
   const [hasNewPostsUpdates, setHasNewPostsUpdates] = useState(globalHasNewPostsUpdates);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(globalLastUpdateTime);
+  const [currentScreen, setCurrentScreen] = useState('city');
   const [lastCitiesSnapshot, setLastCitiesSnapshot] = useState<string | null>(globalLastCitiesSnapshot);
   const [lastPostsSnapshot, setLastPostsSnapshot] = useState<string | null>(globalLastPostsSnapshot);
 
@@ -133,7 +137,7 @@ export const RankingProvider = ({ children }: any) => {
     try {
       const postsRef = ref(database, "posts/");
       // const postQuery = query(postsRef, orderByChild('scores'), limitToLast(2));
-      const postQuery = query(postsRef, orderByChild('scores'),startAt(1), limitToLast(5));
+      const postQuery = query(postsRef, orderByChild('scores'), startAt(1), limitToLast(5));
 
       const snapshot = await get(postQuery);
 
@@ -203,9 +207,9 @@ export const RankingProvider = ({ children }: any) => {
     await fetchTrendingTour();
   }, [fetchTrendingCity, fetchTrendingPost, fetchTrendingTour]);
 
-  // CHẠY LẦN ĐẦU VÀ CHẠY MỖI 1 tiếng
+  // CHẠY MỖI 1 tiếng
   useEffect(() => {
-    // Chạy lần đầu
+    // Fetch lần đầu 
     refreshTrendingAll();
     console.log('Update trending first time at: ', Date.now());
     // Sau đó cứ mỗi 1 giờ gọi lại
@@ -338,10 +342,13 @@ export const RankingProvider = ({ children }: any) => {
         hasNewPostsUpdates,
         isRefreshing,
         lastUpdateTime,
+        currentScreen,
+        setCurrentScreen,
         // refreshCitiesData,
         // refreshPostsData,
         fetchTrendingCity,
         fetchTrendingPost,
+        fetchTrendingTour,
         refreshTrendingAll,
         postsData1,
         toursData

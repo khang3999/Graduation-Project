@@ -10,6 +10,7 @@ import SaveButton from '../buttons/SaveButton'
 import { database, get, ref, update } from '@/firebase/firebaseConfig'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { useAccount } from '@/contexts/AccountProvider'
+import { useAdminProvider } from '@/contexts/AdminProvider'
 
 const { width } = Dimensions.get('window')
 const TYPE = 0 // 0: post, 1: tour
@@ -38,7 +39,7 @@ export type PostModal = {
         }
     },
     match: number,
-    mode: number,
+    mode: string,
     reports: number,
     saves: number,
     scores: number,
@@ -59,28 +60,26 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
     const [indexVisibleMenu, setIndexVisibleMenu] = useState(-1);
     const { userId }: any = useHomeProvider()
     const { likedPostsList, setLikedPostsList }: any = useAccount()
-
+    const { areasByProvinceName }: any = useAdminProvider()
     // useEffect(() => {
     // // console.log(`PostItem render by liked: ${liked}`, data.id)
     // console.log(likedPostsList, 'check');
     // },[likedPostsList])
-    const handleTapOnLocationInMenu = useCallback((selectedCityId: string, selectedCountryId: string, userId: string) => {
-        const updateAndNavigate = async () => {
-            // Update hành vi lên firebase
-            // 1. Lưu lên firebase
-            const refBehavior = ref(database, `accounts/${userId}/behavior`);
-            const dataUpdate = {
-                content: "",
-                location: [selectedCityId],
-            };
-            await update(refBehavior, dataUpdate);
-            router.push({
-                pathname: "/gallery",
-                params: { idCity: selectedCityId, idCountry: selectedCountryId },
-            });
-        }
-        updateAndNavigate()
-    }, [])
+    const handleTapOnLocationInMenu = useCallback(async (location: any, userId: string) => {
+        const areaId = areasByProvinceName[location.name]
+        // Update hành vi lên firebase
+        // 1. Lưu lên firebase
+        const refBehavior = ref(database, `accounts/${userId}/behavior`);
+        const dataUpdate = {
+            content: "",
+            location: [location.id],
+        };
+        await update(refBehavior, dataUpdate);
+        router.push({
+            pathname: "/galleryCities",
+            params: { idCity: location.id, idCountry: location.country, idArea: areaId },
+        });
+    }, [areasByProvinceName])
     const allLocations = useMemo(() => {
         if (!data.locations) {
             return []
@@ -127,7 +126,7 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                         </View>
                         {/* Live mode */}
                         <View style={styles.liveModeWrap}>
-                            <LiveModeButton type="1"></LiveModeButton>
+                            <LiveModeButton mode={data.mode}></LiveModeButton>
                         </View>
                         {/* Location */}
                         <View style={styles.flagBtn}>
@@ -156,7 +155,7 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                             >
                                 {allLocations.map((location: any) => {
                                     return (
-                                        <TouchableOpacity key={location?.id} onPress={() => handleTapOnLocationInMenu?.(location?.id, location.country, userId)}>
+                                        <TouchableOpacity key={location?.id} onPress={() => handleTapOnLocationInMenu?.(location, userId)}>
                                             <Menu.Item title={location.name} titleStyle={styles.itemLocation} dense={true}></Menu.Item>
                                             <Divider />
                                         </TouchableOpacity>
@@ -179,7 +178,7 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                                 <HeartButton data={data} type={TYPE} liked={liked}></HeartButton>
                             </View>
                             {/* <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}> */}
-                                <SaveButton myStyle={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]} data={data} type={TYPE}></SaveButton>
+                            <SaveButton myStyle={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]} data={data} type={TYPE}></SaveButton>
                             {/* </View> */}
                         </View>
                         {/* Topic */}

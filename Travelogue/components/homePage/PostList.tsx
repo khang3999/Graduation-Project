@@ -422,7 +422,7 @@ const PostList = () => {
   const handleTapToViewPostDetail = useCallback((path: any, postId: string) => {
     router.push({
       pathname: path,
-      params: { postId: postId },
+      params: { postId: postId, prevScreen:'home' },
     });
   }, [])
   // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE

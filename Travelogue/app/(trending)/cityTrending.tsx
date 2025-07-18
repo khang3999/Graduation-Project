@@ -8,16 +8,27 @@ import { formatCityName } from '@/utils/commons'
 import { MaterialIcons } from '@expo/vector-icons'
 import { formatNumberShort } from '@/utils'
 import { backgroundColors } from '@/assets/colors'
+import { useIsFocused } from '@react-navigation/native'
 
 const screenHeight = Dimensions.get('window').height;
 const CityTrending = () => {
-  const { citiesData, fetchTrendingCity } = useRanking()
+  const { citiesData, fetchTrendingCity, setCurrentScreen } = useRanking()
   // const animationRef = useRef<LottieView>(null);
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
   // const getValidImageUri = useCallback((uri?: string | null) => {
   //   uri && uri.trim() !== "" ? uri : "https://mediatech.vn/assets/images/imgstd.jpg";
   // }, [])
+
+  useEffect(() => {
+    if (isFocused) {
+      // Màn hình hiện tại được focus
+      setCurrentScreen('city')
+      console.log("Đã quay lại màn hình - load lại dữ liệu");
+      fetchTrendingCity();
+    }
+  }, [isFocused]);
 
   return (
     <View style={{ height: screenHeight - insets.bottom - insets.top }}>
@@ -245,7 +256,7 @@ const CityTrending = () => {
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           showsVerticalScrollIndicator={true}
-          keyExtractor={(item: any, index:any) => index}
+          keyExtractor={(item: any, index: any) => index}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               style={styles.listItem}

@@ -93,7 +93,7 @@ const extractImagesData = (postImages: any, defaultImages: string[]) => {
 
 export default function GalleryPosts({ dataCity }: any) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>("https://mediatech.vn/assets/images/imgstd.jpg");
 
   let images: ImageItem[] = [];
   if (dataCity.postImages || dataCity.defaultImages) {

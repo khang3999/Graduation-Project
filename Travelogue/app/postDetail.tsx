@@ -44,6 +44,7 @@ import { useHomeProvider } from "@/contexts/HomeProvider";
 import { AntDesign, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ImageModal from "react-native-image-modal";
 import { backgroundColors, iconColors } from "@/assets/colors";
+import { useAdminProvider } from "@/contexts/AdminProvider";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -131,6 +132,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const flattenedImagesArray = flattenImages(item.images);
   const [authorParentCommentId, setAuthorParentCommentId] = useState('')
   const { setSearchedAccountData, dataAccount, likedPostsList }: any = useAccount();
+  const { prevScreen } = useLocalSearchParams();
 
 
 
@@ -344,7 +346,7 @@ const PostItem: React.FC<PostItemProps> = ({
           console.log(dataAccountJson, 'adsd');
 
           await setSearchedAccountData(dataAccountJson)
-          router.push("/SearchResult");
+          router.replace("/SearchResult");
         } else {
           console.log("No data account available");
         }
@@ -365,7 +367,11 @@ const PostItem: React.FC<PostItemProps> = ({
         {/* Post Header */}
         <View style={styles.header}>
           <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
-            <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.headerButton} onPress={() => {
+              // if (prevScreen !== 'home') {
+                router.back()
+              // } 
+            }}>
               <AntDesign name="arrowleft" size={24} color='white' />
             </TouchableOpacity>
             <View style={{}}>
@@ -405,7 +411,7 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
 
       {/* CONTENT */}
-      <View style={{ flex: 1, }}>
+      <View style={{ flex: 1, paddingHorizontal: 20 }}>
         {/* BUTTON */}
         <View style={styles.buttonRow}>
           {/* Button comment */}
@@ -420,9 +426,8 @@ const PostItem: React.FC<PostItemProps> = ({
           <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type={TYPE} />
         </View>
 
-        {/* CHIP */}
         {/* Author */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, marginTop: 80 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0, marginTop: 80 }}>
           <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleGoToProfileScreen(item.author.id)}>
             <View style={{ width: 50, height: 50, borderRadius: 30, padding: 2, backgroundColor: 'white', elevation: 4, }}>
               <Image source={{ uri: item.author.avatar }} style={{ width: '100%', height: '100%', borderRadius: 30 }}></Image>
@@ -439,7 +444,7 @@ const PostItem: React.FC<PostItemProps> = ({
           <Text style={styles.textTitle} >{item.title}</Text>
         </View>
         {/* CHIP */}
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ paddingHorizontal: 10 }}>
           <CheckedInChip items={Object.values(flattenedLocationsArray)} />
         </View>
         {/* BADGE */}
@@ -451,7 +456,7 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
 
         {/* Post Description */}
-        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 10, borderRadius: 30, elevation: 4 }}>
+        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4 }}>
           <Markdown>
             {desc.Markdown}
           </Markdown>
@@ -479,14 +484,14 @@ const PostItem: React.FC<PostItemProps> = ({
 
 export default function PostsScreen() {
   // State to track whether full description is shown
-
+  const { areasByProvinceName }: any = useAdminProvider();
   const { selectedPost, setSelectedPost }: any = usePost();
-  const { initialIndex, postId } = useLocalSearchParams();
+  const { initialIndex, postId, prevScreen } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
   const [dataPost, setDataPost] = useState<any>([])
-  const [dataChip, setDataChips] = useState<any>([])
+  const [dataLocations, setDataLoctions] = useState<any>([])
   const memoriedPostItem = useMemo(() => selectedPost, [selectedPost]);
 
   const fetchPostById = async (postId: any) => {
@@ -502,9 +507,9 @@ export default function PostsScreen() {
       const snapshot = await get(refPost);
       if (snapshot.exists()) {
         const dataPostJson: any = snapshot.val()
-        const dataChips  = dataPostJson.locations
-        console.log(dataChips, 'ádasdas');
-        
+        const dataLocations = dataPostJson.locations
+
+        setDataLoctions(flattenLocations(dataLocations))
         setDataPost([dataPostJson])
       } else {
         console.log("No data city available");
@@ -514,17 +519,33 @@ export default function PostsScreen() {
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (postId) {
-        fetchPostById(postId)
+  const updateScoresForCities = async () => {
+    for (const city of dataLocations) {
+      try {
+        const coutnryId = city.country
+        const areaId = areasByProvinceName[city.locationName]
+        const cityId = city.locationCode
+
+        const refCityScores = ref(database, `cities/${coutnryId}/${areaId}/${cityId}/scores`)
+        await runTransaction(refCityScores, (currentScore) => {
+          return (currentScore || 0) + 1;
+        });
+      } catch (error) {
+        console.error("Error fetching data: ", error);
       }
-      return () => {
-        console.log('Screen is unfocused');
-      };
-    }, []) // Cập nhật khi các giá trị này thay đổi
-  );
+    }
+  }
+
+  useEffect(() => {
+    if (postId) {
+      fetchPostById(postId)
+    }
+  }, [postId])
+
+  useEffect(() => {
+    if (dataLocations.length === 0) return
+    updateScoresForCities()
+  }, [dataLocations])
   return (
     <View style={{ marginTop: 30, flex: 1 }}>
       <FlatList
@@ -563,8 +584,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 15,
     paddingHorizontal: 20,
+    // margin:20,
+    // width: windowWidth,
     // height: 50,
-    overflow: 'hidden'
+    // overflow: 'hidden'
   },
   textTitle: {
     fontSize: 26,
