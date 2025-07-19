@@ -26,6 +26,7 @@ import IconEntypo from "react-native-vector-icons/Entypo";
 import IconAntDesign from "react-native-vector-icons/AntDesign";
 import { router } from "expo-router";
 import { set } from "lodash";
+import { useHomeProvider } from "@/contexts/HomeProvider";
 
 export default function ProfileScreen() {
   interface AccountData {
@@ -35,7 +36,8 @@ export default function ProfileScreen() {
   }
 
   const { dataAccount, setDataAccount, setSearchedAccountData }: any = useAccount();
-  const [userId, setUserId] = useState<String | null>()  
+  const {userId} : any = useHomeProvider()
+  // const [userId, setUserId] = useState<String | null>()
   const { height: SCREEN_HEIGHT } = Dimensions.get("window");
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const modalAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -44,15 +46,15 @@ export default function ProfileScreen() {
   const [searchedAccountsData, setSearchedAccountsData] = useState<AccountData[]>([]);
   const [filteredData, setFilteredData] = useState<AccountData[]>([]);
   const [recentSearches, setRecentSearches] = useState<AccountData[]>([]);
-  
-  useEffect(() => {
-    const getCurrentUserToken = async () => {
-      const userToken = await AsyncStorage.getItem("userToken");
-      setUserId(userToken)    
-    }
-    getCurrentUserToken();
-  },[])
-  
+
+  // useEffect(() => {
+  //   const getCurrentUserToken = async () => {
+  //     const userToken = await AsyncStorage.getItem("userToken");
+  //     setUserId(userToken)
+  //   }
+  //   getCurrentUserToken();
+  // }, [])
+
 
 
   const syncUserDataWithFirebase = async () => {
@@ -134,7 +136,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <HeaderProfile onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} isSearched={false}/>
+      <HeaderProfile onModalOpen={openSearchModal} onModalClose={closeSearchModal} handleSearch={handleSearch} isSearched={false} />
       <GalleryTabView isSearched={false} />
 
       {/* Recent Search Modal */}

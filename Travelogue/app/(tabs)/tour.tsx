@@ -10,6 +10,7 @@ import { AntDesign, FontAwesome6, Foundation, MaterialCommunityIcons } from '@ex
 import { backgroundColors, iconColors } from '@/assets/colors'
 import SearchModal from '@/components/tours/modals/SearchModal'
 import NewTourModal from '@/components/tours/modals/NewTourModal'
+import { router } from 'expo-router'
 
 const HEADER_HEIGHT = 0;
 const maxheight = Dimensions.get('window').height;
@@ -95,6 +96,16 @@ const Tour = () => {
           setModalNewPostVisible={setModalNewTourVisible}
           setIsLoading={setIsLoading}
         />}
+
+        {/* <NewTourModal
+          data={dataTours}
+          // data={[]}
+          dataNew={dataNewTourList}
+          modalNewPostVisible={modalNewTourVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewTourVisible}
+          setIsLoading={setIsLoading}
+        /> */}
       </>
     )
   }, [modalSearchVisible, modalNewTourVisible])
@@ -145,7 +156,13 @@ const Tour = () => {
                 <Text style={styles.textBanner}>" Đi đi em,</Text>
                 <Text style={styles.textBanner}>  Còn do dự ... </Text>
                 <Text style={styles.textBanner}>  Trời tối mất"</Text>
-                <TouchableOpacity style={styles.bannerButtonArrowRight}>
+                <TouchableOpacity style={styles.bannerButtonArrowRight}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/(trending)/tourTrending",
+                    });
+                  }}
+                >
                   <AntDesign name="arrowright" size={24} color="white" />
                 </TouchableOpacity>
               </View>
@@ -251,8 +268,9 @@ const styles = StyleSheet.create({
   listBadges: {
     flex: 1,
     backgroundColor: backgroundColors.background1,
+    // backgroundColor: '#c3c3c3',
     borderRadius: 10,
-    elevation: 15,
+    // elevation: 15,
     shadowColor: 'white'
   },
   btnNotifyNewPost: {
@@ -324,7 +342,7 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: backgroundColors.background2,
     paddingBottom: 60,
     // paddingBottom: 100
   },
@@ -390,7 +408,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'white'
+    // backgroundColor: backgroundColors.background2
   },
   badgeText: {
     fontSize: 13,

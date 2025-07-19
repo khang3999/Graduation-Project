@@ -11,6 +11,8 @@ import { database, get, ref, update } from '@/firebase/firebaseConfig'
 import { useHomeProvider } from '@/contexts/HomeProvider'
 import { useAccount } from '@/contexts/AccountProvider'
 import { useAdminProvider } from '@/contexts/AdminProvider'
+import { AntDesign, FontAwesome } from '@expo/vector-icons'
+import { formatNumberLike } from '@/utils'
 
 const { width } = Dimensions.get('window')
 const TYPE = 0 // 0: post, 1: tour
@@ -20,6 +22,7 @@ export type PostModal = {
         fullname: string,
         id: string
     },
+    comments: any,
     content: string,
     created_at: number,
     id: string,
@@ -102,7 +105,7 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                     onPress={() => onTapToViewDetail?.('postDetail', data.id)}
                 >
                     {/* Label */}
-                    <View style={{ borderRadius: 30, position: 'absolute', backgroundColor: 'rgba(100,100,100,0.1)', zIndex: 1, width: '100%', height: '100%' }}></View>
+                    <View style={{ borderRadius: 20, position: 'absolute', backgroundColor: 'rgba(100,100,100,0.1)', zIndex: 1, width: '100%', height: '100%' }}></View>
 
                     <View style={styles.header}>
                         {/*Author*/}
@@ -143,10 +146,10 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                                 anchor={
                                     <View style={{ alignItems: "center" }}>
                                         <IconButton
-                                            style={{ backgroundColor: 'white', width: 50, height: 40 }}
+                                            style={{ backgroundColor: 'white', width: 40, height: 30 }}
                                             icon="map-marker-radius"
                                             iconColor={iconColors.green1}
-                                            size={26}
+                                            size={22}
                                             onPress={() => setIndexVisibleMenu(index)}
                                             accessibilityLabel="Menu button"
                                         />
@@ -169,21 +172,24 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                     <View style={styles.imagePostWrap}>
                         <Image style={styles.imagePost} source={{ uri: data.thumbnail }}></Image>
                     </View>
-                    {/* Action button */}
+
                     <View style={styles.footer}>
+                        {/* Action button */}
                         <View style={styles.actionBar}>
-                            <View style={[styles.btn, {
-                                paddingHorizontal: 10, zIndex: 3
-                            }]}>
-                                <HeartButton data={data} type={TYPE} liked={liked}></HeartButton>
+                            {/* LIKE BUTTON */}
+                            <View style={{ flexDirection: 'row', paddingHorizontal: 5, zIndex: 3, gap: 6, justifyContent: 'center', alignItems: 'center' }} >
+                                <AntDesign name={'hearto'} size={22} color='white' />
+                                <Text style={{ color: 'white' }}>{formatNumberLike(data.likes)}</Text>
                             </View>
-                            {/* <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}> */}
-                            <SaveButton myStyle={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]} data={data} type={TYPE}></SaveButton>
-                            {/* </View> */}
+                            {/* COMMENT BUTTON */}
+                            <View style={{ flexDirection: 'row', paddingHorizontal: 5, zIndex: 3, gap: 6, justifyContent: 'center', alignItems: 'center' }} >
+                                <FontAwesome name="comment-o" size={22} color="white" />
+                                <Text style={{ color: 'white' }}>{data.comments ? formatNumberLike(Object.keys(data.comments).length) : '0'}</Text>
+                            </View>
                         </View>
                         {/* Topic */}
                         <View style={styles.topicContainer}>
-                            <Text numberOfLines={2} ellipsizeMode='tail' textBreakStrategy='balanced' style={styles.topicText}>{data.title}</Text>
+                            <Text numberOfLines={2} style={styles.topicText}>{data.title}</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -194,30 +200,29 @@ const PostItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
 
 const styles = StyleSheet.create({
     topicText: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '500',
         textAlign: 'left',
-        marginBottom: 4,
+        // marginBottom: 4,
         color: 'white',
     },
     topicContainer: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: "rgba(10, 10, 10, 0.6)",
-        borderRadius: 20,
-        padding: 10,
-        marginBottom: 10,
-        marginRight: 10
+        // backgroundColor: "rgba(10, 10, 10, 0.6)",
+        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        borderRadius: 10,
+        padding: 8,
     },
     item: {
         position: "relative",
-        borderRadius: 30,
+        borderRadius: 20,
     },
     itemWrap: {
         backgroundColor: 'white',
         height: 420,
         elevation: 6,
-        borderRadius: 30
+        borderRadius: 20
     },
     btn: {
         backgroundColor: 'white',
@@ -229,24 +234,30 @@ const styles = StyleSheet.create({
         margin: 10,
     },
     actionBar: {
+        flex: 1,
+        gap: 10,
         flexDirection: 'row',
-        alignItems: 'flex-end',
     },
     footer: {
         position: 'absolute',
         bottom: 0,
-        left: 0,
         flexDirection: 'row',
         justifyContent: 'space-around',
-        alignItems: 'flex-end',
-        // padding: 10,
+        width: '100%',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        gap: 10,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
     imagePost: {
         // height: 400,
         height: '100%',
         width: width - 40,
         // backgroundColor: 'red',
-        borderRadius: 30,
+        borderRadius: 20,
     },
     imagePostWrap: {
         height: '100%',
@@ -260,7 +271,7 @@ const styles = StyleSheet.create({
     },
     listLocations: {
         width: 'auto',
-        top: 70,
+        top: 50,
     },
     liveModeWrap: {
     },
@@ -269,13 +280,13 @@ const styles = StyleSheet.create({
     },
     avatar: {
         borderRadius: 90,
-        width: 40,
-        height: 40,
+        width: 34,
+        height: 34,
     },
     avatarWrap: {
         borderRadius: 90,
-        width: 40,
-        height: 40,
+        width: 34,
+        height: 34,
         backgroundColor: 'grey',
         elevation: 3
     },
@@ -290,10 +301,11 @@ const styles = StyleSheet.create({
         zIndex: 3,
     },
     authorContent: {
+        flex: 1,
         flexDirection: 'row',
         backgroundColor: 'white',
         maxWidth: 200,
-        padding: 6,
+        padding: 4,
         marginTop: 10,
         borderRadius: 90,
         zIndex: 3,

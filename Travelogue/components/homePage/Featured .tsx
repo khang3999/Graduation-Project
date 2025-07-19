@@ -67,8 +67,8 @@ const Featured = () => {
       style={{ flexDirection: 'row', backgroundColor: iconColors.green1, marginVertical: 10 }}
     >
       <FlatList
-        data={[]}
-        // data={citiesData.slice(0, 4)}
+        // data={[]}
+        data={citiesData.slice(0, 4)}
         horizontal
         style={{
           flex: 1, padding: 10, backgroundColor: iconColors.green2, borderTopRightRadius: 6,
