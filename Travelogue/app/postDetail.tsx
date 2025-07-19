@@ -66,7 +66,7 @@ type Post = {
   locations: Record<string, Record<string, string>>;
   post_status: string;
   reports: number;
-  mode: number;
+  mode: string;
   view_mode: boolean;
   thumbnail: any,
   title: string

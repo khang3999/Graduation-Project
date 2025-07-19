@@ -620,10 +620,14 @@ const Map = () => {
                     style={styles.countryOption}
                     onPress={() => handleCountryChange(item)}
                   >
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.optionFlag}
-                    />
+                    {
+                      item.image && (
+                        <Image
+                          source={{ uri: item.image }}
+                          style={styles.optionFlag}
+                        />
+                      )
+                    }
                     <Text style={styles.countryLabel}>{item.label}</Text>
                   </TouchableOpacity>
                 )}
