@@ -32,7 +32,17 @@ export const getValidImageUri = (uri: any) => {
   }
   return uri.trim()
 }
-export const formatCityName = (cityName:string) =>{
+export const formatCityName = (cityName: string) => {
   if (!cityName) return ''
   return cityName.replace('Thành phố', '').trim()
+}
+
+export const fortmatContent = (text: string, title: string) => {
+  const index = text.indexOf('## ');
+  
+  if (index !== -1) {
+    console.log(text.substring(0, index).trim());
+    return text.substring(0, index).trim()
+  }
+  return title; // nếu không có "## ", trả toàn bộ
 }

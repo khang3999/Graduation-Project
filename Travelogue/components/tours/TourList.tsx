@@ -463,14 +463,11 @@ const TourList = () => {
             maxToRenderPerBatch={4}
           />
         ) : (
-          <View>
-            <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu tour</Text>
+          <View style={{ height: 620, justifyContent:'center',alignSelf:'center' }}>
+            <Text style={{ fontSize: 28, color: 'grey', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu</Text>
             <LottieView
               autoPlay
               style={{
-                position: "absolute",
-                top: 80,
-                left: 0,
                 width: width,
                 height: 320,
               }}
@@ -479,14 +476,11 @@ const TourList = () => {
           </View>
         )
       ) : (
-        <View>
-          <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 100 }}>Không có tour phù hợp</Text>
+         <View style={{ height: 620, justifyContent: 'center', alignSelf: 'center', }}>
+          <Text style={{ fontSize: 26, color: 'grey', textAlign: 'center', }}>Không tìm thấy tour phù hợp</Text>
           <LottieView
             autoPlay
             style={{
-              position: "absolute",
-              top: 120,
-              left: 0,
               width: width,
               height: 320,
             }}

@@ -214,66 +214,66 @@ const NewPoint = () => {
 
   const handleSave = async () => {
     // if (isReady) {
-      setLoading(true);
-      if (isNaN(Number(longitude)) || isNaN(Number(latitude))) {
-        Toast.show({
-          type: "error",
-          text1: "Lỗi",
-          text2: "Kinh độ và vĩ độ phải là số",
-        });
+    setLoading(true);
+    if (isNaN(Number(longitude)) || isNaN(Number(latitude))) {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Kinh độ và vĩ độ phải là số",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const pointRef = ref(database, `pointsNew/${idCountry}/${idCity}/`
+    );
+    const newPointRef = push(pointRef);
+    const pointId = newPointRef.key;
+
+    const imageUrls = await uploadImagesToStorage(pointId);
+    const data = {
+      id: newPointRef.key || "",
+      address: "",
+      content: content,
+      end: mergeDateAndTime(endDate, endTime).getTime() || 0,
+      geocode: [{
+        longitude: Number(longitude) || 0,
+        latitude: Number(latitude) || 0,
+      }],
+      images: imageUrls || [''],
+      start: mergeDateAndTime(startDate, startTime).getTime() || 0,
+      title: name,
+      updatedAt: new Date().getTime(),
+    };
+
+    set(newPointRef, data)
+      .then(() => {
         setLoading(false);
-        return;
-      }
+        //phong
+        setName("");
+        setLongitude("");
+        setLatitude("");
+        setContent("");
+        setStartDate(null);
+        setEndDate(null);
+        setStartTime(null);
+        setEndTime(null);
+        setDefaultImages([]);
+        setSelectedOption("festival");
+        setIsReady(false);
 
-      const pointRef = ref(database, `pointsNew/${idCountry}/${idCity}/`
-      );
-      const newPointRef = push(pointRef);
-      const pointId = newPointRef.key;
-
-      const imageUrls = await uploadImagesToStorage(pointId);
-      const data = {
-        id: newPointRef.key || "",
-        address: "",
-        content: content,
-        end: mergeDateAndTime(endDate, endTime).getTime() || 0,
-        geocode: [{
-          longitude: Number(longitude) || 0,
-          latitude: Number(latitude) || 0,
-        }],
-        images: imageUrls || [''],
-        start: mergeDateAndTime(startDate, startTime).getTime() || 0,
-        title: name,
-        updatedAt: new Date().getTime(),
-      };
-
-      set(newPointRef, data)
-        .then(() => {
-          setLoading(false);
-          //phong
-          setName("");
-          setLongitude("");
-          setLatitude("");
-          setContent("");
-          setStartDate(null);
-          setEndDate(null);
-          setStartTime(null);
-          setEndTime(null);
-          setDefaultImages([]);
-          setSelectedOption("festival");
-          setIsReady(false);
-
-          // router.push("/(admin)/(information)/festival");
-          router.back();
-          Toast.show({
-            type: "success",
-            text1: "Thành công",
-            text2: "Thêm điểm mới thành công",
-          });
-        })
-        .catch((error) => {
-          setLoading(false);
-          console.error("Error adding data: ", error);
+        // router.push("/(admin)/(information)/festival");
+        router.back();
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+          text2: "Thêm điểm mới thành công",
         });
+      })
+      .catch((error) => {
+        setLoading(false);
+        console.error("Error adding data: ", error);
+      });
     // }
   };
   return (
@@ -394,7 +394,7 @@ const NewPoint = () => {
         </View>
 
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <Text style={styles.label}>Chọn giờ kết thúc</Text>
+          <Text style={styles.textLabel}>Kết thúc</Text>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowEndTimePicker(true)}>
             <Text style={styles.timeText}>
               {endTime
@@ -439,8 +439,8 @@ const NewPoint = () => {
         )}
 
         <Button mode="contained" onPress={handleSave}
-          // disabled={true}
-          // disabled={!isReady}
+        // disabled={true}
+        // disabled={!isReady}
         >
           Lưu
         </Button>

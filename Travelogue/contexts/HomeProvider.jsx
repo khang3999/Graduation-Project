@@ -73,15 +73,14 @@ const HomeProvider = ({ children }) => {
         const unsubscribe = onValue(refCities, (snapshot) => {
             if (snapshot.exists()) {
                 const jsonDataCities = snapshot.val();
-                const result = Object.entries(jsonDataCities).flatMap(([country, regions]) =>
-                    Object.entries(regions).flatMap(([region, cityObj]) =>
-                        Object.entries(cityObj).map(([cityCode, cityInfo]) =>
-                        ({
-                            [cityCode]: cityInfo.name
-                        })
+                const result = Object.entries(jsonDataCities) // country level
+                    .flatMap(([_, regions]) =>
+                        Object.entries(regions).flatMap(([_, cities]) =>
+                            Object.entries(cities).map(([cityId, cityData]) => ({
+                                [cityId]: cityData.value
+                            }))
                         )
-                    )
-                );
+                    );
 
                 setDataAllCities(result);
             } else {

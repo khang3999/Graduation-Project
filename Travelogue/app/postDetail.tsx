@@ -369,7 +369,7 @@ const PostItem: React.FC<PostItemProps> = ({
           <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
             <TouchableOpacity style={styles.headerButton} onPress={() => {
               // if (prevScreen !== 'home') {
-                router.back()
+              router.back()
               // } 
             }}>
               <AntDesign name="arrowleft" size={24} color='white' />
@@ -411,7 +411,7 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
 
       {/* CONTENT */}
-      <View style={{ flex: 1, paddingHorizontal: 20 }}>
+      <View style={{ flex: 1, paddingHorizontal: 20, alignItems: 'center' }}>
         {/* BUTTON */}
         <View style={styles.buttonRow}>
           {/* Button comment */}
@@ -456,7 +456,7 @@ const PostItem: React.FC<PostItemProps> = ({
         </View>
 
         {/* Post Description */}
-        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4 }}>
+        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4, width: '100%' }}>
           <Markdown>
             {desc.Markdown}
           </Markdown>
@@ -583,7 +583,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 15,
+    width: '100%',
     paddingHorizontal: 20,
+    backgroundColor: 'rgba(100,100,100,0.5)',
+
     // margin:20,
     // width: windowWidth,
     // height: 50,

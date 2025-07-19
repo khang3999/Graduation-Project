@@ -55,18 +55,17 @@ const Location = () => {
       const refProvinces = ref(database, `cities/${countryId}`)
       const snapshot = await get(refProvinces);
       if (snapshot.exists()) {
-        const dataProvinces = snapshot.val() as Record<string, any>;;
-        // 👉 Dùng Object.entries + flatMap để gom dữ liệu từ các vùng thành 1 mảng Province[]
-        const dataCitiesArray: Province[] = Object.values(dataProvinces)
-          .flatMap(item => Object.values(item as Province))
-          .sort((a: Province, b: Province) => a.value.localeCompare(b.value));
-
+        const dataProvinces = snapshot.val() as Record<string, any>;
+        const dataRegions = snapshot.val() as Record<string, Record<string, Province>>;
+        const dataCitiesArray: Province[] = Object.values(dataRegions)
+          .flatMap(item => Object.values(item))
+          .sort((a: Province, b: Province) => {
+            return a.value.localeCompare(b.value);
+          });
         // Thêm phần tử default
         dataCitiesArray.unshift(new Province());
-        console.log(dataCitiesArray.slice(0, 3), 'check');
 
         setDataCities(dataCitiesArray);
-        setSelectedCity(dataCitiesArray[1].key);
       } else {
         console.log("FetchCityByCountry: No data available1");
       }

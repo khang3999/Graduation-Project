@@ -9,13 +9,15 @@ import { off, ref } from 'firebase/database'
 import { database, get, onValue } from '@/firebase/firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { TouchableOpacity } from 'react-native-gesture-handler'
+import { useAccount } from '@/contexts/AccountProvider'
 
 
 const _layout = () => {
   const [role, setRole] = useState("user");
   // const [userID, setUserId] = useState("");
-  const [countNotify, setCountNotify] = useState(10);
-  const { dataAccount, userId }: any = useHomeProvider();
+  const [countNotify, setCountNotify] = useState(0);
+  const { userId }: any = useHomeProvider();
+  const { dataAccount }: any = useAccount()
   useEffect(() => {
     if (userId) {
       const userRef = ref(database, `accounts/${userId}`);
@@ -113,7 +115,7 @@ const _layout = () => {
         key={5}
         name="(profiles)"
         options={{
-          title: 'Profile',
+          title: `Xin chào, ${dataAccount?.fullname}`,
           headerShown: true,
         }} />
     </Tabs >

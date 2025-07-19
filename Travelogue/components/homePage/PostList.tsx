@@ -422,7 +422,7 @@ const PostList = () => {
   const handleTapToViewPostDetail = useCallback((path: any, postId: string) => {
     router.push({
       pathname: path,
-      params: { postId: postId, prevScreen:'home' },
+      params: { postId: postId, prevScreen: 'home' },
     });
   }, [])
   // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
@@ -467,7 +467,7 @@ const PostList = () => {
       // <View key={post.item.id} style={styles.itemWrap}>
       //   < PaperProvider >
       //       <TouchableOpacity style={styles.item} onPress={async () => {
-            
+
       //       router.push({
       //         pathname: "/postDetail",
       //         params: { postId: post.item.id },
@@ -585,6 +585,7 @@ const PostList = () => {
                 showsVerticalScrollIndicator={true}
                 showsHorizontalScrollIndicator={true}
                 data={dataPosts}
+                // data={[]}
                 extraData={dataPosts}
                 renderItem={postItem}
                 keyExtractor={(post: any) => {
@@ -597,34 +598,13 @@ const PostList = () => {
                 viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
                 initialNumToRender={1}
                 maxToRenderPerBatch={1}
-              // refreshing={isLoading}
-              // onRefresh={reloadHomeScreen}
               />
-              // <FlashList
-              //   horizontal={true}
-              //   renderItem={postItem}
-              //   data={dataPosts}
-              //   ref={flatListPostRef}
-              //   estimatedItemSize={width} // Quan trọng
-              //   nestedScrollEnabled={true}
-              //   keyExtractor={(post: any) => {return post.id.toString()}}
-              //   ItemSeparatorComponent={() => <View style={{ width: 40 }} />}
-              //   contentContainerStyle={{ paddingVertical: 40, paddingHorizontal: 20, backgroundColor: iconColors.green2 }}
-              //   estimatedFirstItemOffset={20}
-              //   viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
-              //   onViewableItemsChanged={onViewableItemsChanged}
-              //   pagingEnabled
-              // />
               :
-              <View style={{ width: '100%' }}>
-                <Text style={{ width: '100%', fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu bài viết</Text>
+              <View style={{ width: '100%',height: '100%', justifyContent: 'center', alignSelf: 'center', backgroundColor: iconColors.green2 }}>
+                <Text style={{ width: '100%', fontSize: 28, color: 'grey', textAlign: 'center'}}>Đang tải dữ liệu bài viết</Text>
                 <LottieView
                   autoPlay
                   style={{
-                    // position: "absolute",
-                    top: 80,
-                    left: 0,
-                    right: 0,
                     height: 320,
                   }}
                   source={require('@/assets/images/loadingPost.json')}
@@ -633,14 +613,11 @@ const PostList = () => {
 
             // <SkeletonPost></SkeletonPost>
             :
-            <View>
-              <Text style={{ fontSize: 28, color: '#c9c9c9', textAlign: 'center', marginTop: 60 }}>Không có bài viết phù hợp</Text>
+            <View style={{ height: '100%', justifyContent: 'center', alignSelf: 'center', }}>
+              <Text style={{ fontSize: 26, color: 'grey', textAlign: 'center', paddingHorizontal: 20 }}>Không tìm thấy bài viết phù hợp</Text>
               <LottieView
                 autoPlay
                 style={{
-                  position: "absolute",
-                  top: 80,
-                  left: 0,
                   width: width,
                   height: 320,
                 }}

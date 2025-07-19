@@ -97,11 +97,11 @@ const NewTourModal = ({ data, dataNew, modalNewPostVisible, setReload, setModalN
             <View style={styles.modalView}>
                 <View style={[styles.modalBottomView, { height: '75%' }]}>
                     <View style={styles.modalTitleWrap}>
-                        <Text style={styles.modalTitleText}>Bài viết mới</Text>
+                        <Text style={styles.modalTitleText}>Tour mới</Text>
                         <View style={{ position: 'relative' }}>
-                            <Ionicons name="newspaper" size={24} color={iconColors.green1} />
-                            <View style={{ position: 'absolute', right: -12, top: -12 }}>
-                                <Foundation name="burst-new" size={26} color="red" />
+                            <Ionicons name="newspaper" size={22} color={iconColors.green1} />
+                            <View style={{ position: 'absolute', right: -10, top: -12 }}>
+                                <Foundation name="burst-new" size={24} color="red" />
                             </View>
                         </View>
                     </View>
@@ -156,18 +156,18 @@ const styles = StyleSheet.create({
     },
     buttonCancel: {
         backgroundColor: backgroundColors.background1,
-        borderWidth: 1,
-        borderColor: iconColors.green1
     },
     buttonModal: {
-        padding: 10,
+        padding: 8,
         borderRadius: 5,
-        margin: 10,
-        width: 100,
+        // margin: 5,
+        width: 90,
+        borderWidth: 1,
+        borderColor: iconColors.green1,
         elevation: 4
     },
     modalTitleText: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: '600',
         marginRight: 10,
     },
@@ -184,9 +184,10 @@ const styles = StyleSheet.create({
     modalFooter: {
         flexDirection: 'row',
         width: '100%',
-        paddingVertical: 8,
+        paddingVertical: 10,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: 20
     },
     overPlay: {
         backgroundColor: 'black',
@@ -201,6 +202,6 @@ const styles = StyleSheet.create({
         // color: 'white',
         fontWeight: '500',
         textAlign: 'center',
-        fontSize: 16
+        // fontSize: 16
     },
 })

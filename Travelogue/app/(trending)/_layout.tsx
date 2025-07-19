@@ -53,7 +53,7 @@ const _layout = () => {
         ),
         headerLeft: () => (
           <TouchableOpacity onPress={() =>
-            router.replace('/(tabs)')}>
+            router.replace('/(tabs)/')}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
         ),

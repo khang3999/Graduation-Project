@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { rgbaArrayToRGBAColor } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 
 const HeaderIndex = () => {
-  const [countNotify, setCountNotify] = useState(10);
+  const [countNotify, setCountNotify] = useState(0);
   const [role, setRole] = useState("user");
 
   const { dataAccount, userId }: any = useHomeProvider();
@@ -29,7 +29,7 @@ const HeaderIndex = () => {
           );
           setCountNotify(unreadNotifications.length);
         } else {
-          setCountNotify(10)
+          setCountNotify(0)
           console.log("No data available");
         }
       }, (error) => {

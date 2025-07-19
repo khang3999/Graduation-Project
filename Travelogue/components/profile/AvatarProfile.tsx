@@ -34,13 +34,16 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Image style={styles.avatar} source={{ uri: data.avatar }} />
+        <View style={{ paddingHorizontal: 10 }}>
+          {isSearched &&
+            <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{data.fullname}</Text>}
+          <Image style={styles.avatar} source={{ uri: data.avatar }} />
+        </View>
 
-        <Text style={styles.username} numberOfLines={3} ellipsizeMode="tail">{data.fullname}</Text>
 
         <View style={styles.column}>
           <Text style={styles.infoText}>{data.totalPosts ?? null}</Text>
-          <Text style={styles.infoText}>bài viết</Text>
+          <Text style={styles.infoText}>Bài viết</Text>
         </View>
 
       </View>
@@ -51,38 +54,37 @@ export default function AvatarProfile({ isSearched }: AvatarProfileProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    paddingTop: 10 ,
-
+    padding: 10,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: 15
   },
   avatar: {
-    width: 130,
-    height: 130,
+    width: 120,
+    height: 120,
     resizeMode: "contain",
     borderColor: "grey",
     borderWidth: 2,
     borderRadius: 100,
-    marginLeft: 10,
   },
   column: {
+    flex: 1,
     flexDirection: "column",
     marginTop: 15,
   },
   infoText: {
-    fontWeight: "bold",
+    fontWeight: "500",
     fontSize: 18,
     textAlign: "center",
   },
   username: {
-    fontWeight: "bold",
+    fontWeight: "500",
     fontSize: 18,
-    margin: 2,
-    marginTop: 20,
-    maxWidth: 120,
+    paddingBottom: 10,
+    backgroundColor: "#CDCDCD",
+    textAlign: 'center'
   },
   button: {
     alignItems: "center",

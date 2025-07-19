@@ -117,6 +117,15 @@ const Home = () => {
           setModalNewPostVisible={setModalNewPostVisible}
           setIsLoading={setIsLoading}
         />}
+
+        {/* <NewPostModal
+          data={dataPosts}
+          dataNew={dataNewPostList}
+          modalNewPostVisible={modalNewPostVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewPostVisible}
+          setIsLoading={setIsLoading}
+        /> */}
       </>
     );
   }, [modalSearchVisible, modalNewPostVisible]);
@@ -174,9 +183,6 @@ const Home = () => {
           <View>
             <Text style={[styles.textTitle, { marginBottom: 20 }]}>Explore the World through Stories</Text>
           </View>
-
-
-
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
@@ -185,8 +191,8 @@ const Home = () => {
           {/* Tour section */}
           <View>
             <Text style={[styles.textCategory]}>Tour du lịch</Text>
-            <View style={{ paddingBottom: 20 }}>
-              {/* {renderTourList()} */}
+            <View style={{ paddingBottom: 0 }}>
+              {renderTourList()}
             </View>
           </View>
           {/* POST */}
@@ -231,11 +237,6 @@ const Home = () => {
                   </>}
 
                 <Badge size={24} style={[styles.badge, styles.bagdeType]} >{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
-
-                {/* <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge> */}
               </ScrollView>
               {/* Button search and reload */}
               <View style={styles.containerButton}>
