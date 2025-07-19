@@ -46,7 +46,7 @@ interface MenuPopupButtonProps {
   postId: string;
   userId: string;
   locations: any;
-  mode: number;
+  mode: string;
 }
 
 const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({
@@ -455,7 +455,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({
                   { top: menuPosition.top, left: menuPosition.left },
                 ]}
               >
-                {mode === 1 ? (
+                {mode === "normal" ? (
                   <TouchableOpacity
                     style={styles.menuItem}
                     onPress={handleEditPost}
@@ -467,7 +467,7 @@ const MenuPopupButton: React.FC<MenuPopupButtonProps> = ({
                     />
                     <Text style={styles.menuText}>Sửa</Text>
                   </TouchableOpacity>
-                ) : mode === 2 ? (
+                ) : mode === "live" ? (
                   <TouchableOpacity
                     style={styles.menuItem}
                     onPress={handleEditPostLive}

@@ -400,7 +400,7 @@ const EditPostLive = () => {
     // chỉ đổi trang thái mode trong firebase thành 3
     const postRef = ref(database, `posts/${postId}`);
     await update(postRef, {
-      mode: 3,
+      mode: "final",
     });
     Toast.show({
       type: "success",
@@ -634,7 +634,7 @@ const EditPostLive = () => {
         match: 0,
         isCheckIn,
         title,
-        mode: 3,
+        mode: "final",
         status_id: isPublic ? 1 : 2,
         thumbnail,
         created_at: timestamp,
@@ -857,7 +857,7 @@ const EditPostLive = () => {
         id: postId,
         isCheckIn,
         title,
-        mode: 2,
+        mode: "live",
         status_id: isPublic ? 1 : 2,
         thumbnail,
         created_at: timestamp,
