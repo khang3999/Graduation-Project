@@ -6,6 +6,7 @@ import { backgroundColors, iconColors } from '@/assets/colors';
 import { FontAwesome, FontAwesome5, FontAwesome6, Ionicons } from '@expo/vector-icons';
 import { MultipleSelectList, SelectList } from 'react-native-dropdown-select-list';
 import { useHomeProvider } from '@/contexts/HomeProvider';
+import { Province } from '@/model/ProvinceModal';
 
 const { width, height } = Dimensions.get('window')
 
@@ -54,13 +55,19 @@ const SearchModal = () => {
       const refCity = ref(database, `cities/${countryId}`)
       const snapshot = await get(refCity);
       if (snapshot.exists()) {
-        const dataCityJson = snapshot.val()
-        const dataCitiesArray: any = Object.entries(dataCityJson).flatMap(([region, cities]: any) =>
-          Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-            key: cityCode,
-            value: cityInfo.name
-          }))
-        );
+        // const dataCityJson = snapshot.val()
+        const dataRegions = snapshot.val() as Record<string, Record<string, Province>>;
+
+
+        const dataCitiesArray = Object.entries(dataRegions)
+          .flatMap(([_, cities]) =>
+            Object.entries(cities).map(([cityId, cityData]: [string, any]) => ({
+              key: cityId,
+              value: cityData.value
+            }))
+          );
+        // const dataCitiesArray: Province[] = Object.values(dataRegions)
+        //   .flatMap(item => Object.values(item))
         setDataCities(dataCitiesArray)
       } else {
         console.log("No data city available");

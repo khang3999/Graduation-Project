@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useCallback, useMemo, useState } from 'react'
-import { Entypo, FontAwesome } from '@expo/vector-icons'
+import { AntDesign, Entypo, FontAwesome } from '@expo/vector-icons'
 import { Divider, IconButton, Menu, PaperProvider } from 'react-native-paper'
 import { TourModal } from '../homePage/TourItem'
 import { useHomeProvider } from '@/contexts/HomeProvider'
@@ -14,8 +14,9 @@ import HeartButton from '../buttons/HeartButton'
 import SaveButton from '../buttons/SaveButton'
 import LiveModeButton from '../buttons/LiveModeButton'
 import { useAdminProvider } from '@/contexts/AdminProvider'
+import { formatNumberLike } from '@/utils'
 
-const ITEM_HEIGHT = 270;
+const ITEM_HEIGHT = 250;
 const TYPE = 1;
 
 type Props = {
@@ -78,11 +79,11 @@ const TourItemTourScreen = ({ data, index, liked, onTapToViewDetail, onTapToView
           {/*Author*/}
           <View style={styles.authorContent}>
             <TouchableOpacity style={styles.avatarWrap} onPress={() => onTapToViewProfile?.(data.author.id)}>
-              <Image style={styles.avatar} source={require('@/assets/images/logo.png')}></Image>
+              <Image style={styles.avatar} source={{ uri: data.author.avatar }}></Image>
             </TouchableOpacity>
             <View style={{ justifyContent: 'center', marginHorizontal: 4 }}>
               <TouchableOpacity onPress={() => onTapToViewProfile?.(data.author.id)}>
-                <Text style={{ fontWeight: '600' }} numberOfLines={1}>
+                <Text style={{ fontWeight: '500' }} numberOfLines={1}>
                   {data.author.fullname}
                 </Text>
               </TouchableOpacity>
@@ -108,10 +109,10 @@ const TourItemTourScreen = ({ data, index, liked, onTapToViewDetail, onTapToView
               anchor={
                 <View style={{ alignItems: "center" }}>
                   <IconButton
-                    style={{ backgroundColor: 'white', width: 50, height: 40 }}
+                    style={{ backgroundColor: 'white', width: 40, height: 30 }}
                     icon="map-marker-radius"
                     iconColor={iconColors.green1}
-                    size={26}
+                    size={22}
                     onPress={() => setIndexVisibleMenu(index)}
                     accessibilityLabel="Menu button"
                   />
@@ -138,47 +139,64 @@ const TourItemTourScreen = ({ data, index, liked, onTapToViewDetail, onTapToView
           <View style={styles.itemOverplay}></View>
         </View>
 
-        <View style={styles.priceBackground}>
+        {/* <View style={styles.priceBackground}>
           {data.discountTour !== 0 ?
             <View style={styles.priceWrap}>
-              <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color={iconColors.green1} />
+              <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={22} color={iconColors.green2} />
               <View style={{ paddingRight: 10 }}>
                 <Text style={{ textDecorationLine: 'line-through', color: 'grey' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                <Text style={{ fontSize: 18, color: 'white', fontWeight: "500" }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                <Text style={{ fontSize: 16, color: 'white', fontWeight: "500" }}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
               </View>
             </View>
             :
             // <View style={styles.priceBackground}>
             <View style={styles.priceWrap}>
-              <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={24} color={iconColors.green2} />
+              <Entypo style={{ paddingHorizontal: 8 }} name="price-tag" size={22} color={iconColors.green2} />
               <View style={{ paddingRight: 10 }}>
-                <Text style={{ fontSize: 18, color: 'white', fontWeight: "500" }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
+                <Text style={{ fontSize: 16, color: 'white', fontWeight: "500" }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
               </View>
             </View>
             // </View>
           }
-        </View>
+        </View> */}
 
 
         <View style={styles.footer}>
           {/* Button like, comment, save */}
           <View style={styles.actionBar}>
-            <View style={[styles.btn, {
-              paddingHorizontal: 10, zIndex: 3
-            }]}>
-              <HeartButton data={data} type={TYPE} liked={liked}></HeartButton>
+            {/* LIKE BUTTON */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 5, zIndex: 3, gap: 6, justifyContent: 'center', alignItems: 'center' }} >
+              <AntDesign name={'hearto'} size={20} color='white' />
+              <Text style={{ color: 'white' }}>{formatNumberLike(data.likes)}</Text>
             </View>
-            <View style={[styles.btn, { width: 60, marginLeft: 0, zIndex: 3 }]}>
-              <SaveButton data={data} type={TYPE}></SaveButton>
+            {/* COMMENT BUTTON */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 5, zIndex: 3, gap: 6, justifyContent: 'center', alignItems: 'center' }} >
+              <FontAwesome name="comment-o" size={20} color="white" />
+              <Text style={{ color: 'white' }}>{data.comments ? formatNumberLike(Object.keys(data.comments).length) : '0'}</Text>
             </View>
           </View>
+
           <View style={styles.rating}>
             <Text style={styles.textRating}>{`${rating.toFixed(1)}`}</Text>
             {/* <Text style={styles.textRating}> Đánh giá: {`${rating.toFixed(1)} / 5.0`}</Text> */}
             <FontAwesome name="star" size={20} color="#F6CE00" style={{ marginLeft: 4 }} />
           </View>
+
+          <View style={styles.priceWrap}>
+            <Entypo style={{ paddingHorizontal: 6 }} name="price-tag" size={18} color={iconColors.green1} />
+            <View style={{ paddingRight: 4 }}>
+              {data.discountTour !== 0 && (
+                <Text style={{ textDecorationLine: 'line-through', color: 'grey', fontSize: 11 }}>
+                  {originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                </Text>
+              )}
+              <Text style={{ color: 'black', fontWeight: "500" }}>
+                {(data.discountTour !== 0 ? promotionalPrice : originalPrice).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+              </Text>
+            </View>
+          </View>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity >
     </PaperProvider >
   )
 }
@@ -200,58 +218,61 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     position: 'absolute',
-    left: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     bottom: 0,
-    padding: 10,
-    // paddingVertical: 10,
-    // paddingHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 10,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   itemOverplay: {
     backgroundColor: 'rgba(0,0,0,0.1)',
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 30,
+    borderRadius: 20,
   },
   textRating: {
+    color: 'white',
     // justifyContent: 'flex-end'
     fontWeight: '500'
   },
   rating: {
     flexDirection: 'row',
     // position: 'absolute',
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     // backgroundColor: 'rgba(255, 255, 255, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    padding: 10,
+    padding: 6,
   },
   priceWrap: {
     flexDirection: 'row',
-    // backgroundColor: 'white',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    // backgroundColor: backgroundColors.background1,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    height: 50,
-    paddingHorizontal: 10
+    // height: 40,
+    padding: 4
   },
   priceBackground: {
-    position: 'absolute',
+    // position: 'absolute',
     // backgroundColor: iconColors.green1,
     // backgroundColor: 'rgba(0,0,0,0.3)',
     paddingHorizontal: 10,
     borderRadius: 10,
-    bottom: 60,
+    // bottom: 60,
     // left: 10,
   },
   imageTour: {
     height: ITEM_HEIGHT,
     // backgroundColor: 'red',
-    borderRadius: 30,
+    borderRadius: 20,
   },
   itemLocation: {
     padding: 0,
@@ -261,7 +282,7 @@ const styles = StyleSheet.create({
   },
   listLocations: {
     width: 'auto',
-    top: 60,
+    top: 50,
   },
   flagBtn: {
     flex: 1,
@@ -270,13 +291,13 @@ const styles = StyleSheet.create({
   },
   avatar: {
     borderRadius: 90,
-    width: 40,
-    height: 40,
+    width: 34,
+    height: 34,
   },
   avatarWrap: {
     borderRadius: 90,
-    width: 40,
-    height: 40,
+    width: 34,
+    height: 34,
     backgroundColor: 'grey',
     elevation: 3
   },
@@ -285,7 +306,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     maxWidth: 200,
-    padding: 6,
+    padding: 4,
     borderRadius: 90,
     zIndex: 3
   },
@@ -298,9 +319,9 @@ const styles = StyleSheet.create({
     padding: 10
   },
   item: {
-    height: 270,
+    height: ITEM_HEIGHT,
     position: "relative",
-    borderRadius: 30,
+    borderRadius: 20,
     elevation: 6
   },
   actionBar: {

@@ -20,6 +20,7 @@ export type TourModal = {
     },
     content: string,
     created_at: number,
+    comments: any,
     discountTour: number,
     hashtag: string,
     id: string,
@@ -112,19 +113,19 @@ const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
             onPress={() => onTapToViewDetail?.('/tourDetail', data.id)}
         >
             <View style={styles.tourItemHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TouchableOpacity
-                        onPress={() => onTapToViewProfile?.(data.author.id)}
-                    >
-                        <Image source={{ uri: data.author.avatar }} style={{ width: 'auto', height: '100%', borderRadius: 20, aspectRatio: 1 }}>
-                        </Image>
-                    </TouchableOpacity>
-
+                {/* <View style={styles.authorContent}> */}
+                <TouchableOpacity
+                    style={styles.authorContent}
+                    onPress={() => onTapToViewProfile?.(data.author.id)}
+                >
+                    <Image source={{ uri: data.author.avatar }} style={{ width: 30, height: 30, borderRadius: 20, aspectRatio: 1 }}>
+                    </Image>
                     <Text style={{ marginLeft: 6, fontWeight: '500' }}>{data.author.fullname}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                </TouchableOpacity>
+                {/* </View> */}
+                {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <SaveButton data={data} type={TYPE}></SaveButton>
-                </View>
+                </View> */}
             </View>
             <View style={styles.tourItemImageSection}>
                 <View style={{ backgroundColor: 'white', borderRadius: 20, flex: 1, elevation: 6, }}>
@@ -134,41 +135,44 @@ const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                     />
                 </View>
             </View>
+
             <View style={styles.tourItemContentSection}>
-                <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
+                <View style={{ paddingHorizontal: 20, paddingVertical: 10, gap: 6 }}>
                     <Text style={styles.tourItemTitle} numberOfLines={1} ellipsizeMode='tail'>{data.title}</Text>
 
-                    {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}> */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10, justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         {/* Time */}
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="calendar" size={22} color={iconColors.green1} />
-                            <Text style={{ fontSize: 18, paddingLeft: 10 }}>4 ngày</Text>
+                            <Ionicons name="calendar" size={20} color={iconColors.green1} />
+                            <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
                         </View>
                         {/* Rating */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                             <FontAwesome6 name="ranking-star" size={20} color={iconColors.green1} />
-                            <Text style={{ fontSize: 18, paddingRight: 4, paddingLeft: 10 }}>{averageRating(data.ratingSummary.totalRatingValue, data.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
+                            <Text style={{ paddingRight: 4, paddingLeft: 10 }}>{averageRating(data.ratingSummary.totalRatingValue, data.ratingSummary.totalRatingCounter).toFixed(1)}</Text>
                             <View style={{ alignItems: 'center', justifyContent: 'center' }} >
-                                <FontAwesome name="star" size={18} color={iconColors.starRating} />
+                                <FontAwesome name="star" size={20} color={iconColors.starRating} />
                             </View>
                         </View>
                     </View>
-                    {/* </View> */}
+
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <View>
-                            <FontAwesome6 name="money-check-dollar" size={24} color={iconColors.green1} />
+                            <FontAwesome6 name="money-check-dollar" size={20} color={iconColors.green1} />
                         </View>
-                        {data.discountTour !== 0 ?
-                            <View style={styles.tourPriceContainer}>
-                                <Text style={styles.tourOriginalPrice}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                                <Text style={styles.tourDiscountedPrice}>{promotionalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                            </View>
-                            :
-                            <View style={[styles.tourPriceContainer, { justifyContent: 'flex-end' }]}>
-                                <Text style={styles.tourDiscountedPrice}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
-                            </View>
-                        }
+                        <View style={[
+                            styles.tourPriceContainer,
+                            data.discountTour === 0 && { justifyContent: 'flex-end' }
+                        ]}>
+                            {data.discountTour !== 0 && (
+                                <Text style={styles.tourOriginalPrice}>
+                                    {originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                                </Text>
+                            )}
+                            <Text style={styles.tourDiscountedPrice}>
+                                {(data.discountTour !== 0 ? promotionalPrice : originalPrice).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                            </Text>
+                        </View>
                         {/* <Text style={{fontSize: 18, color:'#c1c1c1'}}> <Text style={{fontSize:22}}>|</Text>|1</Text> */}
                         <View style={{ width: 2, height: 26, backgroundColor: iconColors.green1, marginHorizontal: 6 }}></View>
                         <Text style={{ fontSize: 18 }}>1</Text>
@@ -193,14 +197,35 @@ const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
                         </View>
                     </Marquee>
                 </View>
+                <View style={{ height: 10, width: '100%', backgroundColor: iconColors.green5, }}></View>
             </View>
         </TouchableOpacity>
     )
 }
 
 const styles = StyleSheet.create({
+    avatarWrap: {
+        borderRadius: 90,
+        width: 30,
+        height: 30,
+        backgroundColor: 'grey',
+        elevation: 3
+    },
+    authorContent: {
+        // flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: 4,
+        paddingRight:8,
+        marginTop: 10,
+        borderRadius: 90,
+        zIndex: 3,
+        elevation: 4
+    },
     tourDiscountedPrice: {
-        fontSize: 18,
+        fontSize: 16,
+        fontWeight: '500'
         // fontFamily: 'NotoSans_600SemiBold',
     },
     tourOriginalPrice: {
@@ -238,22 +263,21 @@ const styles = StyleSheet.create({
         borderColor: '#d3d3d3',
     },
     tourItemTitle: {
-        fontSize: 20,
-        // fontFamily: 'NotoSans_600SemiBold',
+        fontSize: 16,
         fontWeight: '500',
-        marginBottom: 0
     },
     image: {
         flex: 1,
         borderRadius: 20,
         elevation: 10,
+        height: 180
         // overlayColor: 'white'
     },
     tourFooterSection: {
-        flexDirection: 'row',
-        backgroundColor: iconColors.green5,
+        // flexDirection: 'row',
+        // backgroundColor: iconColors.green5,
         // backgroundColor: '#7B9A6D',
-        height: '12%',
+        // height: '12%',
         width: '100%',
         justifyContent: 'center',
         alignItems: 'flex-start',
@@ -263,7 +287,7 @@ const styles = StyleSheet.create({
     },
     tourItemContentSection: {
         width: '100%',
-        height: '28%',
+        // height: '28%',
         // padding: 10,
         borderTopWidth: 3,
         borderStyle: 'dashed',
@@ -272,28 +296,28 @@ const styles = StyleSheet.create({
     },
     tourItemImageSection: {
         width: '100%',
-        height: '50%',
+        // height: '50%',
         padding: 14,
         // paddingBottom: 20,
         borderRadius: 20,
     },
     tourItemHeader: {
         width: '100%',
-        height: '10%',
+        // height: '10%',
         flexDirection: 'row',
         justifyContent: 'space-between',
         // backgroundColor: 'red',
         paddingHorizontal: 14,
-        paddingTop: 10,
+        paddingTop: 4,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
     },
     tourItem: {
         backgroundColor: 'white',
-        justifyContent: 'center',
-        alignItems: 'center',
+        // justifyContent: 'center',
+        // alignItems: 'center',
         borderRadius: 20,
-        height: 460,
+        // height: 460,
         width: width * 2 / 3,
         // overflow: 'hidden',
         elevation: 4

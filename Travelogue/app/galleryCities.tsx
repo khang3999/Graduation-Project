@@ -2,7 +2,7 @@ import { database, get, onValue } from "@/firebase/firebaseConfig";
 import { useNavigationState, useRoute } from "@react-navigation/native";
 import { router, useFocusEffect } from "expo-router";
 import { ref, runTransaction } from "firebase/database";
-import { ArrowLeft } from "iconsax-react-native";
+import { ArrowLeft, Velas } from "iconsax-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -18,8 +18,11 @@ import formatScore from "@/utils/formatScore";
 import { MaterialIcons } from "@expo/vector-icons";
 import ListPoints from "@/components/listPoints/ListPoints";
 import GalleryPosts from "@/components/gallery/GalleryPosts";
+import { useRanking } from "@/contexts/RankingContext";
+import { FlatList } from "react-native";
 
 const { width } = Dimensions.get("window");
+const pad = 20
 const getValidImageUri = (uri?: string | null) =>
   uri && uri.trim() !== ""
     ? uri
@@ -35,7 +38,7 @@ const GalleryCities = () => {
   const [dataCity, setDataCity] = useState<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const [images, setImages] = useState<string[]>(["https://mediatech.vn/assets/images/imgstd.jpg"])
-
+  const { postsData1 }: any = useRanking()
   // useEffect(() => {
   //   const countryRef = ref(database, `cities/${idCountry}`);
   //   onValue(countryRef, (snapshot) => {
@@ -200,10 +203,82 @@ const GalleryCities = () => {
         );
       case "Bài viết":
         return (
-          <View style={{ padding: 20 }}>
-            <GalleryPosts dataCity={dataCity} />
-          </View>
+          <View style={{ padding: 0, }}>
+            {/* Chưa có bài viết */}
+            {postsData1.length === 0 && <Text
+              style={{ fontStyle: "italic", color: "grey", width: '100%', fontWeight: "500", textAlign: 'center', padding: 20 }}  >
+              Chưa có bài viết liên quan đến tỉnh thành này.
+            </Text>}
+
+            {/* Có bài viết */}
+            {postsData1.length !== 0 &&
+              <Text style={{ fontStyle: "italic", width: '100%', fontWeight: "500", padding: 20 }} >
+                Danh sách {postsData1.length} bài viết nổi bật
+              </Text>}
+            <FlatList
+              data={postsData1}
+              keyExtractor={(item) => item.id}
+              horizontal
+              contentContainerStyle={{ padding: 20 }}
+              ItemSeparatorComponent={() => <View style={{ width: 20 }}></View>}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity key={index} style={styles.cartItem}>
+                  <View style={{ borderRadius: 8, elevation: 5, width: 150, aspectRatio: 1 }}>
+                    <Image style={{ borderRadius: 8, width: 150, aspectRatio: 1 }} source={{ uri: item.thumbnail ?? "https://mediatech.vn/assets/images/imgstd.jpg" }}></Image>
+                  </View>
+
+                  <View style={{ marginTop: 10, width: '100%', justifyContent: 'center' }}>
+                    <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: '500' }}>{item.title}</Text>
+                    <Text style={{}} numberOfLines={2} >
+                      {item.content?.split('<br><br>')[1].trim() || ''}</Text>
+                  </View>
+                </TouchableOpacity>
+
+              )
+              }
+            />
+
+            {/* <GalleryPosts dataCity={dataCity} /> */}
+          </View >
         );
+
+      case "Tour":
+        return (
+          <View style={{ padding: 0, }}>
+            {/* Chưa có tour */}
+            {postsData1.length === 0 && <Text
+              style={{ fontStyle: "italic", color: "grey", width: '100%', fontWeight: "500", textAlign: 'center', padding: 20 }}  >
+              Chưa có tour liên quan đến tỉnh thành này.
+            </Text>}
+
+            {/* Có tour */}
+            {postsData1.length !== 0 &&
+              <Text style={{ fontStyle: "italic", width: '100%', fontWeight: "500", padding: 20 }} >
+                Danh sách {postsData1.length} tour nổi bật
+              </Text>}
+            <FlatList
+              data={postsData1}
+              keyExtractor={(item) => item.id}
+              horizontal
+              contentContainerStyle={{ padding: 20 }}
+              ItemSeparatorComponent={() => <View style={{ width: 20 }}></View>}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity key={index} style={styles.cartItem}>
+                  <View style={{ borderRadius: 8, elevation: 5, width: 150, aspectRatio: 1 }}>
+                    <Image style={{ borderRadius: 8, width: 150, aspectRatio: 1 }} source={{ uri: item.thumbnail ?? "https://mediatech.vn/assets/images/imgstd.jpg" }}></Image>
+                  </View>
+
+                  <View style={{ marginTop: 10, width: '100%', justifyContent: 'center' }}>
+                    <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: '500' }}>{item.title}</Text>
+                    <Text style={{}} numberOfLines={2} >
+                      {item.content?.split('<br><br>')[1].trim() || ''}</Text>
+                  </View>
+                </TouchableOpacity>
+              )} />
+            {/* <GalleryPosts dataCity={dataCity} /> */}
+          </View >
+        );
+
       case "Địa điểm":
         return <ListPoints cities={cities} />;
       default:
@@ -234,7 +309,7 @@ const GalleryCities = () => {
               dataCity.idCountry.slice(1)
               : "Unknown"}
         </Text>
-        
+
         <View style={styles.rating}>
           <Text style={styles.ratingText}>{formatScore(dataCity?.scores)}</Text>
           <MaterialIcons name="sports-score" size={16} color="#FF3300" />
@@ -243,7 +318,9 @@ const GalleryCities = () => {
 
       <View style={styles.contentContainer}>
         <View style={styles.tabsContainer}>
-          {["Chung", "Bài viết", "Địa điểm"].map((tab) => (
+          {/* {["Chung", "Bài viết", "Tour", "Địa điểm"].map((tab) => ( */}
+
+          {["Chung", "Địa điểm"].map((tab) => (
             <TouchableOpacity
               key={tab}
               onPress={() => setSelectedTab(tab)}
@@ -270,6 +347,15 @@ const GalleryCities = () => {
 };
 
 const styles = StyleSheet.create({
+  cartItem: {
+    backgroundColor: "#fff",
+    padding: 20,
+    width: (width - 3 * pad) / 2,
+    borderRadius: 8,
+    elevation: 5,
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
   container: { flex: 1, backgroundColor: "#f9f9f9" },
   backButton: {
     position: "absolute",

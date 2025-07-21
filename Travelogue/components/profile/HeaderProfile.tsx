@@ -33,8 +33,7 @@ export default function HeaderProfile({ onModalOpen = () => { }, onModalClose = 
         <View style={styles.headerButton}>
           {!isSearched && (
             <>
-              <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch} />
-            
+              <SearchButton setDisplay={setIsDisplay} onModalOpen={onModalOpen} onModalClose={onModalClose} handleSearch={handleSearch} />           
             </>
           )}
            <MenuItem menuIcon="menu" isDisplay={isDisplay} isSearched={isSearched} />

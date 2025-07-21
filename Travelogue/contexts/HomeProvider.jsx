@@ -68,33 +68,62 @@ const HomeProvider = ({ children }) => {
     /// ----------------------- FETCH REAL TIME ----------------------
 
     // Lấy các thành phố
+
     useEffect(() => {
-        const refCities = ref(database, `cities/`)
-        const unsubscribe = onValue(refCities, (snapshot) => {
-            if (snapshot.exists()) {
-                const jsonDataCities = snapshot.val();
-                const result = Object.entries(jsonDataCities).flatMap(([country, regions]) =>
-                    Object.entries(regions).flatMap(([region, cityObj]) =>
-                        Object.entries(cityObj).map(([cityCode, cityInfo]) =>
-                        ({
-                            [cityCode]: cityInfo.name
-                        })
-                        )
-                    )
-                );
+        const fetchCities = async () => {
+            try {
+                const refCities = ref(database, `cities/`);
+                const snapshot = await get(refCities);
 
-                setDataAllCities(result);
-            } else {
-                console.log("No data available1");
+                if (snapshot.exists()) {
+                    const jsonDataCities = snapshot.val();
+
+                    const result = Object.entries(jsonDataCities) // country level
+                        .flatMap(([_, regions]) =>
+                            Object.entries(regions).flatMap(([_, cities]) =>
+                                Object.entries(cities).map(([cityId, cityData]) => ({
+                                    [cityId]: cityData.value,
+                                }))
+                            )
+                        );
+
+                    setDataAllCities(result);
+                } else {
+                    console.log("No data available");
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
             }
-        }, (error) => {
-            console.error("Error fetching data:", error);
-        });
-
-        return () => {
-            unsubscribe(); // Sử dụng unsubscribe để hủy listener
         };
-    }, [])
+
+        fetchCities();
+    }, []);
+    // useEffect(() => {
+    //     const refCities = ref(database, `cities/`)
+    //     const unsubscribe = onValue(refCities, (snapshot) => {
+    //         if (snapshot.exists()) {
+    //             const jsonDataCities = snapshot.val();
+    //             const result = Object.entries(jsonDataCities) // country level
+    //                 .flatMap(([_, regions]) =>
+    //                     Object.entries(regions).flatMap(([_, cities]) =>
+    //                         Object.entries(cities).map(([cityId, cityData]) => ({
+    //                             [cityId]: cityData.value
+    //                         }))
+    //                     )
+    //                 );
+
+    //             setDataAllCities(result);
+    //         } else {
+    //             console.log("No data available1");
+    //         }
+    //     }, (error) => {
+    //         console.error("Error fetching data:", error);
+    //     });
+
+    //     return () => {
+    //         unsubscribe(); // Sử dụng unsubscribe để hủy listener
+    //     };
+    // }, [])
     // Lấy các quốc gia 
     useEffect(() => {
         const refCountries = ref(database, `countries`)

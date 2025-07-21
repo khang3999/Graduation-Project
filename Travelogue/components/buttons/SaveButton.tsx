@@ -1,218 +1,104 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { auth, database, ref } from '@/firebase/firebaseConfig';
-import { get, remove, runTransaction, update } from '@firebase/database';
+import { auth, database, get, onValue, ref, update } from '@/firebase/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAccount } from '@/contexts/AccountProvider';
 import { useHomeProvider } from '@/contexts/HomeProvider';
 import { useTourProvider } from '@/contexts/TourProvider';
+import { remove, runTransaction } from 'firebase/database';
 
 const SaveButton = (props: any) => {
-  // const userID = auth.currentUser?.uid
-  const type = props.type
-  const [saved, setSaved] = useState(false);
-  const [userID, setUserID] = useState('')
-  const [data, setData] = useState(props.data)
-  const [saveNum, setSaveNum] = useState(props.data.saves)
-  const { dataPosts, setDataPosts }: any = useHomeProvider()
-  const { dataTours, setDataTours }: any = useTourProvider()
-
-
-  const updateArray = (data: any, id: string, newSaveNumber: number) => {
-    const temp = data.map((item: any) =>
-      item.id === id ? { ...item, saves: newSaveNumber } : item
-    )
-    return temp
-  };
+  const { id } = props.data
+  const type = props.type === 'post' ? 'savedPostsList' : 'savedToursList'
+  const [isSaved, setIsSaved] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [savedList, setSavedList] = useState<any[]>([])
+  const { userId }: any = useHomeProvider()
 
   useEffect(() => {
-    if (type === 0) {
-      // Tìm item có id cụ thể
-      const dataItem = dataPosts.find((item: any) => item.id === data.id);
-      if (dataItem) {
-        setSaveNum(dataItem.saves); // Cập nhật saveNum dựa trên item tìm thấy
-      }
-    } else {
-      // Tìm item có id cụ thể
-      const dataItem = dataTours.find((item: any) => item.id === data.id);
-      if (dataItem) {
-        setSaveNum(dataItem.saves); // Cập nhật saveNum dựa trên item tìm thấy
-      }
-    }
-
-  }, [dataPosts, dataTours])
-
-  // Lấy UserID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userToken");
-        if (userId) {
-          setUserID(userId);
-        } else {
-          console.log("User ID not found");
-        }
-      } catch (error) {
-        console.error("Failed to retrieve user ID:", error);
-      }
-    };
-    getUserId();
-  }, [])
-
-  // Render 1 lần từ db để load các bài đã save
-  useEffect(() => {
-    const checkIfSaved = async () => {
-      const refColumn = type == 0 ? 'savedPostsList' : 'savedToursList'
-      const refAccountList = ref(database, `accounts/${userID}/${refColumn}/${data.id}`);
-      const snapshot = await get(refAccountList);
-
-      // Cập nhật trạng thái saved dựa trên dữ liệu từ Firebase
+    const savedRef = ref(database, `accounts/${userId}/${type}`);
+    const unsubscribe = onValue(savedRef, (snapshot) => {
       if (snapshot.exists()) {
-        setSaved(true); // Nếu dataID đã tồn tại, đánh dấu là saved
+        const dataSavedList = snapshot.val();
+        const savedListId = Object.keys(dataSavedList)
+        console.log(savedListId);
+        setSavedList(savedListId);
+        setIsSaved(savedListId.includes(id))
       } else {
-        setSaved(false); // Nếu không tồn tại, đánh dấu là unsaved
+        console.log(`No data saved ${type} list available`);
       }
+    }, (error) => {
+      console.error("Error fetching data:", error);
+    });
+
+    return () => {
+      unsubscribe(); // Sử dụng unsubscribe để hủy listener
     };
-
-    if (userID) {
-      checkIfSaved(); // Gọi hàm kiểm tra nếu có userID
-    }
-  }, [userID, dataPosts, dataTours]);
-
-
+  }, [userId])
   // Hàm set save
-  const handleSave = async (dataID: any, userID: any) => {
-    const refColumn = type == 0 ? 'savedPostsList' : 'savedToursList';
-    const refTable = type === 0 ? 'posts' : 'tours';
-    const refSavedList = ref(database, `accounts/${userID}/${refColumn}/`);
-    const refItemInSavedList = ref(database, `accounts/${userID}/${refColumn}/${dataID}`);
-    const snapshot = await get(refItemInSavedList);
-    const refSavesOfTable = ref(database, `${refTable}/${dataID}/scores`);
-  
-    // Lấy danh sách các tỉnh thành từ `locations`
-    const locations = data.locations; // Đảm bảo `data.locations` chứa thông tin các tỉnh thành
-    console.log("Locations:", locations);
-  
+  const handleSave = useCallback(async () => {
+    if (isSaved) return
     try {
-      if (snapshot.exists()) {
-        // Unsave
-        await remove(refItemInSavedList);
-        console.log('Đã bỏ lưu ' + dataID);
-  
-        // Giảm 2 điểm
-        await runTransaction(refSavesOfTable, (currentValue) => {
-          return (currentValue || 0) - 2;
-        });
-  
-        // Giảm 2 điểm cho từng tỉnh thành
-        if (locations) {
-          for (const countryKey in locations) {
-            const provinces = locations[countryKey];
-            for (const provinceID in provinces) {
-              console.log("Tìm provinceID:", provinceID);
-  
-              // Dò vào bảng cities để tìm tỉnh thành
-              const citiesRef = ref(database, `cities/${countryKey}`);
-              const citiesSnapshot = await get(citiesRef);
-  
-              if (citiesSnapshot.exists()) {
-                const citiesData = citiesSnapshot.val();
-                let found = false;
-  
-                for (const regionKey in citiesData) {
-                  if (citiesData[regionKey][provinceID]) {
-                    console.log("Tìm thấy provinceID:", provinceID);
-                    console.log("countryKey:", countryKey);
-                    console.log("regionKey:", regionKey);
-  
-                    // Cập nhật scores cho tỉnh thành
-                    const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
-                    await runTransaction(refProvinceScores, (currentValue) => {
-                      return (currentValue || 0) - 2; // Giảm 2 điểm
-                    });
-  
-                    found = true;
-                    break;
-                  }
-                }
-  
-                if (!found) {
-                  console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
-                }
-              }
-            }
-          }
-        }
-  
-        setSaveNum(saveNum - 1);
-        const updatedData = updateArray(type === 0 ? dataPosts : dataTours, dataID, saveNum - 1);
-        type === 0 ? setDataPosts(updatedData) : setDataTours(updatedData);
-      } else {
-        // Save
-        await update(refSavedList, { [dataID]: true });
-        console.log('Đã lưu ' + dataID);
-  
-        // Tăng 2 điểm
-        await runTransaction(refSavesOfTable, (currentValue) => {
-          return (currentValue || 0) + 2;
-        });
-  
-        // Tăng 2 điểm cho từng tỉnh thành
-        if (locations) {
-          for (const countryKey in locations) {
-            const provinces = locations[countryKey];
-            for (const provinceID in provinces) {
-              console.log("Tìm provinceID:", provinceID);
-  
-              // Dò vào bảng cities để tìm tỉnh thành
-              const citiesRef = ref(database, `cities/${countryKey}`);
-              const citiesSnapshot = await get(citiesRef);
-  
-              if (citiesSnapshot.exists()) {
-                const citiesData = citiesSnapshot.val();
-                let found = false;
-  
-                for (const regionKey in citiesData) {
-                  if (citiesData[regionKey][provinceID]) {
-                    console.log("Tìm thấy provinceID:", provinceID);
-                    console.log("countryKey:", countryKey);
-                    console.log("regionKey:", regionKey);
-  
-                    // Cập nhật scores cho tỉnh thành
-                    const refProvinceScores = ref(database, `cities/${countryKey}/${regionKey}/${provinceID}/scores`);
-                    await runTransaction(refProvinceScores, (currentValue) => {
-                      return (currentValue || 0) + 2; // Tăng 2 điểm
-                    });
-  
-                    found = true;
-                    break;
-                  }
-                }
-  
-                if (!found) {
-                  console.warn(`Không tìm thấy regionKey cho provinceID: ${provinceID}`);
-                }
-              }
-            }
-          }
-        }
-  
-        setSaveNum(saveNum + 1);
-        const updatedData = updateArray(type === 0 ? dataPosts : dataTours, dataID, saveNum + 1);
-        type === 0 ? setDataPosts(updatedData) : setDataTours(updatedData);
-      }
+      // Cập nhật vào danh sách 
+      const refSavedList = ref(database, `accounts/${userId}/${type}/`);
+      await update(refSavedList, { [id]: true })
+
+      // Tăng lượt saves
+      const table = props.type === 'post' ? 'posts' : 'tours';
+      const refTable = ref(database, `${table}/${id}/saves`);
+      await runTransaction(refTable, (currentValue) => {
+        return (typeof currentValue === 'number' && currentValue >= 0 ? currentValue : 0) + 1;
+      });
     } catch (error) {
-      console.error('Lỗi khi cập nhật savedPosts:', error);
-    } finally {
-      setSaved(!saved);
+      console.error(`Lỗi khi cập nhật : ${type}`, error);
     }
-  };
+    finally {
+      setIsSaved(true);
+      setIsProcessing(false)
+    }
+  }, [id, props.type, userId, type]);
+
+  // Hàm remove
+  const handleRemove = useCallback(async () => {
+    if (!isSaved) return
+    try {
+      // Xóa khỏi danh sách
+      const refItemInSavedList = ref(database, `accounts/${userId}/${type}/${id}`);
+      await remove(refItemInSavedList)
+
+      // Giảm lượt saves
+      const table = props.type === 'post' ? 'posts' : 'tours';
+      const refTable = ref(database, `${table}/${id}/saves`);
+      await runTransaction(refTable, (currentValue) => {
+        return (typeof currentValue === 'number' && currentValue > 0 ? currentValue - 1 : 0);
+      });
+    } catch (error) {
+      console.error(`Lỗi khi cập nhật : ${type}`, error);
+    } finally {
+      setIsSaved(false);
+      setIsProcessing(false)
+    }
+  }, [isSaved, userId, type, id])
+
+  const handleTapOnButton = () => {
+    setIsProcessing(true)
+  }
+  useEffect(() => {
+    if (isProcessing) {
+      isSaved ? handleRemove() : handleSave()
+    }
+  }, [isProcessing])
   return (
-    <TouchableOpacity delayPressOut={50} onPress={() => handleSave(data.id, userID)} style={props.myStyle}>
-      <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={saved ? savedColor : unsavedColor} style={styles.container} />
-    </TouchableOpacity>
+    <View>
+      {isProcessing &&
+        <View style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 5, position: 'absolute', borderRadius: 90 }}></View>
+      }
+      <TouchableOpacity delayPressOut={50} onPress={isSaved ? handleRemove : handleSave} style={props.myStyle}>
+        <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={24} color={isSaved ? savedColor : unsavedColor} style={{ top: 1 }} />
+      </TouchableOpacity>
+    </View>
   )
 }
 // Style

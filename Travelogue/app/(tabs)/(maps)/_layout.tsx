@@ -18,7 +18,7 @@ const MapLayout = () => {
             screenOptions={{
                 tabBarStyle: styles.tabBar,
                 headerStyle: {
-                    height: 105,
+                    // height: 105,
                     backgroundColor: 'white',
                     borderBottomWidth: 1,
                     // borderRadius: 20,
@@ -36,7 +36,7 @@ const MapLayout = () => {
                 name="checkInMap"
                 options={{
                     // title: 'Check in',
-                    headerTitle: 'Check in',
+                    headerTitle: 'Tỉnh thành',
                     // headerRight: () => <Text style={styles.headerTitleText}>Check in</Text>,
                 }}
             />
@@ -45,8 +45,8 @@ const MapLayout = () => {
                 name="realMap"
                 options={{
                     //     title: 'Real Map',
-                    headerTitle: 'Danh lam',
-                    headerRight: () => <Text style={styles.headerTitleText}>Lễ hội</Text>,
+                    headerTitle: '',
+                    headerRight: () => <Text style={styles.headerTitleText}>Địa điểm</Text>,
                 }}
             />
         </Tabs >
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     headerTitleText: {
         marginHorizontal: 20,
         fontSize: 22,
+        fontWeight: '500'
         // fontFamily: 'FuzzyBold'
     }
 })

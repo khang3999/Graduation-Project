@@ -156,7 +156,7 @@ const ScrapeInfomation = () => {
 
                 // Hàm chuẩn hóa chuỗi
                 const myNormalize = (str) =>
-                    str.replace(/Hoà/g, "Hòa").normalize("NFC").trim().replace(/\\s+/g, " ");
+                    str.replace(/Hoà/g, "Hòa").replace(/Thành phố\s*/gi, "").normalize("NFC").trim().replace(/\\s+/g, " ");
 
                 options.forEach((option) => {
                     const key = option.value.trim();
@@ -266,13 +266,12 @@ const ScrapeInfomation = () => {
             const refProvinces = ref(database, `cities/${countryId}`)
             const snapshot = await get(refProvinces);
             if (snapshot.exists()) {
-                const dataProvinces = snapshot.val() as Record<string, any>;
-                // console.log(dataProvinces, 'fet');
-
-                // Dùng Object.entries + flatMap để gom dữ liệu từ các vùng thành 1 mảng Province[]
-                const dataProvincesArray: Province[] = Object.values(dataProvinces)
-                    .flatMap(item => Object.values(item as Province))
-                    .sort((a: Province, b: Province) => a.value.localeCompare(b.value));
+                const dataRegions = snapshot.val() as Record<string, Record<string, Province>>;
+                const dataProvincesArray: Province[] = Object.values(dataRegions)
+                    .flatMap(item => Object.values(item))
+                    .sort((a: Province, b: Province) => {
+                        return a.value.localeCompare(b.value);
+                    });
                 // Thêm phần tử default
                 dataProvincesArray.unshift(new Province());
                 setDataProvinces(dataProvincesArray);
@@ -361,8 +360,9 @@ const ScrapeInfomation = () => {
             const keywords = ['Hòa Bình', 'Nam Định', 'Bình Định'];
             let url = `${DOMAIN_WIKI}/${(provinceName)}`
 
-
-            if (keywords.some(k => provinceDataImplicit.value.includes(k.normalize("NFC")))) {
+            if (provinceName === 'Hồ_Chí_Minh') {
+                url = `${DOMAIN_WIKI}/Thành_phố_${(provinceName)}`
+            } else if (keywords.some(k => provinceDataImplicit.value.includes(k.normalize("NFC")))) {
                 url += '_(tỉnh)'
             }
             console.log(url, '-----', provinceName);

@@ -25,6 +25,7 @@ const StoryItem = ({ item }: any) => (
         params: {
           idCity: item.key,
           idCountry: item.idCountry,
+          idArea: item.areaId
         },
       });
     }}
@@ -66,25 +67,34 @@ const Featured = () => {
     <View
       style={{ flexDirection: 'row', backgroundColor: iconColors.green1, marginVertical: 10 }}
     >
-      <FlatList
-        data={[]}
-        // data={citiesData.slice(0, 4)}
-        horizontal
-        style={{
-          flex: 1, padding: 10, backgroundColor: iconColors.green2, borderTopRightRadius: 6,
-          borderBottomRightRadius: 6,
-        }}
-        keyExtractor={(item:any) => item.key}
-        renderItem={({ item }) => <StoryItem item={item} />}
-        showsHorizontalScrollIndicator={false}
-      />
+      <View style={{
+        flex: 1, flexDirection: 'row', backgroundColor: iconColors.green2, paddingVertical: 10, borderTopRightRadius: 6,
+        borderBottomRightRadius: 6,
+      }}>
+        <FlatList
+          // data={[]}
+          data={citiesData.slice(0, 4)}
+          horizontal
+          style={{
+            backgroundColor: iconColors.green2, borderTopRightRadius: 6,
+            borderBottomRightRadius: 6,
+          }}
+          contentContainerStyle={{ padding: 0, }}
+          keyExtractor={(item: any) => item.key}
+          renderItem={({ item }) => <StoryItem item={item} />}
+          showsHorizontalScrollIndicator={false}
+        />
+        {/* {citiesData.slice(0, 4).map((item, i) =>
+          <StoryItem item={item} key={i}
+          />)} */}
+      </View>
+
       <TouchableOpacity
         style={{
           backgroundColor: iconColors.green1,
           justifyContent: "center",
           alignItems: "center",
           padding: 2
-
         }}
         onPress={() => {
           // router.push({
