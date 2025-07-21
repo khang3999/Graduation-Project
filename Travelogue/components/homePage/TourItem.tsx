@@ -113,17 +113,16 @@ const TourItem = ({ data, index, liked, onTapToViewDetail, onTapToViewProfile }:
             onPress={() => onTapToViewDetail?.('/tourDetail', data.id)}
         >
             <View style={styles.tourItemHeader}>
-                <View style={styles.authorContent}>
-                    <TouchableOpacity
-                        style={styles.avatarWrap}
-                        onPress={() => onTapToViewProfile?.(data.author.id)}
-                    >
-                        <Image source={{ uri: data.author.avatar }} style={{ width: 30, height: 30, borderRadius: 20, aspectRatio: 1 }}>
-                        </Image>
-                    </TouchableOpacity>
-
+                {/* <View style={styles.authorContent}> */}
+                <TouchableOpacity
+                    style={styles.authorContent}
+                    onPress={() => onTapToViewProfile?.(data.author.id)}
+                >
+                    <Image source={{ uri: data.author.avatar }} style={{ width: 30, height: 30, borderRadius: 20, aspectRatio: 1 }}>
+                    </Image>
                     <Text style={{ marginLeft: 6, fontWeight: '500' }}>{data.author.fullname}</Text>
-                </View>
+                </TouchableOpacity>
+                {/* </View> */}
                 {/* <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <SaveButton data={data} type={TYPE}></SaveButton>
                 </View> */}
@@ -213,12 +212,12 @@ const styles = StyleSheet.create({
         elevation: 3
     },
     authorContent: {
-        flex: 1,
+        // flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'white',
-        maxWidth: 200,
         padding: 4,
+        paddingRight:8,
         marginTop: 10,
         borderRadius: 90,
         zIndex: 3,

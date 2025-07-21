@@ -449,7 +449,7 @@ const TourList = () => {
       {dataTours.length !== 0 ? (
         !isLoading ? (
           <FlatList
-            style={{ maxHeight: 620 }}
+            style={{ maxHeight: 570 }}
             nestedScrollEnabled={true}
             scrollEnabled={false}
             //NHO MO COMMENT
@@ -463,7 +463,7 @@ const TourList = () => {
             maxToRenderPerBatch={4}
           />
         ) : (
-          <View style={{ height: 620, justifyContent:'center',alignSelf:'center' }}>
+          <View style={{ height: 570, justifyContent:'center',alignSelf:'center' }}>
             <Text style={{ fontSize: 28, color: 'grey', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu</Text>
             <LottieView
               autoPlay
@@ -476,7 +476,7 @@ const TourList = () => {
           </View>
         )
       ) : (
-         <View style={{ height: 620, justifyContent: 'center', alignSelf: 'center', }}>
+         <View style={{ height: 570, justifyContent: 'center', alignSelf: 'center', }}>
           <Text style={{ fontSize: 26, color: 'grey', textAlign: 'center', }}>Không tìm thấy tour phù hợp</Text>
           <LottieView
             autoPlay

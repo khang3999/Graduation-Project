@@ -39,6 +39,7 @@ import { Link, router, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message-custom";
 import { TabActions, useNavigation } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
+import { useAdminProvider } from "@/contexts/AdminProvider";
 
 const { width } = Dimensions.get("window");
 
@@ -54,8 +55,10 @@ const CheckInMap = () => {
   const [isVisible, setIsVisible] = useState(false);
   const translateX = useSharedValue(width);
   const [reload, setReload] = useState(false)
-  const [userId, setUserId] = useState(null);
-  const { dataAccount, setDataAccount } = useHomeProvider();
+  // const [userId, setUserId] = useState(null);
+  const { userId, setDataAccount, } = useHomeProvider();
+  const { areasByProvinceName } = useAdminProvider()
+
   const {
     selectedCity,
     setSelectedCity,
@@ -65,21 +68,21 @@ const CheckInMap = () => {
     dataCheckedCities,
     setDataCheckedCities,
     cityRemoved,
-    setCityIdRemoved,
+    setCityRemoved,
   } = useMapCheckinProvider();
 
-  // Login state
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const userId = await AsyncStorage.getItem("userToken");
-      setUserId(userId);
-    };
-    fetchUserId();
-  }, []);
+  // // Login state
+  // useEffect(() => {
+  //   const fetchUserId = async () => {
+  //     const userId = await AsyncStorage.getItem("userToken");
+  //     setUserId(userId);
+  //   };
+  //   fetchUserId();
+  // }, []);
 
   // Fetch checkin list by country
   const fetchCheckinList = async (accountId) => {
-    const refCheckin = ref(database, `accounts/${accountId}/checkInList`);
+    const refCheckin = ref(database, `accounts/${userId}/checkInList`);
     try {
       const snapshot = await get(refCheckin);
       if (snapshot.exists()) {
@@ -104,11 +107,11 @@ const CheckInMap = () => {
     }
   };
   // Lấy các tỉnh đã checkin lần đầu sau khi đã có dữ liệu của account
-  useEffect(() => {
-    if (dataAccount) {
-      fetchCheckinList(dataAccount.id);
-    }
-  }, [dataAccount, reload]);
+  // useEffect(() => {
+  //   if (userId) {
+  //     fetchCheckinList(userId);
+  //   }
+  // }, [userId, reload]);
 
   // useEffect(() => {
   //   setHasFetched(false)
@@ -117,17 +120,17 @@ const CheckInMap = () => {
   useFocusEffect(
     useCallback(() => {
       // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-      if (dataAccount) {
+      if (userId) {
         console.log("map checkin focus");
         setSelectedArea(null);
         setSelectedCityId(null);
         setSelectedCity(null);
-        fetchCheckinList(dataAccount.id);
+        fetchCheckinList(userId);
       }
       return () => {
         console.log("Map Check in screen is unfocused");
       };
-    }, [dataAccount]) // Cập nhật khi các giá trị này thay đổi
+    }, [userId, reload, ]) // Cập nhật khi các giá trị này thay đổi
   );
   // Lấy các quốc gia
   useEffect(() => {
@@ -202,7 +205,7 @@ const CheckInMap = () => {
       if (snapshot.exists()) {
         const dataCitiesJson = snapshot.val();
         const dataCitiesArray = Object.keys(dataCitiesJson).map((key) => ({
-          label: dataCitiesJson[key].name,
+          label: dataCitiesJson[key].value,
           value: key,
         }));
         setDataCities(dataCitiesArray);
@@ -219,7 +222,7 @@ const CheckInMap = () => {
     try {
       const refCheckinListByCountry = ref(
         database,
-        `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`
+        `accounts/${userId}/checkInList/${selectedCountryId}`
       );
       const countrySnapshot = await get(refCheckinListByCountry);
       // Data update
@@ -288,7 +291,7 @@ const CheckInMap = () => {
     try {
       const refCheckinListByCountry = ref(
         database,
-        `accounts/${dataAccount.id}/checkInList/${selectedCountryId}`
+        `accounts/${userId}/checkInList/${selectedCountryId}`
       );
       const countrySnapshot = await get(refCheckinListByCountry);
 
@@ -296,12 +299,13 @@ const CheckInMap = () => {
         // Nếu quốc gia đã tồn tại thì mới hợp lẹ để xóa
         const cityRef = ref(
           database,
-          `accounts/${dataAccount.id}/checkInList/${selectedCountryId}/${selectedCity.value}`
+          `accounts/${userId}/checkInList/${selectedCountryId}/${selectedCity.value}`
         );
         // Xóa thành phố khỏi danh sách
-        setCityIdRemoved(selectedCity); // Lưu lại thành phố vừa bị xóa để tô màu lại
+        setCityRemoved(selectedCity); // Lưu lại thành phố vừa bị xóa để tô màu lại
         setReload(!reload)
         await remove(cityRef);
+        // setCityIdRemoved(selectedCity.value)
         // Toast thông báo
         Toast.show({
           type: "success",
@@ -373,10 +377,13 @@ const CheckInMap = () => {
 
   // Hàm xem chi tiết tỉnh
   const handleTapOnGallery = () => {
+    const areaId = areasByProvinceName[selectedCity.label]
+    // console.log(areasByProvinceName);
+
     if (selectedCity) {
       router.push({
         pathname: "/galleryCities",
-        params: { idCity: selectedCity.value, idCountry: selectedCountry.value },
+        params: { idCity: selectedCity.value, idCountry: selectedCountry.value, idArea: areaId },
       });
       // console.log(selectedCity.value, selectedCountry.value);
     } else {
@@ -500,7 +507,7 @@ const CheckInMap = () => {
             />
           </View>
           <View
-            style={{ flexDirection: "row", justifyContent: "space-around" }}
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
             {/* Chọn tình thành */}
             <Dropdown
@@ -531,7 +538,7 @@ const CheckInMap = () => {
                 size={24}
                 color="black"
               />
-              <Text style={styles.actionBtnText}>Đánh dấu</Text>
+              <Text style={styles.actionBtnText}>Check in</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btnHeader, { backgroundColor: '#f87171', borderWidth: 1, borderColor: '#d1d1d1' }]}
@@ -553,7 +560,7 @@ const CheckInMap = () => {
             flexDirection: "row",
             paddingHorizontal: 10,
             marginTop: 10,
-            justifyContent: "space-around",
+            justifyContent: "space-between",
             alignItems: "center",
           }}
         >
@@ -573,7 +580,7 @@ const CheckInMap = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.btnHeader, { backgroundColor: '#f7dab9' }]}
-            onPress={() => handleTapOnGallery()}
+            onPress={handleTapOnGallery}
           >
             <FontAwesome6 name="images" size={24} color="black" />
             <Text style={styles.actionBtnText}>Khám phá</Text>

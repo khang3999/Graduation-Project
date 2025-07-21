@@ -16,7 +16,7 @@ import LiveModeButton from '../buttons/LiveModeButton'
 import { useAdminProvider } from '@/contexts/AdminProvider'
 import { formatNumberLike } from '@/utils'
 
-const ITEM_HEIGHT = 270;
+const ITEM_HEIGHT = 250;
 const TYPE = 1;
 
 type Props = {
@@ -186,11 +186,11 @@ const TourItemTourScreen = ({ data, index, liked, onTapToViewDetail, onTapToView
             <Entypo style={{ paddingHorizontal: 6 }} name="price-tag" size={18} color={iconColors.green1} />
             <View style={{ paddingRight: 4 }}>
               {data.discountTour !== 0 && (
-                <Text style={{ textDecorationLine: 'line-through', color: 'grey', fontSize:11 }}>
+                <Text style={{ textDecorationLine: 'line-through', color: 'grey', fontSize: 11 }}>
                   {originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                 </Text>
               )}
-              <Text style={{  color: 'black', fontWeight: "500" }}>
+              <Text style={{ color: 'black', fontWeight: "500" }}>
                 {(data.discountTour !== 0 ? promotionalPrice : originalPrice).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
               </Text>
             </View>
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     bottom: 0,
     paddingVertical: 8,
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
     gap: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     padding: 10
   },
   item: {
-    height: 270,
+    height: ITEM_HEIGHT,
     position: "relative",
     borderRadius: 20,
     elevation: 6

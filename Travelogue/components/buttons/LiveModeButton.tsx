@@ -5,16 +5,16 @@ import { StyleSheet } from 'react-native'
 
 export default function LiveModeButton(props: any) {
     const mode = props.mode
-    if (mode !== 'live') {
+    if (mode === 'normal') {
         return <View></View>
     }
     return (
         <>
             {mode === 'live' ?
-                <View style={[styles.container, { backgroundColor: 'red' }]}>
+                <View style={[styles.container, { backgroundColor: mode === 'live' ? 'red': 'grey' }]}>
                     <MaterialCommunityIcons name="run-fast" size={22} color='white' />
                     {/* <Ionicons name="footsteps" size={24} color="red" /> */}
-                    <Text style={styles.text}>Live</Text>
+                    {/* <Text style={styles.text}>Live</Text> */}
                 </View>
                 :
                 (<View style={[styles.container, { backgroundColor: 'white' }]}>
