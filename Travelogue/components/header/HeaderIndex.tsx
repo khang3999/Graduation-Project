@@ -7,14 +7,15 @@ import PlusButton from '../buttons/PlusButton';
 import BellButton from '../buttons/BellButton';
 import { router } from 'expo-router';
 import { rgbaArrayToRGBAColor } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
+import { useAccount } from '@/contexts/AccountProvider';
 
 const HeaderIndex = () => {
   const [countNotify, setCountNotify] = useState(0);
   const [role, setRole] = useState("user");
-
-  const { dataAccount, userId }: any = useHomeProvider();
-
+   const { dataAccount, userId }: any = useHomeProvider();
+  // const { dataAccount }: any = useAccount();
   //Dem nhung thong bao chua xem
+  console.log("User ID:", userId);
   useEffect(() => {
     if (userId) {
       // Lắng nghe dữ liệu từ Firebase Realtime Database theo thời gian thực
@@ -39,12 +40,36 @@ const HeaderIndex = () => {
       return () => count();
     }
   }, [userId]);
+  useEffect(() => {
+      if (userId) {
+        const onValueChange = ref(database, `accounts/${userId}`);
+        const reportListener = onValue(
+          onValueChange,
+          (snapshot) => {
+            if (snapshot.exists()) {
+              const jsonData = snapshot.val();
+              setRole(jsonData.role);
+            } else {
+              console.log("No data available");
+            }
+          },
+          (error) => {
+            console.error("Error fetching data:", error);
+          }
+        );
+  
+        return () => reportListener();
+      }
+  
+    }, [userId]);
+  console.log("Role:", role);
   return (
     <View style={styles.header}>
       <Text style={styles.appName}>Travelogue</Text>
       <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignSelf: 'flex-end' }}>
         <View style={{marginRight: 6}}>
           <PlusButton onPress={() => {
+            console.log("Role:", role);
             role === "user" ? router.push('/(article)/addPostUser') : router.push('/(article)/addPostTour')
           }} ></PlusButton>
         </View>

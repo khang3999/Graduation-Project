@@ -23,10 +23,12 @@ import { Button, Checkbox, Divider } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useHomeProvider } from "@/contexts/HomeProvider";
 import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
+import { useAccount } from "@/contexts/AccountProvider";
 
 const Payment = () => {
   const [accountId, setAccountId] = useState("");
-  const { dataAccount }: any = useHomeProvider();
+  // const { dataAccount }: any = useHomeProvider();
+    const { dataAccount }: any = useAccount();
   const defaultStyles = useDefaultStyles();
   const [startDate, setStartDate] = useState<DateType>();
   const [endDate, setEndDate] = useState<DateType>();
@@ -48,6 +50,7 @@ const Payment = () => {
   const [startFilterWithdraw, setStartFilterWithdraw] = useState(false)
   const [placeholderText, setPlaceholderText] = useState('Nhập số tiền cần nạp');
 
+  console.log("Account ID:", dataAccount.id);
   useEffect(() => {
     setAccountId(dataAccount.id)
   }, [dataAccount])
@@ -70,7 +73,6 @@ const Payment = () => {
     );
     return () => statusContentListener();
   }, []);
-
 
   // Exchange data by account id
   useEffect(() => {
@@ -180,7 +182,6 @@ const Payment = () => {
     }
 
   }, [accountId, dataExchanges]);
-
 
   const handleTextChange = (text: any) => {
     // Remove non-numeric characters to ensure clean parsing
@@ -449,7 +450,6 @@ const Payment = () => {
         </View>
       </View>
 
-
       {/* Datepicker */}
       <TouchableOpacity onPress={openDialogFilter} style={[styles.touchableDatePicker]}>
         {/* <Text style={{ fontSize: 20 }}>
@@ -501,7 +501,6 @@ const Payment = () => {
                 />
 
               </View>
-
 
             </View>
           )}
@@ -738,3 +737,16 @@ const styles = StyleSheet.create({
 });
 
 export default Payment;
+
+
+
+
+
+
+
+
+
+
+
+
+
