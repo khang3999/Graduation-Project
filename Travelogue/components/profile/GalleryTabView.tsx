@@ -68,7 +68,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
   const { setSelectedTour }: any = useTourProvider();
   const { searchedAccountData }: any = useAccount();
   const [searchedAccountID, setSearchedAccountID] = useState('')
-  const { dataAccount }: any = useHomeProvider();
+  const { dataAccount }: any = useAccount();
   // const userId = isSearched ? searchedAccountData.id : dataAccount?.id;
   const userId = isSearched ? searchedAccountID : dataAccount?.id;
   const [isLoading, setIsLoading] = React.useState(true);
@@ -86,12 +86,12 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
         { key: "third" },
       ]
   );
-    useEffect(()=>{
-      if (searchedAccountData) {
-        
-        setSearchedAccountID(searchedAccountData.id)
-      }
-    },[searchedAccountData])
+  useEffect(() => {
+    if (searchedAccountData) {
+
+      setSearchedAccountID(searchedAccountData.id)
+    }
+  }, [searchedAccountData])
 
   //fetching created posts from firebase
   const fetchCreatedPosts = async () => {
@@ -218,7 +218,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
       const fetchData = async () => {
         setIsLoading(true);
 
-        if (isSearched === true&&searchedAccountData) {
+        if (isSearched === true && searchedAccountData) {
           if (searchedAccountData.role === 'user') {
             await fetchCreatedPosts();
           } else if (searchedAccountData.role === 'business') {
@@ -304,7 +304,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                   //   });
                   //   setSelectedTour(createdPosts);
                   // }
-                  if(isSearched === true ){
+                  if (isSearched === true) {
                     if (searchedAccountData.role === 'user') {
                       router.push({
                         pathname: "/postDetail",
@@ -318,7 +318,7 @@ export default function GalleryTabView({ isSearched }: { isSearched: boolean }) 
                       });
                       setSelectedTour([item]);
                     }
-                  }else {
+                  } else {
                     if (dataAccount.role === 'user') {
                       router.push({
                         pathname: "/postDetail",

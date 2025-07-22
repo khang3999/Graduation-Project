@@ -1,36 +1,37 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+const { width } = Dimensions.get('window')
+const pad = 20
 
-const CartItem = ({ title, onPress }: { title: string; onPress: () => void }) => {
+const CartItem = ({ onPress, data }: { data: any, onPress: () => void }) => {
   return (
     <TouchableOpacity style={styles.cartItem} onPress={onPress}>
-      <Text style={styles.cartItemText}>{title}</Text>
+      <Text style={styles.cartItemText}>{data.title}</Text>
+      <View style={{ width: "100%", aspectRatio: 1, borderRadius: 10, elevation: 4, alignSelf: 'flex-end' }}>
+        <Image
+          style={{ width: "100%", aspectRatio: 1, borderRadius: 10 }}
+          source={{ uri: data.images[0] || "https://mediatech.vn/assets/images/imgstd.jpg" }}>
+        </Image>
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   cartItem: {
-    width: "100%",
-    minHeight: 100,
-    minWidth: 120,
-    maxWidth: 120,
     backgroundColor: "#fff",
     padding: 20,
-    marginBottom: 15,
+    width: (width - 3 * pad) / 2,
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     elevation: 5,
-    justifyContent: "center", 
+    justifyContent: "space-between",
     alignItems: "center",
   },
   cartItemText: {
-    fontSize: 14,
-    fontWeight: "ultralight",
-    color: "#333",
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+    textAlign: 'center'
   },
 });
 

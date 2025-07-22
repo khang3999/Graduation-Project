@@ -707,16 +707,18 @@ const TourItem: React.FC<TourItemProps> = ({
             />
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
-          {/* Button save */}
-          {/* <View style={styles.buttonItem}> */}
-          {/* <SaveButton style={styles.buttonItem} data={item} type={TYPE} /> */}
-          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type={TYPE} />
-          {/* </View> */}
+          <HeartButton myStyle={styles.buttonItem} style={styles.buttonLike} data={item} type='tour'></HeartButton>
+
+          {/* Button Rating */}
+          <View style={styles.buttonLike}>
+            <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
+          </View>
+
+          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type='tour' />
         </View>
-        {/* Button Rating */}
-        <View style={[styles.buttonRow, { justifyContent: 'center', bottom: -25 }]}>
-          <RatingButton averageRating={averageRatingValue} onPress={handleOpenRatingComments} />
-        </View>
+
+
+
       </View>
 
       {/* CONTENT */}
@@ -744,12 +746,12 @@ const TourItem: React.FC<TourItemProps> = ({
         </View>
 
         {/* BADGE */}
-        <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
+        {/* <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
           <View style={[{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
             <Ionicons name="calendar" size={22} color={iconColors.green1} />
             <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Tour Description */}
         <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 10, borderRadius: 30, elevation: 4 }}>
@@ -764,28 +766,28 @@ const TourItem: React.FC<TourItemProps> = ({
         {/* <Divider style={styles.divider} /> */}
       </View>
 
-      <View style={[styles.row, { bottom: 0, width: '100%', backgroundColor: iconColors.green5, gap: 10 }]}>
-        <TouchableOpacity style={{ backgroundColor: iconColors.green3, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', margin: 15, marginHorizontal: 30, flex: 1 }} >
+      <View style={[styles.row, { bottom: 0, width: '100%', backgroundColor: backgroundColors.background1, gap: 10, borderTopWidth: 2, borderStyle: "dashed" }]}>
+        <TouchableOpacity style={{ backgroundColor: iconColors.green2, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', margin: 15, marginHorizontal: 30, flex: 1, elevation: 4, borderWidth: 1 }} >
           <FontAwesome6 name="phone-volume" size={20} color="black" />
           <Text style={{ fontWeight: '500', paddingLeft: 10 }}>LIÊN HỆ</Text>
         </TouchableOpacity>
         <View style={{
-          borderRightWidth: 10, borderColor: iconColors.green3, height: '100%'
+          borderRightWidth: 10, borderColor: iconColors.green1, height: '100%'
         }}></View>
         {/* Price */}
-        <View style={{ backgroundColor: iconColors.green3, height: '100%', paddingHorizontal: 15, paddingVertical: 10 }}>
+        <View style={{ backgroundColor: iconColors.green1, height: '100%', paddingHorizontal: 15, paddingVertical: 10 }}>
           {item.discountTour !== 0 ?  // Co discount
             <Text style={{ flex: 1, textDecorationLine: 'line-through', color: '#eeeeee', textAlignVertical: 'center', fontStyle: 'italic' }}>{originalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>
             :
             <></>
           }
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: '500' }}>
+            <Text style={{ fontSize: 18, fontWeight: '500', color: iconColors.green2 }}>
               {(item.discountTour !== 0 ? promotionalPrice : originalPrice).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
             </Text>
-            <View style={{ width: 2, height: 25, backgroundColor: '#333333', marginHorizontal: 6 }}></View>
-            <Text style={{ fontSize: 18, fontWeight: '500' }}>1 </Text>
-            <Ionicons name="people" size={20} color={iconColors.green1} />
+            <View style={{ width: 2, height: 25, backgroundColor: iconColors.green2, marginHorizontal: 6 }}></View>
+            <Text style={{ fontSize: 18, fontWeight: '500', color: iconColors.green2 }}>1 </Text>
+            <Ionicons name="people" size={20} color={iconColors.green2} />
           </View>
         </View>
       </View>
@@ -1002,6 +1004,9 @@ export default function ToursScreen() {
   );
 }
 const styles = StyleSheet.create({
+  buttonLike: {
+    top: 30,
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',

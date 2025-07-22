@@ -54,7 +54,7 @@ const TourSection = () => {
             params: { tourId: tourId },
         });
     }, [])
-    
+
     // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
     const handleTapToViewProfile = useCallback(async (authorId: string) => {
         if (!authorId) {
@@ -93,7 +93,7 @@ const TourSection = () => {
     }, [])
 
     return (
-        <View style={{}}>
+        <View style={{ paddingBottom: 10 }}>
             {!isLoading ?
                 <FlatList
                     ref={flatListTourRef}
@@ -102,13 +102,13 @@ const TourSection = () => {
                     data={dataToursSorted}
                     renderItem={tourItem}
                     keyExtractor={(tour: any) => tour.id}
-                    contentContainerStyle={{ padding: 20 }}
+                    contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 10 }}
                     ItemSeparatorComponent={() => <View style={{ width: 20 }} />}
                 // pagingEnabled
                 >
                 </FlatList>
                 :
-                <View style={{ paddingTop: 20, display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 20, paddingBottom: 20 }}>
+                <View style={{ paddingTop: 10, display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 20, paddingBottom: 10 }}>
                     <SkeletonTourHome />
                     <SkeletonTourHome />
                 </View>

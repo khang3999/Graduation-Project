@@ -133,7 +133,7 @@ const NotificationsScreen = () => {
                 renderItem={renderItem}
                 // keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContainer}
-            />) : (<Text style={styles.noAccountsText}>No data</Text>)}
+            />) : (<Text style={styles.noAccountsText}>Chưa có thông báo</Text>)}
 
         </View>
     );

@@ -13,6 +13,7 @@ import { set } from "lodash";
 import SearchModal from "@/components/homePage/modals/SearchModal";
 import NewPostModal from "@/components/homePage/modals/NewPostModal";
 import { Icon } from "react-native-vector-icons/Icon";
+import { RankingProvider, useRanking } from "@/contexts/RankingContext";
 
 
 const height = Dimensions.get('window').height;
@@ -43,6 +44,7 @@ const Home = () => {
 
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const loopRef = useRef<any>(null);
+  const { fetchTrendingCity }: any = useRanking()
 
   // Animation
   useEffect(() => {
@@ -117,6 +119,15 @@ const Home = () => {
           setModalNewPostVisible={setModalNewPostVisible}
           setIsLoading={setIsLoading}
         />}
+
+        {/* <NewPostModal
+          data={dataPosts}
+          dataNew={dataNewPostList}
+          modalNewPostVisible={modalNewPostVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewPostVisible}
+          setIsLoading={setIsLoading}
+        /> */}
       </>
     );
   }, [modalSearchVisible, modalNewPostVisible]);
@@ -139,7 +150,8 @@ const Home = () => {
   const handleTapOnReloadHomeScreen = useCallback(() => {
     setIsLoading(true)
     setReload((prev: Boolean) => !prev); // toggle reload
-  }, [])
+    fetchTrendingCity()
+  }, [fetchTrendingCity])
 
   return (
     <View style={styles.container}>
@@ -174,9 +186,6 @@ const Home = () => {
           <View>
             <Text style={[styles.textTitle, { marginBottom: 20 }]}>Explore the World through Stories</Text>
           </View>
-
-
-
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
@@ -185,8 +194,8 @@ const Home = () => {
           {/* Tour section */}
           <View>
             <Text style={[styles.textCategory]}>Tour du lịch</Text>
-            <View style={{ paddingBottom: 20 }}>
-              {/* {renderTourList()} */}
+            <View style={{ paddingBottom: 0 }}>
+              {renderTourList()}
             </View>
           </View>
           {/* POST */}
@@ -208,7 +217,7 @@ const Home = () => {
             </View>
 
             {/* Đang hiển thị */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10, marginBottom: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 0, marginBottom: 20 }}>
               <ScrollView
                 horizontal={true}
                 showsHorizontalScrollIndicator={false}
@@ -231,11 +240,6 @@ const Home = () => {
                   </>}
 
                 <Badge size={24} style={[styles.badge, styles.bagdeType]} >{dataTypeSearch[selectedTypeSearch.current - 1].value}</Badge>
-
-                {/* <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge>
-                <Badge size={24} style={styles.badge}>Tất cả</Badge> */}
               </ScrollView>
               {/* Button search and reload */}
               <View style={styles.containerButton}>
@@ -243,11 +247,11 @@ const Home = () => {
                   style={styles.btn}
                   onPress={() => setModalSearchVisible(true)}>
                   {/* <Ionicons name="options-outline" size={28} color={iconColors.green1} /> */}
-                  <MaterialCommunityIcons name="tune-variant" size={24} color={iconColors.green1} />
+                  <MaterialCommunityIcons name="tune-variant" size={22} color={iconColors.green1} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.btn, { backgroundColor: backgroundColors.reloadButton }]} onPress={handleTapOnReloadHomeScreen}>
-                  <AntDesign name="reload1" size={22} color='white' />
+                  <AntDesign name="reload1" size={20} color='white' />
                 </TouchableOpacity>
               </View>
             </View>
@@ -283,7 +287,7 @@ const styles = StyleSheet.create({
   },
   textCategory: {
     marginHorizontal: 20,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
   },
   textTitle: {
@@ -313,8 +317,8 @@ const styles = StyleSheet.create({
     // backgroundColor: '#C3F9C2',
     backgroundColor: 'white',
     marginHorizontal: 5,
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -330,13 +334,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   badge: {
-    fontSize: 16,
+    fontSize: 14,
     // backgroundColor: '#b9e0f7',
     backgroundColor: iconColors.green2,
     color: 'black',
     paddingHorizontal: 6,
     fontWeight: '500',
-    height: 44,
+    height: 38,
     borderRadius: 10,
     elevation: 4,
   },

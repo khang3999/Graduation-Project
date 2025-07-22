@@ -119,7 +119,7 @@ const PostItem: React.FC<PostItemProps> = ({
   item,
   setIsScrollEnabled,
 }) => {
-  const TYPE = 0;
+  const TYPE = 'post';
   const MAX_LENGTH = 10;
   const commentAS = useRef<ActionSheetRef>(null);
   const [commentText, setCommentText] = useState("");
@@ -369,7 +369,7 @@ const PostItem: React.FC<PostItemProps> = ({
           <View style={[styles.row, { justifyContent: 'space-between', padding: 10 }]}>
             <TouchableOpacity style={styles.headerButton} onPress={() => {
               // if (prevScreen !== 'home') {
-                router.back()
+              router.back()
               // } 
             }}>
               <AntDesign name="arrowleft" size={24} color='white' />
@@ -411,9 +411,9 @@ const PostItem: React.FC<PostItemProps> = ({
       </View>
 
       {/* CONTENT */}
-      <View style={{ flex: 1, paddingHorizontal: 20 }}>
+      <View style={{ flex: 1, paddingHorizontal: 20, alignItems: 'center' }}>
         {/* BUTTON */}
-        <View style={styles.buttonRow}>
+        <View style={[styles.buttonRow, {}]}>
           {/* Button comment */}
           <View style={[styles.buttonItem, { gap: 10 }]}>
             <CommentButton
@@ -423,7 +423,8 @@ const PostItem: React.FC<PostItemProps> = ({
             <Text style={styles.totalComments}>{totalComments}</Text>
           </View>
 
-          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type={TYPE} />
+          <HeartButton myStyle={styles.buttonItem} style={styles.buttonLike} data={item} type='post'></HeartButton>
+          <SaveButton myStyle={styles.buttonItem} style={styles.buttonSave} data={item} type='post' />
         </View>
 
         {/* Author */}
@@ -448,15 +449,15 @@ const PostItem: React.FC<PostItemProps> = ({
           <CheckedInChip items={Object.values(flattenedLocationsArray)} />
         </View>
         {/* BADGE */}
-        <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
+        {/* <View style={[styles.row, { justifyContent: 'space-evenly' }]}>
           <View style={[{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: iconColors.green2, padding: 10, borderRadius: 20, elevation: 4 }]}>
             <Ionicons name="calendar" size={22} color={iconColors.green1} />
             <Text style={{ paddingLeft: 10 }}>4 ngày</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Post Description */}
-        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4 }}>
+        <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4, width: '100%' }}>
           <Markdown>
             {desc.Markdown}
           </Markdown>
@@ -583,7 +584,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 15,
+    width: '100%',
     paddingHorizontal: 20,
+    // backgroundColor: 'rgba(100,100,100,0.5)',
+
     // margin:20,
     // width: windowWidth,
     // height: 50,
@@ -595,6 +599,9 @@ const styles = StyleSheet.create({
   },
   buttonComment: {
     padding: 0
+  },
+  buttonLike: {
+    top: -30,
   },
   buttonSave: {
     // padding: 20

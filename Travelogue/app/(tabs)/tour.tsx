@@ -10,6 +10,7 @@ import { AntDesign, FontAwesome6, Foundation, MaterialCommunityIcons } from '@ex
 import { backgroundColors, iconColors } from '@/assets/colors'
 import SearchModal from '@/components/tours/modals/SearchModal'
 import NewTourModal from '@/components/tours/modals/NewTourModal'
+import { router } from 'expo-router'
 
 const HEADER_HEIGHT = 0;
 const maxheight = Dimensions.get('window').height;
@@ -95,6 +96,16 @@ const Tour = () => {
           setModalNewPostVisible={setModalNewTourVisible}
           setIsLoading={setIsLoading}
         />}
+
+        {/* <NewTourModal
+          data={dataTours}
+          // data={[]}
+          dataNew={dataNewTourList}
+          modalNewPostVisible={modalNewTourVisible}
+          setReload={setReload}
+          setModalNewPostVisible={setModalNewTourVisible}
+          setIsLoading={setIsLoading}
+        /> */}
       </>
     )
   }, [modalSearchVisible, modalNewTourVisible])
@@ -139,14 +150,20 @@ const Tour = () => {
                 {/* <Text >Top Travel Picks of the Moment</Text> */}
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <MaterialCommunityIcons name="trending-up" size={20} color="white" />
-                  <Text style={styles.textBanner}>Top trending</Text>
+                  <Text style={[styles.textBanner,{paddingLeft:4}]}>Top trending</Text>
                 </View>
                 <Text style={styles.textBannerTitle}>Những lựa chọn du lịch hàng đầu hiện nay</Text>
-                <Text style={styles.textBanner}>" Đi đi em,</Text>
-                <Text style={styles.textBanner}>  Còn do dự ... </Text>
-                <Text style={styles.textBanner}>  Trời tối mất"</Text>
-                <TouchableOpacity style={styles.bannerButtonArrowRight}>
-                  <AntDesign name="arrowright" size={24} color="white" />
+                <Text style={styles.textBanner}>"Đi đi em,</Text>
+                <Text style={styles.textBanner}> Còn do dự ... </Text>
+                <Text style={styles.textBanner}> Trời tối mất"</Text>
+                <TouchableOpacity style={styles.bannerButtonArrowRight}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/(trending)/tourTrending",
+                    });
+                  }}
+                >
+                  <AntDesign name="arrowright" size={22} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -214,11 +231,11 @@ const Tour = () => {
                   style={styles.btn}
                   onPress={() => setModalSearchVisible(true)}>
                   {/* <Ionicons name="options-outline" size={28} color={iconColors.green1} /> */}
-                  <MaterialCommunityIcons name="tune-variant" size={24} color={iconColors.green1} />
+                  <MaterialCommunityIcons name="tune-variant" size={22} color={iconColors.green1} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.btn, { backgroundColor: backgroundColors.reloadButton }]} onPress={handleTapOnReloadTourScreen}>
-                  <AntDesign name="reload1" size={22} color='white' />
+                  <AntDesign name="reload1" size={20} color='white' />
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,8 +268,9 @@ const styles = StyleSheet.create({
   listBadges: {
     flex: 1,
     backgroundColor: backgroundColors.background1,
+    // backgroundColor: '#c3c3c3',
     borderRadius: 10,
-    elevation: 15,
+    // elevation: 15,
     shadowColor: 'white'
   },
   btnNotifyNewPost: {
@@ -270,14 +288,12 @@ const styles = StyleSheet.create({
     // backgroundColor: '#C3F9C2',
     backgroundColor: 'white',
     marginHorizontal: 5,
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    // elevation: 15,
-    shadowColor: 'white'
   },
   containerButton: {
     flexDirection: 'row',
@@ -289,13 +305,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   badge: {
-    fontSize: 16,
+    fontSize: 14,
     // backgroundColor: '#b9e0f7',
     backgroundColor: iconColors.green2,
     color: 'black',
     paddingHorizontal: 6,
     fontWeight: '500',
-    height: 44,
+    height: 38,
     borderRadius: 10,
     elevation: 4,
   },
@@ -324,7 +340,7 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: backgroundColors.background2,
     paddingBottom: 60,
     // paddingBottom: 100
   },
@@ -334,8 +350,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(46, 64, 49, 0.8)',
     borderRadius: 15,
-    paddingVertical: 15,
-    paddingHorizontal: 15
+    paddingVertical: 12,
+    paddingHorizontal: 12
   },
   bannerIcon: {
     backgroundColor: '#eeeeee',
@@ -343,6 +359,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 60,
     borderRadius: 90,
+    // marginRight:4
   },
   bannerContentItem: {
     flexDirection: 'row',
@@ -390,7 +407,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'white'
+    // backgroundColor: backgroundColors.background2
   },
   badgeText: {
     fontSize: 13,

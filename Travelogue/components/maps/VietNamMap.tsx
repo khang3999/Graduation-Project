@@ -6,8 +6,12 @@ import Toast from 'react-native-toast-message'
 import { ref } from 'firebase/database'
 import { database, onValue } from '@/firebase/firebaseConfig'
 import { find } from 'lodash'
+import { useHomeProvider } from '@/contexts/HomeProvider'
+import { useIsFocused } from '@react-navigation/native'
 
 const VietNamMap = () => {
+    const isFocused = useIsFocused();
+
     // Khai báo biến
     const defaultColor = '#c7c7c7'
     const selectedColor = '#ED1C24'
@@ -15,27 +19,42 @@ const VietNamMap = () => {
     const pathRefs = useRef<any>({});
     const previousCityId = useRef<any>(null);
     const [dataVietNamCities, setDataVietNamCities] = useState([])
+    const { dataAllCities, userId }: any = useHomeProvider()
     const {
         selectedCity, setSelectedCity,
         selectedCityId, setSelectedCityId,
         dataCheckedCities, setDataCheckedCities,
         checkedCityColor,
-        cityRemoved, setCityIdRemoved
+        cityRemoved, setCityRemoved
     }: any = useMapCheckinProvider()
+
+    const findCityByCode = (id: string) => {
+        const found = dataAllCities.find((obj: any) => Object.keys(obj)[0] === id);
+        if (!found) return null;
+
+        const label = Object.values(found)[0];
+        return {
+            value: id,
+            label: label
+        };
+    };
 
     // Lấy các tỉnh của Việt Nam
     useEffect(() => {
-        const refCities = ref(database, `cities/${idVietNam}`)
-        const unsubscribe = onValue(refCities, (snapshot) => {
+        const refCheckInList = ref(database, `accounts/${userId}/checkInList/`)
+        const unsubscribe = onValue(refCheckInList, (snapshot) => {
             if (snapshot.exists()) {
-                const jsonDataRegions = snapshot.val();
-                const dataCitiesArray: any = Object.entries(jsonDataRegions).flatMap(([region, cities]: any) =>
-                    Object.entries(cities).map(([cityCode, cityInfo]: any) => ({
-                        value: cityCode,
-                        label: cityInfo.name
-                    }))
+                const data = snapshot.val();
+                const allCitiesCheckedByCountry = Object.keys(data).flatMap(
+                    (country) => {
+                        return Object.entries(data[country]).map(([cityCode, cityName]) => {
+                            return { [cityCode]: cityName };
+                        });
+                    }
                 );
-                setDataVietNamCities(dataCitiesArray);
+                console.log(allCitiesCheckedByCountry);
+                
+                setDataCheckedCities(allCitiesCheckedByCountry)
             } else {
                 console.log("No data available1");
             }
@@ -92,17 +111,25 @@ const VietNamMap = () => {
             });
         }
         // To màu default khi remove
-        if (cityRemoved) {
-            pathRefs.current[cityRemoved.value].setNativeProps({ fill: defaultColor });
-        }
+        // if (cityRemoved) {
+        //     pathRefs.current[cityRemoved.value].setNativeProps({ fill: defaultColor });
+        // }
     }, [dataCheckedCities, pathRefs]);
 
 
+    useEffect(() => {
+        // To màu default khi remove
+        if (cityRemoved) {
+            pathRefs.current[cityRemoved.value].setNativeProps({ fill: defaultColor });
+            setCityRemoved(null)
+        }
+    },[cityRemoved])
     const handlePress = (id: any) => {
         // Set id tỉnh đang chọn
         setSelectedCityId(id)
         // Chuẩn bị dữ liệu để dồng bộ combo box
-        const selectedCity = dataVietNamCities.find((city: any) => city.value === id);
+        const selectedCity = findCityByCode(id)
+        // const selectedCity = dataVietNamCities.find((city: any) => city.value === id);
         setSelectedCity(selectedCity)
     }
 
