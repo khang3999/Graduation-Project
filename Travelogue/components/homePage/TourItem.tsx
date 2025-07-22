@@ -318,7 +318,8 @@ const styles = StyleSheet.create({
         // alignItems: 'center',
         borderRadius: 20,
         // height: 460,
-        width: width * 2 / 3,
+        width: width - 100,
+        // width: width * 2 ,・
         // overflow: 'hidden',
         elevation: 4
     }

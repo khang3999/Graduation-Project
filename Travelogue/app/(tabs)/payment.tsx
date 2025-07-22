@@ -28,7 +28,7 @@ import { useAccount } from "@/contexts/AccountProvider";
 const Payment = () => {
   const [accountId, setAccountId] = useState("");
   // const { dataAccount }: any = useHomeProvider();
-    const { dataAccount }: any = useAccount();
+  const { dataAccount }: any = useAccount();
   const defaultStyles = useDefaultStyles();
   const [startDate, setStartDate] = useState<DateType>();
   const [endDate, setEndDate] = useState<DateType>();
@@ -124,7 +124,7 @@ const Payment = () => {
   const fetchQRCode = async () => {
     const rawValue = parseFloat(inputText.replace(/\D/g, ""));
     try {
-      setLoadingQR(true);
+      // setLoadingQR(true);
       const response = await fetch("https://api.vietqr.io/v2/generate", {
         method: "POST",
         headers: {
@@ -206,15 +206,15 @@ const Payment = () => {
       fetchQRCode();
     }
     // Lưu giá trị cũ vào placeholder và clear input
-  setPlaceholderText(inputText);
-  setInputText('');
-  setIsDisabled(true); // disable lại button
+    setPlaceholderText(inputText);
+    setInputText('');
+    setIsDisabled(true); // disable lại button
 
-  // Giả lập delay xử lý
-  setTimeout(() => {
-    setLoadingQR(false);
-    // Optional: bạn có thể re-enable sau khi xử lý xong
-  }, 1500);
+    // Giả lập delay xử lý
+    // setTimeout(() => {
+    //   setLoadingQR(false);
+    //   // Optional: bạn có thể re-enable sau khi xử lý xong
+    // }, 1500);
   };
 
   // Them yeu cau nap tien vao bang Exchange
@@ -283,6 +283,8 @@ const Payment = () => {
     setIsVisibleFilter(true);
   };
   const openDialogQR = () => {
+    setQrDataURL(null)
+    setLoadingQR(true);
     setIsVisibleQR(true);
   };
   const onPressFilterDeposit = () => {
@@ -295,7 +297,7 @@ const Payment = () => {
   }
   const filterLogic = (item: any, typeFilter: number) => {
     // dayjs(startDate).startOf('day').valueOf() dua ve timestamp 00:00:00 dd/mm/yyyy
-    if (startDate&&endDate){
+    if (startDate && endDate) {
       if (item.created_at >= dayjs(startDate).startOf('day').valueOf() && item.created_at <= dayjs(endDate).endOf('day').valueOf()) {
         switch (typeFilter) {
           case 1: return item.payment > 0
@@ -304,7 +306,7 @@ const Payment = () => {
         }
       }
     }
-    else{
+    else {
       switch (typeFilter) {
         case 1: return item.payment > 0
         case 2: return item.payment < 0
@@ -368,7 +370,7 @@ const Payment = () => {
                   onChangeText={handleTextChange}
                   keyboardType="numeric"
                   maxLength={15}
-                  placeholder= {placeholderText}
+                  placeholder={placeholderText}
                 />
                 <TouchableOpacity
                   style={[styles.addBtn, isDisabled && styles.disabledBtn]}
@@ -381,7 +383,7 @@ const Payment = () => {
                     <Text style={styles.addBtnText}>Yêu cầu</Text>
                   )}
                 </TouchableOpacity>
-                
+
               </View>
               {qrDataURL ? (
                 <Image source={{ uri: qrDataURL }} style={styles.image} />
@@ -456,7 +458,7 @@ const Payment = () => {
           {(startDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN")) + " - " + (endDate ? ((new Date(endDate.toString())).toLocaleDateString("vi-VN")) : (new Date).toLocaleDateString("vi-VN"))}
         </Text> */}
         <Text style={{ fontSize: 20 }}>
-          {(startDate && endDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN") + " - " + (new Date(endDate.toString())).toLocaleDateString("vi-VN")) :"Tất cả giao dịch")}
+          {(startDate && endDate ? ((new Date(startDate.toString())).toLocaleDateString("vi-VN") + " - " + (new Date(endDate.toString())).toLocaleDateString("vi-VN")) : "Tất cả giao dịch")}
         </Text>
       </TouchableOpacity>
       <Modal
