@@ -137,7 +137,7 @@ const PostItem: React.FC<PostItemProps> = ({
 
 
   const handleCommentSubmit = async (parentComment: Comment, replyText: string) => {
-    if (!userId.id || !dataAccount.avatar || !dataAccount.fullname) {
+    if (!dataAccount.id || !dataAccount.avatar || !dataAccount.fullname) {
       console.error('Missing required author information');
       return;
     }
@@ -474,7 +474,7 @@ const PostItem: React.FC<PostItemProps> = ({
         commentRefAS={commentAS}
         commentsData={comments}
         onSubmitComment={handleCommentSubmit}
-        accountId={dataAccount.id}
+        accountId={userId}
         onDelete={handleDeleteComment}
         postId={item.id}
         type={"post"}
