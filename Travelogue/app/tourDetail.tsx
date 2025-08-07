@@ -917,7 +917,7 @@ export default function ToursScreen() {
     try {
       const refTour = ref(database, `tours/${tourId}`)
       const refScore = ref(database, `tours/${tourId}/scores`);
-
+      const refDataToTraining = ref(database, `dataTourTraining/`)
       // Cập nhật scores trước
       await runTransaction(refScore, (currentScore) => {
         return (currentScore || 0) + 1;
@@ -928,80 +928,86 @@ export default function ToursScreen() {
         const dataTourJson: any = snapshot.val()
 
         const dataLocations = dataTourJson.locations
-        setDataLoctions(flattenLocations(dataLocations))
-        setDataTour([dataTourJson])
-      } else {
-        console.log("No data tour available");
-      }
+        const flatttenLocations = flattenLocations(dataLocations)
+        const ratingPoint = dataTourJson.ratingSummary.totalRatingCounter != 0 ? (dataTourJson.ratingSummary.totalRatingValue / dataTourJson.ratingSummary.totalRatingCounter).toFixed(1) : 0
+        const locationCodes = flatttenLocations.map(item => item.locationCode);
+
+        await push(refDataToTraining, {"id": tourId, "locations": locationCodes, "rating": ratingPoint})
+
+      setDataLoctions(flatttenLocations)
+      setDataTour([dataTourJson])
+    } else {
+      console.log("No data tour available");
+    }
+  } catch (error) {
+    console.error("Error fetching data tour: ", error);
+  }
+}
+
+const updateScoresForCities = async () => {
+  for (const city of dataLocations) {
+    try {
+      const coutnryId = city.country
+      const areaId = areasByProvinceName[city.locationName]
+      const cityId = city.locationCode
+
+      const refCityScores = ref(database, `cities/${coutnryId}/${areaId}/${cityId}/scores`)
+      await runTransaction(refCityScores, (currentScore) => {
+        return (currentScore || 0) + 1;
+      });
     } catch (error) {
-      console.error("Error fetching data tour: ", error);
+      console.error("Error fetching data: ", error);
     }
   }
+}
 
-  const updateScoresForCities = async () => {
-    for (const city of dataLocations) {
-      try {
-        const coutnryId = city.country
-        const areaId = areasByProvinceName[city.locationName]
-        const cityId = city.locationCode
 
-        const refCityScores = ref(database, `cities/${coutnryId}/${areaId}/${cityId}/scores`)
-        await runTransaction(refCityScores, (currentScore) => {
-          return (currentScore || 0) + 1;
-        });
-      } catch (error) {
-        console.error("Error fetching data: ", error);
-      }
-    }
+
+useEffect(() => {
+  // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
+  if (tourId) {
+    fetchTourById(tourId)
   }
+}, [tourId])
 
-
-
-  useEffect(() => {
-    // Kiểm tra khi màn hình focus và cả 2 biến đều có dữ liệu
-    if (tourId) {
-      fetchTourById(tourId)
-    }
-  }, [tourId])
-
-  useEffect(() => {
-    if (dataLocations.length === 0) return
-    updateScoresForCities()
-  }, [dataLocations])
-  return (
-    <>
-      <StatusBar
-        barStyle={"dark-content"}
-        // hidden={true}
-        translucent={false}
-        backgroundColor="white"
-      />
-      <FlatList
-        data={tourId ? dataTour : memoriedTourItem}
-        renderItem={({ item }) => (
-          <TourItem
-            item={item}
-            setIsScrollEnabled={setIsScrollEnabled}
-          />
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        style={styles.container}
-        scrollEnabled={isScrollEnabled}
-        //   initialScrollIndex={initialPage}
-        getItemLayout={(data, index) => ({
-          length: windowHeight,
-          offset: index * windowHeight,
-          index,
-        })}
-      />
-      {/* Loader overlay */}
-      {/* {loading && (
+useEffect(() => {
+  if (dataLocations.length === 0) return
+  updateScoresForCities()
+}, [dataLocations])
+return (
+  <>
+    <StatusBar
+      barStyle={"dark-content"}
+      // hidden={true}
+      translucent={false}
+      backgroundColor="white"
+    />
+    <FlatList
+      data={tourId ? dataTour : memoriedTourItem}
+      renderItem={({ item }) => (
+        <TourItem
+          item={item}
+          setIsScrollEnabled={setIsScrollEnabled}
+        />
+      )}
+      keyExtractor={(item, index) => index.toString()}
+      style={styles.container}
+      scrollEnabled={isScrollEnabled}
+      //   initialScrollIndex={initialPage}
+      getItemLayout={(data, index) => ({
+        length: windowHeight,
+        offset: index * windowHeight,
+        index,
+      })}
+    />
+    {/* Loader overlay */}
+    {/* {loading && (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#B1B1B1" />
           </View>
         )} */}
-    </>
-  );
+  </>
+);
 }
 const styles = StyleSheet.create({
   buttonLike: {
