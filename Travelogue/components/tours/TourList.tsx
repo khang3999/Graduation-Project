@@ -28,6 +28,7 @@ const TYPE = 1;
 
 const TourList = () => {
   const {
+    accountBehavior,
     userId,
   }: any = useHomeProvider()
   const {
@@ -47,7 +48,7 @@ const TourList = () => {
     selectedCountry,
     selectedCities, setSelectedCities,
     dataCities, setDataCities,
-    search, setSearch
+    search, setSearch,
   }: any = useTourProvider();
 
   const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
@@ -389,9 +390,9 @@ const TourList = () => {
   const handleTapToViewPostDetail = useCallback((path: any, tourId: string) => {
     router.push({
       pathname: path,
-      params: { tourId: tourId },
+      params: { tourId: tourId, behaviorLocations: accountBehavior?.location ?? '9999' },
     });
-  }, [])
+  }, [accountBehavior?.location])
   // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
   const handleTapToViewProfile = useCallback(async (authorId: string) => {
     if (!authorId) {

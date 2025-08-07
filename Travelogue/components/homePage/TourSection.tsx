@@ -25,7 +25,7 @@ const TourSection = () => {
         dataToursSorted,
         reload,
         isLoading,
-        setIsLoading
+        setIsLoading, accountBehavior
     }: any = useHomeProvider();
     const { setSearchedAccountData, likedPostsList, setLikedPostsList, }: any = useAccount();
     const flatListTourRef: any = useRef(null)
@@ -51,9 +51,9 @@ const TourSection = () => {
     const handleTapToViewTourDetail = useCallback((path: any, tourId: string) => {
         router.push({
             pathname: path,
-            params: { tourId: tourId },
+            params: { tourId: tourId, behaviorLocations: accountBehavior?.location??'9999' },
         });
-    }, [])
+    }, [accountBehavior?.location ])
 
     // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
     const handleTapToViewProfile = useCallback(async (authorId: string) => {
