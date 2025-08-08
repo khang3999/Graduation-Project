@@ -936,7 +936,7 @@ export default function ToursScreen() {
 
         const behaviorList = String(behaviorLocations).split(',').map(element => element.trim())
 
-        await push(refDataToTraining, { "id": tourId, "locations": locationCodes, "rating": ratingPoint, "behaviors": behaviorList })
+        await push(refDataToTraining, {"locations": locationCodes, "rating": ratingPoint, "behaviors": behaviorList })
 
         setDataLoctions(flatttenLocations)
         setDataTour([dataTourJson])
