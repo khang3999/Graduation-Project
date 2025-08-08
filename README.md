@@ -1,9 +1,31 @@
-# Graduation-Project
-This is our graduation topic. The Travelogue is a cross-platform application (web and mobile) developed as part of a graduation thesis project. The goal of the app is to provide users with a comprehensive travel experience, allowing them to easily search, explore, and plan their trips.
+# Travelogue
 
-# Hà Nội Về Đêm
-Hôm Nay Mình Xin Nói Về Hà Nội
-## **Ngày 1:** Ngày Đi Hà Nội
-Hà Nội Văn Hiến Ngàn Năm
-### 20:10 - Tôi Đi Phố Cổ Hà Nội
-**Địa điểm:** Chả Cá Cà Cuống, 17, Phố Chả Cá, Phường Hàng Đào, Khu phố cổ, Quận Hoàn Kiếm, Thành phố Hà Nội, 11010, Việt Nam
+## Introduction
+This is our graduation project named Travelogue. The goal of the app is to provide users with a comprehensive travel experience, helping them easily search, explore, and plan their trips.
+
+## Key Features
+
+- Automatically crawl travel location data from tourism websites
+
+- Provide AI-powered tour recommendations (branch: show-tours-list-using-AI)
+
+- Search for travel destinations based on various criteria
+
+- Explore places, posts, and reviews from other users
+
+- Plan personalized trips
+
+- Manage travel history and reviews
+
+- Cross-platform support (Android, iOS)
+
+## Technologies Used
+
+- Frontend: React Native
+
+- Backend:  
+  - Firebase Realtime Database, Firebase Storage, Firebase Authentication  
+  - Python backend services using FastAPI for API development  
+  - Python scripts for data crawling (web scraping) and machine learning model training  
+  - Machine Learning: Random Forest algorithm implemented in Python for tour recommendations
+
