@@ -7,7 +7,7 @@ This is our graduation project named Travelogue. The goal of the app is to provi
 
 - Automatically crawl travel location data from tourism websites
 
-- Provide AI-powered tour recommendations
+- Provide AI-powered tour recommendations (branch: show-tours-list-using-AI)
 
 - Search for travel destinations based on various criteria
 
