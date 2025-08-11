@@ -231,8 +231,8 @@ const TourList = () => {
     try {
       // const response = await fetch('http://10.0.2.2:5000/tours/')
       // const json = await response.json();
-
-      const response = await fetch('http://10.0.2.2:5000/tours/related', {
+      //http://192.168.0.136:8000/tours/related
+      const response = await fetch('http://192.168.0.136:8000/tours/related', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
