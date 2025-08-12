@@ -488,7 +488,7 @@ const TourList = () => {
           <FlatList
             style={{ maxHeight: 570 }}
             nestedScrollEnabled={true}
-            scrollEnabled={false}
+            scrollEnabled={true}
             //NHO MO COMMENT
             // horizontal={true}
             data={dataTours}
@@ -496,8 +496,8 @@ const TourList = () => {
             keyExtractor={(tour: any) => tour.id}
             contentContainerStyle={{ paddingVertical: 30, paddingHorizontal: 20, backgroundColor: backgroundColors.background2 }}
             ItemSeparatorComponent={() => <View style={{ height: 30 }} />}
-            initialNumToRender={4}
-            maxToRenderPerBatch={4}
+            // initialNumToRender={4}
+            // maxToRenderPerBatch={4}
           />
         ) : (
           <View style={{ height: 570, justifyContent: 'center', alignSelf: 'center' }}>
