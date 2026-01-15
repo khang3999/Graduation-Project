@@ -1,7 +1,7 @@
 # Travelogue
 
 ## Introduction
-This is our graduation project named Travelogue. The goal of the app is to provide users with a comprehensive travel experience, helping them easily search, explore, and plan their trips.
+This is my graduation project named Travelogue. The goal of the app is to provide users with a comprehensive travel experience, helping them easily search, explore, and plan their trips.
 
 ## Key Features
 
@@ -25,7 +25,6 @@ This is our graduation project named Travelogue. The goal of the app is to provi
 
 - Backend:  
   - Firebase Realtime Database, Firebase Storage, Firebase Authentication  
-  - Python backend services using FastAPI for API development  
-  - Python scripts for data crawling (web scraping) and machine learning model training  
+  - Python backend services using FastAPI for API development 
   - Machine Learning: Random Forest algorithm implemented in Python for tour recommendations
 
