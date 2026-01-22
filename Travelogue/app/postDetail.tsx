@@ -45,6 +45,7 @@ import { AntDesign, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ImageModal from "react-native-image-modal";
 import { backgroundColors, iconColors } from "@/assets/colors";
 import { useAdminProvider } from "@/contexts/AdminProvider";
+import LiveModeButton from "@/components/buttons/LiveModeButton";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -456,8 +457,13 @@ const PostItem: React.FC<PostItemProps> = ({
           </View>
         </View> */}
 
+
         {/* Post Description */}
         <View style={{ padding: 20, marginVertical: 20, backgroundColor: 'white', margin: 0, borderRadius: 30, elevation: 4, width: '100%' }}>
+          <View style={styles.liveModeWrap}>
+            <LiveModeButton mode={item.mode}></LiveModeButton>
+          </View>
+
           <Markdown>
             {desc.Markdown}
           </Markdown>
@@ -579,6 +585,11 @@ export default function PostsScreen() {
   );
 }
 const styles = StyleSheet.create({
+  liveModeWrap: {
+    position: 'absolute',
+    top: -15,
+    left: 30
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',

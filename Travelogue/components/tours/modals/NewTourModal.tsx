@@ -7,6 +7,7 @@ import { database, get, ref } from '@/firebase/firebaseConfig'
 import NewTourItem from './NewTourItem'
 import { Foundation, Ionicons } from '@expo/vector-icons'
 import { backgroundColors, iconColors } from '@/assets/colors'
+import { useHomeProvider } from '@/contexts/HomeProvider'
 const { width, height } = Dimensions.get('window')
 
 type Props = {
@@ -21,6 +22,7 @@ const NewTourModal = ({ data, dataNew, modalNewPostVisible, setReload, setModalN
 
 
     const { setSearchedAccountData }: any = useAccount();
+    const {accountBehavior} :any = useHomeProvider();
     console.log('NewPostModal render');
 
     // Hàm tính những bài viết mới - DONE
@@ -37,9 +39,9 @@ const NewTourModal = ({ data, dataNew, modalNewPostVisible, setReload, setModalN
     const handleTapToViewPostDetail = useCallback((path: any, postId: string) => {
         router.push({
             pathname: path,
-            params: { postId: postId },
+            params: { postId: postId, behaviorLocations: accountBehavior?.location ?? '9999' },
         });
-    }, [])
+    }, [accountBehavior?.location])
 
     const handleTapToViewProfile = useCallback((authorId: string) => {
         const fetchAndNavigate = async () => {

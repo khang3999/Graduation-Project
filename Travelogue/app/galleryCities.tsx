@@ -1,4 +1,4 @@
-import { database, get, onValue } from "@/firebase/firebaseConfig";
+import { database, get, onValue, update } from "@/firebase/firebaseConfig";
 import { useNavigationState, useRoute } from "@react-navigation/native";
 import { router, useFocusEffect } from "expo-router";
 import { ref, runTransaction } from "firebase/database";
@@ -20,6 +20,7 @@ import ListPoints from "@/components/listPoints/ListPoints";
 import GalleryPosts from "@/components/gallery/GalleryPosts";
 import { useRanking } from "@/contexts/RankingContext";
 import { FlatList } from "react-native";
+import { useHomeProvider } from "@/contexts/HomeProvider";
 
 const { width } = Dimensions.get("window");
 const pad = 20
@@ -39,6 +40,7 @@ const GalleryCities = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [images, setImages] = useState<string[]>(["https://mediatech.vn/assets/images/imgstd.jpg"])
   const { postsData1 }: any = useRanking()
+  const { userId }: any = useHomeProvider()
   // useEffect(() => {
   //   const countryRef = ref(database, `cities/${idCountry}`);
   //   onValue(countryRef, (snapshot) => {
@@ -59,6 +61,17 @@ const GalleryCities = () => {
   const fetchCityData = useCallback(async (idCity: string, idArea: string, idCountry: string) => {
     try {
       const countryRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/`);
+
+
+      // Update hành vi lên firebase
+      // 1. Lưu lên firebase
+      const refBehavior = ref(database, `accounts/${userId}/behavior`);
+      const dataUpdate = {
+        content: "",
+        location: [idCity],
+      };
+
+      await update(refBehavior, dataUpdate);
 
       // Update scores
       const cityRef = ref(database, `cities/${idCountry}/${idArea}/${idCity}/scores/`);

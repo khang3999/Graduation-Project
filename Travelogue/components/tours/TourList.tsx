@@ -28,6 +28,7 @@ const TYPE = 1;
 
 const TourList = () => {
   const {
+    accountBehavior,
     userId,
   }: any = useHomeProvider()
   const {
@@ -47,7 +48,7 @@ const TourList = () => {
     selectedCountry,
     selectedCities, setSelectedCities,
     dataCities, setDataCities,
-    search, setSearch
+    search, setSearch,
   }: any = useTourProvider();
 
   const [modalNewPostVisible, setModalNewPostVisible] = useState(false);
@@ -196,6 +197,8 @@ const TourList = () => {
       const snapshot = await get(refBehavior);
       if (snapshot.exists()) {
         const dataBehaviorJson = snapshot.val()
+        console.log(dataBehaviorJson);
+
         return dataBehaviorJson
       } else {
         console.log("No data available - Snapshot don't exist");
@@ -223,6 +226,39 @@ const TourList = () => {
     }
     return []; // đảm bảo luôn trả về mảng
   }, [])
+
+  const fetchRelatedTours = useCallback(async (behaviorLocations: any) => {
+    try {
+      // const response = await fetch('http://10.0.2.2:5000/tours/')
+      // const json = await response.json();
+      const response = await fetch('http://192.168.128.122:5000/tours/related', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          {
+            locations: behaviorLocations
+          }
+        )
+      });
+      const result = await response.json();
+      // console.log(result);
+      return result
+
+      // if (snapshot.exists()) {
+      //   const dataToursJson = snapshot.val()
+      //   const dataToursArray = Object.values(dataToursJson)
+      //   return dataToursArray
+      // } else {
+      //   console.log("No data post available");
+      // }
+    } catch (error) {
+      console.error("Error fetching tour data: ", error);
+    }
+    return []; // đảm bảo luôn trả về mảng
+  }, [])
+
   //XONG
   const sortTourListByBehavior = useCallback((list: any, behavior: any) => {
     const behaviorTours: any = [];
@@ -293,13 +329,14 @@ const TourList = () => {
   const reloadTourScreen = useCallback(async () => {
     // Xử lí
     // Lấy list tour mới nhất
-    const newToursList = await fetchTours();
+    // const newToursList = await fetchTours();
     // Lấy hành vi mới nhất của người dùng
     const newBehavior = await fetchBehavior(userId)
+    const dataRelatedTours = await fetchRelatedTours(newBehavior.location)
     // Cập nhật danh sách tour mới nhất
-    dataTours.current = newToursList;
+    // dataTours.current = dataRelatedTours;
     // Sắp xếp danh sách bài viết theo hành vi mới nhất
-    setDataTours(sortTourListByBehavior(newToursList, newBehavior))
+    setDataTours(dataRelatedTours)
     // Clear data
     dataInput.current = ''
     selectedCountry.current = null
@@ -307,11 +344,11 @@ const TourList = () => {
     setDataCities([])
     selectedTypeSearch.current = 1
     setDataModalSelected(null)
-    setCurrentTourCount(newToursList.length)
+    setCurrentTourCount(dataRelatedTours.length)
     setModalNewPostVisible(false)
     setModalSearchVisible(false)
     setIsLoading(false)
-  }, [])
+  }, [fetchRelatedTours, fetchBehavior])
 
   //XONG
   useFocusEffect(
@@ -333,7 +370,7 @@ const TourList = () => {
       return () => {
         console.log('Screen is unfocused');
       };
-    }, [selectedCityId, content, reload]) // Cập nhật khi các giá trị này thay đổi
+    }, [selectedCityId, content, reload, reloadTourScreen]) // Cập nhật khi các giá trị này thay đổi
   );
   // Run to load new post list but don't merge with old post list
   useEffect(() => {
@@ -352,9 +389,9 @@ const TourList = () => {
   const handleTapToViewPostDetail = useCallback((path: any, tourId: string) => {
     router.push({
       pathname: path,
-      params: { tourId: tourId },
+      params: { tourId: tourId, behaviorLocations: accountBehavior?.location ?? '9999' },
     });
-  }, [])
+  }, [accountBehavior?.location])
   // Định nghĩa hàm xử lý sự kiện khi người dùng nhấn vào chủ bài viết để xem chi tiết trang cá nhân - DONE
   const handleTapToViewProfile = useCallback(async (authorId: string) => {
     if (!authorId) {
@@ -451,7 +488,7 @@ const TourList = () => {
           <FlatList
             style={{ maxHeight: 570 }}
             nestedScrollEnabled={true}
-            scrollEnabled={false}
+            scrollEnabled={true}
             //NHO MO COMMENT
             // horizontal={true}
             data={dataTours}
@@ -459,11 +496,11 @@ const TourList = () => {
             keyExtractor={(tour: any) => tour.id}
             contentContainerStyle={{ paddingVertical: 30, paddingHorizontal: 20, backgroundColor: backgroundColors.background2 }}
             ItemSeparatorComponent={() => <View style={{ height: 30 }} />}
-            initialNumToRender={4}
-            maxToRenderPerBatch={4}
+            // initialNumToRender={4}
+            // maxToRenderPerBatch={4}
           />
         ) : (
-          <View style={{ height: 570, justifyContent:'center',alignSelf:'center' }}>
+          <View style={{ height: 570, justifyContent: 'center', alignSelf: 'center' }}>
             <Text style={{ fontSize: 28, color: 'grey', textAlign: 'center', marginTop: 60 }}>Đang tải dữ liệu</Text>
             <LottieView
               autoPlay
@@ -476,7 +513,7 @@ const TourList = () => {
           </View>
         )
       ) : (
-         <View style={{ height: 570, justifyContent: 'center', alignSelf: 'center', }}>
+        <View style={{ height: 570, justifyContent: 'center', alignSelf: 'center', }}>
           <Text style={{ fontSize: 26, color: 'grey', textAlign: 'center', }}>Không tìm thấy tour phù hợp</Text>
           <LottieView
             autoPlay
