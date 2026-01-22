@@ -15,6 +15,9 @@ import NewPostModal from "@/components/homePage/modals/NewPostModal";
 import { Icon } from "react-native-vector-icons/Icon";
 import { RankingProvider, useRanking } from "@/contexts/RankingContext";
 
+import ChatBotModal from '@/components/chat/ChatBotModal';
+import ChatBotButton from '@/components/chat/ChatBotButton';
+
 
 const height = Dimensions.get('window').height;
 const Home = () => {
@@ -86,32 +89,17 @@ const Home = () => {
   //   return modalNewPostVisible ? <NewPostModal /> : null
   // }, [modalNewPostVisible])
 
+  // const [weatherModalVisible, setWeatherModalVisible] = useState(false);
+  // const [selectedCity, setSelectedCity] = useState("");
+
+  // Chatbot modal state
+  const [chatBotVisible, setChatBotVisible] = useState(false);
+
   const renderModal = useCallback(() => {
     return (
       <>
-        {modalSearchVisible && <SearchModal
-
-        />}
-        {/* {modalSearchVisible && <SearchModal
-          modalSearchVisible={modalSearchVisible}
-          setModalSearchVisible={setModalSearchVisible}
-          dataInput={dataInput}
-          dataCountries={dataCountries}
-          selectedCountry={selectedCountry}
-          // dataCities={dataAllCities}
-          selectedCities={selectedCities}
-          setSelectedCities={setSelectedCities}
-          // setDataCities={setDataCities}
-          dataTypeSearch={dataTypeSearch}
-          selectedTypeSearch={selectedTypeSearch}
-          setIsLoading={setIsLoading}
-          setSearch={setSearch}
-          dataModalSelected={dataModalSelected}
-          setDataModalSelected={setDataModalSelected}
-        />} */}
-
-
-        {modalNewPostVisible && <NewPostModal
+        {modalSearchVisible && <SearchModal />}
+        {modalNewPostVisible && <NewPostModal 
           data={dataPosts}
           dataNew={dataNewPostList}
           modalNewPostVisible={modalNewPostVisible}
@@ -119,18 +107,13 @@ const Home = () => {
           setModalNewPostVisible={setModalNewPostVisible}
           setIsLoading={setIsLoading}
         />}
-
-        {/* <NewPostModal
-          data={dataPosts}
-          dataNew={dataNewPostList}
-          modalNewPostVisible={modalNewPostVisible}
-          setReload={setReload}
-          setModalNewPostVisible={setModalNewPostVisible}
-          setIsLoading={setIsLoading}
-        /> */}
+        <ChatBotModal
+          visible={chatBotVisible}
+          onClose={() => setChatBotVisible(false)}
+        />
       </>
     );
-  }, [modalSearchVisible, modalNewPostVisible]);
+  }, [modalSearchVisible, modalNewPostVisible, chatBotVisible]);
 
   // Dùng cho kiểu 1
   const scrollY = useAnimatedValue(0);
@@ -152,6 +135,11 @@ const Home = () => {
     setReload((prev: Boolean) => !prev); // toggle reload
     fetchTrendingCity()
   }, [fetchTrendingCity])
+
+  // const handleShowWeather = (cityName: string) => {
+  //   setSelectedCity(cityName);
+  //   setWeatherModalVisible(true);
+  // };
 
   return (
     <View style={styles.container}>
@@ -189,7 +177,7 @@ const Home = () => {
           {/* Top list section */}
           <View>
             <Text style={styles.textCategory}>Nổi bật</Text>
-            <Featured></Featured>
+            <Featured />
           </View>
           {/* Tour section */}
           <View>
@@ -265,6 +253,9 @@ const Home = () => {
       {/* {renderSearchModal()}
       {renderNewPostModal()} */}
       {renderModal()}
+
+  {/* Chatbot FAB button */}
+  <ChatBotButton onPress={() => setChatBotVisible(true)} />
     </View >
   )
 }

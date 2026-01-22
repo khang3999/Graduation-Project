@@ -150,7 +150,7 @@ const Tour = () => {
                 {/* <Text >Top Travel Picks of the Moment</Text> */}
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <MaterialCommunityIcons name="trending-up" size={20} color="white" />
-                  <Text style={[styles.textBanner,{paddingLeft:4}]}>Top trending</Text>
+                  <Text style={[styles.textBanner, { paddingLeft: 4 }]}>Top trending</Text>
                 </View>
                 <Text style={styles.textBannerTitle}>Những lựa chọn du lịch hàng đầu hiện nay</Text>
                 <Text style={styles.textBanner}>"Đi đi em,</Text>
@@ -158,9 +158,9 @@ const Tour = () => {
                 <Text style={styles.textBanner}> Trời tối mất"</Text>
                 <TouchableOpacity style={styles.bannerButtonArrowRight}
                   onPress={() => {
-                    router.push({
-                      pathname: "/(trending)/tourTrending",
-                    });
+                    router.push(
+                      "/(trending)/tourTrending"
+                    );
                   }}
                 >
                   <AntDesign name="arrowright" size={22} color="white" />

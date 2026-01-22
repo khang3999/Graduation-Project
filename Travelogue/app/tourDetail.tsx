@@ -901,9 +901,8 @@ export default function ToursScreen() {
   // State to track whether full description is shown
   const { areasByProvinceName }: any = useAdminProvider();
 
-
   const { selectedTour }: any = useTourProvider();
-  const { initialIndex, tourId } = useLocalSearchParams();
+  const { initialIndex, tourId, behaviorLocations } = useLocalSearchParams();
 
   const initialPage = parseInt(initialIndex as string, 10) ? parseInt(initialIndex as string, 10) : 0;
   const [isScrollEnabled, setIsScrollEnabled] = useState(true);
@@ -914,10 +913,12 @@ export default function ToursScreen() {
   const memoriedTourItem = useMemo(() => selectedTour, [selectedTour]);
 
   const fetchTourById = async (tourId: any) => {
+
+
     try {
       const refTour = ref(database, `tours/${tourId}`)
       const refScore = ref(database, `tours/${tourId}/scores`);
-
+      const refDataToTraining = ref(database, `dataTourTraining/`)
       // Cập nhật scores trước
       await runTransaction(refScore, (currentScore) => {
         return (currentScore || 0) + 1;
@@ -928,7 +929,16 @@ export default function ToursScreen() {
         const dataTourJson: any = snapshot.val()
 
         const dataLocations = dataTourJson.locations
-        setDataLoctions(flattenLocations(dataLocations))
+        const flatttenLocations = flattenLocations(dataLocations)
+
+        const ratingPoint = dataTourJson.ratingSummary.totalRatingCounter != 0 ? (dataTourJson.ratingSummary.totalRatingValue / dataTourJson.ratingSummary.totalRatingCounter).toFixed(1) : 0
+        const locationCodes = flatttenLocations.map(item => item.locationCode);
+
+        const behaviorList = String(behaviorLocations).split(',').map(element => element.trim())
+
+        await push(refDataToTraining, {"locations": locationCodes, "rating": ratingPoint, "behaviors": behaviorList })
+
+        setDataLoctions(flatttenLocations)
         setDataTour([dataTourJson])
       } else {
         console.log("No data tour available");
